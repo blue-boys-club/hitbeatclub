@@ -1,0 +1,135 @@
+name: API Continuous Integration
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+      - ".github/workflows/build-api.yaml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+      - ".github/workflows/build-api.yaml"
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  # build:
+  #   name: Build and Test
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 2
+
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "22"
+  #         cache: "yarn"
+
+  #     - name: Install dependencies
+  #       run: yarn install --frozen-lockfile
+
+  #     - name: Build
+  #       run: yarn turbo run build --filter=api
+
+  #     - name: Test
+  #       run: yarn turbo run test --filter=api
+
+  docker:
+    name: Docker
+    # needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Modify scripts and get version
+        id: version
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const date = new Date();
+            const year = date.getUTCFullYear();
+            const month = `${date.getUTCMonth()+1}`.padStart(2, '0');
+            const day = `${date.getUTCDate()}`.padStart(2, '0');
+            const hour = `${date.getUTCHours()}`.padStart(2, '0');
+            const minute = `${date.getUTCMinutes()}`.padStart(2, '0');
+            const second = `${date.getUTCSeconds()}`.padStart(2, '0');
+            const d = `${year}-${month}-${day}T${hour}_${minute}_${second}`;
+
+            core.setOutput('version', `${d}-${context.sha.substring(0, 7)}`);
+
+            // remove refs/heads/
+            const branch = context.ref.substring(11);
+
+            if (branch === 'main') {
+              core.setOutput('push', 'true');
+              core.setOutput('latest-tag', 'latest');
+            } else {
+              core.setOutput('push', 'false');
+              core.setOutput('latest-tag', `${branch}-${d}`);
+            }
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ap-northeast-2
+          role-to-assume: arn:aws:iam::765923357633:role/GithubOIDCRole
+          role-session-name: BuildDockerApiAction
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Build and push
+      - name: Build a multi-platform docker image and push
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64 #,linux/arm64
+          cache-from: |
+            type=local,src=/tmp/.buildx-cache
+          cache-to: |
+            type=inline
+            type=local,dest=/tmp/.buildx-cache-new,mode=max
+          build-args: BUILD_VER=${{ steps.version.outputs.version }}
+          load: false
+          no-cache: ${{ contains(github.event.head_commit.message, '[no cache]') }}
+          push: ${{ steps.version.outputs.push == 'true' }}
+          file: apps/api/Dockerfile
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/blueboysclub/hitbeatclub-api:${{ steps.version.outputs.version }}
+            ${{ steps.login-ecr.outputs.registry }}/blueboysclub/hitbeatclub-api:${{ steps.version.outputs.latest-tag }}
+            ${{ steps.login-ecr.outputs.registry }}/blueboysclub/hitbeatclub-api:${{ github.sha }}
+
+      - # Temp fix
+        # https://github.com/docker/build-push-action/issues/252
+        # https://github.com/moby/buildkit/issues/1896
+        name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
