@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
+const IS_DEV = process.env.NODE_ENV === "development";
 const nextConfig: NextConfig = {
-  /* config options here */
+  compiler: !IS_DEV
+    ? {
+        reactRemoveProperties: { properties: ["^data-testid$"] },
+      }
+    : {},
 };
 
 export default nextConfig;

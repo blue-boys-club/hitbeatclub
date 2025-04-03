@@ -1,5 +1,5 @@
 {
-  "name": "my-turborepo",
+  "name": "hitbeatclub",
   "private": true,
   "scripts": {
     "build": "turbo run build",
@@ -17,9 +17,5 @@
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "yarn@1.22.22",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ]
+  "packageManager": "pnpm@10.7.1"
 }

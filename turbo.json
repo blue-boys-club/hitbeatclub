@@ -17,8 +17,17 @@
       "cache": false,
       "persistent": true
     },
+    "transit": {
+      "dependsOn": ["^transit"]
+    },
     "test": {
-      "dependsOn": ["^test"]
+      "dependsOn": ["transit", "^test"],
+      "outputs": ["coverage.json"]
+    },
+    "test:watch": {
+      "dependsOn": ["^test:watch"],
+      "cache": false,
+      "persistent": true
     }
   }
 }

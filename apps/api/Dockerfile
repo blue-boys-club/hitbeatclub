@@ -1,12 +1,26 @@
-# Base image with configurable Node version
+# Base image with configurable versions
 ARG NODE_VERSION=22
-FROM node:${NODE_VERSION}-alpine AS base
+ARG ALPINE_VERSION=3.21
+ARG PNPM_VERSION="^10.0.0"
+ARG TURBO_VERSION="^2.4.4"
+
+FROM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS alpine
 RUN apk update && apk add --no-cache libc6-compat curl
+
+FROM alpine AS base
+
+# Pnpm ENV
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+RUN \
+    # Install pnpm
+    # corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
+    npm install -g pnpm@${PNPM_VERSION} turbo@${TURBO_VERSION}
 
 # Generate a partial monorepo for the API package
 FROM base AS builder
 WORKDIR /app
-RUN yarn global add turbo --network-timeout 1000000
 COPY . .
 RUN turbo prune --scope=api --docker
 
@@ -15,9 +29,10 @@ FROM base AS installer
 WORKDIR /app
 # Copy the pruned dependencies
 COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/out/yarn.lock ./yarn.lock
+COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=builder /app/turbo.json ./turbo.json
-RUN yarn install --frozen-lockfile --network-timeout 1000000
+RUN  --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile
 
 # Build the application
 FROM base AS sourcer
@@ -25,7 +40,7 @@ WORKDIR /app
 COPY --from=installer /app/ .
 COPY --from=builder /app/out/full/ .
 COPY .gitignore .gitignore
-RUN yarn turbo run build
+RUN pnpm turbo run build
 
 # Production stage
 FROM base AS runner

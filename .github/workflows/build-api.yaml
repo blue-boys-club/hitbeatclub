@@ -26,20 +26,25 @@ jobs:
   #       with:
   #         fetch-depth: 2
 
+  #     - uses: pnpm/action-setup@v4
+
   #     - name: Setup Node.js
   #       uses: actions/setup-node@v4
   #       with:
   #         node-version: "22"
-  #         cache: "yarn"
+  #         cache: "pnpm"
 
   #     - name: Install dependencies
-  #       run: yarn install --frozen-lockfile
+  #       run: pnpm install --frozen-lockfile
+
+  #     # - name: Lint
+  #     #   run: pnpm turbo run lint --filter=api
 
   #     - name: Build
-  #       run: yarn turbo run build --filter=api
+  #       run: pnpm turbo run build --filter=api
 
-  #     - name: Test
-  #       run: yarn turbo run test --filter=api
+  #     # - name: Test
+  #     #   run: pnpm turbo run test --filter=api
 
   docker:
     name: Docker
@@ -48,6 +53,8 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    # Only run on main branch
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -66,12 +73,12 @@ jobs:
             const hour = `${date.getUTCHours()}`.padStart(2, '0');
             const minute = `${date.getUTCMinutes()}`.padStart(2, '0');
             const second = `${date.getUTCSeconds()}`.padStart(2, '0');
-            const d = `${year}-${month}-${day}T${hour}_${minute}_${second}`;
+            const d = `${year}-${month}-${day}T${hour}-${minute}-${second}`;
 
             core.setOutput('version', `${d}-${context.sha.substring(0, 7)}`);
 
-            // remove refs/heads/
-            const branch = context.ref.substring(11);
+            // remove refs/heads/ or refs/pull/ using regex
+            const branch = context.ref.replace(/^refs\/(?:heads|pull)\//, '').replace('/', '-');
 
             if (branch === 'main') {
               core.setOutput('push', 'true');
