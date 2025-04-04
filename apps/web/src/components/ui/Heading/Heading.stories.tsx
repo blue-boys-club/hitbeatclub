@@ -14,6 +14,12 @@ const meta: Meta = {
   parameters: {
     layout: "centered",
   },
+  argTypes: {
+    children: {
+      description: "텍스트/컴포넌트",
+      type: "string",
+    },
+  },
   tags: ["autodocs"],
 };
 

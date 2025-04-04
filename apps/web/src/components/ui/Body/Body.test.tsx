@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { BodyLarge, BodyMedium, BodySmall } from "..";
-import { AllowedElements } from "./BaseBody";
+import { AllowedBodyElements } from "./BaseBody";
 
 describe("Body Components", () => {
   const testCases = [
@@ -84,7 +84,7 @@ describe("Body Components", () => {
         tagNames.forEach((tagName) => {
           it(`should render as '${tagName}' when as prop is provided`, () => {
             render(
-              <Component as={tagName as AllowedElements}>{text}</Component>
+              <Component as={tagName as AllowedBodyElements}>{text}</Component>
             );
             const body = screen.getByText(text);
             expect(body.tagName.toLowerCase()).toBe(tagName);

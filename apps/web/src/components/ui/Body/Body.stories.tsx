@@ -7,6 +7,26 @@ const meta: Meta = {
   parameters: {
     // layout: "centered",
   },
+  argTypes: {
+    as: {
+      description: "렌더링 할 HTML Body 태그 (default: div)",
+      options: [
+        "div",
+        "span",
+        "p",
+        "article",
+        "section",
+        "main",
+        "aside",
+        "nav",
+        "header",
+        "footer",
+      ],
+      control: {
+        type: "select",
+      },
+    },
+  },
   tags: ["autodocs"],
 };
 

@@ -46,16 +46,21 @@ const baseBodyVariants = cva("justify-start text-hbc-black", {
   },
 });
 
-export type AllowedElements = NonNullable<
+/**
+ * 허용된 HTML Body 태그
+ */
+export type AllowedBodyElements = NonNullable<
   VariantProps<typeof baseBodyVariants>["as"]
 >;
 
-/**
- * @property {"div", "span", "p", "article", "section", "main", "aside", "nav", "header", "footer", "asChild"} [as] - 렌더링 할 HTML Body 태그
- * @property {"large", "medium", "small"} [size] - 렌더링 할 HTML Body 태그의 크기
- */
-export type BaseBodyProps<T extends React.ElementType = AllowedElements> = {
+export type BaseBodyProps<T extends React.ElementType = AllowedBodyElements> = {
+  /**
+   * 렌더링 할 HTML Body 태그
+   */
   as?: T;
+  /**
+   * 렌더링 할 HTML Body 태그의 크기
+   */
   size?: VariantProps<typeof baseBodyVariants>["size"];
 } & Omit<React.ComponentPropsWithoutRef<T>, "as" | "size">;
 
@@ -65,7 +70,7 @@ export type BaseBodyProps<T extends React.ElementType = AllowedElements> = {
 export const BaseBody = memo(
   forwardRef<
     React.ComponentRef<React.ElementType>,
-    BaseBodyProps<AllowedElements>
+    BaseBodyProps<AllowedBodyElements>
   >(({ as = "div", size, className, children, ...props }, ref) => {
     const Component = as as React.ElementType;
 
