@@ -13,7 +13,7 @@ describe("Heading Components", () => {
   ] as const;
 
   testCases.forEach(({ Component, level, text }) => {
-    describe(`${level}`, () => {
+    describe(`render ${Component.displayName} (${level})`, () => {
       afterEach(() => {
         cleanup();
       });
