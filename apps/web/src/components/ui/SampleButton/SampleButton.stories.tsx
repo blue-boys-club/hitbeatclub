@@ -56,7 +56,8 @@ const meta: Meta<typeof SampleButton> = {
   parameters: {
     docs: {
       description: {
-        component: "재사용 가능한 버튼 컴포넌트입니다.",
+        component:
+          "[Storybook + Unit Test Sample] 재사용 가능한 버튼 컴포넌트입니다.",
       },
     },
   },
