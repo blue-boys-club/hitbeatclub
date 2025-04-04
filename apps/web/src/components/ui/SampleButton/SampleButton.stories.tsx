@@ -23,7 +23,7 @@ import { SampleButton } from "./SampleButton";
  * ```
  */
 const meta: Meta<typeof SampleButton> = {
-  title: "UI/SampleButton",
+  title: "UI/[Sample] SampleButton",
   component: SampleButton,
   tags: ["autodocs"],
   argTypes: {
