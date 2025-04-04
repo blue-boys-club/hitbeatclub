@@ -8,6 +8,8 @@ export default defineConfig({
     environment: "jsdom",
     css: true,
 
+    setupFiles: ["./vitest.setup.tsx"],
+
     coverage: {
       enabled: true,
       exclude: [
@@ -15,6 +17,10 @@ export default defineConfig({
         "*.config.mjs",
         "*.config.js",
         "*.config.ts",
+
+        // style/font definition
+        "src/styles/**/*.css",
+        "src/styles/**/*.ts",
 
         "**/.storybook/**",
         // 👇 This pattern must align with the `stories` property of your `.storybook/main.ts` config
