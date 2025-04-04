@@ -62,6 +62,22 @@ describe("Body Components", () => {
           const mixedBody = screen.getByText("한글 텍스트 English Text");
           expect(mixedBody).toHaveClass("font-suit");
         });
+
+        it("should apply suisse font for when complicated children is provided", () => {
+          render(
+            <Component data-testid="mixed-component">
+              <span>한글 텍스트</span>
+            </Component>
+          );
+          const mixedBody = screen.getByTestId("mixed-component");
+          expect(mixedBody).toHaveClass("font-suit");
+        });
+
+        it("should apply suit font for only special characters", () => {
+          render(<Component>.,!@#$%^&*()_+</Component>);
+          const specialBody = screen.getByText(".,!@#$%^&*()_+");
+          expect(specialBody).toHaveClass("font-suit");
+        });
       });
 
       describe("should render as different HTML element when as prop is provided", () => {
