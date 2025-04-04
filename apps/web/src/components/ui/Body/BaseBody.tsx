@@ -65,7 +65,7 @@ export type BaseBodyProps<T extends React.ElementType = AllowedBodyElements> = {
 } & Omit<React.ComponentPropsWithoutRef<T>, "as" | "size">;
 
 /**
- * 모든 헤딩 컴포넌트의 기본 컴포넌트
+ * 모든 바디 컴포넌트의 기본 컴포넌트
  */
 export const BaseBody = memo(
   forwardRef<
