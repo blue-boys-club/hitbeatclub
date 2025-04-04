@@ -55,7 +55,7 @@ describe("Heading Components", () => {
           expect(englishHeading).toHaveClass("font-suisse");
         });
 
-        it("should apply suisse font for Mixed Language text", () => {
+        it("should apply suit font for Mixed Language text", () => {
           render(<Component>한글 제목 English Title</Component>);
           const mixedHeading = screen.getByRole("heading", {
             level: Number(level[1]),
