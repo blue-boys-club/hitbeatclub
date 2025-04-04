@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { fontSuit, fontSuisse } from "@/app/fonts";
+import { fontSuit, fontSuisse } from "@/styles/font";
 import "@/styles/globals.css";
+import { cn } from "@/common/utils/tailwind";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -15,7 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${fontSuit.variable} ${fontSuisse.variable} antialiased`}
+        className={cn(fontSuit.variable, fontSuisse.variable, "antialiased")}
       >
         {children}
       </body>

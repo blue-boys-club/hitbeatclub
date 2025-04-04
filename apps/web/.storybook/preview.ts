@@ -1,7 +1,7 @@
 import { withThemeByClassName } from "@storybook/addon-themes";
 import type { Preview } from "@storybook/react";
-import "../src/app/globals.css";
-import { storyQueryDecorator } from "./decorators";
+import "../src/styles/globals.css";
+import { storyFontDecorator, storyQueryDecorator } from "./decorators";
 
 const preview: Preview = {
   parameters: {
@@ -21,7 +21,7 @@ const preview: Preview = {
       },
       defaultTheme: "light",
     }),
-
+    storyFontDecorator,
     storyQueryDecorator,
   ],
 };

@@ -12,23 +12,25 @@
   --hbc-gray-100: #e7e7e7;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --hbc-blue: #3884ff;
-    --hbc-black: #1f1f1f;
-  }
+/* @media (prefers-color-scheme: dark) { */
+.dark {
+  --hbc-blue: #3884ff;
+  --hbc-black: #1f1f1f;
 }
 
 @theme inline {
-  --color-black: var(--hbc-black);
-  --color-white: var(--hbc-white);
-  --color-blue: var(--hbc-blue);
-  --color-red: var(--hbc-red);
+  --color-hbc-black: var(--hbc-black);
+  --color-hbc-white: var(--hbc-white);
+  --color-hbc-blue: var(--hbc-blue);
+  --color-hbc-red: var(--hbc-red);
 
-  --color-gray-400: var(--hbc-gray-400);
-  --color-gray-300: var(--hbc-gray-300);
-  --color-gray-200: var(--hbc-gray-200);
-  --color-gray-100: var(--hbc-gray-100);
+  --color-hbc-gray-400: var(--hbc-gray-400);
+  --color-hbc-gray-300: var(--hbc-gray-300);
+  --color-hbc-gray-200: var(--hbc-gray-200);
+  --color-hbc-gray-100: var(--hbc-gray-100);
+
+  --font-suit: var(--font-hbc-suit);
+  --font-suisse: var(--font-hbc-suisse);
 }
 
 body {

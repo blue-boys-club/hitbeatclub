@@ -1,5 +1,3 @@
-export { SampleButton } from "./SampleButton";
-
 export {
   Heading1,
   Heading2,
