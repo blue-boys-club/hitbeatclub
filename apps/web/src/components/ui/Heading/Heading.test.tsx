@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { Heading1, Heading2, Heading3, Heading4, Heading5, Heading6 } from ".";
+import { Heading1, Heading2, Heading3, Heading4, Heading5, Heading6 } from "..";
 
 describe("Heading Components", () => {
   const testCases = [

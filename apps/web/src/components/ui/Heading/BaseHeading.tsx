@@ -1,5 +1,6 @@
 import { cn } from "@/common/utils/tailwind";
 import { cva, VariantProps } from "class-variance-authority";
+import { memo } from "react";
 import { forwardRef } from "react";
 
 const baseHeadingVariants = cva("justify-start text-hbc-black", {
@@ -89,37 +90,45 @@ const baseHeadingVariants = cva("justify-start text-hbc-black", {
   },
 });
 
+type AllowedElements = NonNullable<
+  VariantProps<typeof baseHeadingVariants>["as"]
+>;
+
 /**
  * @property {"h1", "h2", "h3", "h4", "h5", "h6"} [as] - 렌더링 할 HTML Heading 태그
  */
 export interface BaseHeadingProps
-  extends React.HTMLAttributes<HTMLHeadingElement>,
-    Pick<VariantProps<typeof baseHeadingVariants>, "as"> {}
-
+  extends React.HTMLAttributes<HTMLHeadingElement> {
+  as?: AllowedElements;
+}
 /**
  * 모든 헤딩 컴포넌트의 기본 컴포넌트
  */
-export const BaseHeading = forwardRef<HTMLHeadingElement, BaseHeadingProps>(
-  ({ as = "h1", className, ...props }, ref) => {
-    const Component = as || "h1";
+export const BaseHeading = memo(
+  forwardRef<HTMLHeadingElement, BaseHeadingProps>(
+    ({ as = "h1", className, ...props }, ref) => {
+      const Component = as;
 
-    // 순수 영문 텍스트 여부
-    const isPureEnglish = !!props.children?.toString()?.match(/^[a-zA-Z\s]+$/);
+      // 순수 영문 텍스트 여부
+      const isPureEnglish = !!props.children
+        ?.toString()
+        ?.match(/^[a-zA-Z\s]+$/);
 
-    return (
-      <Component
-        ref={ref}
-        className={cn(
-          baseHeadingVariants({
-            as,
-            isPureEnglish,
-          }),
-          className
-        )}
-        {...props}
-      />
-    );
-  }
+      return (
+        <Component
+          ref={ref}
+          className={cn(
+            baseHeadingVariants({
+              as,
+              isPureEnglish,
+            }),
+            className
+          )}
+          {...props}
+        />
+      );
+    }
+  )
 );
 
 BaseHeading.displayName = "BaseHeading";

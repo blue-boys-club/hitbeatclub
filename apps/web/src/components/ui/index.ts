@@ -1,10 +1,3 @@
-export { SampleButton } from "./SampleButton";
-
-export {
-  Heading1,
-  Heading2,
-  Heading3,
-  Heading4,
-  Heading5,
-  Heading6,
-} from "./Heading";
+export * from "./SampleButton";
+export * from "./Heading";
+export * from "./Body";
