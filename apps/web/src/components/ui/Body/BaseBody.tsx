@@ -1,3 +1,4 @@
+import { checkIsPureEnglish } from "@/common/utils";
 import { cn } from "@/common/utils/tailwind";
 import { cva, VariantProps } from "class-variance-authority";
 import { forwardRef, memo } from "react";
@@ -74,16 +75,7 @@ export const BaseBody = memo(
   >(({ as = "div", size, className, children, ...props }, ref) => {
     const Component = as as React.ElementType;
 
-    // 순수 영문 텍스트 여부
-    // 단 특수문자나 숫자만 있는 경우는 순수 영문으로 처리하지 않음
-    // 영문, 숫자, 기본 특수문자만 포함된 경우 영문으로 판단
-    const isEnglish = !!children
-      ?.toString()
-      ?.match(/^[a-zA-Z0-9\s.,!?()_\-']+$/);
-    // 특수문자로만 이루어진 경우 체크
-    const isOnlySpecialCharacters = !!children?.toString()?.match(/^[^\w\s]+$/);
-    // 영문이면서 특수문자로만 이루어지지 않은 경우를 순수 영문으로 판단
-    const isPureEnglish = isEnglish && !isOnlySpecialCharacters;
+    const isPureEnglish = checkIsPureEnglish(children);
 
     return (
       <Component

@@ -1,3 +1,4 @@
+import { checkIsPureEnglish } from "@/common/utils";
 import { cn } from "@/common/utils/tailwind";
 import { cva, VariantProps } from "class-variance-authority";
 import { memo } from "react";
@@ -110,9 +111,7 @@ export const BaseHeading = memo(
       const Component = as;
 
       // 순수 영문 텍스트 여부
-      const isPureEnglish = !!props.children
-        ?.toString()
-        ?.match(/^[a-zA-Z\s]+$/);
+      const isPureEnglish = checkIsPureEnglish(props.children);
 
       return (
         <Component
