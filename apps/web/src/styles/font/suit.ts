@@ -5,5 +5,5 @@ export const suit = localFont({
   variable: "--font-hbc-suit",
   display: "swap",
   // weight: "100 900",
-  weight: "variable",
+  // weight: "variable",
 });
