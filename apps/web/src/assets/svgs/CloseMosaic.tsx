@@ -1,0 +1,15 @@
+export const CloseMosaic = () => {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <rect x="0.5" y="11.3262" width="1.78261" height="1.78261" fill="black" stroke="black" />
+      <rect x="3.10938" y="8.71729" width="1.78261" height="1.78261" fill="black" stroke="black" />
+      <rect x="5.7168" y="6.10889" width="1.78261" height="1.78261" fill="black" stroke="black" />
+      <rect x="8.32617" y="8.71729" width="1.78261" height="1.78261" fill="black" stroke="black" />
+      <rect x="3.10938" y="3.5" width="1.78261" height="1.78261" fill="black" stroke="black" />
+      <rect x="0.5" y="0.891113" width="1.78261" height="1.78261" fill="black" stroke="black" />
+      <rect x="10.9355" y="11.3262" width="1.78261" height="1.78261" fill="black" stroke="black" />
+      <rect x="8.32617" y="3.5" width="1.78261" height="1.78261" fill="black" stroke="black" />
+      <rect x="10.9346" y="0.891113" width="1.78261" height="1.78261" fill="black" stroke="black" />
+    </svg>
+  );
+};
