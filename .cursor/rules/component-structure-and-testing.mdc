@@ -1,0 +1,211 @@
+---
+description: Component Structure and Testing Guidelines for React TypeScript Projects
+globs: packages/ui/src/**/*.ts,packages/**/*.tsx,apps/**/components/**/*.ts,apps/**/components/**/*.tsx
+alwaysApply: false
+---
+
+# Component Structure and Testing Guidelines
+
+## 1. Component Organization
+
+### 1.1 File Locations
+- Components should be placed in:
+  - `apps/[app-name]/src/components/`
+- Each component should be a TypeScript React component with proper type definitions
+
+### 1.2 Basic Component Structure
+```tsx
+import type { ButtonHTMLAttributes, ReactNode } from "react"
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  children: ReactNode;
+  className?: string;
+  appName: string;
+}
+
+export const Button = ({ children, className, appName, ...props }: ButtonProps) => {
+  const handleClick = () => {
+    alert(`Hello from your ${appName} app!`);
+  };
+
+  return (
+    <button className={className} onClick={handleClick} {...props}>
+      {children}
+    </button>
+  );
+};
+```
+
+## 2. Documentation Standards
+
+### 2.1 Component Documentation
+- Use JSDoc/TSDoc format
+- Write comments in Korean for team communication
+- Include usage examples
+- Document all props and their purposes
+
+### 2.2 Required Documentation
+- Component purpose and usage
+- Complex business logic
+- Important state management decisions
+- Non-obvious implementation details
+
+## 3. Styling Utilities
+
+### 3.1 Class Name Utility (cn)
+```tsx
+import { cn } from '@/common/utils';
+
+// Basic usage
+const className = cn('base-class', 'additional-class');
+
+// Conditional classes
+const className = cn(
+  'base-class',
+  isActive && 'active-class',
+  isDisabled && 'disabled-class'
+);
+```
+
+### 3.2 Class Variance Authority (cva)
+```tsx
+import { cva, type VariantProps } from 'class-variance-authority';
+
+const buttonVariants = cva('base-styles', {
+  variants: {
+    variant: {
+      primary: 'bg-blue-500 text-white',
+      secondary: 'bg-gray-200 text-gray-900',
+    },
+    size: {
+      sm: 'h-9 px-3',
+      md: 'h-10 px-4',
+    },
+  },
+  defaultVariants: {
+    variant: 'primary',
+    size: 'md',
+  },
+});
+```
+
+## 4. Testing Standards
+
+### 4.1 Test File Structure
+- Create `.test.tsx` files for each component
+- Use React Testing Library with Vitest
+- Test both rendering and interactions
+
+### 4.2 Test Implementation Example
+```tsx
+import { describe, it, expect, afterEach, vi } from "vitest";
+import { cleanup, render, screen, fireEvent } from "@testing-library/react";
+import { Button } from "./button";
+
+describe("Button", () => {
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  it("renders correctly", () => {
+    render(<Button appName="Test">Click me</Button>);
+    expect(screen.getByText("Click me")).toBeInTheDocument();
+  });
+});
+```
+
+## 5. Storybook Integration
+
+### 5.1 Story File Structure
+- Create `.stories.tsx` files for each component
+- Use Component Story Format (CSF)
+- Define component variants using stories
+
+### 5.2 Story Implementation Example
+```tsx
+import type { Meta, StoryObj } from '@storybook/react';
+import { Button } from './button';
+
+const meta: Meta<typeof Button> = {
+  title: 'Components/Button',
+  component: Button,
+  tags: ['autodocs'],
+  argTypes: {
+    variant: {
+      control: 'select',
+      options: ['primary', 'secondary'],
+    },
+  },
+};
+
+export default meta;
+type Story = StoryObj<typeof Button>;
+
+export const Primary: Story = {
+  args: {
+    children: 'Click me',
+    variant: 'primary',
+  },
+};
+```
+
+## 6. Base Component Pattern
+
+### 6.0 Base Component Usage
+Base components are only needed when a component requires multiple variations with shared core functionality.
+(e.g., Heading1-6 sharing BaseHeading's styling and behavior)
+
+### 6.1 Implementation Structure
+```tsx
+// Base Component
+import { cva, VariantProps } from "class-variance-authority";
+import { memo, forwardRef } from "react";
+
+const baseVariants = cva("base-classes", {
+  variants: {
+    variant: {
+      // variant options
+    },
+  },
+  defaultVariants: {
+    // default values
+  }
+});
+
+export const BaseComponent = memo(
+  forwardRef<HTMLElement, BaseComponentProps>((props, ref) => {
+    // Implementation
+  })
+);
+```
+
+### 6.2 File Structure
+```
+Component/
+├── BaseComponent.tsx      # Base implementation
+├── Component.tsx          # Specific implementations
+├── Component.stories.tsx  # Storybook stories
+├── Component.test.tsx     # Test files
+└── index.ts              # Exports
+```
+
+## 7. Best Practices
+
+### 7.1 Component Development
+- Use `memo`/`useMemo`, `useCallback` and `forwardRef` for performance
+- Define clear display names
+- Keep components focused on single responsibility
+- Consider accessibility in implementations
+
+### 7.2 Code Organization
+- Group related components together
+- Maintain consistent file structure
+- Use clear naming conventions
+- Keep components small and focused
+
+### 7.3 Performance
+- Implement proper memoization
+- Use efficient rendering patterns
+- Optimize event handlers
+- Monitor component re-renders
