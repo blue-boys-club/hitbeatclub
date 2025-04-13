@@ -12,7 +12,6 @@ import {
 } from "./Heading";
 
 // Button components
-import { SampleButton } from "./SampleButton";
 import { SubscribeButton } from "./SubscribeButton";
 import { LoginButton } from "./LoginButton";
 
@@ -28,33 +27,7 @@ import { Toggle } from "./Toggle";
 import { UserAvatar, ArtistAvatar, AlbumAvatar } from "./Avatar";
 
 // Popup components
-import {
-  Popup as PopupRoot,
-  PopupClose,
-  PopupContent,
-  PopupDescription,
-  PopupFooter,
-  PopupHeader,
-  PopupOverlay,
-  PopupPortal,
-  PopupTitle,
-  PopupTrigger,
-  PopupButton,
-} from "./Popup";
-
-const Popup = {
-  Popup: PopupRoot,
-  PopupClose,
-  PopupContent,
-  PopupDescription,
-  PopupFooter,
-  PopupHeader,
-  PopupOverlay,
-  PopupPortal,
-  PopupTitle,
-  PopupTrigger,
-  PopupButton,
-};
+import * as Popup from "./Popup";
 
 const UI = {
   BodyLarge,
@@ -67,7 +40,6 @@ const UI = {
   Heading5,
   Heading6,
 
-  SampleButton,
   SubscribeButton,
   LoginButton,
 
@@ -96,7 +68,6 @@ export {
   Heading4,
   Heading5,
   Heading6,
-  SampleButton,
   SubscribeButton,
   LoginButton,
   Dropdown,

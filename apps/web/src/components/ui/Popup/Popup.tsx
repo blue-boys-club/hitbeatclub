@@ -50,8 +50,8 @@ const PopupContent = React.forwardRef<
       </div>
       <DialogPrimitive.Close
         className={cn(
-          "absolute right-[-18px] top-[-18px] z-[60] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer",
-          "disabled:hidden disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+          "absolute right-[-18px] top-[-18px] z-[60] cursor-pointer",
+          "disabled:hidden disabled:pointer-events-none"
         )}
       >
         <CloseModal />
