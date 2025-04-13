@@ -1,15 +1,16 @@
-export const Lock = () => {
+import { cn } from "@/common/utils";
+
+export interface LockProps {
+  className?: string;
+}
+
+export const Lock = ({ className }: LockProps) => {
   return (
     <div
-      style={{
-        display: 'flex',
-        width: '24px',
-        height: '24px',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'white',
-        borderRadius: '50%',
-      }}
+      className={cn(
+        "flex w-[24px] h-[24px] justify-center items-center bg-white rounded-full",
+        className
+      )}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

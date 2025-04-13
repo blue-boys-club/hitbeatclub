@@ -3,7 +3,7 @@ import { cn } from "@/common/utils/tailwind";
 import { cva, VariantProps } from "class-variance-authority";
 import { forwardRef, memo } from "react";
 
-const baseBodyVariants = cva("justify-start text-hbc-black", {
+const baseBodyVariants = cva("justify-start", {
   variants: {
     as: {
       div: "",

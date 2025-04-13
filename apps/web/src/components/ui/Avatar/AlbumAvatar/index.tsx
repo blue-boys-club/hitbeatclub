@@ -1,0 +1,1 @@
+export { AlbumAvatar } from "./AlbumAvatar";

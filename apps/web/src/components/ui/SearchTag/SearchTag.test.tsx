@@ -18,7 +18,7 @@ describe("SearchTag", () => {
     it("renders with custom placeholder", () => {
       render(<SearchTag placeholder="Custom placeholder" />);
       expect(
-        screen.getByPlaceholderText("Custom placeholder"),
+        screen.getByPlaceholderText("Custom placeholder")
       ).toBeInTheDocument();
     });
 
@@ -31,7 +31,11 @@ describe("SearchTag", () => {
     it("renders with correct border styles", () => {
       render(<SearchTag />);
       const wrapper = screen.getByRole("searchbox").parentElement;
-      expect(wrapper).toHaveClass("border-2", "border-black", "rounded-[40px]");
+      expect(wrapper).toHaveClass(
+        "border-2",
+        "border-hbc-black",
+        "rounded-[40px]"
+      );
     });
 
     it("renders search icon button", () => {
@@ -52,7 +56,7 @@ describe("SearchTag", () => {
       const customClass = "wrapper-class";
       render(<SearchTag wrapperClassName={customClass} />);
       expect(screen.getByRole("searchbox").parentElement).toHaveClass(
-        customClass,
+        customClass
       );
     });
 
@@ -63,7 +67,7 @@ describe("SearchTag", () => {
         "[&::-webkit-search-cancel-button]:hidden",
         "[&::-webkit-search-decoration]:hidden",
         "[&::-webkit-search-results-button]:hidden",
-        "[&::-webkit-search-results-decoration]:hidden",
+        "[&::-webkit-search-results-decoration]:hidden"
       );
     });
   });

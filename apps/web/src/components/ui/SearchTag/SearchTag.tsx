@@ -1,5 +1,6 @@
 "use client";
 
+import { Search } from "@/assets/svgs/Search";
 import { cn } from "@/common/utils";
 import { forwardRef, memo, useRef } from "react";
 
@@ -19,7 +20,7 @@ export const SearchTag = memo(
   forwardRef<HTMLInputElement, SearchTagProps>(
     (
       { className, wrapperClassName, onSearch, onChange, ...props },
-      forwardedRef,
+      forwardedRef
     ) => {
       const innerRef = useRef<HTMLInputElement>(null);
       const inputRef = (forwardedRef ||
@@ -38,10 +39,10 @@ export const SearchTag = memo(
           className={cn(
             "inline-flex items-center justify-between",
             "w-[208px] h-6",
-            "rounded-[40px] border-2 border-black bg-white",
+            "rounded-[40px] border-2 border-hbc-black bg-hbc-white",
             "lg:w-[180px]",
             "sm:w-full sm:max-w-[208px]",
-            wrapperClassName,
+            wrapperClassName
           )}
         >
           <input
@@ -51,8 +52,8 @@ export const SearchTag = memo(
             onChange={handleChange}
             className={cn(
               "w-full bg-transparent",
-              "text-black font-inter text-base font-normal leading-4",
-              "placeholder:text-black",
+              "text-hbc-black font-inter text-base font-normal leading-4",
+              "placeholder:text-hbc-black",
               "focus:outline-none",
               "px-[7px]",
               "[&::-webkit-search-cancel-button]:hidden",
@@ -61,12 +62,11 @@ export const SearchTag = memo(
               "[&::-webkit-search-results-decoration]:hidden",
               "[&::-ms-clear]:hidden",
               "[&::-ms-reveal]:hidden",
-              className,
+              className
             )}
             {...props}
           />
-          <div
-            role="button"
+          <button
             tabIndex={0}
             onClick={handleIconClick}
             onKeyDown={(e) => {
@@ -74,12 +74,14 @@ export const SearchTag = memo(
                 handleIconClick();
               }
             }}
-            className="flex items-center justify-center p-[4px_5px] gap-[10px] w-[22px] h-5 cursor-pointer"
-          />
+            className="flex items-center justify-center p-[4px_5px] gap-[10px] w-[22px] h-5 cursor-pointer mr-[3px]"
+          >
+            <Search />
+          </button>
         </label>
       );
-    },
-  ),
+    }
+  )
 );
 
 SearchTag.displayName = "SearchTag";

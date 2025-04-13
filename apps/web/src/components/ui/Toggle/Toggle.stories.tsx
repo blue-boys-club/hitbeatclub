@@ -1,22 +1,22 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Toggle } from './Toggle';
+import type { Meta, StoryObj } from "@storybook/react";
+import { Toggle } from "./Toggle";
 
 const meta: Meta<typeof Toggle> = {
-  title: 'UI/Toggle',
+  title: "UI/Components/Toggle",
   component: Toggle,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     defaultChecked: {
-      control: 'boolean',
-      description: '토글의 초기 상태를 설정합니다.',
+      control: "boolean",
+      description: "토글의 초기 상태를 설정합니다.",
     },
     disabled: {
-      control: 'boolean',
-      description: '토글의 비활성화 상태를 설정합니다.',
+      control: "boolean",
+      description: "토글의 비활성화 상태를 설정합니다.",
     },
     onChange: {
-      action: 'changed',
-      description: '토글 상태가 변경될 때 호출되는 콜백 함수입니다.',
+      action: "changed",
+      description: "토글 상태가 변경될 때 호출되는 콜백 함수입니다.",
     },
   },
 };
@@ -56,7 +56,7 @@ export const DisabledChecked: Story = {
 // 커스텀 스타일
 export const CustomStyle: Story = {
   args: {
-    className: 'bg-purple-500',
+    className: "bg-purple-500",
   },
 };
 
