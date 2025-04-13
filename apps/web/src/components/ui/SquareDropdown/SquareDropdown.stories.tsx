@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { SquareDropdown } from "./SquareDropdown";
 
 const meta: Meta<typeof SquareDropdown> = {
-  title: "UI/Components/SquareDropdown",
+  title: "UI/SquareDropdown",
   component: SquareDropdown,
   parameters: {
     layout: "centered",

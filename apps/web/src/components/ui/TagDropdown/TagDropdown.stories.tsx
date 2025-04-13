@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { TagDropdown } from "./TagDropdown";
 
 const meta: Meta<typeof TagDropdown> = {
-  title: "UI/Components/TagDropdown",
+  title: "UI/TagDropdown",
   component: TagDropdown,
   parameters: {
     layout: "centered",

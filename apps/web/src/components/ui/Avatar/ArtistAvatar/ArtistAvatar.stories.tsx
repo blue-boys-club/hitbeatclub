@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { ArtistAvatar } from "./ArtistAvatar";
 
 const meta: Meta<typeof ArtistAvatar> = {
-  title: "UI/Components/Avatar/ArtistAvatar",
+  title: "UI/Avatar/ArtistAvatar",
   component: ArtistAvatar,
   tags: ["autodocs"],
   argTypes: {

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { SubscribeButton } from "./SubscribeButton";
 
 const meta: Meta<typeof SubscribeButton> = {
-  title: "UI/Components/SubscribeButton",
+  title: "UI/SubscribeButton",
   component: SubscribeButton,
   tags: ["autodocs"],
   argTypes: {

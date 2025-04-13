@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { LoginButton } from "./LoginButton";
 
 const meta: Meta<typeof LoginButton> = {
-  title: "UI/Components/LoginButton",
+  title: "UI/LoginButton",
   component: LoginButton,
   tags: ["autodocs"],
 };

@@ -31,7 +31,7 @@ import { SearchTag } from "./SearchTag";
  * ```
  */
 const meta: Meta<typeof SearchTag> = {
-  title: "UI/Components/SearchTag",
+  title: "UI/SearchTag",
   component: SearchTag,
   parameters: {
     layout: "centered",
