@@ -10,17 +10,15 @@ import { fontSuit, fontSuisse } from "../src/styles/font";
  * @returns 쿼리 데코레이터
  */
 export const storyQueryDecorator = (StoryFn: () => ReactElement) => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-      },
-    },
-  });
+	const queryClient = new QueryClient({
+		defaultOptions: {
+			queries: {
+				retry: false,
+			},
+		},
+	});
 
-  return (
-    <QueryClientProvider client={queryClient}>{StoryFn()}</QueryClientProvider>
-  );
+	return <QueryClientProvider client={queryClient}>{StoryFn()}</QueryClientProvider>;
 };
 
 /**
@@ -30,9 +28,5 @@ export const storyQueryDecorator = (StoryFn: () => ReactElement) => {
  * @returns 폰트 데코레이터
  */
 export const storyFontDecorator = (StoryFn: () => ReactElement) => {
-  return (
-    <div className={cn(fontSuit.variable, fontSuisse.variable, "antialiased")}>
-      {StoryFn()}
-    </div>
-  );
+	return <div className={cn(fontSuit.variable, fontSuisse.variable, "antialiased")}>{StoryFn()}</div>;
 };

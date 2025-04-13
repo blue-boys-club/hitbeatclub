@@ -1,0 +1,13 @@
+{
+    "name": "@hitbeatclub/prettier-config",
+    "version": "0.0.1",
+    "type": "commonjs",
+    "private": true,
+    "exports": {
+      ".": "./index.js"
+    },
+    "devDependencies": {
+      "prettier": "^3.5.3"
+    }
+  }
+  

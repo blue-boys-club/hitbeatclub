@@ -6,8 +6,8 @@ import client from "../client";
  * @returns 상품 목록
  */
 export const getProductList = async () => {
-  const response = await client.get("/products");
-  return response.data;
+	const response = await client.get("/products");
+	return response.data;
 };
 
 // TODO: Type package로 공유 타입 정의
@@ -17,8 +17,8 @@ export const getProductList = async () => {
  * @returns 상품 상세 정보
  */
 export const getProduct = async (productId: number) => {
-  const response = await client.get(`/products/${productId}`);
-  return response.data;
+	const response = await client.get(`/products/${productId}`);
+	return response.data;
 };
 
 // TODO: Type package로 공유 타입 정의
@@ -28,8 +28,8 @@ export const getProduct = async (productId: number) => {
  * @returns 생성된 상품 정보
  */
 export const createProduct = async (product: unknown) => {
-  const response = await client.post("/products", product);
-  return response.data;
+	const response = await client.post("/products", product);
+	return response.data;
 };
 
 // TODO: Type package로 공유 타입 정의
@@ -40,8 +40,8 @@ export const createProduct = async (product: unknown) => {
  * @returns 수정된 상품 정보
  */
 export const updateProduct = async (productId: number, product: unknown) => {
-  const response = await client.put(`/products/${productId}`, product);
-  return response.data;
+	const response = await client.put(`/products/${productId}`, product);
+	return response.data;
 };
 
 // TODO: Type package로 공유 타입 정의
@@ -51,6 +51,6 @@ export const updateProduct = async (productId: number, product: unknown) => {
  * @returns 삭제된 상품 정보
  */
 export const deleteProduct = async (productId: number) => {
-  const response = await client.delete(`/products/${productId}`);
-  return response.data;
+	const response = await client.delete(`/products/${productId}`);
+	return response.data;
 };

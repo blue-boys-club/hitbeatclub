@@ -2,14 +2,7 @@
 import { BodyLarge, BodyMedium, BodySmall } from "./Body";
 
 // Heading components
-import {
-  Heading1,
-  Heading2,
-  Heading3,
-  Heading4,
-  Heading5,
-  Heading6,
-} from "./Heading";
+import { Heading1, Heading2, Heading3, Heading4, Heading5, Heading6 } from "./Heading";
 
 // Button components
 import { SubscribeButton } from "./SubscribeButton";
@@ -30,52 +23,52 @@ import { UserAvatar, ArtistAvatar, AlbumAvatar } from "./Avatar";
 import * as Popup from "./Popup";
 
 const UI = {
-  BodyLarge,
-  BodyMedium,
-  BodySmall,
-  Heading1,
-  Heading2,
-  Heading3,
-  Heading4,
-  Heading5,
-  Heading6,
+	BodyLarge,
+	BodyMedium,
+	BodySmall,
+	Heading1,
+	Heading2,
+	Heading3,
+	Heading4,
+	Heading5,
+	Heading6,
 
-  SubscribeButton,
-  LoginButton,
+	SubscribeButton,
+	LoginButton,
 
-  Dropdown,
-  TagDropdown,
-  SquareDropdown,
+	Dropdown,
+	TagDropdown,
+	SquareDropdown,
 
-  Toggle,
+	Toggle,
 
-  UserAvatar,
-  ArtistAvatar,
-  AlbumAvatar,
+	UserAvatar,
+	ArtistAvatar,
+	AlbumAvatar,
 
-  Popup,
+	Popup,
 };
 
 export default UI;
 
 export {
-  BodyLarge,
-  BodyMedium,
-  BodySmall,
-  Heading1,
-  Heading2,
-  Heading3,
-  Heading4,
-  Heading5,
-  Heading6,
-  SubscribeButton,
-  LoginButton,
-  Dropdown,
-  TagDropdown,
-  SquareDropdown,
-  Toggle,
-  UserAvatar,
-  ArtistAvatar,
-  AlbumAvatar,
-  Popup,
+	BodyLarge,
+	BodyMedium,
+	BodySmall,
+	Heading1,
+	Heading2,
+	Heading3,
+	Heading4,
+	Heading5,
+	Heading6,
+	SubscribeButton,
+	LoginButton,
+	Dropdown,
+	TagDropdown,
+	SquareDropdown,
+	Toggle,
+	UserAvatar,
+	ArtistAvatar,
+	AlbumAvatar,
+	Popup,
 };

@@ -8,9 +8,11 @@
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "generate:component": "turbo gen react-component",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
+    "@hitbeatclub/prettier-config": "workspace:*",
     "@hitbeatclub/eslint-config": "workspace:*",
     "@hitbeatclub/typescript-config": "workspace:*",
     "@turbo/gen": "^2.4.4",
@@ -18,6 +20,7 @@
     "@types/react": "19.0.12",
     "@types/react-dom": "19.0.4",
     "eslint": "^9.23.0",
+    "prettier": "^3.5.3",
     "typescript": "5.8.2"
   },
   "dependencies": {
