@@ -16,9 +16,11 @@
 		"dev": {
 			"cache": false,
 			"persistent": true,
-			"dependsOn": ["^dev", "storybook"]
+			"dependsOn": ["^dev"]
 		},
 		"storybook": {
+			"cache": false,
+			"persistent": true,
 			"dependsOn": ["^storybook"]
 		},
 		"transit": {
