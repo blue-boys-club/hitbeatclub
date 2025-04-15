@@ -1,10 +1,11 @@
-export const PlusCircle = () => {
+export const PlusCircle = ({ color }: { color: string }) => {
 	return (
 		<div
 			style={{
-				backgroundColor: "black",
+				border: "2px solid",
+				borderColor: color,
 				borderRadius: "50%",
-				padding: 4,
+				padding: 3,
 				display: "inline-flex",
 			}}
 		>
@@ -17,13 +18,13 @@ export const PlusCircle = () => {
 			>
 				<path
 					d="M6.20312 0V12"
-					stroke="white"
-					strokeWidth="3"
+					stroke={color}
+					strokeWidth="2"
 				/>
 				<path
 					d="M12.2031 6L0.203125 6"
-					stroke="white"
-					strokeWidth="3"
+					stroke={color}
+					strokeWidth="2"
 				/>
 			</svg>
 		</div>
