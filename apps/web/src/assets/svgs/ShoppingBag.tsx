@@ -2,7 +2,7 @@ interface ShoppingBagProps {
 	color?: string;
 }
 
-export const ShoppingBag = ({ color = "black" }: ShoppingBagProps) => {
+export const ShoppingBag = ({ color = "#fff" }: ShoppingBagProps) => {
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
