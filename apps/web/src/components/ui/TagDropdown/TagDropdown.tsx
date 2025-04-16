@@ -27,7 +27,9 @@ export interface TagDropdownProps {
 	trigger?: ReactNode;
 	options: TagDropdownOption[];
 	className?: string;
+	wrapperClassName?: string;
 	optionsClassName?: string;
+	optionsPosition?: string;
 	onSelect?: (value: string) => void;
 	onOpenChange?: (isOpen: boolean) => void;
 	textComponent?: React.ComponentType<{ children: ReactNode }>;
@@ -41,11 +43,13 @@ export const TagDropdown = memo(function TagDropdown({
 	options,
 	className,
 	optionsClassName,
+	optionsPosition = "left",
 	onSelect,
 	onOpenChange,
 	textComponent: TextComponent = BodyMedium,
 	showChevron = true,
 	defaultOpen = false,
+	wrapperClassName,
 }: TagDropdownProps) {
 	const [isOpen, setIsOpen] = useState(defaultOpen);
 	const dropdownRef = useRef<HTMLDivElement>(null);
@@ -114,7 +118,8 @@ export const TagDropdown = memo(function TagDropdown({
 	const dropdownMenuClasses = useMemo(
 		() =>
 			cn(
-				"absolute top-[38px] left-0",
+				"absolute top-[38px]",
+				optionsPosition,
 				"min-w-full py-2 px-[10px]",
 				"border-2 border-black rounded-[5px]",
 				"flex flex-col gap-[10px] justify-center",
@@ -142,7 +147,7 @@ export const TagDropdown = memo(function TagDropdown({
 	return (
 		<div
 			ref={dropdownRef}
-			className="relative inline-block font-inter"
+			className={cn("relative inline-block font-inter", wrapperClassName)}
 			data-testid="tag-dropdown"
 		>
 			{children ? (
