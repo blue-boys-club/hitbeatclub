@@ -77,7 +77,7 @@ export const HeaderNav = memo(() => {
 							{notificationOptions.length > 0 ? (
 								<TagDropdown
 									wrapperClassName="flex"
-									optionsClassName={"top-[60px]"}
+									optionsClassName={"top-[60px] max-h-[400px] overflow-y-auto justify-start"}
 									optionsPosition="right-0"
 									showChevron={false}
 									options={notificationOptions.map((option) => ({
@@ -85,10 +85,15 @@ export const HeaderNav = memo(() => {
 										className: "rounded-[5px] text-base font-bold leading-4",
 									}))}
 								>
-									<NotificationOn
-										aria-label="알림 있음"
-										className="w-10 h-10"
-									/>
+									<div>
+										<div className="flex size-[18px] items-center justify-center absolute right-0 top-0 rounded-full font-bold text-[11px] bg-red-500 text-white">
+											{notificationOptions.length > 9 ? "9+" : notificationOptions.length}
+										</div>
+										<NotificationOff
+											aria-label="알림 있음"
+											className="w-10 h-10"
+										/>
+									</div>
 								</TagDropdown>
 							) : (
 								<NotificationOff
