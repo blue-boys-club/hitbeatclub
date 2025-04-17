@@ -13,7 +13,7 @@ const Header = memo(({ className }: HeaderProps) => {
 	return (
 		<header
 			className={cn(
-				"w-full",
+				"[width:calc(100vw-237px)] bg-white z-5",
 				"fixed top-0 right-0 z-10 border-0 border-b-[8px] px-5 py-3 mb-0",
 				"flex items-center gap-7 justify-between shrink-0",
 				className,
