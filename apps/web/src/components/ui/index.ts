@@ -21,6 +21,12 @@ import { UserAvatar, ArtistAvatar, AlbumAvatar } from "./Avatar";
 
 // Popup components
 import * as Popup from "./Popup";
+import { Input } from "./Input";
+import { Badge } from "./Badge";
+import { PopupButton } from "./PopupButton";
+import { FreeDownloadButton } from "./FreeDownloadButton";
+import { PurchaseButton } from "./PurchaseButton";
+import { AlbumCoverCard } from "./AlbumCoverCard";
 
 const UI = {
 	BodyLarge,
@@ -47,6 +53,13 @@ const UI = {
 	AlbumAvatar,
 
 	Popup,
+
+	Input,
+	Badge,
+	PopupButton,
+	FreeDownloadButton,
+	PurchaseButton,
+	AlbumCoverCard,
 };
 
 export default UI;
@@ -71,4 +84,10 @@ export {
 	ArtistAvatar,
 	AlbumAvatar,
 	Popup,
+	Input,
+	Badge,
+	PopupButton,
+	FreeDownloadButton,
+	PurchaseButton,
+	AlbumCoverCard,
 };
