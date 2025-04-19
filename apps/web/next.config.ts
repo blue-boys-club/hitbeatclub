@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
 				reactRemoveProperties: { properties: ["^data-testid$"] },
 			}
 		: {},
+		images: {
+			domains: [
+			  'placehold.co',    
+		],
+	},
 };
 
 export default nextConfig;

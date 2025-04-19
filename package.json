@@ -10,7 +10,7 @@
     "test:watch": "turbo run test:watch",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types"
-  },
+  },  
   "devDependencies": {
     "@hitbeatclub/prettier-config": "workspace:*",
     "prettier": "^3.5.3",

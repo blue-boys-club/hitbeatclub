@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Upload from "@/assets/svgs/Upload";
 import { ArtistAvatar } from "@/components/ui";
-import NavLink from "./NavLink";
+import NavLink from "./NavLink";		
 import ArtistStatRow from "./ArtistStatRow";
 import { Dollars } from "@/assets/svgs/Dollars";
 import { ArtistInfo } from "@/assets/svgs/ArtistInfo";
@@ -21,7 +21,7 @@ const navItems = [
 	{ href: "/payouts", label: "Payouts", icon: Dollars },
 ];
 
-const ArtistSidebar = () => {
+export const ArtistSidebar = () => {
 	return (
 		<aside className="bg-white pt-4 pl-3 w-fit">
 			<Image
@@ -75,5 +75,3 @@ const ArtistSidebar = () => {
 		</aside>
 	);
 };
-
-export default ArtistSidebar;

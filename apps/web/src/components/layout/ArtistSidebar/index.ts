@@ -1,0 +1,1 @@
+export { ArtistSidebar } from "./ArtistSidebar";

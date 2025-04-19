@@ -5,13 +5,13 @@ import { cn } from "@/common/utils";
 import { CloseBlack } from "@/assets/svgs/CloseBlack";
 
 interface GenreButtonProps {
-	genreName: string;
+	name: string;
 	showDeleteButton?: boolean;
 	onDelete?: () => void;
 	className?: string;
 }
 
-export const GenreButton = memo(({ showDeleteButton = false, genreName, onDelete, className }: GenreButtonProps) => {
+export const GenreButton = memo(({ showDeleteButton = false, name, onDelete, className }: GenreButtonProps) => {
 	const handleClick = () => {
 		onDelete?.();
 	};
@@ -31,7 +31,7 @@ export const GenreButton = memo(({ showDeleteButton = false, genreName, onDelete
 					showDeleteButton ? "text-black" : "text-black group-hover:text-white",
 				)}
 			>
-				{genreName}
+				{name}
 			</div>
 
 			{showDeleteButton && <CloseBlack />}

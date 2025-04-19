@@ -1,4 +1,6 @@
 import { Acapella } from "./Acapella";
+import { ArrowLeftMosaic } from "./ArrowLeftMosaic";
+import { ArrowRightMosaic } from "./ArrowRightMosaic";
 import { AudioBarPause } from "./AudioBarPause";
 import { AudioBarPlay } from "./AudioBarPlay";
 import { Beat } from "./Beat";
@@ -85,6 +87,8 @@ export {
 	AudioBarPause,
 	AudioBarPlay,
 	Beat,
+	ArrowRightMosaic,
+	ArrowLeftMosaic,
 	Cart,
 	Checkbox,
 	CheckboxCircle,
