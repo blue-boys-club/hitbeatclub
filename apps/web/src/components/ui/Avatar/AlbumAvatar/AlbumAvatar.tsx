@@ -34,7 +34,7 @@ export const AlbumAvatar = memo(function AlbumAvatar({
 				alt={alt}
 				className={cn(
 					"absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
-					"rounded-full w-[200px] h-[200px] object-cover aspect-square border-[4px] border-dashed border-white",
+					"rounded-full w-[200px] h-[200px] object-cover aspect-square border-[4px] border-dashed  border-white",
 					className,
 				)}
 				// image width * 4

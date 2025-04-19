@@ -29,6 +29,10 @@ const config: StorybookConfig = {
 			from: "../public",
 			to: "/public",
 		},
+		{
+			from: "../public/mockServiceWorker.js",
+			to: "/mockServiceWorker.js",
+		},
 	],
 };
 

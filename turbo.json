@@ -42,5 +42,6 @@
 			"dependsOn": ["^format"],
 			"cache": false
 		}
-	}
+	},
+	"globalEnv": ["NODE_ENV"]
 }

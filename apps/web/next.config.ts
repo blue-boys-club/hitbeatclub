@@ -7,10 +7,9 @@ const nextConfig: NextConfig = {
 				reactRemoveProperties: { properties: ["^data-testid$"] },
 			}
 		: {},
-		images: {
-			domains: [
-			  'placehold.co',    
-		],
+	images: {
+		// placeholder images
+		remotePatterns: [new URL("https://placehold.co/**")],
 	},
 };
 

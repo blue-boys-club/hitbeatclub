@@ -1,24 +1,25 @@
 {
-  "name": "hitbeatclub",
-  "private": true,
-  "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "dev:api": "turbo run dev --filter=api",
-    "lint": "turbo run lint",
-    "test": "turbo run test",
-    "test:watch": "turbo run test:watch",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
-  },  
-  "devDependencies": {
-    "@hitbeatclub/prettier-config": "workspace:*",
-    "prettier": "^3.5.3",
-    "turbo": "^2.5.0",
-    "typescript": "5.8.2"
-  },
-  "engines": {
-    "node": ">=18"
-  },
-  "packageManager": "pnpm@10.7.1"
+	"name": "hitbeatclub",
+	"private": true,
+	"scripts": {
+		"build": "turbo run build",
+		"dev": "turbo run dev",
+		"dev:api": "turbo run dev --filter=api",
+		"lint": "turbo run lint",
+		"test": "turbo run test",
+		"test:watch": "turbo run test:watch",
+		"format": "turbo run format",
+		"check-types": "turbo run check-types",
+		"storybook": "turbo run storybook"
+	},
+	"devDependencies": {
+		"@hitbeatclub/prettier-config": "workspace:*",
+		"prettier": "^3.5.3",
+		"turbo": "^2.5.0",
+		"typescript": "5.8.2"
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"packageManager": "pnpm@10.7.1"
 }

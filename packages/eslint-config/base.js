@@ -10,23 +10,23 @@ import pluginPrettierRecommended from "eslint-plugin-prettier/recommended";
  * @type {import("eslint").Linter.Config[]}
  * */
 export const config = [
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
-  {
-    plugins: {
-      turbo: turboPlugin,
-    },
-    rules: {
-      "turbo/no-undeclared-env-vars": "warn",
-    },
-  },
-  {
-    plugins: {
-      onlyWarn,
-    },
-  },
-  {
-    ignores: ["dist/**"],
-  },
-  pluginPrettierRecommended,
+	js.configs.recommended,
+	...tseslint.configs.recommended,
+	{
+		plugins: {
+			turbo: turboPlugin,
+		},
+		rules: {
+			"turbo/no-undeclared-env-vars": "warn",
+		},
+	},
+	{
+		plugins: {
+			onlyWarn,
+		},
+	},
+	{
+		ignores: ["dist/**"],
+	},
+	pluginPrettierRecommended,
 ];

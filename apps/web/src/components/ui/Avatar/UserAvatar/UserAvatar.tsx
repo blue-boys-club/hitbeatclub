@@ -7,8 +7,9 @@ import { Connecting } from "@/assets/svgs/Connecting";
 const userAvatarVariants = cva("relative rounded-full", {
 	variants: {
 		size: {
-			small: "w-[51px] h-[51px]",
-			large: "w-[87px] h-[87px]",
+			small: "w-51px h-51px",
+			large: "w-87px h-87px",
+			sidebar: "w-87px h-87px @200px/sidebar:w-51px @200px/sidebar:h-51px",
 		},
 	},
 	defaultVariants: {
@@ -19,8 +20,9 @@ const userAvatarVariants = cva("relative rounded-full", {
 const userAvatarNotificationVariants = cva("absolute z-10 top-0 right-0", {
 	variants: {
 		size: {
-			small: "w-[15px] h-[15px]",
-			large: "w-[25px] h-[25px]",
+			small: "w-15px h-15px",
+			large: "w-25px h-25px",
+			sidebar: "w-25px h-25px @200px/sidebar:w-15px @200px/sidebar:h-15px",
 		},
 	},
 	defaultVariants: {
@@ -51,7 +53,7 @@ export const UserAvatar = memo(function UserAvatar({
 			<Image
 				src={src}
 				alt={alt}
-				className="absolute rounded-full w-full h-full object-cover aspect-square"
+				className="absolute object-cover w-full h-full rounded-full aspect-square"
 				width={size === "small" ? 204 : 348}
 				height={size === "small" ? 204 : 348}
 				loading="lazy"

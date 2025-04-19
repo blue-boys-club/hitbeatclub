@@ -1,48 +1,56 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-:root {
-  --hbc-black: #000000;
-  --hbc-white: #ffffff;
-  --hbc-red: #ff1900;
-  --hbc-blue: #001eff;
+/* Safelisting all tailwind classes */
+@source inline("");
 
-  --hbc-gray-400: #4d4d4f;
-  --hbc-gray-300: #87878a;
-  --hbc-gray-200: #bbbbbf;
-  --hbc-gray-100: #e7e7e7;
+:root {
+	--hbc-black: #000000;
+	--hbc-white: #ffffff;
+	--hbc-red: #ff1900;
+	--hbc-blue: #001eff;
+
+	--hbc-gray-400: #4d4d4f;
+	--hbc-gray-300: #87878a;
+	--hbc-gray-200: #bbbbbf;
+	--hbc-gray-100: #e7e7e7;
+	--hbc-gray: #bdbdbd;
 }
 
 /* @media (prefers-color-scheme: dark) { */
 .dark {
-  --hbc-blue: #3884ff;
-  --hbc-black: #1f1f1f;
+	--hbc-blue: #3884ff;
+	--hbc-black: #1f1f1f;
 }
 
 @theme inline {
-  --color-hbc-black: var(--hbc-black);
-  --color-hbc-white: var(--hbc-white);
-  --color-hbc-blue: var(--hbc-blue);
-  --color-hbc-red: var(--hbc-red);
+	--color-hbc-black: var(--hbc-black);
+	--color-hbc-white: var(--hbc-white);
+	--color-hbc-blue: var(--hbc-blue);
+	--color-hbc-red: var(--hbc-red);
 
-  --color-hbc-gray-400: var(--hbc-gray-400);
-  --color-hbc-gray-300: var(--hbc-gray-300);
-  --color-hbc-gray-200: var(--hbc-gray-200);
-  --color-hbc-gray-100: var(--hbc-gray-100);
+	--color-hbc-gray-400: var(--hbc-gray-400);
+	--color-hbc-gray-300: var(--hbc-gray-300);
+	--color-hbc-gray-200: var(--hbc-gray-200);
+	--color-hbc-gray-100: var(--hbc-gray-100);
+	--color-hbc-gray: var(--hbc-gray);
 
-  --font-suit: var(--font-hbc-suit);
-  --font-suisse: var(--font-hbc-suisse);
+	--font-suit: var(--font-hbc-suit);
+	--font-suisse: var(--font-hbc-suisse);
 }
 
+/* Tailwind Javascript config for programmatically generated tailwind css */
+/* See also: https://tailwindcss.com/docs/functions-and-directives#config-directive */
+@config "./tailwind.config.js";
+
 body {
-  /* background: var(--background);
+	/* background: var(--background);
   color: var(--foreground); */
-  font-family:
-    var(--font-suit), var(--font-suisse), Arial, Helvetica, sans-serif;
+	font-family: var(--font-suit), var(--font-suisse), Arial, Helvetica, sans-serif;
 }
 
 *,
 ::before,
 ::after {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/common/utils";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useId } from "react";
 
 export interface SquareDropdownOption {
 	label: string;
@@ -14,6 +14,7 @@ export interface SquareDropdownProps {
 	options: SquareDropdownOption[];
 	onChange?: (value: string) => void;
 	className?: string;
+	buttonClassName?: string;
 	optionsClassName?: string;
 }
 
@@ -23,12 +24,14 @@ export const SquareDropdown = ({
 	options,
 	onChange,
 	className,
+	buttonClassName,
 	optionsClassName,
 }: SquareDropdownProps) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [internalValue, setInternalValue] = useState(defaultValue || options[0]?.value);
 	const dropdownRef = useRef<HTMLDivElement>(null);
-	const listboxId = useRef(`listbox-${Math.random().toString(36).slice(2)}`).current;
+	const uniqueId = useId();
+	const listboxId = `listbox-${uniqueId}`;
 
 	const currentValue = controlledValue ?? internalValue;
 	const currentLabel = options.find((opt) => opt.value === currentValue)?.label || options[0]?.label;
@@ -70,6 +73,7 @@ export const SquareDropdown = ({
 					"bg-hbc-white",
 					"text-hbc-black text-[16px] font-bold whitespace-nowrap",
 					"focus:outline-none cursor-pointer",
+					buttonClassName,
 				)}
 				aria-haspopup="listbox"
 				aria-expanded={isOpen}
@@ -102,7 +106,7 @@ export const SquareDropdown = ({
 					className={cn(
 						"absolute top-0 right-0",
 						"w-full min-w-[98px]",
-						"border-l-[3px] border-t-[4px] border-b-[2px] border-hbc-black",
+						"border-l-3px border-t-4px border-b-2px border-hbc-black",
 						"bg-hbc-white",
 						"z-50",
 						"p-0 m-0 list-none",

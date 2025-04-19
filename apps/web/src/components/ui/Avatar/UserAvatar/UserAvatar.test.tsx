@@ -59,8 +59,8 @@ describe("UserAvatar", () => {
 			/>,
 		);
 		const wrapper = screen.getByTestId("user-avatar");
-		expect(wrapper.className).toContain("w-[51px]");
-		expect(wrapper.className).toContain("h-[51px]");
+		expect(wrapper.className).toContain("w-51px");
+		expect(wrapper.className).toContain("h-51px");
 
 		rerender(
 			<UserAvatar
@@ -68,8 +68,8 @@ describe("UserAvatar", () => {
 				size="large"
 			/>,
 		);
-		expect(wrapper.className).toContain("w-[87px]");
-		expect(wrapper.className).toContain("h-[87px]");
+		expect(wrapper.className).toContain("w-87px");
+		expect(wrapper.className).toContain("h-87px");
 	});
 
 	it("shows notification badge when isNotification is true", () => {
@@ -99,8 +99,8 @@ describe("UserAvatar", () => {
 			/>,
 		);
 		let badge = screen.getByTestId("notification-badge");
-		expect(badge.className).toContain("w-[15px]");
-		expect(badge.className).toContain("h-[15px]");
+		expect(badge.className).toContain("w-15px");
+		expect(badge.className).toContain("h-15px");
 
 		rerender(
 			<UserAvatar
@@ -110,8 +110,8 @@ describe("UserAvatar", () => {
 			/>,
 		);
 		badge = screen.getByTestId("notification-badge");
-		expect(badge.className).toContain("w-[25px]");
-		expect(badge.className).toContain("h-[25px]");
+		expect(badge.className).toContain("w-25px");
+		expect(badge.className).toContain("h-25px");
 	});
 
 	it("applies custom className to container", () => {

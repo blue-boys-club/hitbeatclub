@@ -42,8 +42,8 @@ describe("ArtistAvatar", () => {
 			/>,
 		);
 		const image = screen.getByTestId("artist-avatar-image");
-		expect(image.className).toContain("w-[174px]");
-		expect(image.className).toContain("h-[174px]");
+		expect(image.className).toContain("w-174px");
+		expect(image.className).toContain("h-174px");
 		expect(image).toHaveAttribute("width", "696");
 		expect(image).toHaveAttribute("height", "696");
 	});
@@ -56,8 +56,8 @@ describe("ArtistAvatar", () => {
 			/>,
 		);
 		const image = screen.getByTestId("artist-avatar-image");
-		expect(image.className).toContain("w-[252px]");
-		expect(image.className).toContain("h-[252px]");
+		expect(image.className).toContain("w-252px");
+		expect(image.className).toContain("h-252px");
 		expect(image).toHaveAttribute("width", "1008");
 		expect(image).toHaveAttribute("height", "1008");
 	});

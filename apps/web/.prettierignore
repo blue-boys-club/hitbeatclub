@@ -1,0 +1,13 @@
+# build output
+**/out
+**/.next
+**/build
+**/coverage
+**/.turbo
+
+# msw
+**/public/mockServiceWorker.js
+
+# node_modules
+node_modules/
+

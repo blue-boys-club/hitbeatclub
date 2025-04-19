@@ -6,8 +6,8 @@ import Image from "next/image";
 const artistAvatarVariants = cva("rounded-full object-cover aspect-square", {
 	variants: {
 		size: {
-			small: "w-[174px] h-[174px]",
-			large: "w-[252px] h-[252px]",
+			small: "w-174px h-174px",
+			large: "w-252px h-252px",
 		},
 	},
 	defaultVariants: {

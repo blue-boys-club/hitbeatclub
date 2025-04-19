@@ -2,8 +2,13 @@
 
 import { useToast } from "@/hooks/use-toast";
 import { Toast, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/Toast/toast";
+import { memo } from "react";
 
-export function Toaster() {
+interface ToasterProps {
+	viewportClassName?: string;
+}
+
+export const Toaster = memo(function Toaster({ viewportClassName }: ToasterProps) {
 	const { toasts } = useToast();
 
 	return (
@@ -22,7 +27,7 @@ export function Toaster() {
 					</Toast>
 				);
 			})}
-			<ToastViewport />
+			<ToastViewport className={viewportClassName} />
 		</ToastProvider>
 	);
-}
+});

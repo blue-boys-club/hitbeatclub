@@ -1,26 +1,27 @@
 {
-  "name": "@hitbeatclub/eslint-config",
-  "version": "0.0.1",
-  "type": "module",
-  "private": true,
-  "exports": {
-    "./base": "./base.js",
-    "./next-js": "./next.js",
-    "./react-internal": "./react-internal.js"
-  },
-  "devDependencies": {
-    "@hitbeatclub/prettier-config": "workspace:*",
-    "@eslint/js": "^9.23.0",
-    "@next/eslint-plugin-next": "^15.2.1",
-    "eslint": "^9.23.0",
-    "eslint-plugin-only-warn": "^1.1.0",
-    "eslint-plugin-prettier": "^5.2.6",
-    "eslint-plugin-react": "^7.37.4",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-turbo": "^2.4.4",
-    "globals": "^16.0.0",
-    "prettier": "^3.5.3",
-    "typescript": "^5.8.2",
-    "typescript-eslint": "^8.28.0"
-  }
+	"name": "@hitbeatclub/eslint-config",
+	"version": "0.0.1",
+	"type": "module",
+	"private": true,
+	"exports": {
+		"./base": "./base.js",
+		"./next-js": "./next.js",
+		"./react-internal": "./react-internal.js"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.23.0",
+		"@hitbeatclub/prettier-config": "workspace:*",
+		"@next/eslint-plugin-next": "^15.2.1",
+		"eslint": "^9.23.0",
+		"eslint-config-prettier": "^10.1.2",
+		"eslint-plugin-only-warn": "^1.1.0",
+		"eslint-plugin-prettier": "^5.2.6",
+		"eslint-plugin-react": "^7.37.4",
+		"eslint-plugin-react-hooks": "^5.2.0",
+		"eslint-plugin-turbo": "^2.4.4",
+		"globals": "^16.0.0",
+		"prettier": "^3.5.3",
+		"typescript": "^5.8.2",
+		"typescript-eslint": "^8.28.0"
+	}
 }
