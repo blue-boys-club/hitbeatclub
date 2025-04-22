@@ -17,6 +17,7 @@ import { CloseMosaic } from "./CloseMosaic";
 import { CloseWhite } from "./CloseWhite";
 import { Connecting } from "./Connecting";
 import { Contact } from "./Contact";
+import { Correct } from "./Correct";
 import { Copy } from "./Copy";
 import { Delete } from "./Delete";
 import { Discord } from "./Discord";
@@ -37,6 +38,7 @@ import { HBCLoginMain } from "./HBCLoginMain";
 import { HBCTopLogo } from "./HBCTopLogo";
 import { HBCWhite } from "./HBCWhite";
 import { Hit } from "./Hit";
+import { Incorrect } from "./Incorrect";
 import { KaKaoTalk } from "./KaKaoTalk";
 import { KaKaoTalkLogin } from "./KaKaoTalkLogin";
 import { LargeAuthBadge } from "./LargeAuthBadge";
@@ -176,4 +178,6 @@ export {
 	Volume,
 	VolumeThumb,
 	Youtube,
+	Correct,
+	Incorrect,
 };

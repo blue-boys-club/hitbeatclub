@@ -12,9 +12,10 @@ import {
 	AudioBarPause,
 	VolumeThumb,
 } from "@/assets/svgs";
-import ReactPlayer from "react-player";
+import { ReactPlayer } from "./ReactPlayer";
 import { type AudioPlayerProps } from "./types";
 import * as Slider from "@radix-ui/react-slider";
+import { Suspense } from "react";
 
 export const AudioPlayer = ({
 	playerRef,
@@ -55,9 +56,9 @@ export const AudioPlayer = ({
 	return (
 		<div className="flex flex-col items-center gap-1.5">
 			{/* 재생 컨트롤 */}
-			<div className="inline-flex justify-center items-center gap-4">
+			<div className="inline-flex items-center justify-center gap-4">
 				<button
-					className="flex justify-center items-center gap-2 cursor-pointer"
+					className="flex items-center justify-center gap-2 cursor-pointer"
 					onClick={toggleRepeatMode}
 				>
 					{getRepeatIcon()}
@@ -107,8 +108,8 @@ export const AudioPlayer = ({
 			/>
 
 			{/* 재생 시간 및 프로그레스 바 */}
-			<div className="inline-flex justify-center items-center gap-4">
-				<div className="text-black text-base font-bold font-['SUIT'] leading-3">{formatTime(currentTime)}</div>
+			<div className="inline-flex items-center justify-center gap-4">
+				<div className="text-black text-base font-bold font-['suit'] leading-3">{formatTime(currentTime)}</div>
 				<Slider.Root
 					className="relative flex h-5 w-[500px] items-center cursor-pointer group"
 					value={[currentTime]}
@@ -121,13 +122,13 @@ export const AudioPlayer = ({
 						<Slider.Range className="absolute h-[6px] top-1/2 -translate-y-1/2 bg-black" />
 					</Slider.Track>
 					<Slider.Thumb
-						className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+						className="transition-opacity duration-200 opacity-0 group-hover:opacity-100"
 						aria-label="Time"
 					>
 						<VolumeThumb />
 					</Slider.Thumb>
 				</Slider.Root>
-				<div className="text-black text-base font-bold font-['SUIT'] leading-3">{formatTime(duration)}</div>
+				<div className="text-black text-base font-bold font-['suit'] leading-3">{formatTime(duration)}</div>
 			</div>
 		</div>
 	);

@@ -1,6 +1,11 @@
-export const KaKaoTalkLogin = () => {
+interface KaKaoTalkLoginProps {
+	className?: string;
+}
+
+export const KaKaoTalkLogin = ({ className }: KaKaoTalkLoginProps) => {
 	return (
 		<svg
+			className={className}
 			xmlns="http://www.w3.org/2000/svg"
 			width="27"
 			height="27"

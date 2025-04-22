@@ -1,9 +1,7 @@
+import { AuthLogin } from "@/features/auth/components/AuthLogin";
+
 const LoginPage = () => {
-    return (
-        <div>
-            <h1>로그인 페이지</h1>
-        </div>
-    )
-}
+	return <AuthLogin />;
+};
 
 export default LoginPage;

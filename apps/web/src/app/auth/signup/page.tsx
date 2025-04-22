@@ -1,9 +1,7 @@
+import { AuthSignup } from "@/features/auth/components/AuthSignup";
+
 const SignUpPage = () => {
-    return (
-        <div>
-            <h1>회원가입 페이지</h1>
-        </div>
-    )
-}
+	return <AuthSignup />;
+};
 
 export default SignUpPage;

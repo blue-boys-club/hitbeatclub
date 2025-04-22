@@ -1,6 +1,11 @@
-export const HBCLoginMain = () => {
+interface HBCLoginMainProps {
+	className?: string;
+}
+
+export const HBCLoginMain = ({ className }: HBCLoginMainProps) => {
 	return (
 		<svg
+			className={className}
 			width="333"
 			height="123"
 			viewBox="0 0 333 123"
