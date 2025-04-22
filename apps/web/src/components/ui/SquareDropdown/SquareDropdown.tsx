@@ -16,6 +16,8 @@ export interface SquareDropdownProps {
 	className?: string;
 	buttonClassName?: string;
 	optionsClassName?: string;
+	optionClassName?: string;
+	placeholderClassName?: string;
 }
 
 export const SquareDropdown = ({
@@ -26,6 +28,8 @@ export const SquareDropdown = ({
 	className,
 	buttonClassName,
 	optionsClassName,
+	optionClassName,
+	placeholderClassName,
 }: SquareDropdownProps) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [internalValue, setInternalValue] = useState(defaultValue || options[0]?.value);
@@ -80,7 +84,7 @@ export const SquareDropdown = ({
 				aria-controls={listboxId}
 				id={`${listboxId}-trigger`}
 			>
-				<span>{currentLabel}</span>
+				<span className={cn(placeholderClassName)}>{currentLabel}</span>
 				<svg
 					className={cn("ml-3 h-4 shrink-0")}
 					width={10}
@@ -132,6 +136,7 @@ export const SquareDropdown = ({
 								"hover:bg-hbc-black hover:text-hbc-white",
 								"transition-colors duration-200",
 								"cursor-pointer",
+								optionClassName,
 							)}
 						>
 							{option.label}

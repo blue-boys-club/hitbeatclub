@@ -10,11 +10,12 @@ export interface SearchTagProps extends Omit<React.InputHTMLAttributes<HTMLInput
 	 * Callback fired when search is triggered via icon click
 	 */
 	onSearch?: (value: string) => void;
+	buttonClassName?: string;
 }
 
 export const SearchTag = memo(
 	forwardRef<HTMLInputElement, SearchTagProps>(
-		({ className, wrapperClassName, onSearch, onChange, ...props }, forwardedRef) => {
+		({ className, wrapperClassName, onSearch, onChange, buttonClassName, ...props }, forwardedRef) => {
 			const innerRef = useRef<HTMLInputElement>(null);
 			const inputRef = (forwardedRef || innerRef) as React.RefObject<HTMLInputElement>;
 
@@ -66,7 +67,10 @@ export const SearchTag = memo(
 								handleIconClick();
 							}
 						}}
-						className="flex items-center justify-center p-[4px_5px] gap-[10px] w-[22px] h-5 cursor-pointer mr-[3px]"
+						className={cn(
+							"flex items-center justify-center p-[4px_5px] gap-[10px] w-[22px] h-5 cursor-pointer mr-[3px]",
+							buttonClassName,
+						)}
 					>
 						<Search />
 					</button>

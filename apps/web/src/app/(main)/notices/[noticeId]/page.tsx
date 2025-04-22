@@ -1,9 +1,7 @@
-const NoticeDetailPage = () => {
-    return (
-        <div>
-            <h1>공지사항 상세 페이지</h1>
-        </div>
-    )
-}
+import NoticeDetailPage from "@/features/notice/components/NoticeDetailPage";
 
-export default NoticeDetailPage;
+const NoticeDetailRoute = () => {
+	return <NoticeDetailPage />;
+};
+
+export default NoticeDetailRoute;
