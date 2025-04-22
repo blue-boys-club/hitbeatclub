@@ -1,10 +1,7 @@
+import UserAccountSetting from "@/features/user/components/UserAccountSetting";
 
 const AccountSettingPage = () => {
-    return (
-        <div>
-            <h1>계정 설정 페이지</h1>
-        </div>
-    )
-}
+	return <UserAccountSetting />;
+};
 
 export default AccountSettingPage;

@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/common/utils";
+import { cva, type VariantProps } from "class-variance-authority";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface DropdownOption {
@@ -8,7 +9,54 @@ export interface DropdownOption {
 	value: string;
 }
 
-export interface DropdownProps {
+const dropdownVariants = cva(
+	"w-full border border-black rounded-[5px] bg-white text-[#4D4D4F] font-bold tracking-[0.01em] focus:outline-none cursor-pointer relative",
+	{
+		variants: {
+			size: {
+				sm: "h-[28px] text-[12px] px-3 pr-8",
+				md: "h-[35px] text-[14px] px-4 pr-10",
+				lg: "h-[42px] text-[16px] px-5 pr-12",
+			},
+		},
+		defaultVariants: {
+			size: "md",
+		},
+	},
+);
+
+const dropdownOptionsVariants = cva(
+	"w-full border-2 border-black rounded-[5px] bg-white py-[10px] px-[10px] space-y-[10px] overflow-y-auto max-w-full",
+	{
+		variants: {
+			size: {
+				sm: "text-[12px]",
+				md: "text-[14px]",
+				lg: "text-[16px]",
+			},
+		},
+		defaultVariants: {
+			size: "md",
+		},
+	},
+);
+
+const dropdownOptionVariants = cva(
+	"px-[10px] py-[4px] rounded-[40px] font-bold leading-[16px] cursor-pointer transition-colors duration-200 truncate",
+	{
+		variants: {
+			selected: {
+				true: "bg-black text-white",
+				false: "bg-white text-black hover:bg-gray-50",
+			},
+		},
+		defaultVariants: {
+			selected: false,
+		},
+	},
+);
+
+export interface DropdownProps extends VariantProps<typeof dropdownVariants> {
 	value?: string;
 	defaultValue?: string;
 	options: DropdownOption[];
@@ -26,6 +74,7 @@ export const Dropdown = ({
 	className,
 	optionsClassName,
 	placeholder = "Please select...",
+	size,
 }: DropdownProps) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [internalValue, setInternalValue] = useState(defaultValue);
@@ -114,15 +163,7 @@ export const Dropdown = ({
 					onClick={() => {
 						setIsOpen(!isOpen);
 					}}
-					className={cn(
-						"w-full h-[35px]",
-						"border border-black rounded-[5px]",
-						"bg-white text-[#4D4D4F]",
-						"text-[16px] font-bold tracking-[0.01em]",
-						"focus:outline-none cursor-pointer",
-						"px-4 pr-10",
-						"relative",
-					)}
+					className={dropdownVariants({ size })}
 					aria-haspopup="listbox"
 					aria-expanded={isOpen}
 				>
@@ -158,16 +199,7 @@ export const Dropdown = ({
 				>
 					<ul
 						role="listbox"
-						className={cn(
-							"w-full",
-							"border-2 border-black rounded-[5px]",
-							"bg-white",
-							"py-[10px] px-[10px]",
-							"space-y-[10px]",
-							"overflow-y-auto",
-							"max-w-full",
-							optionsClassName,
-						)}
+						className={cn(dropdownOptionsVariants({ size }), optionsClassName)}
 					>
 						{options.map((option) => (
 							<li
@@ -175,15 +207,9 @@ export const Dropdown = ({
 								role="option"
 								aria-selected={currentValue === option.value}
 								onClick={() => handleSelect(option.value)}
-								className={cn(
-									"px-[10px] py-[4px]",
-									"rounded-[40px]",
-									"text-[16px] font-bold leading-[16px]",
-									"cursor-pointer",
-									"transition-colors duration-200",
-									"truncate",
-									currentValue === option.value ? "bg-black text-white" : "bg-white text-black hover:bg-gray-50",
-								)}
+								className={dropdownOptionVariants({
+									selected: currentValue === option.value,
+								})}
 							>
 								{option.label}
 							</li>
