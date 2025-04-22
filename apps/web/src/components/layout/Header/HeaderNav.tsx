@@ -70,7 +70,11 @@ export const HeaderNav = memo(() => {
 		>
 			{isLogined ? (
 				<>
-					<SubscribeButton isSubscribed={isSubscribed} />
+					<SubscribeButton
+						component="Link"
+						href="/artist-studio"
+						isSubscribed={isSubscribed}
+					/>
 
 					<div className={cn("size-10 flex items-center justify-center cursor-pointer relative")}>
 						<div className="absolute inset-0 flex items-center justify-center">

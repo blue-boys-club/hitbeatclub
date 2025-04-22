@@ -1,7 +1,8 @@
 import { cn } from "@/common/utils";
 import { cva, VariantProps } from "class-variance-authority";
-import { HTMLAttributes, memo } from "react";
+import { type HTMLAttributes, memo } from "react";
 import { Lock } from "@/assets/svgs/Lock";
+import Link, { type LinkProps } from "next/link";
 
 const subscribeButtonVariants = cva(
 	cn(
@@ -22,18 +23,49 @@ const subscribeButtonVariants = cva(
 	},
 );
 
-export interface SubscribeButtonProps
+export interface SubscribeButtonButtonProps
 	extends VariantProps<typeof subscribeButtonVariants>,
-		HTMLAttributes<HTMLButtonElement> {}
+		HTMLAttributes<HTMLButtonElement> {
+	component?: "button" | undefined;
+}
 
-export const SubscribeButton = memo(({ isSubscribed, className, ...props }: SubscribeButtonProps) => {
-	return (
-		<button
-			{...props}
-			className={cn(subscribeButtonVariants({ isSubscribed }), className)}
-		>
+export interface SubscribeButtonLinkProps
+	extends VariantProps<typeof subscribeButtonVariants>,
+		LinkProps,
+		HTMLAttributes<HTMLAnchorElement> {
+	component: "Link";
+}
+
+export type SubscribeButtonProps = SubscribeButtonButtonProps | SubscribeButtonLinkProps;
+
+export const SubscribeButton = memo((props: SubscribeButtonProps) => {
+	const { component = "button", isSubscribed, className, ...restProps } = props;
+	const classes = cn(subscribeButtonVariants({ isSubscribed }), className);
+
+	const content = (
+		<>
 			<span>ARTIST STUDIO</span>
 			{!isSubscribed && <Lock className="bg-transparent" />}
+		</>
+	);
+
+	if (component === "Link") {
+		return (
+			<Link
+				{...(restProps as SubscribeButtonLinkProps)}
+				className={classes}
+			>
+				{content}
+			</Link>
+		);
+	}
+
+	return (
+		<button
+			{...(restProps as SubscribeButtonButtonProps)}
+			className={classes}
+		>
+			{content}
 		</button>
 	);
 });

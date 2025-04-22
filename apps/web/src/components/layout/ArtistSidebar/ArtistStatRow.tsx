@@ -16,7 +16,7 @@ const ArtistStatRow = ({ artistStats }: ArtistStatRowProps) => (
 					outline
 					rounded
 					size="sm"
-					className="text-black text-center font-bold text-[16px] leading-[16px] py-1 w-full"
+					className="w-full font-bold text-center text-hbc-black text-16px leading-16px"
 				>
 					{stat.label}
 				</Badge>
@@ -29,7 +29,7 @@ const ArtistStatRow = ({ artistStats }: ArtistStatRowProps) => (
 					variant="outline"
 					outline
 					size="sm"
-					className="text-black text-center font-bold text-[16px] leading-[16px] py-1"
+					className="font-bold text-center text-hbc-black text-16px leading-16px"
 				>
 					{stat.value}
 				</Badge>

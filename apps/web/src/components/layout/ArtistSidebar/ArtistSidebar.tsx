@@ -3,11 +3,12 @@
 import Image from "next/image";
 import Upload from "@/assets/svgs/Upload";
 import { ArtistAvatar } from "@/components/ui";
-import NavLink from "./NavLink";		
+import NavLink from "./NavLink";
 import ArtistStatRow from "./ArtistStatRow";
 import { Dollars } from "@/assets/svgs/Dollars";
 import { ArtistInfo } from "@/assets/svgs/ArtistInfo";
 import { UserProfile } from "@/assets/svgs/UserProfile";
+import { ArtistStudioTitle } from "./ArtistStudioTitle";
 
 const artistStats = [
 	{ label: "Follower", value: "4,567" },
@@ -23,44 +24,51 @@ const navItems = [
 
 export const ArtistSidebar = () => {
 	return (
-		<aside className="bg-white pt-4 pl-3 w-fit">
-			<Image
-				src="/assets/logo.png"
-				alt="로고"
-				width={120}
-				height={67}
-			/>
+		<div className="flex flex-col flex-1 h-full gap-8px">
+			<div className="flex-none px-13px pt-19px">
+				<Image
+					src="/assets/logo.png"
+					alt="로고"
+					width={120}
+					height={67}
+				/>
+			</div>
 
-			<div className="pt-4 pb-4 pr-2 w-fit border-r-2 border-[#FF1900]">
-				<div className="border-b-6 border-[#FF1900] pb-[14px] pr-[137px] mb-[10px]">
-					<h1 className="text-[#FF1900] text-xl font-extrabold text-center tracking-[0.2px]">ARTIST STUDIO</h1>
+			<aside className="border-r-2 bg-hbc-white border-hbc-red pb-16px">
+				<div className="flex items-center justify-start px-4px pr-5px pl-9px ">
+					{/* 이거 왜 피그마에 SVG로 있나요... */}
+					<ArtistStudioTitle />
 				</div>
 
-				<section className="flex flex-col items-center justify-center gap-5">
+				<hr className="border-hbc-red border-3 my-10px mr-9px ml-4px" />
+
+				<section className="flex flex-col items-center justify-center gap-20px">
 					<ArtistAvatar
 						src="/"
 						alt="아티스트 프로필 이미지"
-						className="bg-black"
-						size="large"
+						className="bg-black my-8px"
+						size="small"
 					/>
 
-					<h2 className="text-black text-center font-suisse text-[38px] font-bold leading-[40px] tracking-[0.38px]">
+					<h2 className="font-bold text-center text-black font-suisse text-38px leading-40px tracking-038px h-40px">
 						홍길동
 					</h2>
 
 					<ArtistStatRow artistStats={artistStats} />
+				</section>
 
+				<section className="flex flex-col mt-48px pl-20px pr-11px gap-15px ">
 					<div
-						className="flex flex-col items-center justify-center gap-5 px-22 py-10 border border-dotted border-[#FF1900] cursor-pointer"
+						className="flex flex-col items-center justify-center gap-5 px-8px py-40px border border-dotted border-[#FF1900] cursor-pointer"
 						role="button"
 						tabIndex={0}
 						onClick={() => {}}
 					>
-						<Upload className="hover:opacity-80 transition-opacity" />
+						<Upload className="transition-opacity hover:opacity-80" />
 						<span className="text-[#FF1900] text-[13px] font-extrabold">Drop Your Fire🔥</span>
 					</div>
 
-					<nav className="flex flex-col gap-[10px] py-3 border-y-[6px] border-[#FF1900] w-full">
+					<nav className="flex flex-col w-full gap-10px pt-11px pb-6px border-y-6px border-hbc-red">
 						{navItems.map(({ href, label, icon }) => (
 							<NavLink
 								key={label}
@@ -71,7 +79,7 @@ export const ArtistSidebar = () => {
 						))}
 					</nav>
 				</section>
-			</div>
-		</aside>
+			</aside>
+		</div>
 	);
 };

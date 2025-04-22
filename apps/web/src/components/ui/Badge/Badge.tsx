@@ -11,10 +11,10 @@ export interface BadgeProps
 const BadgeVariant = cva("flex items-center justify-center w-fit leading-none", {
 	variants: {
 		variant: {
-			default: "bg-black text-white",
-			destructive: "bg-[#FF1900] text-white",
-			secondary: "bg-[#DFDFDF] text-black",
-			outline: "bg-white text-black",
+			default: "bg-hbc-black text-hbc-white",
+			destructive: "bg-hbc-red text-hbc-white",
+			secondary: "bg-[#DFDFDF] text-hbc-black",
+			outline: "bg-hbc-white text-hbc-black",
 		},
 		size: {
 			sm: "text-xs px-2 py-0.5",
@@ -27,7 +27,7 @@ const BadgeVariant = cva("flex items-center justify-center w-fit leading-none", 
 			extrabold: "font-extrabold",
 		},
 		outline: {
-			true: "border-black border-[4px]",
+			true: "border-hbc-black border-2px ring-2 ring-hbc-black",
 			false: "",
 		},
 		rounded: {
