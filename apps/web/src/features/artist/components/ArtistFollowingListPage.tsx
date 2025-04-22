@@ -13,9 +13,30 @@ const artists = [
 		followers: 100,
 		isFollowing: true,
 	},
+	{
+		id: 2,
+		name: "Jane Doe",
+		image: "/",
+		followers: 200,
+		isFollowing: false,
+	},
+	{
+		id: 3,
+		name: "John Doe",
+		image: "/",
+		followers: 100,
+		isFollowing: true,
+	},
+	{
+		id: 4,
+		name: "Jane Doe",
+		image: "/",
+		followers: 200,
+		isFollowing: false,
+	},
 ];
 
-const ArtistFollowingList = () => {
+const ArtistFollowingListPage = () => {
 	const [activeView, setActiveView] = useState<ViewType>("grid");
 	const [selectedSort, setSelectedSort] = useState<SortOption>("Recent");
 	const [searchValue, setSearchValue] = useState("");
@@ -38,4 +59,4 @@ const ArtistFollowingList = () => {
 	);
 };
 
-export default ArtistFollowingList;
+export default ArtistFollowingListPage;

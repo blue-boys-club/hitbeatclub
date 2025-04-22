@@ -1,7 +1,7 @@
-import ArtistFollowingList from "@/features/artist/components/ArtistFollowingList";
+import ArtistFollowingListPage from "@/features/artist/components/ArtistFollowingListPage";
 
-const FollowArtistPage = () => {
-	return <ArtistFollowingList />;
+const FollowArtistListRoute = () => {
+	return <ArtistFollowingListPage />;
 };
 
-export default FollowArtistPage;
+export default FollowArtistListRoute;

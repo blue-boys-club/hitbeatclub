@@ -1,7 +1,7 @@
-import UserAccountSetting from "@/features/user/components/UserAccountSetting";
+import UserAccountSettingPage from "@/features/user/components/UserAccountSettingPage";
 
-const AccountSettingPage = () => {
-	return <UserAccountSetting />;
+const AccountSettingRoute = () => {
+	return <UserAccountSettingPage />;
 };
 
-export default AccountSettingPage;
+export default AccountSettingRoute;
