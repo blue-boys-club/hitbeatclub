@@ -21,11 +21,6 @@ const meta: Meta<typeof Button> = {
 			control: "select",
 			options: ["md", "full"],
 		},
-		fontWeight: {
-			description: "버튼 폰트 두께",
-			control: "select",
-			options: ["extraBold", "bold", "semibold"],
-		},
 		children: {
 			description: "버튼 내부 콘텐츠",
 			control: "text",
@@ -96,17 +91,6 @@ export const Rounded: Story = {
 	),
 };
 
-// 폰트 두께 변형 예시
-export const FontWeight: Story = {
-	render: () => (
-		<div className="flex items-center gap-4">
-			<Button fontWeight="extraBold">Extra Bold</Button>
-			<Button fontWeight="bold">Bold</Button>
-			<Button fontWeight="semibold">Semibold</Button>
-		</div>
-	),
-};
-
 // 모든 변형 조합 예시
 export const AllVariants: Story = {
 	render: () => (
@@ -116,7 +100,6 @@ export const AllVariants: Story = {
 					variant="fill"
 					size="sm"
 					rounded="md"
-					fontWeight="bold"
 				>
 					Fill Small
 				</Button>
@@ -124,7 +107,6 @@ export const AllVariants: Story = {
 					variant="fill"
 					size="md"
 					rounded="md"
-					fontWeight="bold"
 				>
 					Fill Medium
 				</Button>
@@ -132,7 +114,6 @@ export const AllVariants: Story = {
 					variant="fill"
 					size="lg"
 					rounded="md"
-					fontWeight="bold"
 				>
 					Fill Large
 				</Button>
@@ -142,7 +123,6 @@ export const AllVariants: Story = {
 					variant="outline"
 					size="sm"
 					rounded="md"
-					fontWeight="bold"
 				>
 					Outline Small
 				</Button>
@@ -150,7 +130,6 @@ export const AllVariants: Story = {
 					variant="outline"
 					size="md"
 					rounded="md"
-					fontWeight="bold"
 				>
 					Outline Medium
 				</Button>
@@ -158,7 +137,6 @@ export const AllVariants: Story = {
 					variant="outline"
 					size="lg"
 					rounded="md"
-					fontWeight="bold"
 				>
 					Outline Large
 				</Button>
@@ -168,7 +146,6 @@ export const AllVariants: Story = {
 					variant="fill"
 					size="md"
 					rounded="full"
-					fontWeight="extraBold"
 				>
 					Fill Rounded Full
 				</Button>
@@ -176,7 +153,6 @@ export const AllVariants: Story = {
 					variant="outline"
 					size="md"
 					rounded="full"
-					fontWeight="semibold"
 				>
 					Outline Rounded Full
 				</Button>

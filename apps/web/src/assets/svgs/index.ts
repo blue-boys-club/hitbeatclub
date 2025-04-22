@@ -11,6 +11,7 @@ import { CartShop } from "./CartShop";
 import { Checkbox } from "./Checkbox";
 import { CheckboxCircle } from "./CheckboxCircle";
 import { ChevronDown } from "./ChevronDown";
+import { ChevronRight } from "./ChevronRight";
 import { CloseBlack } from "./CloseBlack";
 import { CloseModal } from "./CloseModal";
 import { CloseMosaic } from "./CloseMosaic";
@@ -103,6 +104,7 @@ export {
 	Checkbox,
 	CheckboxCircle,
 	ChevronDown,
+	ChevronRight,
 	CloseBlack,
 	CloseModal,
 	CloseMosaic,

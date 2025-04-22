@@ -7,6 +7,7 @@ const buttonVariants = cva(
 	cn(
 		"inline-flex items-center justify-center transition-colors cursor-pointer",
 		"disabled:opacity-50 disabled:pointer-events-none",
+		"font-bold",
 	),
 	{
 		variants: {
@@ -23,17 +24,11 @@ const buttonVariants = cva(
 				md: "rounded-md",
 				full: "rounded-full",
 			},
-			fontWeight: {
-				extraBold: "font-extrabold",
-				bold: "font-bold",
-				semibold: "font-semibold",
-			},
 		},
 		defaultVariants: {
 			variant: "fill",
 			size: "md",
 			rounded: "md",
-			fontWeight: "bold",
 		},
 	},
 );
@@ -44,11 +39,11 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, Var
 	disabled?: boolean;
 }
 
-export const Button = ({ fontWeight, rounded, size, variant, className, disabled, ...props }: ButtonProps) => {
+export const Button = ({ rounded, size, variant, className, disabled, ...props }: ButtonProps) => {
 	return (
 		<button
 			{...props}
-			className={cn(buttonVariants({ variant, size, rounded, fontWeight }), className)}
+			className={cn(buttonVariants({ variant, size, rounded }), className)}
 			disabled={disabled}
 		>
 			{props.children}

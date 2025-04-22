@@ -1,10 +1,7 @@
+import ArtistTrackListPage from "@/features/artist/components/ArtistTrackListPage";
 
-const ArtistPage = () => {
-    return (
-        <div>
-            <h1>아티스트 페이지</h1>
-        </div>
-    )
-}
+const ArtistTrackListRoute = () => {
+	return <ArtistTrackListPage />;
+};
 
-export default ArtistPage;
+export default ArtistTrackListRoute;
