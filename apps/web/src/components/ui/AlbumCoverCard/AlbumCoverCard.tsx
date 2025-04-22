@@ -1,4 +1,5 @@
 "use client";
+
 import { PauseCircle, PlayCircle } from "@/assets/svgs";
 import { cn } from "@/common/utils";
 import { cva, VariantProps } from "class-variance-authority";

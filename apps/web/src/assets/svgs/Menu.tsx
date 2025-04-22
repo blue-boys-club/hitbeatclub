@@ -1,4 +1,4 @@
-export const Menu = () => {
+export const Menu = ({ fill = "#DFDFDF" }: { fill?: string }) => {
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
@@ -11,19 +11,19 @@ export const Menu = () => {
 				fillRule="evenodd"
 				clipRule="evenodd"
 				d="M20 4H0V0H20V4Z"
-				fill="#DFDFDF"
+				fill={fill}
 			/>
 			<path
 				fillRule="evenodd"
 				clipRule="evenodd"
 				d="M20 12H0V8H20V12Z"
-				fill="#DFDFDF"
+				fill={fill}
 			/>
 			<path
 				fillRule="evenodd"
 				clipRule="evenodd"
 				d="M20 20H0V16H20V20Z"
-				fill="#DFDFDF"
+				fill={fill}
 			/>
 		</svg>
 	);

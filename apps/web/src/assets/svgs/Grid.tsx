@@ -1,4 +1,4 @@
-export const Grid = () => {
+export const Grid = ({ fill = "black" }: { fill?: string }) => {
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
@@ -10,26 +10,26 @@ export const Grid = () => {
 			<rect
 				width="9.33333"
 				height="9.33333"
-				fill="black"
+				fill={fill}
 			/>
 			<rect
 				x="10.667"
 				width="9.33333"
 				height="9.33333"
-				fill="black"
+				fill={fill}
 			/>
 			<rect
 				y="10.668"
 				width="9.33333"
 				height="9.33333"
-				fill="black"
+				fill={fill}
 			/>
 			<rect
 				x="10.667"
 				y="10.666"
 				width="9.33333"
 				height="9.33333"
-				fill="black"
+				fill={fill}
 			/>
 		</svg>
 	);
