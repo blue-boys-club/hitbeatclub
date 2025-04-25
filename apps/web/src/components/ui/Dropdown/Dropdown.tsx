@@ -63,6 +63,7 @@ export interface DropdownProps extends VariantProps<typeof dropdownVariants> {
 	onChange?: (value: string) => void;
 	className?: string;
 	optionsClassName?: string;
+	buttonClassName?: string;
 	placeholder?: string;
 }
 
@@ -73,6 +74,7 @@ export const Dropdown = ({
 	onChange,
 	className,
 	optionsClassName,
+	buttonClassName,
 	placeholder = "Please select...",
 	size,
 }: DropdownProps) => {
@@ -163,7 +165,7 @@ export const Dropdown = ({
 					onClick={() => {
 						setIsOpen(!isOpen);
 					}}
-					className={dropdownVariants({ size })}
+					className={cn(dropdownVariants({ size }), buttonClassName)}
 					aria-haspopup="listbox"
 					aria-expanded={isOpen}
 				>

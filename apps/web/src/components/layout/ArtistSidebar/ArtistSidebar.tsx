@@ -17,7 +17,7 @@ const artistStats = [
 ];
 
 const navItems = [
-	{ href: "/studio", label: "My Studio", icon: UserProfile },
+	{ href: "/artist-studio", label: "My Studio", icon: UserProfile },
 	{ href: "/artist-info", label: "Artist Info", icon: ArtistInfo },
 	{ href: "/payouts", label: "Payouts", icon: Dollars },
 ];

@@ -1,10 +1,7 @@
+import ArtistStudioDashboardPage from "@/features/artist/components/ArtistStudioDashboardPage";
 
-const ArtistStudioDetailPage = () => {
-    return (
-        <div>
-            <h1>마이 스튜디오 페이지</h1>
-        </div>
-    )
-}
+const ArtistStudioDetailRoute = () => {
+	return <ArtistStudioDashboardPage />;
+};
 
-export default ArtistStudioDetailPage;
+export default ArtistStudioDetailRoute;
