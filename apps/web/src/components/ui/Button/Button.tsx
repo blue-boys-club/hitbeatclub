@@ -42,16 +42,19 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, Var
 	children: React.ReactNode;
 	onClick?: () => void;
 	disabled?: boolean;
+	wrapperClassName?: string;
 }
 
-export const Button = ({ fontWeight, rounded, size, variant, className, disabled, ...props }: ButtonProps) => {
+export const Button = ({ rounded, size, variant, className, disabled, wrapperClassName, ...props }: ButtonProps) => {
 	return (
-		<button
-			{...props}
-			className={cn(buttonVariants({ variant, size, rounded, fontWeight }), className)}
-			disabled={disabled}
-		>
-			{props.children}
-		</button>
+		<div className={cn(wrapperClassName)}>
+			<button
+				{...props}
+				className={cn(buttonVariants({ variant, size, rounded }), className)}
+				disabled={disabled}
+			>
+				{props.children}
+			</button>
+		</div>
 	);
 };

@@ -1,6 +1,7 @@
 import { Acapella } from "./Acapella";
 import { ArrowLeftMosaic } from "./ArrowLeftMosaic";
 import { ArrowRightMosaic } from "./ArrowRightMosaic";
+import { ArrowRight } from "./ArrowRight";
 import { AudioBarPause } from "./AudioBarPause";
 import { AudioBarPlay } from "./AudioBarPlay";
 import { Beat } from "./Beat";
@@ -86,11 +87,14 @@ import { Tiktok } from "./Tiktok";
 import { Tooltip } from "./Tooltip";
 import { Undo } from "./Undo";
 import { UserProfile } from "./UserProfile";
+import { Upload } from "./Upload";
 import { Volume } from "./Volume";
 import { VolumeThumb } from "./VolumeThumb";
 import { Youtube } from "./Youtube";
+import { AddCircle } from "./AddCircle";
 
 export {
+	AddCircle,
 	Acapella,
 	AudioBarPause,
 	AudioBarPlay,
@@ -182,4 +186,6 @@ export {
 	Youtube,
 	Correct,
 	Incorrect,
+	Upload,
+	ArrowRight,
 };
