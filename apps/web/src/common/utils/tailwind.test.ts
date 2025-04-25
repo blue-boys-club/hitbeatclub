@@ -24,9 +24,9 @@ describe("twMerge utility", () => {
 		});
 
 		it("should merge text width classes", () => {
-			expect(cn("text-10")).toBe("text-10");
-			expect(cn("text-10", "text-20")).toBe("text-20");
-			expect(cn("text-10", "text-20", "text-30px")).toBe("text-30px");
+			expect(cn("text-10px")).toBe("text-10px");
+			expect(cn("text-10px", "text-20px")).toBe("text-20px");
+			expect(cn("text-10px", "text-20px", "text-30px")).toBe("text-30px");
 		});
 
 		it("should merge gap classes", () => {

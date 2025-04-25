@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Search } from "@/assets/svgs/Search";
 import { cn } from "@/common/utils";
 import { TagDropdown } from "@/components/ui";
 import { Input } from "@/components/ui/Input";
+import { usePathname, useRouter } from "next/navigation";
+import { useSearchParametersStateByKey } from "@/features/search/hooks/useSearchParameters";
 
 interface SearchOption {
 	label: string;
@@ -12,44 +14,78 @@ interface SearchOption {
 }
 
 export const SearchBar = () => {
-	const [searchValue, setSearchValue] = useState("");
+	const router = useRouter();
+	const pathname = usePathname();
+	const isSearch = pathname === "/search";
+	const [searchValue, setSearchValue] = useSearchParametersStateByKey("search");
 	const [searchOptions, setSearchOptions] = useState<SearchOption[]>([]);
+
+	const navigateToSearch = useCallback(() => {
+		if (!searchValue) return;
+
+		const url = new URL(window.location.href);
+		url.pathname = "/search";
+		url.searchParams.set("search", searchValue);
+		router.push(url.toString());
+	}, [router, searchValue]);
 
 	const handleSearchChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
-			setSearchValue(e.target.value);
-			const filteredOptions = searchOptions.filter((option) =>
-				option.label.toLowerCase().includes(e.target.value.toLowerCase()),
-			);
-			setSearchOptions(filteredOptions);
+			const value = e.target.value;
+			setSearchValue(value);
+			setSearchOptions(searchOptions.filter((option) => option.label.toLowerCase().includes(value.toLowerCase())));
 		},
-		[searchOptions],
+		[searchOptions, setSearchValue],
 	);
 
 	const handleSearchSubmit = useCallback(
 		(e: React.FormEvent<HTMLFormElement>) => {
 			e.preventDefault();
+			if (!isSearch) {
+				navigateToSearch();
+			}
 		},
-		[searchValue],
+		[isSearch, navigateToSearch],
 	);
+
+	const handleSearchOptionSelect = useCallback(
+		(value: string) => {
+			setSearchValue(value);
+			if (!isSearch) {
+				navigateToSearch();
+			}
+		},
+		[isSearch, navigateToSearch, setSearchValue],
+	);
+
+	useEffect(() => {
+		if (!isSearch && searchValue) {
+			// preload search page
+			router.prefetch(`/search?search=${searchValue}`);
+		}
+	}, [isSearch, router, searchValue]);
 
 	return (
 		<TagDropdown
-			optionsClassName={"rounded-none p-3 border-[6px] border-b-black border-x-0 border-t-0 rounded-b-[5px]"}
+			wrapperClassName="w-full"
+			className="w-full"
+			optionsClassName={cn(
+				"rounded-none p-3 border-[6px] border-b-black border-x-0 border-t-0 rounded-b-[5px]",
+				searchOptions.length === 0 && "hidden",
+			)}
 			showChevron={false}
-			options={searchOptions.map((option) => {
-				return {
-					...option,
-					className: "rounded-[5px] text-base font-bold leading-4",
-				};
-			})}
+			options={searchOptions.map((option) => ({
+				...option,
+				className: "rounded-[5px] text-base font-bold leading-4",
+			}))}
+			onSelect={handleSearchOptionSelect}
 		>
 			<form
-				className={cn("relative flex items-center w-full")}
+				className="relative flex items-center w-full"
 				onSubmit={handleSearchSubmit}
 			>
 				<Search
-					className={cn("absolute left-3 text-[#BDBDBD] pointer-events-none")}
+					className="absolute left-3 text-[#BDBDBD] pointer-events-none"
 					aria-hidden="true"
 				/>
 				<Input
@@ -59,7 +95,7 @@ export const SearchBar = () => {
 						"placeholder:text-[#BDBDBD] placeholder:text-base placeholder:font-normal placeholder:leading-4",
 					)}
 					placeholder="Search for artists, beats, a cappellas"
-					value={searchValue}
+					value={searchValue ?? ""}
 					onChange={handleSearchChange}
 				/>
 			</form>

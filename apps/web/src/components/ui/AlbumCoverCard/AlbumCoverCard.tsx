@@ -29,6 +29,7 @@ const AlbumCoverCardWrapper = cva("relative inline-block cursor-pointer group fl
 		},
 		border: {
 			true: "ring-2 ring-black",
+			main: "shadow-[1px_3px,_-1px_3px,_1px_-3px,_-1px_-3px_0_var(--hbc-black)]",
 			false: "ring-0",
 		},
 	},
@@ -92,7 +93,7 @@ export const AlbumCoverCard = ({
 					priority
 					className="object-cover"
 				/>
-				<div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+				<div className="absolute inset-0 flex items-center justify-center transition-opacity duration-200 opacity-0 bg-black/30 group-hover:opacity-100">
 					{isPlay ? <PauseCircle /> : <PlayCircle />}
 				</div>
 			</div>

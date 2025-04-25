@@ -13,6 +13,7 @@ const px0_10 = generatePxToRemRange(10);
 const px0_100 = generatePxToRemRange(100);
 const px0_200 = generatePxToRemRange(200);
 const px0_500 = generatePxToRemRange(500);
+const px500_1000_10 = generatePxToRemRange(1000, 500, 10);
 
 const px0d00_100d00 = generatePxToRemRange(100, 0, 0.01);
 
@@ -41,6 +42,7 @@ const config = {
 			// it is `containers` as respecting old tailwind config
 			containers: {
 				...px0_500,
+				...px500_1000_10,
 			},
 		},
 	},

@@ -27,6 +27,7 @@ import { PopupButton } from "./PopupButton";
 import { FreeDownloadButton } from "./FreeDownloadButton";
 import { PurchaseButton } from "./PurchaseButton";
 import { AlbumCoverCard } from "./AlbumCoverCard";
+import { SectionHeader } from "./SectionHeader";
 
 const UI = {
 	BodyLarge,
@@ -60,6 +61,7 @@ const UI = {
 	FreeDownloadButton,
 	PurchaseButton,
 	AlbumCoverCard,
+	SectionHeader,
 };
 
 export default UI;
@@ -90,4 +92,5 @@ export {
 	FreeDownloadButton,
 	PurchaseButton,
 	AlbumCoverCard,
+	SectionHeader,
 };

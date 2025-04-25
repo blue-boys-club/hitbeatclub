@@ -32,7 +32,7 @@ export const SearchTag = memo(
 					className={cn(
 						"inline-flex items-center justify-between",
 						"w-[208px] h-6",
-						"rounded-[40px] border-2 border-hbc-black bg-hbc-white",
+						"rounded-[40px] outline-2 outline-hbc-black -outline-offset-1 bg-hbc-white",
 						"lg:w-[180px]",
 						"sm:w-full sm:max-w-[208px]",
 						wrapperClassName,

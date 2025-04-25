@@ -100,18 +100,19 @@ export const TagDropdown = memo(function TagDropdown({
 
 		if (children && Children.count(children) === 1 && isValidElement(children)) {
 			return (
-				<button {...buttonProps}>
+				// <button {...buttonProps}>
+				<span {...buttonProps}>
 					<Slot.Root>{children}</Slot.Root>
 					{showChevron && <ChevronDown />}
-				</button>
+				</span>
 			);
 		}
 
 		return (
-			<button {...buttonProps}>
+			<span {...buttonProps}>
 				{typeof trigger === "string" ? <TextComponent>{trigger}</TextComponent> : trigger}
 				{showChevron && <ChevronDown />}
-			</button>
+			</span>
 		);
 	}, [trigger, children, TextComponent, toggleDropdown, showChevron, className, isOpen]);
 
@@ -121,14 +122,14 @@ export const TagDropdown = memo(function TagDropdown({
 				"absolute top-[38px]",
 				optionsPosition,
 				"min-w-full py-2 px-[10px]",
-				"border-2 border-black rounded-[5px]",
+				"outline-2 outline-black -outline-offset-1 rounded-[5px]",
 				"flex flex-col gap-[10px] justify-center",
 				"bg-white",
 				"sm:px-2",
 				"z-50",
 				optionsClassName,
 			),
-		[optionsClassName],
+		[optionsClassName, optionsPosition],
 	);
 
 	const triggerClasses = useMemo(
@@ -136,7 +137,7 @@ export const TagDropdown = memo(function TagDropdown({
 			cn(
 				"inline-flex items-center gap-0.5",
 				"px-[9px] py-[2px] pr-[3px]",
-				"border-2 border-black rounded-[40px]",
+				"outline-2 outline-black -outline-offset-1 rounded-[40px]",
 				"bg-white cursor-pointer whitespace-nowrap",
 				"sm:px-[6px]",
 				className,
