@@ -5,8 +5,8 @@ const pxToRem = (px, base = 16) => `${px / base}rem`;
 const generatePxToRemRange = (max, min = 0, step = 1) =>
 	Object.fromEntries(
 		Array.from({ length: max - min + 1 }, (_, i) => [`${min + i * step}px`, pxToRem(min + i * step)])
-			// escape dots with _
-			.map(([key, value]) => [key.replace(".", "_"), value]),
+			// escape dots with empty string
+			.map(([key, value]) => [key.replace(".", ""), value]),
 	);
 
 const px0_10 = generatePxToRemRange(10);
@@ -17,7 +17,7 @@ const px500_1000_10 = generatePxToRemRange(1000, 500, 10);
 
 const px0d00_100d00 = generatePxToRemRange(100, 0, 0.01);
 
-const percentage0_100 = Array.from({ length: 100 }, (_, i) => `${i}%`);
+const percentage0_200 = Object.fromEntries(Array.from({ length: 200 }, (_, i) => [`${i}%`, `${i}%`]));
 
 /**
  * @type {import('tailwindcss').Config}
@@ -31,11 +31,11 @@ const config = {
 			spacing: px0_500,
 			leading: {
 				...px0d00_100d00,
-				...percentage0_100,
+				...percentage0_200,
 			},
 			tracking: {
 				...px0d00_100d00,
-				...percentage0_100,
+				...percentage0_200,
 			},
 			radius: px0_200,
 

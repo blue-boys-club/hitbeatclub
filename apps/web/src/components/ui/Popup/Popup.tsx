@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { PopupButton as BasicPopupButton } from "@/components/ui/PopupButton";
 
 import { cn } from "@/common/utils";
 import { CloseModal } from "@/assets/svgs/CloseModal";
@@ -103,10 +104,12 @@ const PopupDescription = React.forwardRef<
 ));
 PopupDescription.displayName = DialogPrimitive.Description.displayName;
 
-const PopupButton = React.forwardRef<React.ElementRef<"button">, React.ComponentPropsWithoutRef<"button">>(
-	({ className, ...props }, ref) => (
-		<PopupClose asChild>
-			<button
+const PopupButton = React.forwardRef<
+	React.ElementRef<"button">,
+	React.ComponentPropsWithoutRef<typeof BasicPopupButton>
+>(({ className, ...props }, ref) => (
+	<PopupClose asChild>
+		{/* <button
 				ref={ref}
 				className={cn(
 					"flex px-[12px] py-[5px] gap-[10px] items-center align-center bg-hbc-black rounded-[30px] cursor-pointer",
@@ -114,10 +117,18 @@ const PopupButton = React.forwardRef<React.ElementRef<"button">, React.Component
 					className,
 				)}
 				{...props}
-			/>
-		</PopupClose>
-	),
-);
+			/> */}
+		<BasicPopupButton
+			ref={ref}
+			className={cn(
+				"flex px-[12px] py-[5px] gap-[10px] items-center align-center bg-hbc-black rounded-[30px] cursor-pointer",
+				"text-center font-suit text-[18px] font-bold leading-[100%] text-hbc-white tracking-[0.18px]",
+				className,
+			)}
+			{...props}
+		/>
+	</PopupClose>
+));
 PopupButton.displayName = "PopupButton";
 
 export {

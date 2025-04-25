@@ -1,54 +1,42 @@
 "use client";
 
 import { cn } from "@/common/utils";
-import { useState } from "react";
+import { forwardRef, useId } from "react";
 
-export interface ToggleProps {
-	defaultChecked?: boolean;
-	onChange?: (checked: boolean) => void;
+export interface ToggleProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> {
 	className?: string;
-	disabled?: boolean;
+	toggleClassName?: string;
 }
 
-export const Toggle = ({ className, defaultChecked = false, onChange, disabled = false, ...props }: ToggleProps) => {
-	const [isChecked, setIsChecked] = useState(defaultChecked);
+export const Toggle = forwardRef<HTMLInputElement, ToggleProps>(
+	({ className, toggleClassName, disabled, ...props }, ref) => {
+		const id = useId();
 
-	const handleClick = () => {
-		if (disabled) return;
+		return (
+			<div className={cn("relative inline-flex items-center", className)}>
+				<input
+					type="checkbox"
+					id={id}
+					className="sr-only peer"
+					disabled={disabled}
+					ref={ref}
+					{...props}
+				/>
+				<label
+					htmlFor={id}
+					className={cn(
+						"w-11 h-6 p-0.5 rounded-full flex items-center transition-all duration-300 ease-in-out",
+						"after:content-[''] after:absolute after:h-5 after:w-5 after:bg-white after:rounded-full after:shadow-sm after:transition-transform after:duration-300 after:ease-in-out",
+						"peer-checked:after:translate-x-full after:translate-x-0",
+						"bg-gray-300 peer-checked:bg-[#0061ff]",
+						"peer-disabled:bg-[#bbbbbf] peer-disabled:cursor-not-allowed peer-disabled:after:opacity-90",
+						"cursor-pointer",
+						toggleClassName,
+					)}
+				/>
+			</div>
+		);
+	},
+);
 
-		const newValue = !isChecked;
-		setIsChecked(newValue);
-		onChange?.(newValue);
-	};
-
-	return (
-		<div
-			role="switch"
-			aria-checked={isChecked}
-			aria-disabled={disabled}
-			tabIndex={disabled ? -1 : 0}
-			onClick={handleClick}
-			onKeyDown={(e) => {
-				if (disabled) return;
-				if (e.key === "Enter" || e.key === " ") {
-					e.preventDefault();
-					handleClick();
-				}
-			}}
-			className={cn(
-				"w-11 h-6 p-0.5 rounded-full transition-all duration-300 ease-in-out",
-				disabled ? "bg-[#bbbbbf] cursor-not-allowed" : ["cursor-pointer", isChecked ? "bg-[#0061ff]" : "bg-gray-300"],
-				className,
-			)}
-			{...props}
-		>
-			<div
-				className={cn(
-					"w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300 ease-in-out",
-					isChecked ? "translate-x-5" : "translate-x-0",
-					disabled && "opacity-90",
-				)}
-			/>
-		</div>
-	);
-};
+Toggle.displayName = "Toggle";

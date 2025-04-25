@@ -1,10 +1,7 @@
+import { SubscribePage } from "@/features/subscribe/SubscribePage";
 
-const SubscribePage = () => {
-    return (
-        <div>
-            <h1>구독 페이지</h1>
-        </div>
-    )
-}
+const SubscribeRoute = () => {
+	return <SubscribePage />;
+};
 
-export default SubscribePage;
+export default SubscribeRoute;

@@ -8,7 +8,7 @@ const px0_500 = Array.from({ length: 500 }, (_, i) => `${i}${postfix}`);
 const px500_1000_10 = Array.from({ length: 50 }, (_, i) => `${500 + i * 10}${postfix}`);
 const px0_00_100_00 = Array.from({ length: 100 * 100 }, (_, i) => `${i / 100}${postfix}`.replace(".", ""));
 
-const percentage0_100 = Array.from({ length: 100 }, (_, i) => `${i}%`);
+const percentage0_200 = Array.from({ length: 200 }, (_, i) => `${i}%`);
 
 // TODO: Customize tailwind merge
 export const twMerge = extendTailwindMerge({
@@ -26,11 +26,10 @@ export const twMerge = extendTailwindMerge({
 				"hbc-gray",
 			],
 			spacing: [...px0_500],
-			text: [...px0_100],
-			tracking: [...px0_00_100_00, ...percentage0_100],
-			leading: [...px0_00_100_00, ...percentage0_100],
+			text: [...px0_100.map((size) => `text-${size}`)],
+			tracking: [...px0_00_100_00, ...percentage0_200],
+			leading: [...px0_00_100_00, ...percentage0_200],
 			radius: [...px0_200],
-
 			container: [...px0_500, ...px500_1000_10, "sidebar-expanded"],
 		},
 	},

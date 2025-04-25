@@ -1,6 +1,6 @@
 import { cn } from "@/common/utils";
 import { cva, VariantProps } from "class-variance-authority";
-import React from "react";
+import React, { forwardRef } from "react";
 
 export interface PopupButtonProps
 	extends React.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -25,13 +25,18 @@ const popupButtonVariants = cva(
 	},
 );
 
-export const PopupButton = ({ className, intent, children, ...props }: PopupButtonProps) => {
-	return (
-		<button
-			className={cn(popupButtonVariants({ intent, className }))}
-			{...props}
-		>
-			{children}
-		</button>
-	);
-};
+export const PopupButton = forwardRef<HTMLButtonElement, PopupButtonProps>(
+	({ className, intent, children, ...props }, ref) => {
+		return (
+			<button
+				ref={ref}
+				className={cn(popupButtonVariants({ intent, className }))}
+				{...props}
+			>
+				{children}
+			</button>
+		);
+	},
+);
+
+PopupButton.displayName = "PopupButton";
