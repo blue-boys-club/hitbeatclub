@@ -44,7 +44,7 @@ export const WithButton: Story = {
 		title: "Section Title",
 		goTo: {
 			label: "Click Me",
-			onClick: () => alert("Button clicked!"),
+			href: "#",
 		},
 	},
 };

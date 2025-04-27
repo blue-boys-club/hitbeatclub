@@ -92,6 +92,7 @@ import { Volume } from "./Volume";
 import { VolumeThumb } from "./VolumeThumb";
 import { Youtube } from "./Youtube";
 import { AddCircle } from "./AddCircle";
+import { Phone } from "./Phone";
 
 export {
 	AddCircle,
@@ -188,4 +189,5 @@ export {
 	Incorrect,
 	Upload,
 	ArrowRight,
+	Phone,
 };

@@ -6,7 +6,7 @@ const meta: Meta<typeof GenreButton> = {
 	component: GenreButton,
 	tags: ["autodocs"],
 	argTypes: {
-		genreName: {
+		name: {
 			description: "장르 이름",
 			control: "text",
 		},
@@ -39,7 +39,7 @@ type Story = StoryObj<typeof GenreButton>;
 // 기본 상태 (삭제 버튼 있음)
 export const Default: Story = {
 	args: {
-		genreName: "Boom bap",
+		name: "Boom bap",
 		showDeleteButton: false,
 	},
 };
@@ -47,23 +47,23 @@ export const Default: Story = {
 // 삭제 버튼 없는 상태 (hover 효과 있음)
 export const WithoutDeleteButton: Story = {
 	args: {
-		genreName: "Boom bap",
+		name: "Boom bap",
 		showDeleteButton: false,
 	},
 };
 
 // 긴 텍스트 케이스
-export const LongGenreName: Story = {
+export const Longname: Story = {
 	args: {
-		genreName: "Alternative Progressive Rock Metal",
+		name: "Alternative Progressive Rock Metal",
 		showDeleteButton: true,
 	},
 };
 
 // 한글 장르명 케이스
-export const KoreanGenreName: Story = {
+export const Koreanname: Story = {
 	args: {
-		genreName: "힙합",
+		name: "힙합",
 		showDeleteButton: true,
 	},
 };
@@ -71,7 +71,7 @@ export const KoreanGenreName: Story = {
 // 커스텀 스타일 적용
 export const WithCustomStyle: Story = {
 	args: {
-		genreName: "Jazz",
+		name: "Jazz",
 		showDeleteButton: true,
 		className: "shadow-lg",
 	},
@@ -82,19 +82,19 @@ export const MultipleGenreButtons: Story = {
 	render: () => (
 		<div className="flex flex-wrap gap-2">
 			<GenreButton
-				genreName="Hip Hop"
+				name="Hip Hop"
 				showDeleteButton={true}
 			/>
 			<GenreButton
-				genreName="R&B"
+				name="R&B"
 				showDeleteButton={true}
 			/>
 			<GenreButton
-				genreName="Jazz"
+				name="Jazz"
 				showDeleteButton={false}
 			/>
 			<GenreButton
-				genreName="Rock"
+				name="Rock"
 				showDeleteButton={true}
 			/>
 		</div>
@@ -104,7 +104,7 @@ export const MultipleGenreButtons: Story = {
 // 인터랙션 테스트를 위한 스토리
 export const WithInteraction: Story = {
 	args: {
-		genreName: "Click to Delete",
+		name: "Click to Delete",
 		showDeleteButton: true,
 		onDelete: () => alert("장르가 삭제되었습니다."),
 	},

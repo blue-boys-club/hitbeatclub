@@ -1,8 +1,13 @@
-const ArtistStudioSettlementsRoute = () => {
+import ArtistStudioPayoutsPage from "@/features/artist/components/ArtistStudioPayoutPage";
+
+const ArtistStudioSettlementsRoute = async ({ params }: { params: Promise<{ artistId: string }> }) => {
+	const { artistId } = await params;
+
 	return (
-		<div>
-			<h1>마이 스튜디오 정산 페이지</h1>
-		</div>
+		<ArtistStudioPayoutsPage
+			artistId={artistId}
+			type="settlements"
+		/>
 	);
 };
 

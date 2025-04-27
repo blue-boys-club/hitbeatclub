@@ -5,7 +5,7 @@ import { useAudioPlayer } from "@/hooks/useAudioPlayer";
 import { Like, ShoppingBag } from "@/assets/svgs";
 import { AudioPlayer } from "./AudioPlayer";
 import { VolumeControl } from "./VolumeControl";
-
+import Image from "next/image";
 export const Footer = () => {
 	// UI-related state
 	const [like, setLike] = useState(false);
@@ -28,7 +28,10 @@ export const Footer = () => {
 				{/* 트랙 정보 및 좋아요/장바구니 */}
 				<div className="flex items-center gap-2 w-96">
 					<div className="flex items-center justify-between gap-4">
-						<img
+						<Image
+							width={60}
+							height={60}
+							alt="track"
 							className="border-black w-14 h-14"
 							src="https://placehold.co/60x60"
 						/>
@@ -44,7 +47,9 @@ export const Footer = () => {
 							onClick={onClickLike}
 						>
 							{like ? (
-								<img
+								<Image
+									width={20}
+									height={20}
 									className="w-5 h-5"
 									src="/assets/ActiveLike.png"
 									alt="like"

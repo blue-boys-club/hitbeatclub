@@ -8,9 +8,17 @@ import { ArtistStudioAccountSettingCancelMembershipCompleteModal } from "./modal
 import { ArtistStudioAccountSettingPlanChangeModal } from "./modal/ArtistStudioAccountSettingPlanChangeModal";
 import { ArtistStudioAccountSettingPlanChangeCompleteModal } from "./modal/ArtistStudioAccountSettingPlanChangeCompleteModal";
 import { ArtistStudioAccountSettingPlanChangeCancelModal } from "./modal/ArtistStudioAccountSettingPlanChangeCancelModal";
+import { useShallow } from "zustand/react/shallow";
+import { useLayoutStore } from "@/stores/layout";
 
 export const ArtistStudioAccountSettingMembership = () => {
-	const [isMembership, setIsMembership] = useState(true);
+	// const [isMembership, setIsMembership] = useState(true);
+	const { isMembership, setMembership } = useLayoutStore(
+		useShallow((state) => ({
+			isMembership: state.isMembership,
+			setMembership: state.setMembership,
+		})),
+	);
 	const [isExpired, setIsExpired] = useState(true);
 
 	// 요금제 전환 관련 상태
@@ -65,7 +73,7 @@ export const ArtistStudioAccountSettingMembership = () => {
 		<div className="w-[737px] flex flex-col gap-10">
 			<div className="flex flex-col gap-[5px]">
 				<div className="text-[22px] font-bold leading-[26.4px] tracking-0.22px">나의 멤버십정보</div>
-				<div className="flex justify-between items-center gap-1">
+				<div className="flex items-center justify-between gap-1">
 					<div className="text-[16px] text-hbc-red font-bold leading-[19.2px] tracking-0.16px">
 						연간 요금제를 이용 중입니다.
 					</div>
@@ -91,8 +99,8 @@ export const ArtistStudioAccountSettingMembership = () => {
 
 			<div className="flex flex-col gap-[15px]">
 				<div className="text-[22px] font-bold leading-[26.4px] tracking-0.22px">멤버십 결제 수단 변경</div>
-				<div className="flex justify-between items-center gap-1">
-					<div className=" text-black font-bold leading-tight tracking-tight">멤버십 정기 결제 수단</div>
+				<div className="flex items-center justify-between gap-1">
+					<div className="font-bold leading-tight tracking-tight text-black ">멤버십 정기 결제 수단</div>
 					<Button
 						variant="outline"
 						className="w-[120px] text-[12px]"
@@ -104,7 +112,7 @@ export const ArtistStudioAccountSettingMembership = () => {
 
 			<div className="flex flex-col gap-[15px]">
 				<div className="text-[22px] font-bold leading-[26.4px] tracking-0.22px">멤버십 변경 / 해지</div>
-				<div className="flex justify-between items-center gap-1">
+				<div className="flex items-center justify-between gap-1">
 					<div className="flex items-center gap-2.5">
 						<div className="text-black font-bold leading-[19.2px] tracking-0.16px">멤버십 요금제 전환</div>
 						<div className="text-hbc-red text-[12px] font-bold leading-[14.4px] tracking-0.12px">

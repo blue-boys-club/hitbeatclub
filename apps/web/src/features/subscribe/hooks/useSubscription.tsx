@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect, createContext, useContext, ReactNode } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { SubscribeFormValues } from "../schema";
+import { useLayoutStore } from "@/stores/layout";
+import { useShallow } from "zustand/react/shallow";
 
 export type ModalType = "promotion" | "payment" | "success" | "error" | "information";
 
@@ -19,7 +21,12 @@ const SubscriptionContext = createContext<UseSubscriptionReturn | undefined>(und
 
 // Provider 컴포넌트
 export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
-	const [isSubscribed, setIsSubscribed] = useState(false); // 서버에서 구독 상태 확인 필요
+	const { isSubscribed, setIsSubscribed } = useLayoutStore(
+		useShallow((state) => ({
+			isSubscribed: state.isMembership,
+			setIsSubscribed: state.setMembership,
+		})),
+	);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const { toast } = useToast();
 

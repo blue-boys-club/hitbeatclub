@@ -22,7 +22,7 @@ const NavLink = ({ href, label, Icon, isLocked, onClick }: NavLinkProps) => {
 			onClick(e);
 		}
 	};
-    
+
 	return (
 		<Link
 			href={href}

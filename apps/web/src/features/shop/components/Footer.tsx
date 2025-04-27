@@ -32,16 +32,22 @@ const Footer = () => {
 			</UI.BodySmall>
 			<div className="flex flex-row gap-2">
 				<Link
-					href="/terms"
+					href="/terms-of-service"
 					className="text-hbc-gray-400 text-[16px] font-medium font-suit leading-none tracking-016px"
 				>
 					서비스이용약관
 				</Link>
 				<Link
-					href="/privacy"
+					href="/privacy-policy"
 					className="text-hbc-gray-400 text-[16px] font-medium font-suit leading-none tracking-016px"
 				>
 					개인정보처리방침
+				</Link>
+				<Link
+					href="/refund-policy"
+					className="text-hbc-gray-400 text-[16px] font-medium font-suit leading-none tracking-016px"
+				>
+					환불정책
 				</Link>
 				<Link
 					href="/notice"
@@ -50,7 +56,7 @@ const Footer = () => {
 					공지사항
 				</Link>
 				<Link
-					href="/contact"
+					href="/support"
 					className="text-hbc-gray-400 text-[16px] font-medium font-suit leading-none tracking-016px"
 				>
 					고객센터

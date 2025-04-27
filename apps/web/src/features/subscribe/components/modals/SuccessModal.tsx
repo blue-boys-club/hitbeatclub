@@ -1,6 +1,6 @@
 import { memo } from "react";
 import Link from "next/link";
-import { Popup, PopupContent, PopupFooter } from "@/components/ui/Popup";
+import { Popup, PopupContent, PopupDescription, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
 import { useSubscription } from "../../hooks/useSubscription";
 import { cn } from "@/common/utils/tailwind";
 
@@ -22,9 +22,10 @@ export const SuccessModal = memo(() => {
 			onOpenChange={handleOnOpenChange}
 		>
 			<PopupContent className="w-[589px] max-w-[589px] flex flex-col justify-start items-center gap-25px">
-				<div className="self-stretch font-extrabold leading-loose text-center tracking-026px text-hbc-black text-26px font-suit">
-					🎉 히트비트클럽 멤버가 되신 걸 환영합니다!
-				</div>
+				<PopupHeader>
+					<PopupTitle>히트비트클럽 멤버가 되신 걸 환영합니다!</PopupTitle>
+					<PopupDescription className="sr-only">히트비트클럽 멤버가 되신 걸 환영합니다!</PopupDescription>
+				</PopupHeader>
 
 				<div className="flex flex-col items-center justify-center w-full gap-25px">
 					<div className="flex flex-col items-start justify-start h-16 gap-10px">

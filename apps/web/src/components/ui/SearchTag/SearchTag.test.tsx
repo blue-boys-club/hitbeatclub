@@ -29,7 +29,7 @@ describe("SearchTag", () => {
 		it("renders with correct border styles", () => {
 			render(<SearchTag />);
 			const wrapper = screen.getByRole("searchbox").parentElement;
-			expect(wrapper).toHaveClass("border-2", "border-hbc-black", "rounded-[40px]");
+			expect(wrapper).toHaveClass("outline-2", "outline-hbc-black", "-outline-offset-1", "rounded-[40px]");
 		});
 
 		it("renders search icon button", () => {

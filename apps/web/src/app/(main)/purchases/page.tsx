@@ -1,10 +1,7 @@
+import { OrderListPage } from "@/features/purchase/OrderListPage";
 
 const PurchasesPage = () => {
-    return (
-        <div>
-            <h1>구매 페이지</h1>
-        </div>
-    )
-}
+	return <OrderListPage />;
+};
 
 export default PurchasesPage;

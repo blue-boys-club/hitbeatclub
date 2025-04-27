@@ -10,8 +10,12 @@ interface UserProfileProps extends SVGProps<SVGSVGElement> {
 	fill?: string;
 }
 
-export const UserProfile: React.FC<UserProfileProps> = ({ className, width = 31, height = 30, fill = "black" }) => {
-
+export const UserProfile: React.FC<UserProfileProps> = ({
+	className,
+	width = 31,
+	height = 30,
+	fill = "black",
+}: UserProfileProps) => {
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"

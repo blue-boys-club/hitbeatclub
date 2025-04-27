@@ -6,11 +6,11 @@ const meta: Meta<typeof TagButton> = {
 	component: TagButton,
 	tags: ["autodocs"],
 	argTypes: {
-		tagName: {
+		name: {
 			description: "태그 이름",
 			control: "text",
 		},
-		onClick: {
+		onSelect: {
 			description: "태그 클릭 시 실행될 함수",
 			action: "clicked",
 		},
@@ -35,37 +35,37 @@ type Story = StoryObj<typeof TagButton>;
 
 export const Default: Story = {
 	args: {
-		tagName: "example",
+		name: "example",
 	},
 };
 
 export const WithCustomClass: Story = {
 	args: {
-		tagName: "custom",
+		name: "custom",
 		className: "shadow-md",
 	},
 };
 
-export const LongTagName: Story = {
+export const LongName: Story = {
 	args: {
-		tagName: "verylongtagnameexample",
+		name: "verylongtagnameexample",
 	},
 };
 
 export const WithKoreanText: Story = {
 	args: {
-		tagName: "한글태그",
+		name: "한글태그",
 	},
 };
 
 // 여러 태그 버튼을 한번에 보여주는 예시
 export const MultipleTagButtons: Story = {
 	render: () => (
-		<div className="flex gap-2 flex-wrap">
-			<TagButton tagName="음악" />
-			<TagButton tagName="댄스" />
-			<TagButton tagName="힙합" />
-			<TagButton tagName="재즈" />
+		<div className="flex flex-wrap gap-2">
+			<TagButton name="음악" />
+			<TagButton name="댄스" />
+			<TagButton name="힙합" />
+			<TagButton name="재즈" />
 		</div>
 	),
 };

@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/Button";
+import Link from "next/link";
 import React from "react";
 
 const UserAccountSubscribe = () => {
 	return (
-		<section className="flex justify-between pt-4 px-8 items-start">
+		<section className="flex items-start justify-between px-8 pt-4">
 			{true ? (
 				<>
 					<div className="text-[16px] leading-[160%] tracking-[-0.32px] font-extrabold text-black">
@@ -26,14 +27,16 @@ const UserAccountSubscribe = () => {
 						HITBEATCLUB 님은, 아직 구독중인 이용권이 없습니다.
 					</div>
 
-					<Button
-						variant={"fill"}
-						rounded={"full"}
-						fontWeight={"extraBold"}
-						className="border-3 bg-[#FF1900] hover:bg-[#FF1900]/80"
-					>
-						{"요금제 구독하기"}
-					</Button>
+					<Link href="/subscribe">
+						<Button
+							variant={"fill"}
+							rounded={"full"}
+							fontWeight={"extraBold"}
+							className="border-3 bg-[#FF1900] hover:bg-[#FF1900]/80"
+						>
+							{"요금제 구독하기"}
+						</Button>
+					</Link>
 				</>
 			)}
 		</section>

@@ -2,6 +2,7 @@ import { CartShop } from "@/assets/svgs";
 import { cn } from "@/common/utils";
 import { memo } from "react";
 import CartItems from "./CartItems";
+import Link from "next/link";
 
 const CartSection = memo(() => {
 	return (
@@ -24,9 +25,12 @@ const CartSection = memo(() => {
 
 			{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
 			{/* @ts-ignore TODO: Implement cart click handler */}
-			<button className="self-end leading-none bg-white border-4 border-black border-solid cursor-pointer rounded-40px mt-4px mb-5px px-10px py-4px mr-4px">
+			<Link
+				href="/cart"
+				className="self-end leading-none bg-white border-4 border-black border-solid cursor-pointer rounded-40px mt-4px mb-5px px-10px py-4px mr-4px"
+			>
 				Go Cart
-			</button>
+			</Link>
 		</div>
 	);
 });

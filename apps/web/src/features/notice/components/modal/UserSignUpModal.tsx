@@ -1,4 +1,3 @@
-
 const UserSignUpModal = () => {
 	return <div>UserSignUpModal</div>;
 };

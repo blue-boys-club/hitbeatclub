@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, Suspense } from "react";
 import { Search } from "@/assets/svgs/Search";
 import { cn } from "@/common/utils";
 import { TagDropdown } from "@/components/ui";
@@ -14,6 +14,14 @@ interface SearchOption {
 }
 
 export const SearchBar = () => {
+	return (
+		<Suspense fallback={null}>
+			<SearchBarClient />
+		</Suspense>
+	);
+};
+
+export const SearchBarClient = () => {
 	const router = useRouter();
 	const pathname = usePathname();
 	const isSearch = pathname === "/search";

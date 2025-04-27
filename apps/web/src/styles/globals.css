@@ -37,11 +37,34 @@
 
 	--font-suit: var(--font-hbc-suit);
 	--font-suisse: var(--font-hbc-suisse);
+
+	/* Collapsible Animations */
+	--animate-collapsible-down: collapsible-down 0.2s ease-out;
+	--animate-collapsible-up: collapsible-up 0.2s ease-out;
+
+	/* Keyframes for Collapsible */
+	@keyframes collapsible-down {
+		from {
+			height: 0;
+		}
+		to {
+			height: var(--radix-collapsible-content-height);
+		}
+	}
+
+	@keyframes collapsible-up {
+		from {
+			height: var(--radix-collapsible-content-height);
+		}
+		to {
+			height: 0;
+		}
+	}
 }
 
 /* Tailwind Javascript config for programmatically generated tailwind css */
 /* See also: https://tailwindcss.com/docs/functions-and-directives#config-directive */
-@config "./tailwind.config.js";
+@config "./tailwind.config.ts";
 
 body {
 	/* background: var(--background);

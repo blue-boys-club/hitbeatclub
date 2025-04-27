@@ -8,7 +8,7 @@ const StorybookButton = ({
 	children: React.ReactNode;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) => (
 	<button
-		className="border-2 border-hbc-black rounded-md p-2 cursor-pointer"
+		className="p-2 border-2 rounded-md cursor-pointer border-hbc-black"
 		{...props}
 	>
 		{children}

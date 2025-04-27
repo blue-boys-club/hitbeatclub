@@ -1,12 +1,12 @@
 // ONLY FOR PROGRAMMATICALLY GENERATED TAILWIND CSS
 
-const pxToRem = (px, base = 16) => `${px / base}rem`;
+const pxToRem = (px: number, base: number = 16) => `${px / base}rem`;
 
-const generatePxToRemRange = (max, min = 0, step = 1) =>
+const generatePxToRemRange = (max: number, min: number = 0, step: number = 1) =>
 	Object.fromEntries(
 		Array.from({ length: max - min + 1 }, (_, i) => [`${min + i * step}px`, pxToRem(min + i * step)])
 			// escape dots with empty string
-			.map(([key, value]) => [key.replace(".", ""), value]),
+			.map(([key, value]) => [key?.replace(".", ""), value]),
 	);
 
 const px0_10 = generatePxToRemRange(10);

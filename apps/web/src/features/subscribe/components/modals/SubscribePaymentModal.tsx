@@ -1,5 +1,13 @@
 import { memo, useEffect, useMemo, useState } from "react";
-import { Popup, PopupButton, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
+import {
+	Popup,
+	PopupButton,
+	PopupContent,
+	PopupDescription,
+	PopupFooter,
+	PopupHeader,
+	PopupTitle,
+} from "@/components/ui/Popup";
 import { PopupButton as BasicPopupButton } from "@/components/ui/PopupButton";
 import { cn } from "@/common/utils/tailwind";
 import { useSubscription } from "../../hooks/useSubscription";
@@ -12,7 +20,7 @@ type PaymentTab = "card" | "easy";
 /**
  * 멤버십 가입 확인 모달 컴포넌트
  */
-export const PaymentModal = memo(() => {
+export const SubscribePaymentModal = memo(() => {
 	const { watch, setValue, handleSubmit } = useFormContext<SubscribeFormValues>();
 	const promotionCode = watch("promotionCode");
 	const recurringPeriod = watch("recurringPeriod");
@@ -161,7 +169,7 @@ export const PaymentModal = memo(() => {
 	// 간편결제 옵션 렌더링
 	const renderEasyPayOptions = () => (
 		<div className="flex flex-col gap-4 mb-5">
-			<p className="mb-2 text-sm text-gray-500">현재 지원되는 간편결제 수단을 선택해주세요.</p>
+			<p className="mb-2 text-sm text-gray-500">간편결제 수단을 선택해주세요.</p>
 			<div className="grid grid-cols-2 gap-4">
 				<button
 					type="button"
@@ -204,14 +212,13 @@ export const PaymentModal = memo(() => {
 			<PopupContent className="w-[600px] max-w-[600px]">
 				<PopupHeader>
 					<PopupTitle className="text-[26px] font-bold">결제 정보 입력</PopupTitle>
+					<PopupDescription className="text-[16px] font-bold">
+						선택하신 맴버십 플랜: <span className="text-hbc-black">{subscriptionPlanText}</span>
+					</PopupDescription>
 				</PopupHeader>
 
 				<div className="flex flex-col items-start justify-start w-full gap-25px">
 					<div className="w-full mb-4">
-						<span className="block mb-2 font-bold text-16px leading-32px tracking-016px">
-							선택하신 멤버십 플랜: <span className="text-hbc-black">{subscriptionPlanText}</span>
-						</span>
-
 						{promotionCode && (
 							<div className="p-3 mb-3 rounded-md bg-blue-50">
 								<span className="font-bold text-blue-700">프로모션 코드 적용: {promotionCode}</span>
@@ -224,7 +231,10 @@ export const PaymentModal = memo(() => {
 							</span>
 							<ul className="ml-5 text-sm text-gray-700 list-disc">
 								<li>입력하신 카드 정보로 정기 결제가 이루어집니다.</li>
-								<li>첫 결제 후 매월 같은 날짜에 자동으로 결제됩니다.</li>
+								<li>
+									첫 결제 후 {recurringPeriod === RecurringPeriod.YEARLY ? "매년" : "매월"} 같은 날짜에 자동으로
+									결제됩니다.
+								</li>
 								<li>언제든지 멤버십을 취소할 수 있습니다.</li>
 							</ul>
 						</div>
@@ -251,7 +261,8 @@ export const PaymentModal = memo(() => {
 										? "border-b-2 border-hbc-black text-hbc-black"
 										: "text-gray-500 hover:text-gray-700 cursor-pointer",
 								)}
-								onClick={() => setActiveTab("easy")}
+								// onClick={() => setActiveTab("easy")}
+								onClick={() => alert("간편결제 정기결제는 현재 지원되지 않습니다.")}
 							>
 								간편결제
 							</button>
@@ -288,4 +299,4 @@ export const PaymentModal = memo(() => {
 	);
 });
 
-PaymentModal.displayName = "PaymentModal";
+SubscribePaymentModal.displayName = "PaymentModal";

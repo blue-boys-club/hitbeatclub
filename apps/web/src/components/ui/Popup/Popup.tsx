@@ -22,7 +22,7 @@ const PopupOverlay = React.forwardRef<
 	<DialogPrimitive.Overlay
 		ref={ref}
 		className={cn(
-			"fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+			"fixed inset-0 z-[70] bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
 			className,
 		)}
 		{...props}
@@ -39,7 +39,7 @@ const PopupContent = React.forwardRef<
 		<DialogPrimitive.Content
 			ref={ref}
 			className={cn(
-				"fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-[5px] bg-hbc-white duration-200",
+				"fixed left-[50%] top-[50%] z-[70] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-[5px] bg-hbc-white duration-200",
 				"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
 				"data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
 				className,
@@ -122,7 +122,7 @@ const PopupButton = React.forwardRef<
 			ref={ref}
 			className={cn(
 				"flex px-[12px] py-[5px] gap-[10px] items-center align-center bg-hbc-black rounded-[30px] cursor-pointer",
-				"text-center font-suit text-[18px] font-bold leading-[100%] text-hbc-white tracking-[0.18px]",
+				"text-center font-suit text-[18px] font-bold leading-[100%] text-hbc-white tracking-[0.18px] ring-0",
 				className,
 			)}
 			{...props}

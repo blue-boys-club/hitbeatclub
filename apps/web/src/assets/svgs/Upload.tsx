@@ -6,7 +6,7 @@ interface UploadIconProps extends SVGProps<SVGSVGElement> {
 	height?: number;
 }
 
-export const Upload: React.FC<UploadIconProps> = ({ className, width = 40, height = 41 }) => {
+export const Upload: React.FC<UploadIconProps> = ({ className, width = 40, height = 41 }: UploadIconProps) => {
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"

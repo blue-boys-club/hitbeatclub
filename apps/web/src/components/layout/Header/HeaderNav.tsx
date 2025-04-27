@@ -5,9 +5,11 @@ import { NotificationOn } from "@/assets/svgs/NotificationOn";
 import { UserProfile } from "@/assets/svgs/UserProfile";
 import { cn } from "@/common/utils";
 import { LoginButton, SubscribeButton, TagDropdown, UserAvatar } from "@/components/ui";
+import { useLayoutStore } from "@/stores/layout";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { memo, useCallback, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 
 interface NotificationOption {
 	label: string;
@@ -23,7 +25,7 @@ interface HeaderNavOption {
 const headerNavOptions: HeaderNavOption[] = [
 	{
 		label: "주문 목록",
-		value: "orders",
+		value: "purchases",
 	},
 	{
 		label: "아티스트 스튜디오",
@@ -38,9 +40,13 @@ const headerNavOptions: HeaderNavOption[] = [
 export const HeaderNav = memo(() => {
 	const navigate = useRouter();
 	const [isLogined, setIsLogined] = useState(true);
-	const [isSubscribed, setIsSubscribed] = useState(true);
 	const [userProfileImage, setUserProfileImage] = useState(false);
 	const [notificationOptions, setNotificationOptions] = useState<NotificationOption[]>([]);
+	const { isSubscribed } = useLayoutStore(
+		useShallow((state) => ({
+			isSubscribed: state.isMembership,
+		})),
+	);
 
 	const signOut = useCallback(() => {
 		console.log("로그아웃");
@@ -50,8 +56,8 @@ export const HeaderNav = memo(() => {
 	const handelDropdownOptionSelect = useCallback(
 		(value: string) => {
 			switch (value) {
-				case "orders":
-					navigate.push("/orders");
+				case "purchases":
+					navigate.push("/purchases");
 					break;
 				case "studio":
 					navigate.push("/studio");
@@ -72,7 +78,7 @@ export const HeaderNav = memo(() => {
 				<>
 					<SubscribeButton
 						component="Link"
-						href="/artist-studio"
+						href={isSubscribed ? "/artist-studio" : "/subscribe"}
 						isSubscribed={isSubscribed}
 					/>
 

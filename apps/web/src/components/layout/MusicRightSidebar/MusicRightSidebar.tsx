@@ -10,10 +10,12 @@ import { AlbumAvatar } from "@/components/ui";
 import { FreeDownloadButton } from "@/components/ui/FreeDownloadButton";
 import { GenreButton } from "@/components/ui/GenreButton";
 import { PurchaseButton } from "@/components/ui/PurchaseButton";
+import { useShallow } from "zustand/react/shallow";
+import { useLayoutStore } from "@/stores/layout";
+import { useRouter } from "next/navigation";
+import { PurchaseModal } from "./PurchaseModal";
 
 interface MusicRightSidebarProps {
-	isOpen: boolean;
-	onToggleOpen: (isOpen: boolean) => void;
 	trackInfo?: {
 		title: string;
 		artist: string;
@@ -33,34 +35,55 @@ interface MusicRightSidebarProps {
  */
 export const MusicRightSidebar = memo(
 	({
-		isOpen,
-		onToggleOpen,
 		trackInfo = {
 			title: "Secret Garden",
 			artist: "NotJake",
 			description:
 				"플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운무 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.",
-			albumImgSrc: "https://placehold.co/60x60",
+			albumImgSrc: "https://placehold.co/360x360.png",
 			price: 15000,
 			genres: ["C# minor", "BPM 120", "Boom bap", "Old School"],
 		},
 	}: MusicRightSidebarProps) => {
+		const router = useRouter();
+		const { isOpen, setRightSidebar, isSubscribed } = useLayoutStore(
+			useShallow((state) => ({
+				isOpen: state.rightSidebar.isOpen,
+				isSubscribed: state.isMembership, // TODO: remove this and verify from server
+				setRightSidebar: state.setRightSidebar,
+			})),
+		);
+
+		const handleToggleOpen = () => {
+			setRightSidebar(!isOpen);
+		};
+
+		const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
 		const [isLiked, setIsLiked] = useState(false);
 
 		const onLikeClick = () => {
 			setIsLiked(!isLiked);
 		};
 
+		const onClickFreeDownload = () => {
+			if (!isSubscribed) {
+				router.push("/subscribe");
+			} else {
+				alert("준비중입니다.");
+			}
+		};
+
 		return (
 			<div
 				className={cn(
-					"fixed right-0 top-0 h-[calc(100vh-92px)] transition-all duration-700 ease-in-out",
+					"fixed right-0 top-87px h-[calc(100vh-92px-72px-15px)] transition-all duration-500 ease-in-out",
 					isOpen ? "w-80" : "w-0",
 				)}
 			>
-				<div className="w-80 h-full pb-15 bg-hbc-white border-l-2 border-black flex flex-col overflow-hidden">
+				<div className="flex flex-col h-full overflow-hidden border-l-2 border-black w-80 pb-15 bg-hbc-white">
 					<button
-						onClick={() => onToggleOpen(!isOpen)}
+						onClick={handleToggleOpen}
 						className={cn(
 							"absolute top-0 cursor-pointer hover:opacity-80 transition-opacity",
 							isOpen ? "left-0" : "-left-8",
@@ -69,7 +92,7 @@ export const MusicRightSidebar = memo(
 						{isOpen ? <ArrowRightMosaic /> : <ArrowLeftMosaic />}
 					</button>
 
-					<div className="flex justify-center items-center mt-12 mb-6">
+					<div className="flex items-center justify-center mt-12 mb-6">
 						<AlbumAvatar src={trackInfo.albumImgSrc} />
 					</div>
 
@@ -78,8 +101,8 @@ export const MusicRightSidebar = memo(
 							{trackInfo.title}
 						</div>
 
-						<div className="flex justify-between items-center gap-2 mb-4">
-							<div className="text-lg font-['Suisse_Int'l']">{trackInfo.artist}</div>
+						<div className="flex items-center justify-between gap-2 mb-4">
+							<div className="text-lg font-suisse">{trackInfo.artist}</div>
 							<div>
 								<Beat className="w-16 h-4" />
 							</div>
@@ -90,9 +113,9 @@ export const MusicRightSidebar = memo(
 					</div>
 
 					<ScrollArea.Root className="flex-1 min-h-0 px-6 my-4">
-						<ScrollArea.Viewport className="size-full p-2">
-							<div className="mb-3 text-base font-bold font-['SUIT'] leading-snug">곡 정보</div>
-							<div className="text-hbc-gray-300 text-base font-bold font-['SUIT'] leading-relaxed mb-6">
+						<ScrollArea.Viewport className="p-2 size-full">
+							<div className="mb-3 text-base font-bold leading-snug font-suit">곡 정보</div>
+							<div className="mb-6 text-base font-bold leading-relaxed text-hbc-gray-300 font-suit">
 								{trackInfo.description}
 							</div>
 
@@ -125,13 +148,15 @@ export const MusicRightSidebar = memo(
 							<div className="flex flex-col gap-0.5">
 								<FreeDownloadButton
 									variant="secondary"
-									className="outline-4 outline-hbc-black px-2.5 font-['Suisse_Int'l']"
+									className="outline-4 outline-hbc-black px-2.5 font-suisse"
+									onClick={onClickFreeDownload}
 								>
 									Free Download
 								</FreeDownloadButton>
 								<PurchaseButton
 									iconColor="hbc-white"
 									className="outline-4 outline-hbc-black"
+									onClick={() => setIsPaymentModalOpen(true)}
 								>
 									{trackInfo.price?.toLocaleString()} KRW
 								</PurchaseButton>
@@ -139,7 +164,7 @@ export const MusicRightSidebar = memo(
 
 							<div
 								onClick={onLikeClick}
-								className="cursor-pointer w-8 h-8 flex justify-center items-center hover:opacity-80 transition-opacity"
+								className="flex items-center justify-center w-8 h-8 transition-opacity cursor-pointer hover:opacity-80"
 							>
 								{isLiked ? (
 									<Image
@@ -155,6 +180,15 @@ export const MusicRightSidebar = memo(
 						</div>
 					</div>
 				</div>
+				<PurchaseModal
+					isOpen={isPaymentModalOpen}
+					onClose={() => setIsPaymentModalOpen(false)}
+					item={{
+						id: 1,
+						name: trackInfo.title,
+						price: trackInfo.price!,
+					}}
+				/>
 			</div>
 		);
 	},

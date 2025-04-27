@@ -1,14 +1,13 @@
 import React from "react";
 import SupportAccordian from "./SupportAccordian";
-import Image from "next/image";
-import { questions } from "../user.constants";
+import { questions } from "../support.constants";
 import { SupportLoge } from "@/assets/svgs/SupportLoge";
 
 const SupportQuestionList = () => {
 	return (
 		<section className="pt-[30px] pl-[46px] pr-[63px]">
 			<header className="pb-10 flex flex-col gap-[5px]">
-				<div className="flex gap-3 items-center">
+				<div className="flex items-center gap-3">
 					<SupportLoge />
 					<div className="text-[#3884FF] font-suit text-[26px] font-extrabold leading-[100%] tracking-[0.26px]">
 						Support Center

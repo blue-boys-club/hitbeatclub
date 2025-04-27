@@ -1,10 +1,5 @@
+import { CartPage } from "@/features/cart/CartPage";
 
-const CartPage = () => {
-    return (
-        <div>
-            <h1>장바구니 페이지</h1>
-        </div>
-    )
+export default function CartRoute() {
+	return <CartPage />;
 }
-
-export default CartPage;

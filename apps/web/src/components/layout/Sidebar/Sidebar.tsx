@@ -1,27 +1,28 @@
 "use client";
 
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { cn } from "@/common/utils";
 import { HBCTopLogo, SidebarArrow } from "@/assets/svgs";
 import { CartSection } from "./Cart";
 import SidebarTabs from "./SidebarTabs";
+import { useLayoutStore } from "@/stores/layout";
 
-interface SidebarProps {
-	isCollapsed: boolean;
-	onToggleCollapse: (isCollapsed: boolean) => void;
-}
+export const Sidebar = memo(() => {
+	const { isOpen, setLeftSidebar } = useLayoutStore(
+		useShallow((state) => ({
+			isOpen: state.leftSidebar.isOpen,
+			setLeftSidebar: state.setLeftSidebar,
+		})),
+	);
 
-export const Sidebar = memo(({ isCollapsed, onToggleCollapse }: SidebarProps) => {
 	const handleCollapseToggle = useCallback(() => {
-		onToggleCollapse(!isCollapsed);
-	}, [isCollapsed, onToggleCollapse]);
+		setLeftSidebar(!isOpen);
+	}, [isOpen, setLeftSidebar]);
 
 	return (
 		<div
-			className={cn(
-				"flex flex-col flex-1 h-full gap-5px transition-all duration-300 ",
-				isCollapsed ? "w-150px" : "w-305px",
-			)}
+			className={cn("flex flex-col flex-1 h-full gap-5px transition-all duration-500 ", isOpen ? "w-305px" : "w-150px")}
 		>
 			<div className="flex-none px-13px pt-19px">
 				<HBCTopLogo />
@@ -38,7 +39,7 @@ export const Sidebar = memo(({ isCollapsed, onToggleCollapse }: SidebarProps) =>
 					<button
 						type="button"
 						onClick={handleCollapseToggle}
-						aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+						aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
 						className="absolute top-0 cursor-pointer -right-2px"
 					>
 						<SidebarArrow className={"transition-all duration-300 -scale-x-100 @200px/sidebar:scale-x-100"} />

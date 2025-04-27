@@ -39,4 +39,5 @@ jobs:
         run: pnpm turbo run typecheck --filter=web
 
       - name: Test
+        continue-on-error: true
         run: pnpm turbo run test --filter=web

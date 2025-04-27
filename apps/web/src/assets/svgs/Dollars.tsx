@@ -7,12 +7,18 @@ interface DollarsProps extends SVGProps<SVGSVGElement> {
 	fill?: string;
 }
 
-export const Dollars: React.FC<DollarsProps> = ({ className, width = 34, height = 33, fill = "black" }) => {
+export const Dollars: React.FC<DollarsProps> = ({
+	className,
+	width = 34,
+	height = 33,
+	fill = "black",
+}: DollarsProps) => {
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
 			width={width}
 			height={height}
+			className={className}
 			viewBox="0 0 34 33"
 			fill="none"
 		>

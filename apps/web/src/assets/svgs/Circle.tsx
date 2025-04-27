@@ -14,7 +14,7 @@ const Circle = () => {
 				cy="6.5"
 				r="5.5"
 				stroke="#3884FF"
-				stroke-width="2"
+				strokeWidth="2"
 			/>
 		</svg>
 	);

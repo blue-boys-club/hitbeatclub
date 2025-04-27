@@ -35,7 +35,6 @@ type Story = StoryObj<typeof Toast>;
 // Story that demonstrates the actual usage
 export const ToastWithTrigger: Story = {
 	render: () => {
-		// eslint-disable-next-line react-hooks/rules-of-hooks -- Storybook Demonstration purpose
 		const { toast } = useToast();
 
 		return (
@@ -57,7 +56,6 @@ export const ToastWithTrigger: Story = {
 
 export const ToastWithTriggerAndReactNode: Story = {
 	render: () => {
-		// eslint-disable-next-line react-hooks/rules-of-hooks -- Storybook Demonstration purpose
 		const { toast } = useToast();
 
 		return (

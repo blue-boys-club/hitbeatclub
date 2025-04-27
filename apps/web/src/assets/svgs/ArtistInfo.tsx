@@ -6,7 +6,12 @@ interface ArtistInfoProps extends SVGProps<SVGSVGElement> {
 	height?: number;
 	fill?: string;
 }
-export const ArtistInfo: React.FC<ArtistInfoProps> = ({ className, width = 41, height = 40, fill = "#FF1900" }) => {
+export const ArtistInfo: React.FC<ArtistInfoProps> = ({
+	className,
+	width = 41,
+	height = 40,
+	fill = "#FF1900",
+}: ArtistInfoProps) => {
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
