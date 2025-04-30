@@ -1,10 +1,9 @@
 import { useState, useCallback, useEffect, createContext, useContext, ReactNode } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { SubscribeFormValues } from "../schema";
 import { useLayoutStore } from "@/stores/layout";
 import { useShallow } from "zustand/react/shallow";
 
-export type ModalType = "promotion" | "payment" | "success" | "error" | "information";
+export type ModalType = "promotion" | "payment" | "success" | "error" | "information" | "paypal";
 
 export type UseSubscriptionReturn = {
 	isSubscribed: boolean;
@@ -28,7 +27,6 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 		})),
 	);
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const { toast } = useToast();
 
 	const [modals, setModals] = useState<Record<ModalType, boolean>>({
 		promotion: false,
@@ -36,6 +34,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 		success: false,
 		error: false,
 		information: false,
+		paypal: false,
 	});
 
 	// 모달 관리 함수

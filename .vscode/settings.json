@@ -1,5 +1,5 @@
 {
 	"prettier.enable": true,
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
-	"cSpell.words": ["hitbeatclub"]
+	"cSpell.words": ["hitbeatclub", "PortOne", "HitBeat"]
 }

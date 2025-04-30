@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
 	Popup,
 	PopupButton,
@@ -14,29 +14,36 @@ import { useSubscription } from "../../hooks/useSubscription";
 import { RecurringPeriod, SubscribeFormValues, cardCredentialSchema } from "../../schema";
 import { useForm, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import PortOne from "@portone/browser-sdk/v2";
+import { z } from "zod";
 
-type PaymentTab = "card" | "easy";
+type PaymentTab = "card" | "easy" | "paypal";
+// Infer the type from the Zod schema
+type CardCredentialValues = z.infer<typeof cardCredentialSchema>;
 
 /**
  * 멤버십 가입 확인 모달 컴포넌트
  */
 export const SubscribePaymentModal = memo(() => {
-	const { watch, setValue, handleSubmit } = useFormContext<SubscribeFormValues>();
+	const { watch, setValue } = useFormContext<SubscribeFormValues>();
 	const promotionCode = watch("promotionCode");
 	const recurringPeriod = watch("recurringPeriod");
 	const { modals, closeModal, openModal, isSubmitting, submitSubscription } = useSubscription();
 	const [activeTab, setActiveTab] = useState<PaymentTab>("card");
-
-	useEffect(() => {
-		console.log("payment modal status:", modals.payment);
-	}, [modals.payment]);
+	const [paypalBillingKey, setPaypalBillingKey] = useState<string | null>(null); // State for PayPal billing key
+	const [paypalError, setPaypalError] = useState<string | null>(null); // State for PayPal errors
+	const [isPaypalUILoaded, setIsPaypalUILoaded] = useState(false); // Track if PortOne UI is loaded
 
 	const {
 		register,
 		handleSubmit: handleCardSubmit,
 		formState: { errors },
-	} = useForm({
+		reset: resetCardForm, // Get reset function for card form
+	} = useForm<CardCredentialValues>({
+		// Use inferred type
 		resolver: zodResolver(cardCredentialSchema),
+		// defaultValues can be omitted if fields are empty strings,
+		// or kept for clarity
 		defaultValues: {
 			number: "",
 			expiryMonth: "",
@@ -46,15 +53,24 @@ export const SubscribePaymentModal = memo(() => {
 		},
 	});
 
+	const handleCloseModal = useCallback(() => {
+		closeModal("payment");
+		setActiveTab("card"); // Reset tab to default
+		setPaypalBillingKey(null); // Reset paypal state
+		setPaypalError(null);
+		setIsPaypalUILoaded(false);
+		resetCardForm(); // Reset card form fields
+	}, [closeModal, resetCardForm]);
+
 	const handleOnOpenChange = (open: boolean) => {
 		if (!open) {
-			closeModal("payment");
+			handleCloseModal();
 		}
 	};
 
-	// 신용카드 정보 제출
-	const onSubmitCardInfo = (data: any) => {
-		// 카드 정보를 부모 폼에 추가
+	// 신용카드 정보 제출 핸들러
+	const onSubmitCardInfo = (data: CardCredentialValues) => {
+		// Use inferred type
 		setValue(
 			"method",
 			{
@@ -62,25 +78,30 @@ export const SubscribePaymentModal = memo(() => {
 					credential: data,
 				},
 			},
-			{ shouldValidate: true },
+			{ shouldValidate: true }, // Trigger validation on parent form if needed
 		);
-
-		// 결제 진행
+		// Proceed with the actual subscription submission
 		handleSubscribeConfirm();
 	};
 
-	// 구독 확인 및 제출
+	// 구독 확인 및 최종 제출 (모든 탭 공통)
 	const handleSubscribeConfirm = async () => {
 		try {
-			// 폼 제출 처리 - 여기서 현재 폼 데이터 전체를 가져와 submitSubscription으로 전달
+			// Ensure method is set correctly based on activeTab before submitting
+			if (activeTab === "paypal" && paypalBillingKey) {
+				setValue("method", { paypal: { billingKey: paypalBillingKey } }, { shouldValidate: true });
+			}
+			// Card details are set via onSubmitCardInfo which calls this function
+
+			// Get the latest form data and submit
 			const formData = watch();
 			await submitSubscription(formData);
 
-			closeModal("payment");
-			// success 모달은 submitSubscription 내부에서 열립니다
+			handleCloseModal(); // Close and reset state on success
+			// Success modal is opened within submitSubscription
 		} catch (error) {
 			console.error("Subscription failed:", error);
-			closeModal("payment");
+			handleCloseModal(); // Close and reset state on error
 			openModal("error");
 		}
 	};
@@ -91,11 +112,19 @@ export const SubscribePaymentModal = memo(() => {
 		[recurringPeriod],
 	);
 
+	const subscriptionPaypalText = useMemo(
+		() => (recurringPeriod === RecurringPeriod.YEARLY ? "HITBEAT 연간 멤버십" : "HITBEAT 월간 멤버십"),
+		[recurringPeriod],
+	);
+
 	// 신용카드 입력 필드 렌더링
 	const renderCardForm = () => (
+		// The form tag here is only for grouping inputs and handling submit via RHF's handleSubmit
+		// The actual submission logic is triggered by the main button in the footer
 		<form
-			onSubmit={handleCardSubmit(onSubmitCardInfo)}
+			// onSubmit={handleCardSubmit(onSubmitCardInfo)} // Remove direct submit handler here
 			className="w-full"
+			noValidate // Prevent browser validation, rely on RHF/Zod
 		>
 			<div className="flex flex-col gap-4 mb-5">
 				<div>
@@ -204,6 +233,137 @@ export const SubscribePaymentModal = memo(() => {
 		</div>
 	);
 
+	// 페이팔 UI 로드 및 빌링 키 발급 처리
+	const loadPaypal = useCallback(async () => {
+		if (typeof window !== "undefined" && !isPaypalUILoaded && activeTab === "paypal") {
+			setPaypalError(null); // Clear previous errors
+			setPaypalBillingKey(null); // Clear previous key
+			setIsPaypalUILoaded(true); // Mark as attempting to load
+
+			try {
+				console.log("Attempting to load PayPal UI...");
+				await PortOne.loadIssueBillingKeyUI(
+					{
+						uiType: "PAYPAL_RT",
+						storeId: process.env.NEXT_PUBLIC_PORTONE_STORE_ID!,
+						issueName: subscriptionPaypalText,
+						billingKeyMethod: "PAYPAL",
+						channelKey: process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_PAYPAL!,
+					},
+					{
+						onIssueBillingKeySuccess: (response) => {
+							console.log("PayPal Billing Key Issued:", response);
+							if (response.billingKey) {
+								setPaypalBillingKey(response.billingKey);
+								setPaypalError(null); // Clear error on success
+								// Set value in parent form immediately? Or wait for final submit? Let's wait.
+								setValue("method", { paypal: { billingKey: response.billingKey } }, { shouldValidate: true });
+							} else {
+								console.error("PayPal Success Response missing billingKey:", response);
+								setPaypalError("페이팔 빌링키 발급 응답이 올바르지 않습니다.");
+								setPaypalBillingKey(null);
+							}
+							// setIsPaypalUILoaded(false); // Keep UI loaded? Or close? Depends on PortOne behavior
+						},
+						onIssueBillingKeyFail: (error) => {
+							console.error("PayPal Billing Key Issue Failed:", error);
+							setPaypalError(`페이팔 연동 중 오류가 발생했습니다: ${error.message || "알 수 없는 오류"}`);
+							setPaypalBillingKey(null); // Clear key on failure
+							// setIsPaypalUILoaded(false); // Reset load state on failure?
+						},
+						// Optional: Add onCancel, onClose callbacks if needed
+					},
+				);
+				console.log("PayPal UI load requested.");
+				// Note: setIsPaypalUILoaded(true) was set earlier.
+				// PortOne SDK handles the UI display. Actual success/failure comes via callbacks.
+			} catch (error: unknown) {
+				console.error("Error initiating PayPal UI load:", error);
+				setPaypalError(`페이팔 UI 로드 중 오류 발생: ${error instanceof Error ? error.message : "알 수 없는 오류"}`);
+				setIsPaypalUILoaded(false); // Reset load state on catch
+			}
+		}
+	}, [isPaypalUILoaded, activeTab, subscriptionPaypalText, setValue]);
+
+	// Load PayPal UI when the modal is open and the PayPal tab is active
+	useEffect(() => {
+		let cleanupPortOne: (() => void) | undefined;
+
+		if (modals.payment && activeTab === "paypal") {
+			loadPaypal();
+			// Optional: If PortOne provides a cleanup function after loadIssueBillingKeyUI resolves, use it here.
+			// Example: cleanupPortOne = response?.cleanup;
+		}
+
+		// Cleanup function for useEffect
+		return () => {
+			if (cleanupPortOne) {
+				cleanupPortOne(); // Clean up PortOne UI if necessary
+			}
+			// Reset PayPal state if tab changes away from PayPal or modal closes
+			// (Closing is handled by handleCloseModal, but this adds safety)
+			if (activeTab !== "paypal") {
+				setPaypalBillingKey(null);
+				setPaypalError(null);
+				// Reset the UI loaded state as well, so it reloads if the user comes back
+				setIsPaypalUILoaded(false);
+			}
+		};
+		// Ensure all dependencies that affect loading are included
+	}, [modals.payment, activeTab, loadPaypal]);
+
+	// 페이팔 결제 영역 렌더링
+	const renderPaypalForm = () => (
+		<div className="flex flex-col gap-4 mb-5">
+			<p className="mb-2 text-sm text-gray-500">페이팔 계정으로 정기결제를 설정합니다.</p>
+			{/* PortOne SDK will likely inject its UI here or manage it separately */}
+			{/* We display status messages based on our state */}
+			{!isPaypalUILoaded && <p>페이팔 연동 준비 중...</p>}
+			<div className="portone-ui-container">
+				<div className="p-4 rounded-md h-14 bg-hbc-gray-100 animate-pulse"></div>
+			</div>
+			{paypalError && <p className="mt-1 text-xs text-red-500">{paypalError}</p>}
+			{paypalBillingKey && !paypalError && (
+				<p className="mt-1 text-xs text-green-600">
+					페이팔 연동이 완료되었습니다. &apos;결제하기&apos; 버튼을 클릭하여 구독을 완료하세요.
+				</p>
+			)}
+			{!paypalBillingKey && !paypalError && isPaypalUILoaded && (
+				<p className="mt-1 text-xs text-blue-600">페이팔 화면의 안내에 따라 결제를 진행해주세요.</p>
+			)}
+			{/* Placeholder for where PortOne might inject UI, if applicable */}
+		</div>
+	);
+
+	// Determine if the main submit button should be disabled
+	const isSubmitDisabled = useMemo(() => {
+		if (isSubmitting) return true;
+		if (activeTab === "easy") return true; // Easy pay is disabled
+		if (activeTab === "paypal" && !paypalBillingKey) return true; // PayPal needs billing key
+		// Card form validation is handled by RHF, but handleCardSubmit triggers it.
+		// We don't disable based on card form errors here directly,
+		// as the button click triggers validation.
+		return false;
+	}, [isSubmitting, activeTab, paypalBillingKey]);
+
+	// Main submit button click handler
+	const handleFinalSubmitClick = () => {
+		if (activeTab === "card") {
+			// Trigger validation and submission for card form
+			handleCardSubmit(onSubmitCardInfo)(); // Note the extra () to invoke the handler
+		} else if (activeTab === "paypal") {
+			// PayPal billing key should already be set if button is enabled
+			if (paypalBillingKey) {
+				handleSubscribeConfirm();
+			} else {
+				// This case should ideally not happen if button is disabled correctly
+				setPaypalError("페이팔 연동이 완료되지 않았습니다.");
+			}
+		} else if (activeTab === "easy") {
+			alert("간편결제는 현재 지원되지 않습니다.");
+		}
+	};
+
 	return (
 		<Popup
 			open={modals.payment}
@@ -266,30 +426,44 @@ export const SubscribePaymentModal = memo(() => {
 							>
 								간편결제
 							</button>
+							<button
+								type="button"
+								className={cn(
+									"px-4 py-2 text-sm font-medium",
+									activeTab === "paypal"
+										? "border-b-2 border-hbc-black text-hbc-black"
+										: "text-gray-500 hover:text-gray-700 cursor-pointer",
+								)}
+								onClick={() => setActiveTab("paypal")}
+							>
+								페이팔
+							</button>
 						</div>
 
-						<div className="mt-4">{activeTab === "card" ? renderCardForm() : renderEasyPayOptions()}</div>
+						{/* Render content based on active tab */}
+						<div className="mt-4">
+							{activeTab === "card" && renderCardForm()}
+							{activeTab === "easy" && renderEasyPayOptions()}
+							{activeTab === "paypal" && renderPaypalForm()} {/* Add PayPal form render */}
+						</div>
 					</div>
 				</div>
 
 				<PopupFooter className={cn("flex", isSubmitting && "opacity-50 pointer-events-none")}>
 					<PopupButton
 						intent="cancel"
-						onClick={() => closeModal("payment")}
+						onClick={handleCloseModal} // Use centralized close handler
 						disabled={isSubmitting}
 					>
 						취소
 					</PopupButton>
 
+					{/* Unified Submit Button */}
 					<BasicPopupButton
 						intent="confirm"
-						className="bg-hbc-red"
-						onClick={
-							activeTab === "card"
-								? handleCardSubmit(onSubmitCardInfo)
-								: () => alert("간편결제는 현재 지원되지 않습니다.")
-						}
-						disabled={isSubmitting || activeTab === "easy"}
+						className={cn("bg-hbc-red", isSubmitDisabled && "opacity-50 cursor-not-allowed")}
+						onClick={handleFinalSubmitClick} // Use new handler
+						disabled={isSubmitDisabled} // Use calculated disabled state
 					>
 						{isSubmitting ? "처리 중..." : "결제하기"}
 					</BasicPopupButton>
@@ -299,4 +473,4 @@ export const SubscribePaymentModal = memo(() => {
 	);
 });
 
-SubscribePaymentModal.displayName = "PaymentModal";
+SubscribePaymentModal.displayName = "SubscribePaymentModal"; // Update display name consistency

@@ -230,7 +230,7 @@ export const CartPaymentDetail = ({
 				<PaymentSelectModal
 					total={total}
 					orderName={getOrderName()}
-					orderData={items}
+					// orderData={items}
 					onPaymentComplete={handlePaymentComplete}
 					onPaymentError={handlePaymentError}
 					trigger={

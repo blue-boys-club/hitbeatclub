@@ -204,7 +204,7 @@ export const PurchaseModal = ({ isOpen, onClose, item, licenses = licenseOptions
 			<PaymentSelectModal
 				total={price!}
 				orderName={`${item.name} 라이센스 구매`}
-				orderData={[]}
+				// orderData={[]}
 				open={paymentModalOpen}
 				onOpenChange={setPaymentModalOpen}
 				onPaymentComplete={handlePaymentComplete}

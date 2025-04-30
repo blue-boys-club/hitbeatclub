@@ -2,7 +2,6 @@ import { memo } from "react";
 import Link from "next/link";
 import { Popup, PopupContent, PopupDescription, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
 import { useSubscription } from "../../hooks/useSubscription";
-import { cn } from "@/common/utils/tailwind";
 
 /**
  * 멤버십 가입 성공 모달 컴포넌트
