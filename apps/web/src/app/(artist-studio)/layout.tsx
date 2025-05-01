@@ -27,12 +27,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 			>
 				{children}
 			</main>
-
-			{/* Fixed Footer */}
-			{/* <div className="fixed left-0 right-0 z-10 bottom-12px">
-				<Footer />
-			</div> */}
-
 			<Toaster viewportClassName="bottom-0px" />
 		</div>
 	);

@@ -2,7 +2,7 @@
 
 import { cn } from "@/common/utils";
 import { MusicRightSidebar } from "@/components/layout";
-import { Footer } from "@/components/layout/Footer";
+import { FooterPlayer } from "@/components/layout/Footer/Player/FooterPlayer";
 import Header from "@/components/layout/Header/Header";
 import { Sidebar } from "@/components/layout/Sidebar/Sidebar";
 import { Toaster } from "@/components/ui/Toast/toaster";
@@ -48,7 +48,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
 			{/* Fixed Footer */}
 			<div className="fixed left-0 right-0 z-[10] bottom-12px">
-				<Footer />
+				<FooterPlayer />
 			</div>
 
 			<Toaster viewportClassName="bottom-92px" />

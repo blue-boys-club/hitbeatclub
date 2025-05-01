@@ -1,9 +1,9 @@
-import { TrackItem } from "../types";
+import { ProductItem } from "../types";
 import LikeItemImage from "./LikeItemImage";
 import { SmallEqualizer } from "@/assets/svgs";
 
 export interface LikeItemProps {
-	track: TrackItem;
+	track: ProductItem;
 }
 
 export const LikeItem = ({ track }: LikeItemProps) => {

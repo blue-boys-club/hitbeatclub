@@ -1,4 +1,4 @@
-import { CartPage } from "@/features/cart/CartPage";
+import CartPage from "@/page/CartPage";
 
 export default function CartRoute() {
 	return <CartPage />;

@@ -1,7 +1,6 @@
-import PrivacyPolicyPage from "@/features/privacy-policy/components/PrivacyPolicyPage";
-
-const PrivacyPolicyRoute = () => {
-	return <PrivacyPolicyPage />;
+import PolicyPrivacyPage from "@/page/PolicyPrivacyPage";
+const PolicyPrivacyRoute = () => {
+	return <PolicyPrivacyPage />;
 };
 
-export default PrivacyPolicyRoute;
+export default PolicyPrivacyRoute;

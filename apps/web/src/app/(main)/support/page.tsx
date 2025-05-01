@@ -1,4 +1,4 @@
-import SupportPage from "@/features/support/components/SupportPage";
+import SupportPage from "@/page/SupportPage";
 
 const SupportRoute = () => {
 	return <SupportPage />;

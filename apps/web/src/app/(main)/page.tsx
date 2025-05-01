@@ -1,5 +1,5 @@
-import ShopMainPage from "@/features/shop/ShopMainPage";
+import ProductMainPage from "@/page/ProductMainPage";
 
 export default function MainRoute() {
-	return <ShopMainPage />;
+	return <ProductMainPage />;
 }

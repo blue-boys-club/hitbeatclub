@@ -1,84 +1,66 @@
-"use client";
+import UI from "@/components/ui";
+import Link from "next/link";
 
-import { useState } from "react";
-import { useAudioPlayer } from "@/hooks/useAudioPlayer";
-import { Like, ShoppingBag } from "@/assets/svgs";
-import { AudioPlayer } from "./AudioPlayer";
-import { VolumeControl } from "./VolumeControl";
-import Image from "next/image";
 export const Footer = () => {
-	// UI-related state
-	const [like, setLike] = useState(false);
-	const [cart, setCart] = useState(false);
-
-	// Audio player state and controls
-	const audioPlayerState = useAudioPlayer();
-
-	const onClickLike = () => {
-		setLike(!like);
-	};
-
-	const onClickCart = () => {
-		setCart(!cart);
-	};
-
 	return (
-		<div className="relative w-full h-20 bg-white border-t-8 border-black">
-			<div className="flex items-center justify-between w-full p-2">
-				{/* 트랙 정보 및 좋아요/장바구니 */}
-				<div className="flex items-center gap-2 w-96">
-					<div className="flex items-center justify-between gap-4">
-						<Image
-							width={60}
-							height={60}
-							alt="track"
-							className="border-black w-14 h-14"
-							src="https://placehold.co/60x60"
-						/>
-						<div className="flex flex-col gap-1">
-							<div className="text-xl font-bold leading-none text-black">빈지노 타입비트...</div>
-							<div className="text-base font-bold leading-none w-36 text-black/70">빈지노</div>
-						</div>
-					</div>
-
-					<div className="flex justify-between items-center gap-[10px]">
-						<div
-							className="flex items-center justify-center w-8 h-8 cursor-pointer"
-							onClick={onClickLike}
-						>
-							{like ? (
-								<Image
-									width={20}
-									height={20}
-									className="w-5 h-5"
-									src="/assets/ActiveLike.png"
-									alt="like"
-								/>
-							) : (
-								<Like />
-							)}
-						</div>
-						<div
-							onClick={onClickCart}
-							className="cursor-pointer"
-						>
-							<ShoppingBag color={cart ? "#3884FF" : "white"} />
-						</div>
-					</div>
-				</div>
-
-				{/* 재생 컨트롤 */}
-				<div className="flex justify-center flex-1 ">
-					<AudioPlayer
-						{...audioPlayerState}
-						url={"dummyMusic.mp3"}
-					/>
-				</div>
-
-				{/* 볼륨 컨트롤 */}
-				<div className="flex justify-end w-96">
-					<VolumeControl {...audioPlayerState} />
-				</div>
+		<div className="flex flex-col gap-15px my-15px">
+			<UI.BodySmall className="whitespace-pre-line text-hbc-gray-400">
+				회사명 : 블루보이즈클럽
+				<br />
+				주소 : 서울특별시 마포구 성산로2길 21-30, 401호(성산동, 예지빌딩)
+				<br />
+				대표 : 현태웅
+				<br />
+				사업자등록번호 : 274-21-02190
+				<br />
+				통신판매업신고번호 : 2024-서울마포-2047
+				<br />
+				사업자정보확인 버튼
+				<br />
+				고객센터 : 010-8680-2015 (평일 09:00-18:00, 유료)
+				<br />
+				이메일 : info@hitbeatclub.com
+				<br />
+				호스팅서비스사업자 : Amazon Web Services (AWS)
+				<br />
+				개인정보보호책임자 : 현태웅
+				<br />
+				블루보이즈클럽 © blueboysclub Corp. <br />
+				<br />
+				“히트비트클럽은 통신판매중개자이며 통신판매의 당사자가 아닙니다. 따라서 히트비트클럽은 상품·거래 정보 및 가격에
+				대하여 책임을 지지 않습니다.”
+			</UI.BodySmall>
+			<div className="flex flex-row gap-2">
+				<Link
+					href="/terms-of-service"
+					className="text-hbc-gray-400 text-[16px] font-medium font-suit leading-none tracking-016px"
+				>
+					서비스이용약관
+				</Link>
+				<Link
+					href="/privacy-policy"
+					className="text-hbc-gray-400 text-[16px] font-medium font-suit leading-none tracking-016px"
+				>
+					개인정보처리방침
+				</Link>
+				<Link
+					href="/refund-policy"
+					className="text-hbc-gray-400 text-[16px] font-medium font-suit leading-none tracking-016px"
+				>
+					환불정책
+				</Link>
+				<Link
+					href="/notice"
+					className="text-hbc-gray-400 text-[16px] font-medium font-suit leading-none tracking-016px"
+				>
+					공지사항
+				</Link>
+				<Link
+					href="/support"
+					className="text-hbc-gray-400 text-[16px] font-medium font-suit leading-none tracking-016px"
+				>
+					고객센터
+				</Link>
 			</div>
 		</div>
 	);

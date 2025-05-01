@@ -14,7 +14,7 @@ interface NavLinkProps {
 const NavLink = ({ href, label, Icon, isLocked, onClick }: NavLinkProps) => {
 	const pathname = usePathname();
 
-	const isActive = pathname.includes(href);
+	const isActive = pathname ? pathname.includes(href) : false;
 
 	const handleClick = (e: React.MouseEvent) => {
 		if (isLocked && onClick) {

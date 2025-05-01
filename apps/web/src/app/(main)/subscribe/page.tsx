@@ -1,4 +1,4 @@
-import { SubscribePage } from "@/features/subscribe/SubscribePage";
+import SubscribePage from "@/page/SubscribePage";
 
 const SubscribeRoute = () => {
 	return <SubscribePage />;

@@ -1,5 +1,4 @@
-import { ArtistStudioAccountSettingPage } from "@/features/artist/components/ArtistStudioAccountSettingPage";
-
+import ArtistStudioAccountSettingPage from "@/page/ArtistStudioAccountSettingPage";
 const ArtistStudioSettingRoute = () => {
 	return <ArtistStudioAccountSettingPage />;
 };

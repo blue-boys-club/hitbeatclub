@@ -1,4 +1,4 @@
-import UserAccountSettingPage from "@/features/user/components/UserAccountSettingPage";
+import UserAccountSettingPage from "@/page/UserAccountSettingPage";
 
 const AccountSettingRoute = () => {
 	return <UserAccountSettingPage />;

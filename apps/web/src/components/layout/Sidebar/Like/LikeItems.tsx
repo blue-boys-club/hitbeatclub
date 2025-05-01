@@ -2,7 +2,7 @@ import { cn } from "@/common/utils";
 import { useQuery } from "@tanstack/react-query";
 import { memo } from "react";
 import LikeItem from "./LikeItem";
-import { TrackItem } from "../types";
+import { ProductItem } from "../types";
 
 interface LikeItemsProps {
 	search?: string;
@@ -10,12 +10,12 @@ interface LikeItemsProps {
 }
 
 const LikeItems = memo(({ search, sort }: LikeItemsProps) => {
-	const items = useQuery<TrackItem[]>({
+	const items = useQuery<ProductItem[]>({
 		/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
 		/* @ts-ignore TODO: Implement proper like items query */
 		queryKey: ["demo", "like", "items", search, sort],
 		queryFn: () => {
-			return Promise.resolve<TrackItem[]>(
+			return Promise.resolve<ProductItem[]>(
 				Array.from({ length: 15 }, (_, i) => ({
 					id: i,
 					title: `La Vie En Rose ${i}`,

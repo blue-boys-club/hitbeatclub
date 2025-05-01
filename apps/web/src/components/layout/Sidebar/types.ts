@@ -1,7 +1,7 @@
 export type Tab = "like" | "follow";
 
 // TODO: Use proper types
-export interface TrackItem {
+export interface ProductItem {
 	id: number;
 	title: string;
 	artist: string;

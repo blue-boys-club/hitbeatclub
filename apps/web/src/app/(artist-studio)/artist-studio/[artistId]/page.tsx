@@ -1,4 +1,4 @@
-import ArtistStudioDashboardPage from "@/features/artist/components/ArtistStudioDashboardPage";
+import ArtistStudioDashboardPage from "@/page/ArtistStudioDashboardPage";
 
 const ArtistStudioDetailRoute = () => {
 	return <ArtistStudioDashboardPage />;

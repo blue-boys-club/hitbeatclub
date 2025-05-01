@@ -3,7 +3,7 @@ import { SquareDropdown } from "@/components/ui";
 import { SearchTag } from "@/components/ui/SearchTag";
 import { noticeDropdownOptions } from "../notice.constants";
 
-const NoticeSearchBar = () => {
+export const NoticeSearchBar = () => {
 	return (
 		<section className="pt-[14px] pb-6 flex justify-end items-center">
 			<div className="flex gap-5 items-end">
@@ -23,5 +23,3 @@ const NoticeSearchBar = () => {
 		</section>
 	);
 };
-
-export default NoticeSearchBar;

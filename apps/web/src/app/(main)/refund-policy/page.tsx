@@ -1,7 +1,6 @@
-import RefundPolicyPage from "@/features/refund-policy/components/RefundPolicyPage";
-
-const RefundPolicyRoute = () => {
-	return <RefundPolicyPage />;
+import PolicyRefundPage from "@/page/PolicyRefundPage";
+const PolicyRefundRoute = () => {
+	return <PolicyRefundPage />;
 };
 
-export default RefundPolicyRoute;
+export default PolicyRefundRoute;

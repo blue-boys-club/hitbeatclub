@@ -19,7 +19,7 @@ const datas = [
 	{ id: 15, title: "HITBEATCLUB 웹사이트 리뉴얼", date: "24.11.17", views: 17 },
 ];
 
-const NoticeList = () => {
+export const NoticeList = () => {
 	const navigate = useRouter();
 
 	return (
@@ -63,5 +63,3 @@ const NoticeList = () => {
 		</section>
 	);
 };
-
-export default NoticeList;

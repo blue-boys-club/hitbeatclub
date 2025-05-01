@@ -1,5 +1,4 @@
-import ArtistStudioPayoutsPage from "@/features/artist/components/ArtistStudioPayoutPage";
-
+import ArtistStudioPayoutsPage from "@/page/ArtistStudioPayoutPage";
 const ArtistStudioTransactionsRoute = async ({ params }: { params: Promise<{ artistId: string }> }) => {
 	const { artistId } = await params;
 

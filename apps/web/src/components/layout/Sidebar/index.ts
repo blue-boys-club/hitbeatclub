@@ -1,2 +1,2 @@
 export { Sidebar } from "./Sidebar";
-export type { Tab, TrackItem, FollowItem } from "./types";
+export type { Tab, ProductItem, FollowItem } from "./types";

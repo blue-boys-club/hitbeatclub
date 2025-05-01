@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/Button";
 import React from "react";
 import { useRouter } from "next/navigation";
 
-const NoticeDetailContent = () => {
+export const NoticeDetailContent = () => {
 	const router = useRouter();
 	return (
 		<div>
@@ -98,5 +98,3 @@ const NoticeDetailContent = () => {
 		</div>
 	);
 };
-
-export default NoticeDetailContent;

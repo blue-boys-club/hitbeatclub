@@ -1,5 +1,4 @@
-import NoticeDetailPage from "@/features/notice/components/NoticeDetailPage";
-
+import NoticeDetailPage from "@/page/NoticeDetailPage";
 const NoticeDetailRoute = () => {
 	return <NoticeDetailPage />;
 };

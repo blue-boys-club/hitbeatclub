@@ -1,7 +1,6 @@
-import ArtistTrackListPage from "@/features/artist/components/ArtistTrackListPage";
-
+import ArtistProductListPage from "@/page/ArtistProductListPage";
 const ArtistTrackListRoute = () => {
-	return <ArtistTrackListPage />;
+	return <ArtistProductListPage />;
 };
 
 export default ArtistTrackListRoute;

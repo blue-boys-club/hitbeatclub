@@ -1,5 +1,4 @@
-import ArtistFollowingListPage from "@/features/artist/components/ArtistFollowingListPage";
-
+import ArtistFollowingListPage from "@/page/ArtistFollowingListPage";
 const FollowArtistListRoute = () => {
 	return <ArtistFollowingListPage />;
 };

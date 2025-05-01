@@ -1,7 +1,6 @@
-import TermsOfServicePage from "@/features/terms-of-service/components/TermsOfServicePage";
-
-const TermsOfServiceRoute = () => {
-	return <TermsOfServicePage />;
+import PolicyTermsPage from "@/features/policy/components/PolicyTermsPage";
+const PolicyTermsRoute = () => {
+	return <PolicyTermsPage />;
 };
 
-export default TermsOfServiceRoute;
+export default PolicyTermsRoute;

@@ -1,7 +1,7 @@
-import TrackLikeListPage from "@/features/track/TrackLikeListPage";
+import ProductLikeListPage from "@/page/ProductLikeListPage";
 
 const TrackLikeListRoute = () => {
-	return <TrackLikeListPage />;
+	return <ProductLikeListPage />;
 };
 
 export default TrackLikeListRoute;
