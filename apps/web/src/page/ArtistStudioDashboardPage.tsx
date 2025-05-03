@@ -1,8 +1,8 @@
+import ArtistStudioDashboardContentList from "@/features/artist-studio/dashboard/components/ArtistStudioDashboardContentList";
+import ArtistStudioDashboardHeader from "@/features/artist-studio/dashboard/components/ArtistStudioDashboardHeader";
+import ArtistStudioDashboardInfo from "@/features/artist-studio/dashboard/components/ArtistStudioDashboardInfo";
+import ArtistStudioDashboardStatistics from "@/features/artist-studio/dashboard/components/ArtistStudioDashboardStatistics";
 import React from "react";
-import ArtistStudioDashboardContentList from "@/features/artist-studio/components/dashboard/ArtistStudioDashboardContentList";
-import ArtistStudioDashboardHeader from "@/features/artist-studio/components/dashboard/ArtistStudioDashboardHeader";
-import ArtistStudioDashboardInfo from "@/features/artist-studio/components/dashboard/ArtistStudioDashboardInfo";
-import ArtistStudioDashboardStatistics from "@/features/artist-studio/components/dashboard/ArtistStudioDashboardStatistics";
 
 const ArtistStudioDashboardPage = () => {
 	return (

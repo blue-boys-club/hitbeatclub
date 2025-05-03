@@ -4,14 +4,14 @@ import { ProductItem } from "./ProductItem";
 import { ProductSort } from "./ProductSort";
 import { ProductSearch } from "./ProductSearch";
 
-interface TrackListProps {
+interface ProductListProps {
 	tracks: number[]; //Temp
 	onFiltersChange?: () => void;
 	onSortChange?: () => void;
 	onSearch?: (query: string) => void;
 }
 
-export const ProductList = memo(({ onFiltersChange, onSortChange, onSearch, tracks }: TrackListProps) => {
+export const ProductList = memo(({ onFiltersChange, onSortChange, onSearch, tracks }: ProductListProps) => {
 	return (
 		<>
 			<div className="mb-3">

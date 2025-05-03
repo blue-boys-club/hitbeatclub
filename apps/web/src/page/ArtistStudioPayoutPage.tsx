@@ -1,6 +1,6 @@
-import ArtistStudioPayoutDashboard from "@/features/artist-studio/components/payout/ArtistStudioPayoutDashboard";
-import ArtistStudioPayoutHeader from "@/features/artist-studio/components/payout/ArtistStudioPayoutHeader";
-import ArtistStudioPayoutTable from "@/features/artist-studio/components/payout/ArtistStudioPayoutTable";
+import ArtistStudioPayoutDashboard from "@/features/artist-studio/payout/components/ArtistStudioPayoutDashboard";
+import ArtistStudioPayoutHeader from "@/features/artist-studio/payout/components/ArtistStudioPayoutHeader";
+import ArtistStudioPayoutTable from "@/features/artist-studio/payout/components/ArtistStudioPayoutTable";
 import React from "react";
 
 interface ArtistStudioPayoutsPageProps {
