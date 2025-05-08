@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DB_URL")
+}
+
+model user {
+  id                       BigInt                @id @default(autoincrement())
+  email                    String                @db.VarChar(255)
+  name                     String                @db.VarChar(100)
+  password                 String?               @db.VarChar(255)
+  phone_number             String                @db.VarChar(20)
+  gender                   String?               @db.Char(1)
+  birth_date               DateTime              @db.Timestamp(0)
+  profile_url              String?               @db.VarChar(255)
+  country                  String                @db.VarChar(4)
+  region                   String                @db.VarChar(100)
+  access_token             String?               @db.VarChar(255)
+  refresh_token            String?               @db.VarChar(255)
+  agreed_terms_at          DateTime              @db.Timestamp(0)
+  agreed_privacy_policy_at DateTime              @db.Timestamp(0)
+  agreed_email_at          DateTime?             @db.Timestamp(0)
+  created_at               DateTime?             @default(now()) @db.Timestamp(0)
+  updated_at               DateTime?             @default(now()) @db.Timestamp(0)
+  deleted_at               DateTime?             @db.Timestamp(0)
+  artist                   artist[]
+  cart                     cart[]
+  order                    order[]
+  payments                 payments[]
+  user_social_account      user_social_account[]
+}
+
+model artist {
+  id                                BigInt    @id @default(autoincrement())
+  user_id                           BigInt    @unique
+  stage_name                        String?   @db.VarChar(30)
+  slug                              String?   @db.VarChar(20)
+  description                       String?   @db.Text
+  profile_image_url                 String?   @db.VarChar(255)
+  instagram_account                 String?   @db.VarChar(30)
+  youtube_account                   String?   @db.VarChar(30)
+  tiktok_account                    String?   @db.VarChar(30)
+  soundcloud_account                String?   @db.VarChar(30)
+  kakao_account                     String?   @db.VarChar(30)
+  line_account                      String?   @db.VarChar(30)
+  discord_account                   String?   @db.VarChar(30)
+  country                           String?   @db.VarChar(3)
+  city                              String?   @db.VarChar(100)
+  created_at                        DateTime? @default(now()) @db.Timestamp(0)
+  updated_at                        DateTime? @default(now()) @db.Timestamp(0)
+  deleted_at                        DateTime? @db.Timestamp(0)
+  user                              user      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_TO_artist_1")
+  product_product_seller_idToartist product[] @relation("product_seller_idToartist")
+  product_product_user_idToartist   product[] @relation("product_user_idToartist")
+
+  @@index([user_id], map: "FK_user_TO_artist_1")
+}
+
+model cart {
+  id         BigInt    @id @default(autoincrement())
+  product_id BigInt
+  user_id    BigInt
+  quantity   Int?
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  updated_at DateTime? @default(now()) @db.Timestamp(0)
+  deleted_at DateTime? @db.Timestamp(0)
+  product    product   @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_product_TO_cart_1")
+  user       user      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_product_TO_cart_3")
+
+  @@index([product_id], map: "FK_product_TO_cart_1")
+  @@index([user_id], map: "FK_product_TO_cart_3")
+}
+
+model order {
+  id           BigInt         @id @default(autoincrement())
+  buyer_id     BigInt
+  order_number String?        @db.VarChar(100)
+  total_price  Int?
+  status       String?        @db.VarChar(20)
+  created_at   DateTime?      @default(now()) @db.Timestamp(0)
+  updated_at   DateTime?      @default(now()) @db.Timestamp(0)
+  deleted_at   DateTime?      @db.Timestamp(0)
+  user         user           @relation(fields: [buyer_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_TO_order_1")
+  order_detail order_detail[]
+  payments     payments[]
+
+  @@index([buyer_id], map: "FK_user_TO_order_1")
+}
+
+model order_detail {
+  id         BigInt    @id @default(autoincrement())
+  order_id   BigInt
+  quantity   Int?      @db.TinyInt
+  unit_price Int?
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  updated_at DateTime? @default(now()) @db.Timestamp(0)
+  deleted_at DateTime? @db.Timestamp(0)
+  order      order     @relation(fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_order_TO_order_detail_1")
+
+  @@index([order_id], map: "FK_order_TO_order_detail_1")
+}
+
+model payments {
+  id             BigInt    @id @default(autoincrement())
+  order_id       BigInt
+  user_id        BigInt
+  payment_method String?   @db.VarChar(50)
+  payment_key    String?   @db.VarChar(255)
+  amount         Int?
+  status         String?   @db.VarChar(50)
+  paid_at        DateTime? @db.Timestamp(0)
+  created_at     DateTime? @default(now()) @db.Timestamp(0)
+  updated_at     DateTime? @default(now()) @db.Timestamp(0)
+  deleted_at     DateTime? @db.Timestamp(0)
+  order          order     @relation(fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_order_TO_payments_1")
+  user           user      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_order_TO_payments_2")
+
+  @@index([order_id], map: "FK_order_TO_payments_1")
+  @@index([user_id], map: "FK_order_TO_payments_2")
+}
+
+model product {
+  id                               BigInt    @id @default(autoincrement())
+  seller_id                        BigInt
+  user_id                          BigInt
+  product_name                     String?   @db.VarChar(255)
+  description                      String?   @db.Text
+  price                            Int?
+  image_url                        String?   @db.VarChar(255)
+  title                            String?   @db.VarChar(50)
+  type                             String?   @db.VarChar(10)
+  genre                            String?   @db.VarChar(100)
+  tags                             Json?
+  bpm                              Int?
+  tonality                         String?   @db.VarChar(10)
+  license_type                     String?   @db.VarChar(100)
+  license_price                    Int?
+  currency                         String?   @db.VarChar(10)
+  cover_image_url                  String?   @db.VarChar(255)
+  audio_file_url                   String?   @db.VarChar(255)
+  zip_file_url                     String?   @db.VarChar(255)
+  is_free_download                 Boolean?
+  is_public                        Boolean?
+  created_at                       DateTime? @default(now()) @db.Timestamp(0)
+  updated_at                       DateTime? @default(now()) @db.Timestamp(0)
+  deleted_at                       DateTime? @db.Timestamp(0)
+  cart                             cart[]
+  artist_product_seller_idToartist artist    @relation("product_seller_idToartist", fields: [seller_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_artist_TO_product_1")
+  artist_product_user_idToartist   artist    @relation("product_user_idToartist", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_artist_TO_product_2")
+
+  @@index([seller_id], map: "FK_artist_TO_product_1")
+  @@index([user_id], map: "FK_artist_TO_product_2")
+}
+
+model user_social_account {
+  id               BigInt    @id @default(autoincrement())
+  user_id          BigInt
+  provider         String    @db.VarChar(20)
+  provider_user_id BigInt
+  email            String?   @db.VarChar(255)
+  profile_image    String?   @db.VarChar(255)
+  name             String?   @db.VarChar(100)
+  access_token     String    @db.VarChar(255)
+  refresh_token    String    @db.VarChar(255)
+  connected_at     DateTime  @db.Timestamp(0)
+  created_at       DateTime? @default(now()) @db.Timestamp(0)
+  updated_at       DateTime? @default(now()) @db.Timestamp(0)
+  deleted_at       DateTime? @db.Timestamp(0)
+  user             user      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_TO_user_social_account_1")
+
+  @@index([user_id], map: "FK_user_TO_user_social_account_1")
+}

@@ -1,69 +1,106 @@
-import { NestFactory } from "@nestjs/core";
-import { AppModule } from "./app.module";
-import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import { RequestMethod, ValidationPipe } from "@nestjs/common";
-import { CorsOptions } from "@nestjs/common/interfaces/external/cors-options.interface";
-import { useContainer } from "class-validator";
-
-// dayjs 설정
-import * as dayjs from "dayjs";
-import * as utc from "dayjs/plugin/utc";
-import * as timezone from "dayjs/plugin/timezone";
-import "dayjs/locale/ko";
+import { NestApplication, NestFactory } from '@nestjs/core';
+import { AppModule } from './app/app.module';
+import 'dayjs/locale/ko';
+import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
+import { useContainer } from 'class-validator';
+import swaggerInit from 'src/swagger';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
-	const app = await NestFactory.create(AppModule);
+    const app: NestApplication = await NestFactory.create(AppModule);
 
-	const corsOptions: CorsOptions = {
-		origin: true,
-		methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-		credentials: true,
-	};
+    app.enableCors({
+        origin: ['https://hitbeatclub.com', 'http://localhost:3000'],
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // 허용할 HTTP 메서드
+        credentials: true, // 자격 증명 허용 (쿠키 등)
+    });
 
-	app.enableCors(corsOptions);
+    const configService = app.get(ConfigService);
+    const databaseUri: string = configService.get<string>('database.uri');
+    const env: string = configService.get<string>('app.env');
+    const timezone: string = configService.get<string>('app.timezone');
+    const host: string = configService.get<string>('app.http.host');
+    const port: number = configService.get<number>('app.http.port');
+    const globalPrefix: string = configService.get<string>('app.globalPrefix');
+    const versioningPrefix: string = configService.get<string>(
+        'app.urlVersion.prefix'
+    );
+    const version: string = configService.get<string>('app.urlVersion.version');
 
-	dayjs.extend(utc);
-	dayjs.extend(timezone);
-	dayjs.locale("ko");
+    // enable
+    const httpEnable: boolean = configService.get<boolean>('app.http.enable');
+    const versionEnable: string = configService.get<string>(
+        'app.urlVersion.enable'
+    );
+    const jobEnable: boolean = configService.get<boolean>('app.jobEnable');
 
-	app.setGlobalPrefix("v1", {
-		exclude: [{ path: "docs", method: RequestMethod.GET }],
-	});
-	const isProduction = process.env.NODE_ENV.includes("prod") ? true : false;
-	// 로컬 & 개발환경에서만 Swagger 셋팅
-	if (true) {
-		const config = new DocumentBuilder()
-			.setTitle("Backend Api Docs")
-			.setDescription("Backend user api")
-			.setVersion("1.0")
-			.addBearerAuth()
-			.addTag("admin.auth", "Admin Auth")
-			.addTag("admin.public.auth", "Admin Public Auth")
-			.addTag("admin.user", "Admin User")
-			.addTag("admin.file", "Admin File")
-			.build();
+    const logger = new Logger();
+    process.env.NODE_ENV = env;
+    process.env.TZ = timezone;
 
-		const document = SwaggerModule.createDocument(app as any, config);
-		SwaggerModule.setup("v1/docs", app as any, document, {
-			swaggerOptions: {
-				persistAuthorization: true,
-			},
-		});
-	}
+    // Global
+    app.setGlobalPrefix(globalPrefix);
 
-	useContainer(app.select(AppModule), { fallbackOnErrors: true });
+    // For Custom Validation
+    useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-	app.useGlobalPipes(
-		new ValidationPipe({
-			whitelist: true,
-			forbidNonWhitelisted: true,
-			transform: true,
-			transformOptions: {
-				enableImplicitConversion: true,
-			},
-		}),
-	);
+    // Versioning
+    if (versionEnable) {
+        app.enableVersioning({
+            type: VersioningType.URI,
+            defaultVersion: version,
+            prefix: versioningPrefix,
+        });
+    }
 
-	await app.listen(4000);
+    swaggerInit(app);
+
+    useContainer(app.select(AppModule), { fallbackOnErrors: true });
+
+    app.useGlobalPipes(
+        new ValidationPipe({
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            transformOptions: {
+                enableImplicitConversion: true,
+            },
+        })
+    );
+
+    await app.listen(4000);
+
+    logger.log(`==========================================================`);
+
+    logger.log(`Environment Variable`, 'NestApplication');
+
+    // Validate Env
+    // const classEnv = plainToInstance(AppEnvDto, process.env);
+    // const errors = await validate(classEnv);
+    // if (errors.length > 0) {
+    //     logger.log(errors, 'NestApplication');
+    //     throw new Error('Env Variable Invalid');
+    // }
+
+    logger.log(JSON.parse(JSON.stringify(process.env)), 'NestApplication');
+
+    logger.log(`==========================================================`);
+
+    logger.log(`Job is ${jobEnable}`, 'NestApplication');
+    logger.log(
+        `Http is ${httpEnable}, ${
+            httpEnable ? 'routes registered' : 'no routes registered'
+        }`,
+        'NestApplication'
+    );
+    logger.log(`Http versioning is ${versionEnable}`, 'NestApplication');
+
+    logger.log(
+        `Http Server running on ${await app.getUrl()}`,
+        'NestApplication'
+    );
+    logger.log(`Database uri ${databaseUri}`, 'NestApplication');
+
+    logger.log(`==========================================================`);
 }
 bootstrap();

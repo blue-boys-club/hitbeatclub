@@ -1,0 +1,6 @@
+export enum ENUM_EMAIL {
+    SIGN_UP = 'SIGN_UP',
+    CHANGE_PASSWORD = 'CHANGE_PASSWORD',
+    WElCOME = 'WElCOME',
+    EMAIL = 'EMAIL',
+}
