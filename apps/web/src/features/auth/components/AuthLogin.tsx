@@ -1,10 +1,14 @@
 "use client";
 
 import { GoogleLogin, HBCLoginMain, KaKaoTalkLogin, NaverLogin } from "@/assets/svgs";
+import { cn } from "@/common/utils";
 import { Button } from "@/components/ui/Button";
+import { useGoogleAuth } from "@/hooks/use-google-auth";
 import Link from "next/link";
 
 export const AuthLogin = () => {
+	const { handleGoogleLogin, isReady: isGoogleReady } = useGoogleAuth();
+
 	const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 	};
@@ -104,7 +108,11 @@ export const AuthLogin = () => {
 
 					<button
 						type="button"
-						className="flex items-center justify-center w-full h-10 gap-2 px-4 py-2 font-semibold bg-white border border-gray-300 rounded-md cursor-pointer"
+						className={cn(
+							"flex items-center justify-center w-full h-10 gap-2 px-4 py-2 font-semibold bg-white border border-gray-300 rounded-md",
+							isGoogleReady ? "cursor-pointer" : "cursor-not-allowed",
+						)}
+						onClick={handleGoogleLogin}
 					>
 						<GoogleLogin className="w-[24px] h-[24px]" />
 						구글 로그인
