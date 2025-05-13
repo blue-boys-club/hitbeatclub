@@ -4,7 +4,8 @@ import { cn } from "@/common/utils";
 import { SquareDropdown } from "@/components/ui";
 import { SearchTag } from "@/components/ui/SearchTag";
 import { SORT_OPTIONS } from "@/features/artist/artist.constants";
-import type { ArtistSearchBarProps, SortOption, ViewType } from "@/features/artist/artist.types";
+import { ViewType, type ArtistSearchBarProps, type SortOption } from "@/features/artist/artist.types";
+import { useRouter } from "next/navigation";
 import React from "react";
 
 const ArtistSearchBar = ({
@@ -15,9 +16,13 @@ const ArtistSearchBar = ({
 	searchValue,
 	setSearchValue,
 }: ArtistSearchBarProps) => {
+	const router = useRouter();
+
 	const handleViewChange = (view: ViewType) => {
 		setActiveView(view);
+		router.push(`?view=${view}`);
 	};
+
 	const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value.toLowerCase();
 		setSearchValue(value);
@@ -40,17 +45,17 @@ const ArtistSearchBar = ({
 				<div className="flex gap-1">
 					<button
 						className="cursor-pointer"
-						onClick={() => handleViewChange("grid")}
+						onClick={() => handleViewChange(ViewType.GRID)}
 						aria-label="그리드 보기"
 					>
-						<Grid fill={activeView === "grid" ? "black" : "#DFDFDF"} />
+						<Grid fill={activeView === ViewType.GRID ? "black" : "#DFDFDF"} />
 					</button>
 					<button
 						className="cursor-pointer"
-						onClick={() => handleViewChange("list")}
+						onClick={() => handleViewChange(ViewType.LIST)}
 						aria-label="리스트 보기"
 					>
-						<Menu fill={activeView === "list" ? "black" : "#DFDFDF"} />
+						<Menu fill={activeView === ViewType.LIST ? "black" : "#DFDFDF"} />
 					</button>
 				</div>
 				<SquareDropdown

@@ -1,14 +1,24 @@
 import { SmallAuthBadge } from "@/assets/svgs";
 import { FollowItem as FollowItemType } from "../types";
 import { UserAvatar } from "@/components/ui";
+import { useRouter } from "next/navigation";
 
 export interface FollowItemProps {
 	follow: FollowItemType;
 }
 
 export const FollowItem = ({ follow }: FollowItemProps) => {
+	const router = useRouter();
+
+	const onClickArtist = () => {
+		router.push(`/artists/${follow.id}`);
+	};
+
 	return (
-		<div className="flex items-center justify-start gap-16px w-87px h-87px @200px/sidebar:w-280px @200px/sidebar:h-51px group/follow-item hover:cursor-pointer">
+		<div
+			className="flex items-center justify-start gap-16px w-87px h-87px @200px/sidebar:w-280px @200px/sidebar:h-51px group/follow-item hover:cursor-pointer"
+			onClick={onClickArtist}
+		>
 			<div className="flex-shrink-0 w-87px @200px/sidebar:w-51px">
 				<UserAvatar
 					size="sidebar"

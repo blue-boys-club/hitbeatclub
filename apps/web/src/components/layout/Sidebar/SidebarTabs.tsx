@@ -5,6 +5,7 @@ import { Tab } from "./types";
 import { OpenInNew } from "@/assets/svgs";
 import { LikeSection } from "./Like";
 import { FollowSection } from "./Follow";
+import { useRouter } from "next/navigation";
 
 interface TabTriggerProps {
 	onClick: () => void;
@@ -50,6 +51,7 @@ const TabContent = memo(({ value, children }: TabContentProps) => (
 TabContent.displayName = "TabContent";
 
 export const SidebarTabs = memo(() => {
+	const router = useRouter();
 	const [currentTab, setCurrentTab] = useState<Tab>("like");
 
 	return (
@@ -67,6 +69,7 @@ export const SidebarTabs = memo(() => {
 								if (currentTab === "like") {
 									/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
 									/* @ts-ignore TODO: Implement navigation to /like */
+									router.push("/likes");
 								}
 							}}
 						>
@@ -78,6 +81,7 @@ export const SidebarTabs = memo(() => {
 								if (currentTab === "follow") {
 									/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
 									/* @ts-ignore TODO: Implement navigation to /follow */
+									router.push("/follow-artists");
 								}
 							}}
 						>

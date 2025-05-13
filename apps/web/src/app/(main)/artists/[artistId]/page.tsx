@@ -1,9 +1,7 @@
+import ArtistProductListPage from "@/page/ArtistProductListPage";
+
 const ArtistDetailPage = () => {
-	return (
-		<div>
-			<h1>아티스트 상세 페이지 </h1>
-		</div>
-	);
+	return <ArtistProductListPage />;
 };
 
 export default ArtistDetailPage;
