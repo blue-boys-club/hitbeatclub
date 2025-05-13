@@ -154,7 +154,7 @@ export const MusicRightSidebar = memo(
 									Free Download
 								</FreeDownloadButton>
 								<PurchaseButton
-									iconColor="hbc-white"
+									iconColor="white"
 									className="outline-4 outline-hbc-black"
 									onClick={() => setIsPaymentModalOpen(true)}
 								>
