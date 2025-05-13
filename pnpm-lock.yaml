@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      usehooks-ts:
-        specifier: ^3.1.1
-        version: 3.1.1(react@19.1.0)
     devDependencies:
       '@hitbeatclub/prettier-config':
         specifier: workspace:*
@@ -328,6 +324,9 @@ importers:
       tailwind-merge:
         specifier: ^3.2.0
         version: 3.2.0
+      usehooks-ts:
+        specifier: ^3.1.1
+        version: 3.1.1(react@19.1.0)
       zod:
         specifier: ^3.24.3
         version: 3.24.3

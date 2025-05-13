@@ -1,87 +1,17 @@
 "use client";
 
 import { GoogleLogin, HBCLoginMain, KaKaoTalkLogin, NaverLogin } from "@/assets/svgs";
+import { cn } from "@/common/utils";
 import { Button } from "@/components/ui/Button";
+import { useGoogleAuth } from "@/hooks/use-google-auth";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useScript } from "usehooks-ts";
-
-// Google OAuth 타입 정의
-declare global {
-	interface Window {
-		google: {
-			accounts: {
-				id: {
-					initialize: (config: {
-						client_id: string;
-						login_uri: string;
-						ux_mode: string;
-						use_fedcm_for_button: boolean;
-						use_fedcm_for_prompt: boolean;
-						button_auto_select: boolean;
-						callback: (response: { credential?: string }) => void;
-					}) => void;
-					renderButton: (
-						element: HTMLElement,
-						options: {
-							theme: string;
-							size: string;
-							text: string;
-							type: string;
-							width: string;
-							click_listener?: () => void;
-						},
-					) => void;
-				};
-			};
-		};
-	}
-}
 
 export const AuthLogin = () => {
-	const router = useRouter();
-	const [googleButtonRef, setGoogleButtonRef] = useState<HTMLDivElement | null>(null);
+	const { handleGoogleLogin, isReady: isGoogleReady } = useGoogleAuth();
 
 	const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 	};
-
-	const script = useScript("https://accounts.google.com/gsi/client", {
-		removeOnUnmount: false,
-	});
-
-	useEffect(() => {
-		if (typeof window.google !== "undefined" && googleButtonRef) {
-			window.google.accounts.id.initialize({
-				client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
-				login_uri: process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI || "",
-				ux_mode: "popup",
-				use_fedcm_for_button: false,
-				use_fedcm_for_prompt: false,
-				button_auto_select: true,
-
-				callback: (response: { credential?: string }) => {
-					if (response.credential) {
-						router.push(`/auth/google/callback?credential=${encodeURIComponent(response.credential)}`);
-					} else {
-						console.error("Google 로그인 실패", response);
-					}
-				},
-			});
-
-			window.google.accounts.id.renderButton(googleButtonRef, {
-				theme: "outline",
-				size: "large",
-				text: "continue_with",
-				type: "standard",
-				width: "414",
-				click_listener: () => {
-					console.log("click the google button");
-				},
-			});
-		}
-	}, [script, googleButtonRef, router]);
 
 	return (
 		<div className="w-[400px] h-full m-auto py-20 flex flex-col items-center justify-center">
@@ -176,15 +106,13 @@ export const AuthLogin = () => {
 						네이버 로그인
 					</button>
 
-					<div className="absolute h-full w-full opacity-0">
-						<div
-							ref={setGoogleButtonRef}
-							id="google-signin-button"
-						/>
-					</div>
 					<button
 						type="button"
-						className="flex items-center justify-center w-full h-10 gap-2 px-4 py-2 font-semibold bg-white border border-gray-300 rounded-md cursor-pointer"
+						className={cn(
+							"flex items-center justify-center w-full h-10 gap-2 px-4 py-2 font-semibold bg-white border border-gray-300 rounded-md",
+							isGoogleReady ? "cursor-pointer" : "cursor-not-allowed",
+						)}
+						onClick={handleGoogleLogin}
 					>
 						<GoogleLogin className="w-[24px] h-[24px]" />
 						구글 로그인
