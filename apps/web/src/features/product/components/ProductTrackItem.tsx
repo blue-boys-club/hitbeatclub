@@ -1,0 +1,51 @@
+import { Hit } from "@/assets/svgs";
+import { checkIsPureEnglish } from "@/common/utils";
+import { cn } from "@/common/utils/tailwind";
+import Link from "next/link";
+import { AlbumCoverCard } from "@/components/ui";
+import { Product } from "../product.types";
+
+interface ProductTrackItemProps {
+	track: Product;
+}
+export const ProductTrackItem = ({ track }: ProductTrackItemProps) => {
+	const { title, artist, albumCoverUrl, isHit } = track;
+	const isTitlePureEnglish = checkIsPureEnglish(title);
+	const isArtistPureEnglish = checkIsPureEnglish(artist);
+
+	return (
+		<Link
+			// TODO: 상품 상세 페이지 링크 추가
+			href={`/tracks/${track.id}`}
+			className="inline-flex flex-col items-start justify-start w-48 gap-6px"
+		>
+			<AlbumCoverCard
+				albumImgSrc={albumCoverUrl}
+				size="xl"
+				rounded="none"
+				border="main"
+			/>
+			<div className="flex flex-col items-start justify-start gap-3px">
+				<div className="inline-flex items-center justify-center gap-10px">
+					<div
+						className={cn(
+							"justify-start text-hbc-black text-18px font-semibold leading-24px tracking-018px",
+							isTitlePureEnglish ? "font-suisse" : "font-suit",
+						)}
+					>
+						{title}
+					</div>
+					{isHit && <Hit />}
+				</div>
+				<div
+					className={cn(
+						"w-48 justify-start text-zinc-500 text-16px font-normal leading-18px tracking-016px",
+						isArtistPureEnglish ? "font-suisse" : "font-suit",
+					)}
+				>
+					{artist}
+				</div>
+			</div>
+		</Link>
+	);
+};

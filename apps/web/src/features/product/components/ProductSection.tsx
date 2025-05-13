@@ -6,6 +6,7 @@ import { ProductItem } from "./ProductItem";
 import { Carousel, CarouselContent, CarouselItem, type CarouselPlugin } from "@/components/ui/Carousel/Carousel";
 import { memo, useEffect, useState } from "react";
 import { Product } from "../product.types";
+import { ProductTrackItem } from "./ProductTrackItem";
 
 interface ShopSectionProps {
 	sectionHeader: Omit<SectionHeaderProps, "size">;
@@ -51,7 +52,7 @@ export const ProductSection = memo(({ sectionHeader, products }: ShopSectionProp
 							key={product.id}
 							className="p-1 pr-8px basis-auto"
 						>
-							<ProductItem />
+							<ProductTrackItem track={product} />
 						</CarouselItem>
 					))}
 				</CarouselContent>
