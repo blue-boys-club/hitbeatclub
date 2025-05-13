@@ -1,4 +1,8 @@
-export type ViewType = "grid" | "list";
+export enum ViewType {
+	GRID = "GRID",
+	LIST = "LIST",
+}
+
 export type SortOption = "Recent" | "A-Z" | "Popular";
 
 export interface SortOptionType {
@@ -7,7 +11,7 @@ export interface SortOptionType {
 }
 
 export interface Artist {
-	id: number;
+	id: string;
 	name: string;
 	image: string;
 	followers: number;

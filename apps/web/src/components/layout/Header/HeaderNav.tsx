@@ -1,15 +1,15 @@
 "use client";
 
+import React, { memo, useCallback, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useShallow } from "zustand/react/shallow";
+
 import { NotificationOff } from "@/assets/svgs/NotificationOff";
-import { NotificationOn } from "@/assets/svgs/NotificationOn";
 import { UserProfile } from "@/assets/svgs/UserProfile";
 import { cn } from "@/common/utils";
 import { LoginButton, SubscribeButton, TagDropdown, UserAvatar } from "@/components/ui";
 import { useLayoutStore } from "@/stores/layout";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import React, { memo, useCallback, useState } from "react";
-import { useShallow } from "zustand/react/shallow";
 
 interface NotificationOption {
 	label: string;
@@ -25,11 +25,11 @@ interface HeaderNavOption {
 const headerNavOptions: HeaderNavOption[] = [
 	{
 		label: "주문 목록",
-		value: "purchases",
+		value: "orders",
 	},
 	{
 		label: "아티스트 스튜디오",
-		value: "studio",
+		value: "artist-studio",
 	},
 	{
 		label: "로그아웃",
@@ -38,7 +38,8 @@ const headerNavOptions: HeaderNavOption[] = [
 ];
 
 export const HeaderNav = memo(() => {
-	const navigate = useRouter();
+	const router = useRouter();
+
 	const [isLogined, setIsLogined] = useState(true);
 	const [userProfileImage, setUserProfileImage] = useState(false);
 	const [notificationOptions, setNotificationOptions] = useState<NotificationOption[]>([]);
@@ -50,24 +51,25 @@ export const HeaderNav = memo(() => {
 
 	const signOut = useCallback(() => {
 		console.log("로그아웃");
+		router.push("/auth/login");
 		// TODO: 실제 로그아웃 로직 구현
-	}, []);
+	}, [router]);
 
 	const handelDropdownOptionSelect = useCallback(
 		(value: string) => {
 			switch (value) {
-				case "purchases":
-					navigate.push("/purchases");
+				case "orders":
+					router.push("/orders");
 					break;
-				case "studio":
-					navigate.push("/studio");
+				case "artist-studio":
+					router.push("/artist-studio/123");
 					break;
 				case "logout":
 					signOut();
 					break;
 			}
 		},
-		[navigate, signOut],
+		[router, signOut],
 	);
 	return (
 		<nav

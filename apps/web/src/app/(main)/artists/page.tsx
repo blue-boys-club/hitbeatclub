@@ -1,6 +1,7 @@
 import ArtistProductListPage from "@/page/ArtistProductListPage";
+
 const ArtistTrackListRoute = () => {
-	return <ArtistProductListPage />;
+	return <></>;
 };
 
 export default ArtistTrackListRoute;

@@ -10,13 +10,13 @@ import { ProductList } from "@/features/product/components";
  * - 트랙 목록 표시
  */
 const ArtistProductListPage = memo(() => {
-	const dummyTracks = Array.from({ length: 20 }, (_, i) => i);
+	const dummyProducts = Array.from({ length: 20 }, (_, i) => i);
 
 	return (
 		<>
 			<ArtistInfo />
 			<ProductList
-				tracks={dummyTracks}
+				products={dummyProducts}
 				onFiltersChange={() => {}}
 				onSortChange={() => {}}
 				onSearch={() => {}}

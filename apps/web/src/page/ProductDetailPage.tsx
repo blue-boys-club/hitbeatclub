@@ -9,6 +9,9 @@ import { TagButton } from "@/components/ui/TagButton";
 import { ProductDetailLicense } from "../features/product/components/ProductDetailLicense";
 import { ProductDetailLicenseModal } from "../features/product/components/modal/ProductDetailLicenseModal";
 import { LicenseColor, LicenseType } from "../features/product/product.constants";
+import { useRouter } from "next/navigation";
+import { useLayoutStore } from "@/stores/layout";
+import { useShallow } from "zustand/react/shallow";
 
 interface TrackInfo {
 	title: string;
@@ -51,15 +54,29 @@ const trackInfo: TrackInfo = {
 interface ProductDetailPageProps {}
 
 const ProductDetailPage = memo(({}: ProductDetailPageProps) => {
+	const router = useRouter();
 	const [isLiked, setIsLiked] = useState(false);
 	const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
+	const { isSubscribed } = useLayoutStore(
+		useShallow((state) => ({
+			isSubscribed: state.isMembership, // TODO: remove this and verify from server
+		})),
+	);
 
 	const onLikeClick = () => {
 		setIsLiked(!isLiked);
 	};
 
-	const onPurchaseClick = () => {
+	const onClickPurchase = () => {
 		setIsLicenseModalOpen(true);
+	};
+
+	const onClickFreeDownload = () => {
+		if (!isSubscribed) {
+			router.push("/subscribe");
+		} else {
+			alert("준비중입니다.");
+		}
 	};
 
 	return (
@@ -136,13 +153,14 @@ const ProductDetailPage = memo(({}: ProductDetailPageProps) => {
 								<FreeDownloadButton
 									variant="secondary"
 									className="outline-4 outline-hbc-black px-2.5 font-suisse"
+									onClick={onClickFreeDownload}
 								>
 									Free Download
 								</FreeDownloadButton>
 								<PurchaseButton
 									iconColor="hbc-white"
 									className="outline-4 outline-hbc-black font-suisse"
-									onClick={onPurchaseClick}
+									onClick={onClickPurchase}
 								>
 									{trackInfo.price?.toLocaleString()} KRW
 								</PurchaseButton>

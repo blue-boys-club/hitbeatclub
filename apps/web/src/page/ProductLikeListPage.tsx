@@ -9,13 +9,13 @@ import { ProductList, ProductLikeHeader } from "@/features/product/components";
  * - 좋아요한 트랙 목록 표시
  */
 const ProductLikeListPage = memo(() => {
-	const dummyTracks = Array.from({ length: 20 }, (_, i) => i);
+	const dummyProducts = Array.from({ length: 20 }, (_, i) => i);
 
 	return (
 		<>
 			<ProductLikeHeader />
 			<ProductList
-				tracks={dummyTracks}
+				products={dummyProducts}
 				onFiltersChange={() => {}}
 				onSortChange={() => {}}
 				onSearch={() => {}}
