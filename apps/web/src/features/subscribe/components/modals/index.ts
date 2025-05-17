@@ -1,5 +1,8 @@
-export { PromotionCodeModal } from "./PromotionCodeModal";
-// export { SubscribePaymentModal as PaymentModal } from "./SubscribePaymentModal"; // Removed
-export { SuccessModal } from "./SuccessModal";
-export { ErrorModal } from "./ErrorModal";
-export { InformationModal } from "./InformationModal";
+export * from "./ErrorModal";
+export * from "./InformationModal";
+export * from "./PromotionCodeModal";
+export * from "./SuccessModal";
+// export * from "./SubscribePaymentModal"; // Remove old modal
+
+export * from "./SubscribePaymentChoiceModal"; // Add new choice modal
+export * from "./SubscribePaypalModal"; // Add new PayPal modal
