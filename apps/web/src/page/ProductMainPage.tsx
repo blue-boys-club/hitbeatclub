@@ -1,26 +1,18 @@
+"use client";
+
 import Image from "next/image";
 import bannerBackground from "@/assets/images/shop-banner-bg.jpeg";
 import { ProductSection } from "@/features/product/components/ProductSection";
 import { Footer } from "@/components/layout/Footer";
-
-const mockProducts = [
-	{
-		id: 1,
-		title: "Product 1",
-		artist: "Artist 1",
-		isHit: true,
-		albumCoverUrl: "https://placehold.co/180x180.png",
-	},
-	...Array.from({ length: 4 }, (_, index) => ({
-		id: index + 2,
-		title: `Product ${index + 2}`,
-		artist: `Artist ${index + 2}`,
-		isHit: false,
-		albumCoverUrl: "https://placehold.co/180x180.png",
-	})),
-];
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { getProductListQueryOption } from "@/apis/product/query/product.query-option";
 
 export default function ProductMainPage() {
+	const { data: products = [] } = useQuery({
+		...getProductListQueryOption(),
+		placeholderData: keepPreviousData,
+	});
+
 	return (
 		<div className="flex flex-col gap-15px">
 			<div className="flex items-center justify-center w-full h-150px">
@@ -42,7 +34,7 @@ export default function ProductMainPage() {
 						href: "#",
 					},
 				}}
-				products={mockProducts}
+				products={products}
 			/>
 
 			<ProductSection
@@ -53,7 +45,7 @@ export default function ProductMainPage() {
 						href: "#",
 					},
 				}}
-				products={mockProducts}
+				products={products}
 			/>
 
 			<ProductSection
@@ -64,7 +56,7 @@ export default function ProductMainPage() {
 						href: "#",
 					},
 				}}
-				products={mockProducts}
+				products={products}
 			/>
 
 			<ProductSection
@@ -72,7 +64,7 @@ export default function ProductMainPage() {
 					title: "Recommended",
 					subtitle: "당신을 위한 오늘의 추천곡",
 				}}
-				products={mockProducts}
+				products={products}
 			/>
 
 			<ProductSection
@@ -80,7 +72,7 @@ export default function ProductMainPage() {
 					title: "Recent",
 					subtitle: "최근 재생한 항목",
 				}}
-				products={mockProducts}
+				products={products}
 			/>
 
 			<Footer />

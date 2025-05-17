@@ -12,50 +12,58 @@ import { LicenseColor, LicenseType } from "../features/product/product.constants
 import { useRouter } from "next/navigation";
 import { useLayoutStore } from "@/stores/layout";
 import { useShallow } from "zustand/react/shallow";
+import { useQuery } from "@tanstack/react-query";
+import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 
-interface TrackInfo {
-	title: string;
-	artist: string;
-	description: string;
-	albumImgSrc: string;
-	price: number;
-	genres: string[];
-	tags: string[];
+// interface TrackInfo {
+// 	title: string;
+// 	artist: string;
+// 	description: string;
+// 	albumImgSrc: string;
+// 	price: number;
+// 	genres: string[];
+// 	tags: string[];
+// }
+
+// const LICENSE_INFO = {
+// 	Exclusive: {
+// 		price: "140,000 KRW",
+// 		specialNote: {
+// 			text: "저작권 표기 필수",
+// 			color: LicenseColor.RED,
+// 		},
+// 	},
+// 	Master: {
+// 		price: "40,000 KRW",
+// 		specialNote: {
+// 			text: "저작권 일체 판매",
+// 			color: LicenseColor.BLUE,
+// 		},
+// 	},
+// } as const;
+
+// const trackInfo: TrackInfo = {
+// 	title: "Secret Garden",
+// 	artist: "NotJake",
+// 	description:
+// 		"플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운무 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.",
+// 	albumImgSrc: "https://placehold.co/192x192",
+// 	price: 15000,
+// 	genres: ["C# minor", "BPM 120", "Boom bap", "Old School"],
+// 	tags: ["G-funk", "Trippy", "Flower"],
+// };
+
+interface ProductDetailPageProps {
+	trackId: number;
 }
 
-const LICENSE_INFO = {
-	Exclusive: {
-		price: "140,000 KRW",
-		specialNote: {
-			text: "저작권 표기 필수",
-			color: LicenseColor.RED,
-		},
-	},
-	Master: {
-		price: "40,000 KRW",
-		specialNote: {
-			text: "저작권 일체 판매",
-			color: LicenseColor.BLUE,
-		},
-	},
-} as const;
-
-const trackInfo: TrackInfo = {
-	title: "Secret Garden",
-	artist: "NotJake",
-	description:
-		"플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운무 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.",
-	albumImgSrc: "https://placehold.co/192x192",
-	price: 15000,
-	genres: ["C# minor", "BPM 120", "Boom bap", "Old School"],
-	tags: ["G-funk", "Trippy", "Flower"],
-};
-
-interface ProductDetailPageProps {}
-
-const ProductDetailPage = memo(({}: ProductDetailPageProps) => {
+const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 	const router = useRouter();
 	const [isLiked, setIsLiked] = useState(false);
+	const { data: product } = useQuery({
+		...getProductQueryOption(trackId),
+	});
+
 	const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
 	const { isSubscribed } = useLayoutStore(
 		useShallow((state) => ({
@@ -75,25 +83,25 @@ const ProductDetailPage = memo(({}: ProductDetailPageProps) => {
 		if (!isSubscribed) {
 			router.push("/subscribe");
 		} else {
-			alert("준비중입니다.");
+			// alert("준비중입니다.");
 		}
 	};
+
+	const cheapestLicensePrice = product?.licenses.reduce((min, license) => Math.min(min, license.price), Infinity);
 
 	return (
 		<>
 			<main className="px-9 pt-10">
 				<article className="flex gap-10">
 					<aside>
-						<AlbumAvatar src={trackInfo.albumImgSrc} />
+						<AlbumAvatar src={product?.albumImgSrc || "https://placehold.co/192x192"} />
 					</aside>
 
 					<section className="flex flex-col gap-5">
 						<header className="flex justify-between items-center gap-2">
 							<div className="flex items-center gap-2">
 								<div className="w-[400px] flex items-center gap-2">
-									<h1 className="text-32px font-extrabold leading-[40px] tracking-0.32px truncate">
-										{trackInfo.title}
-									</h1>
+									<h1 className="text-32px font-extrabold leading-[40px] tracking-0.32px truncate">{product?.title}</h1>
 									<div>
 										<Beat className="w-[48px] h-[13px]" />
 									</div>
@@ -115,7 +123,7 @@ const ProductDetailPage = memo(({}: ProductDetailPageProps) => {
 									className="w-[51px] h-[51px] bg-black"
 									size="large"
 								/>
-								<span className="text-16px font-bold">{trackInfo.artist}</span>
+								<span className="text-16px font-bold">{product?.artist}</span>
 							</div>
 
 							<button
@@ -141,7 +149,7 @@ const ProductDetailPage = memo(({}: ProductDetailPageProps) => {
 								className="flex flex-wrap gap-2"
 								aria-label="장르 목록"
 							>
-								{trackInfo.genres?.map((genre) => (
+								{product?.genres?.map((genre) => (
 									<GenreButton
 										key={genre}
 										name={genre}
@@ -162,24 +170,24 @@ const ProductDetailPage = memo(({}: ProductDetailPageProps) => {
 									className="outline-4 outline-hbc-black font-suisse"
 									onClick={onClickPurchase}
 								>
-									{trackInfo.price?.toLocaleString()} KRW
+									{cheapestLicensePrice?.toLocaleString()} KRW
 								</PurchaseButton>
 							</div>
 						</div>
 
 						<section>
 							<h2 className="text-[16px] font-bold">곡 정보</h2>
-							<p className="text-16px text-[#777] leading-[22px]">{trackInfo.description}</p>
+							<p className="text-16px text-[#777] leading-[22px]">{product?.description}</p>
 						</section>
 
 						<nav
 							className="flex flex-wrap gap-2"
 							aria-label="태그 목록"
 						>
-							{trackInfo.tags.map((tag) => (
+							{product?.genres?.map((genre) => (
 								<TagButton
-									key={tag}
-									name={tag}
+									key={genre}
+									name={genre}
 									isClickable={false}
 								/>
 							))}
@@ -193,15 +201,18 @@ const ProductDetailPage = memo(({}: ProductDetailPageProps) => {
 					<h2 className="mb-2.5 text-26px font-bold leading-[32px] tracking-0.26px text-center">라이센스</h2>
 
 					<div className="flex gap-10 w-[787px] mx-auto py-10 border-t-2px border-hbc-black">
-						{Object.entries(LICENSE_INFO).map(([type, info]) => (
+						{product?.licenses.map((license) => (
 							<div
-								key={type}
+								key={license.id}
 								className="flex flex-1 gap-5"
 							>
 								<ProductDetailLicense
-									type={type as LicenseType}
-									price={info.price}
-									specialNote={info.specialNote}
+									type={license.name as LicenseType}
+									price={license.price.toLocaleString()}
+									specialNote={{
+										text: license.specialNote.text,
+										color: license.specialNote.color as LicenseColor,
+									}}
 									isClickable={false}
 								/>
 							</div>

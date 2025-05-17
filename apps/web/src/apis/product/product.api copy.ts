@@ -1,5 +1,4 @@
 import client from "../client";
-import { PRODUCTS } from "./product.dummy";
 
 // TODO: Type package로 공유 타입 정의
 /**
@@ -7,9 +6,8 @@ import { PRODUCTS } from "./product.dummy";
  * @returns 상품 목록
  */
 export const getProductList = async () => {
-	// const response = await client.get("/products");
-	// return response.data;
-	return PRODUCTS;
+	const response = await client.get("/products");
+	return response.data;
 };
 
 // TODO: Type package로 공유 타입 정의
@@ -19,9 +17,8 @@ export const getProductList = async () => {
  * @returns 상품 상세 정보
  */
 export const getProduct = async (productId: number) => {
-	// const response = await client.get(`/products/${productId}`);
-	// return response.data;
-	return PRODUCTS.find((product) => product.id === productId);
+	const response = await client.get(`/products/${productId}`);
+	return response.data;
 };
 
 // TODO: Type package로 공유 타입 정의

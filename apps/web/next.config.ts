@@ -9,7 +9,12 @@ const nextConfig: NextConfig = {
 		: {},
 	images: {
 		// placeholder images
-		remotePatterns: [new URL("https://placehold.co/**")],
+		remotePatterns: [
+			new URL("https://placehold.co/**"),
+			new URL("https://prod-assets.hitbeatclub.com/**"),
+			new URL("https://staging-assets.hitbeatclub.com/**"),
+			new URL("https://dev-assets.hitbeatclub.com/**"),
+		],
 	},
 	eslint: {
 		// Warning: This allows production builds to successfully complete even if

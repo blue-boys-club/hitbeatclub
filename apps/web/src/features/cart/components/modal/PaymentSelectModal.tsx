@@ -55,12 +55,12 @@ const paymentMethods: PaymentMethod[] = [
 	// 	method: "VIRTUAL_ACCOUNT",
 	// 	icon: "🏦",
 	// },
-	{
-		id: "easy-pay",
-		name: "간편결제",
-		method: "EASY_PAY",
-		icon: "📱",
-	},
+	// {
+	// 	id: "easy-pay",
+	// 	name: "간편결제",
+	// 	method: "EASY_PAY",
+	// 	icon: "📱",
+	// },
 	{
 		id: "transfer",
 		name: "계좌이체",
@@ -372,7 +372,12 @@ export const PaymentSelectModal = ({
 							</Popup.PopupDescription>
 						</Popup.PopupHeader>
 
-						<div className={cn("grid gap-3 mt-4", paymentMethods.length > 4 ? "grid-cols-3" : "grid-cols-2")}>
+						<div
+							className={cn(
+								"grid gap-3 mt-4",
+								paymentMethods.length > 4 || paymentMethods.length === 3 ? "grid-cols-3" : "grid-cols-2",
+							)}
+						>
 							{paymentMethods.map((method) => (
 								<button
 									key={method.id}

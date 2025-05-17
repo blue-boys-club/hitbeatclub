@@ -3,6 +3,7 @@ import { cn } from "@/common/utils";
 import { HTMLAttributes, memo } from "react";
 import Image from "next/image";
 import { Connecting } from "@/assets/svgs/Connecting";
+import { assetImageLoader } from "@/common/utils/image-loader";
 
 const userAvatarVariants = cva("relative rounded-full", {
 	variants: {
@@ -58,6 +59,7 @@ export const UserAvatar = memo(function UserAvatar({
 				height={size === "small" ? 204 : 348}
 				loading="lazy"
 				data-testid="user-avatar-image"
+				loader={assetImageLoader}
 			/>
 			{isNotification && (
 				<Connecting
