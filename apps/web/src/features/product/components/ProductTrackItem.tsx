@@ -9,18 +9,18 @@ interface ProductTrackItemProps {
 	track: Product;
 }
 export const ProductTrackItem = ({ track }: ProductTrackItemProps) => {
-	const { title, artist, albumCoverUrl, isHit } = track;
+	const { title, artist, albumImgSrc, isHit } = track;
 	const isTitlePureEnglish = checkIsPureEnglish(title);
 	const isArtistPureEnglish = checkIsPureEnglish(artist);
 
 	return (
 		<Link
 			// TODO: 상품 상세 페이지 링크 추가
-			href={`/tracks/${track.id}`}
+			href={`/products/${track.id}`}
 			className="inline-flex flex-col items-start justify-start w-48 gap-6px"
 		>
 			<AlbumCoverCard
-				albumImgSrc={albumCoverUrl}
+				albumImgSrc={albumImgSrc}
 				size="xl"
 				rounded="none"
 				border="main"
