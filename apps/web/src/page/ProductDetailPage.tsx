@@ -221,10 +221,13 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 				</section>
 			</main>
 
-			<ProductDetailLicenseModal
-				isOpen={isLicenseModalOpen}
-				onClose={() => setIsLicenseModalOpen(false)}
-			/>
+			{product && (
+				<ProductDetailLicenseModal
+					item={{ id: product.id, name: product.title }}
+					isOpen={isLicenseModalOpen}
+					onClose={() => setIsLicenseModalOpen(false)}
+				/>
+			)}
 		</>
 	);
 });
