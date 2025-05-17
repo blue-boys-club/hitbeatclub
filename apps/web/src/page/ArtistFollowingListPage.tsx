@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState } from "react";
 import ArtistHeader from "@/features/artist/components/ArtistHeader";
 import ArtistSearchBar from "@/features/artist/components/ArtistSearchBar";
@@ -38,10 +39,7 @@ const artists = [
 	},
 ];
 
-const ArtistFollowingListPage = () => {
-	const searchParams = useSearchParams();
-	const view = searchParams.get("view") ?? ViewType.GRID;
-
+const ArtistFollowingListPage = ({ view }: { view: string }) => {
 	const [activeView, setActiveView] = useState<ViewType>(view as ViewType);
 	const [selectedSort, setSelectedSort] = useState<SortOption>("Recent");
 	const [searchValue, setSearchValue] = useState("");

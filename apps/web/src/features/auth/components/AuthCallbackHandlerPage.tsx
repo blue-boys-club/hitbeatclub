@@ -1,10 +1,12 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 const DEBUG = process.env.NODE_ENV === "development";
 
-export const AuthCallbackHandlerPage = () => {
+export const AuthCallbackHandlerPage = (): React.ReactNode => {
 	const [authCompleted, setAuthCompleted] = useState(false);
 	const [authError, setAuthError] = useState<string | null>(null);
 	const router = useRouter();
