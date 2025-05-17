@@ -6,7 +6,8 @@ import { useForm, SubmitHandler, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RecurringPeriod, subscribeFormSchema, type SubscribeFormValues } from "../schema";
 import { useSubscription } from "../hooks/useSubscription";
-import { PromotionCodeModal, PaymentModal, SuccessModal, ErrorModal } from "./modals";
+import PortOne from "@portone/browser-sdk/v2";
+import { PromotionCodeModal, SuccessModal, ErrorModal } from "./modals";
 import { SubscribeBenefitBody } from "./SubscribeBenefitBody";
 import { SubscribeFormHeader } from "./SubscribeFormHeader";
 import { SubscribePrice } from "./SubscribePrice";
@@ -16,11 +17,11 @@ import { HBCGray } from "@/assets/svgs";
  * 구독 폼 내용 컴포넌트
  */
 export const SubscribeFormContent = () => {
-	const { isSubscribed, isSubmitting, openModal, submitSubscription } = useSubscription();
+	const { isSubscribed, isSubmitting, openModal, submitSubscription, closeModal, modals } = useSubscription();
 	const { toast } = useToast();
 
 	// React Hook Form 설정
-	const methods = useForm({
+	const methods = useForm<SubscribeFormValues>({
 		resolver: zodResolver(subscribeFormSchema),
 		defaultValues: {
 			recurringPeriod: RecurringPeriod.YEARLY,
@@ -52,9 +53,70 @@ export const SubscribeFormContent = () => {
 	};
 
 	// 구독 버튼 클릭 핸들러
-	const handleSubscribe = () => {
-		if (isSubscribed) return;
-		openModal("payment");
+	const handleSubscribe = async () => {
+		if (isSubscribed || isSubmitting) return;
+
+		const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID;
+		// Use a generic Toss channel key or make it specific if you have one for Toss Payments PG
+		const channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_RECURRING;
+		const orderName = recurringPeriod === RecurringPeriod.YEARLY ? "HITBEAT 연간 멤버십" : "HITBEAT 월간 멤버십";
+
+		if (!storeId || !channelKey) {
+			console.error("PortOne storeId or Toss Payments channelKey is not configured.");
+			openModal("error");
+			return;
+		}
+
+		try {
+			const response = await PortOne.requestIssueBillingKey({
+				storeId,
+				channelKey,
+				billingKeyMethod: "CARD", // For Toss Payments PG, use 'CARD'
+				customer: {
+					// Populate with actual customer data if available/required by Toss Payments
+					// Example: customerId might be needed for some PGs or for your records
+					// customerId: `user_${userId}`
+				},
+				issueName: orderName,
+				redirectUrl: window.location.href, // Or a specific page for post-payment
+			});
+
+			if (response?.code === "ISSUED" && response.billingKey) {
+				console.log("Billing Key issued:", response.billingKey);
+				const currentFormData = methods.getValues();
+				await submitSubscription({
+					...currentFormData,
+					method: {
+						// Ensure this matches the updated paymentMethodSchema
+						tossBillingKey: {
+							billingKey: response.billingKey,
+							pg: "tosspayments", // Explicitly state 'tosspayments'
+						},
+					},
+				});
+				// No need to reset() here, as submitSubscription will open success modal which might lead to navigation or other state changes.
+				// Resetting is done in the main onSubmit after submitSubscription is successful.
+			} else if (response?.code === "CANCELLED") {
+				console.log("Payment cancelled by user.");
+				// Handle cancellation (e.g., show a toast or message)
+				toast({
+					title: "알림",
+					description: "빌링키 발급이 취소되었습니다.",
+					variant: "default",
+				});
+			} else {
+				console.error("Billing key issuance failed:", response);
+				let errorMessage = "빌링키 발급에 실패했습니다.";
+				if (response?.message) {
+					errorMessage += ` (${response.message})`;
+				}
+				// Pass error message to error modal if your ErrorModal component supports it
+				openModal("error");
+			}
+		} catch (error) {
+			console.error("Error during PortOne requestIssueBillingKey:", error);
+			openModal("error");
+		}
 	};
 
 	// 구독 기간 변경 시 알림 표시
@@ -161,7 +223,6 @@ export const SubscribeFormContent = () => {
 
 				{/* Modals */}
 				<PromotionCodeModal />
-				<PaymentModal />
 				<SuccessModal />
 				<ErrorModal />
 			</form>

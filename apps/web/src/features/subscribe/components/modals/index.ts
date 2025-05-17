@@ -1,5 +1,5 @@
 export { PromotionCodeModal } from "./PromotionCodeModal";
-export { SubscribePaymentModal as PaymentModal } from "./SubscribePaymentModal";
+// export { SubscribePaymentModal as PaymentModal } from "./SubscribePaymentModal"; // Removed
 export { SuccessModal } from "./SuccessModal";
-export { InformationModal } from "./InformationModal";
 export { ErrorModal } from "./ErrorModal";
+export { InformationModal } from "./InformationModal";

@@ -34,6 +34,12 @@ export const paypalCredentialSchema = z.object({
 	billingKey: z.string().min(1, "페이팔 빌링키를 입력해주세요."),
 });
 
+// Toss Payments Billing Key 스키마 추가
+export const tossBillingKeySchema = z.object({
+	billingKey: z.string().min(1, "빌링키를 입력해주세요."),
+	pg: z.string().min(1, "PG 정보가 필요합니다."), // To store 'toss'
+});
+
 export type CardCredential = z.infer<typeof cardCredentialSchema>;
 
 // 결제 방식 스키마
@@ -45,11 +51,15 @@ export const paymentMethodSchema = z
 			})
 			.optional(),
 		paypal: paypalCredentialSchema.optional(),
+		tossBillingKey: tossBillingKeySchema.optional(), // Toss Billing Key 추가
 	})
-	.refine((data) => !(data.card || data.paypal), {
-		message: "신용카드 또는 페이팔 정보를 입력해주세요.",
-		path: ["card", "paypal"],
-	});
+	.refine(
+		(data) => data.card || data.paypal || data.tossBillingKey, // Refine 조건 수정
+		{
+			message: "결제 정보를 입력해주세요.", // 메시지 일반화
+			path: ["card", "paypal", "tossBillingKey"], // Path 수정
+		},
+	);
 
 export type PaymentMethod = z.infer<typeof paymentMethodSchema>;
 
