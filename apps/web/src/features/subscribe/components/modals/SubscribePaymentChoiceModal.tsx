@@ -8,40 +8,66 @@ import {
 	PopupButton,
 	PopupDescription,
 } from "@/components/ui/Popup";
-import { useSubscription } from "../../hooks/useSubscription"; // Assuming this hook provides modal controls
 import { RecurringPeriod } from "../../schema";
 
+/**
+ * `SubscribePaymentChoiceModal` 컴포넌트의 Props 정의
+ */
 interface SubscribePaymentChoiceModalProps {
+	/** 모달 닫기 콜백 함수 */
 	onClose: () => void;
-	onSelectTossCard: () => void;
+	/** 카드 결제 선택 콜백 함수 */
+	onSelectCard: () => void;
+	/** 토스페이 결제 선택 콜백 함수 */
+	onSelectToss: () => void;
+	/** 페이팔 결제 선택 콜백 함수 */
 	onSelectPaypal: () => void;
+	/** 모달의 열림 상태 */
 	isOpen: boolean;
+	/** 현재 선택된 구독 주기 (연간/월간) */
 	recurringPeriod: RecurringPeriod;
+	/** 적용된 프로모션 코드 (선택 사항) */
 	promotionCode?: string | null;
+	/** 카드 결제 처리 중 상태 (선택 사항) */
+	isInitiatingCard?: boolean;
+	/** 토스페이 결제 처리 중 상태 (선택 사항) */
+	isInitiatingToss?: boolean;
 }
 
 /**
- * 결제 수단 선택 모달
+ * 결제 수단 선택 모달 컴포넌트입니다.
+ * 사용자에게 다양한 결제 옵션(카드, 토스페이, 페이팔 등)을 제공하고 선택을 처리합니다.
  */
 export const SubscribePaymentChoiceModal = memo(
 	({
 		isOpen,
 		onClose,
-		onSelectTossCard,
+		onSelectCard,
+		onSelectToss,
 		onSelectPaypal,
 		recurringPeriod,
 		promotionCode,
+		isInitiatingCard,
+		isInitiatingToss,
 	}: SubscribePaymentChoiceModalProps) => {
+		/**
+		 * 모달의 열림/닫힘 상태 변경 시 호출되는 핸들러입니다.
+		 * @param open 새로운 열림 상태
+		 */
 		const handleOnOpenChange = (open: boolean) => {
 			if (!open) {
 				onClose();
 			}
 		};
 
-		const subscriptionPlanText = useMemo(
-			() => (recurringPeriod === RecurringPeriod.YEARLY ? "연간 멤버십 (189,900원 결제)" : "월간 멤버십 (24,990원/월)"),
-			[recurringPeriod],
-		);
+		/** 구독 플랜에 대한 설명 텍스트 (예: "연간 멤버십 (189,900원 결제)") */
+		const subscriptionPlanText = useMemo(() => {
+			const yearlyPrice = "189,900원";
+			const monthlyPrice = "24,990원/월";
+			return recurringPeriod === RecurringPeriod.YEARLY
+				? `연간 멤버십 (${yearlyPrice} 결제)`
+				: `월간 멤버십 (${monthlyPrice})`;
+		}, [recurringPeriod]);
 
 		return (
 			<Popup
@@ -78,18 +104,20 @@ export const SubscribePaymentChoiceModal = memo(
 
 						<div>
 							<p className="mb-3 text-center text-gray-600">정기결제를 위한 결제 수단을 선택해주세요.</p>
-							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+							{/* First row for Card and PayPal */}
+							<div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2">
 								<button
-									onClick={onSelectTossCard}
-									className="flex flex-col items-center justify-center p-6 text-lg font-semibold text-white transition-colors bg-blue-500 rounded-lg shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+									onClick={onSelectCard}
+									className="flex flex-col items-center justify-center p-6 text-lg font-semibold text-white transition-colors bg-blue-500 rounded-lg shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50"
+									disabled={isInitiatingCard || isInitiatingToss}
 								>
 									<span>💳</span>
-									<span className="mt-2">카드 결제</span>
-									<span className="mt-1 text-xs font-normal">(토스페이먼츠)</span>
+									<span className="mt-2">{isInitiatingCard ? "처리중..." : "카드 결제"}</span>
 								</button>
 								<button
 									onClick={onSelectPaypal}
-									className="flex flex-col items-center justify-center p-6 text-lg font-semibold text-white transition-colors bg-sky-500 rounded-lg shadow hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-50"
+									className="flex flex-col items-center justify-center p-6 text-lg font-semibold text-white transition-colors bg-sky-500 rounded-lg shadow hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-50 disabled:opacity-50"
+									disabled={isInitiatingCard || isInitiatingToss}
 								>
 									<span>
 										<img
@@ -100,6 +128,19 @@ export const SubscribePaymentChoiceModal = memo(
 									</span>
 									<span className="mt-2">페이팔</span>
 								</button>
+							</div>
+
+							{/* Second row for Easy Payments (Toss Pay for now) */}
+							<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+								<button
+									onClick={onSelectToss}
+									className="flex flex-col items-center justify-center p-6 text-lg font-semibold text-white transition-colors bg-cyan-500 rounded-lg shadow hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-50 sm:col-start-1 disabled:opacity-50"
+									disabled={isInitiatingToss || isInitiatingCard}
+								>
+									<span className="text-2xl">토</span>
+									<span className="mt-2">{isInitiatingToss ? "처리중..." : "토스페이"}</span>
+								</button>
+								{/* Future easy payment methods will go here */}
 							</div>
 						</div>
 					</div>

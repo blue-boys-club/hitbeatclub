@@ -55,7 +55,7 @@ export const SubscribePaypalModal = memo(({ isOpen, onClose, onSuccess, onError 
 						setUiStatus("processingCallback");
 						if (response.billingKey) {
 							setPaypalBillingKey(response.billingKey); // Set for a moment if needed
-							setValue("method", { paypal: { billingKey: response.billingKey } }, { shouldValidate: true });
+							setValue("method", { type: "PAYPAL", billingKey: response.billingKey }, { shouldValidate: true });
 							setPaypalError(null);
 							onSuccess(response.billingKey); // Auto-proceed on success
 						} else {

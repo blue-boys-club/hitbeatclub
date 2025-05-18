@@ -2,11 +2,15 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/common/utils";
 import Link from "next/link";
-import { useForm, SubmitHandler, FormProvider, useFormContext } from "react-hook-form";
+import { useForm, SubmitHandler, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RecurringPeriod, subscribeFormSchema, type SubscribeFormValues } from "../schema";
-import { useSubscription } from "../hooks/useSubscription";
-import PortOne from "@portone/browser-sdk/v2";
+import {
+	useSubscription,
+	type AugmentedSubscribeFormValues,
+	type BaseBillingKeyIssueArgs,
+	type PaymentGatewayType,
+} from "../hooks/useSubscription";
 import {
 	PromotionCodeModal,
 	SuccessModal,
@@ -20,27 +24,28 @@ import { SubscribePrice } from "./SubscribePrice";
 import { HBCGray } from "@/assets/svgs";
 
 /**
- * 구독 폼 내용 컴포넌트
+ * 구독 폼의 주요 콘텐츠를 렌더링하고 구독 과정을 처리하는 컴포넌트입니다.
+ * 사용자의 입력, 결제 수단 선택, PortOne 연동, 모달 관리를 담당합니다.
  */
 export const SubscribeFormContent = () => {
 	const {
-		isSubscribed,
-		isSubmitting,
+		isMembership,
+		isSubmitting: isFinalSubmitting,
+		isProcessingPayment,
 		openModal,
-		closeModal: closeOriginalModalHook,
 		submitSubscription,
+		initiateBillingKeyIssue,
 	} = useSubscription();
 	const { toast } = useToast();
 
-	// States for new modal flow
+	// Modal States
 	const [isPaymentChoiceModalOpen, setIsPaymentChoiceModalOpen] = useState(false);
 	const [isPaypalModalOpen, setIsPaypalModalOpen] = useState(false);
 
-	// State for Toss/Card direct processing
-	const [isProcessingTossCard, setIsProcessingTossCard] = useState(false);
-	const [tossCardError, setTossCardError] = useState<string | null>(null);
+	// Local button specific loading states (can be helpful for individual button feedback)
+	const [isInitiatingCard, setIsInitiatingCard] = useState(false);
+	const [isInitiatingToss, setIsInitiatingToss] = useState(false);
 
-	// React Hook Form 설정
 	const methods = useForm<SubscribeFormValues>({
 		resolver: zodResolver(subscribeFormSchema),
 		defaultValues: {
@@ -48,120 +53,147 @@ export const SubscribeFormContent = () => {
 		},
 	});
 
-	const {
-		handleSubmit,
-		setValue,
-		watch,
-		formState: { errors },
-		reset,
-	} = methods;
+	const { handleSubmit, setValue, watch, reset } = methods;
 
-	// 현재 폼 값 감시
 	const recurringPeriod = watch("recurringPeriod");
 	const promotionCode = watch("promotionCode");
-	const currentMethod = watch("method"); // Watch the method for debugging
 
+	/** 구독 상품명 (연간/월간) */
 	const subscriptionIssueName = useMemo(
 		() => (recurringPeriod === RecurringPeriod.YEARLY ? "HITBEAT 연간 멤버십" : "HITBEAT 월간 멤버십"),
 		[recurringPeriod],
 	);
 
-	// 구독 신청 처리 (This will be called after successful billing key acquisition)
-	const processSubscription = useCallback(
-		async (billingKey: string, paymentType: "tossOrCard" | "paypal") => {
-			console.log(`Processing subscription with ${paymentType}, billingKey: ${billingKey}`);
-			if (paymentType === "tossOrCard") {
-				setValue("method", { tossOrCardBillingKey: billingKey }, { shouldValidate: true });
-			} else if (paymentType === "paypal") {
-				setValue("method", { paypal: { billingKey: billingKey } }, { shouldValidate: true });
-			}
+	/** 현재 구독 상품 가격 */
+	const currentAmount = useMemo(() => (recurringPeriod === RecurringPeriod.YEARLY ? 189900 : 24990), [recurringPeriod]);
 
-			// Add a brief delay to allow React to update state before reading it with watch()
+	/**
+	 * 빌링키 발급 후 실제 구독 처리를 위해 `useSubscription`의 `submitSubscription`을 호출합니다.
+	 * @param billingKey 발급된 빌링키
+	 * @param paymentType 선택된 결제 수단 타입 (내부 식별용)
+	 */
+	const processSubscriptionWithBillingKey = useCallback(
+		async (billingKey: string, paymentType: PaymentGatewayType | "PAYPAL") => {
+			console.log(`Local processSubscription with ${paymentType}, billingKey: ${billingKey}`);
+
+			// Map PaymentGatewayType to the string expected by the form schema for `method.type`
+			// Assuming schema expects 'CARD', 'TOSS', 'PAYPAL'
+			const formMethodType = paymentType === "TOSS_EASY_PAY" ? "TOSS" : paymentType;
+
+			setValue("method", { type: formMethodType, billingKey }, { shouldValidate: true });
+
+			// Ensure RHF state is updated before reading it
 			await new Promise((resolve) => setTimeout(resolve, 0));
 
-			const formData = watch();
-			console.log("Final form data for submission:", formData);
+			const currentFormValues = watch();
+			const augmentedData: AugmentedSubscribeFormValues = {
+				...currentFormValues,
+				paymentMethodType: paymentType, // This uses the full PaymentGatewayType | "PAYPAL"
+				// TODO: Collect these from actual form fields if they exist
+				customerName: (currentFormValues as any).customerName || "폼에서 고객명 필요",
+				email: (currentFormValues as any).email || "폼에서 이메일 필요",
+				phone: (currentFormValues as any).phone || "폼에서 전화번호 필요",
+				method: { type: formMethodType, billingKey }, // Use mapped type for form data consistency
+			};
 
-			if (isSubscribed) return;
-			setIsProcessingTossCard(false); // Ensure this is reset
+			console.log("Final augmented data for submission via hook:", augmentedData);
+
+			if (isMembership) return;
 
 			try {
-				await submitSubscription(formData);
-				reset();
+				await submitSubscription(augmentedData);
+				reset(); // Reset form on successful subscription
 			} catch (error) {
-				console.error("Subscription failed during final submission:", error);
-				openModal("error"); // Ensure error modal is opened
+				// Error handling is primarily done within the hook, but can add UI specific feedback here
+				console.error("Error during handoff to hook's submitSubscription:", error);
 			}
 		},
-		[isSubscribed, openModal, reset, setValue, submitSubscription, watch],
+		[isMembership, reset, setValue, submitSubscription, watch],
 	);
 
-	// Original onSubmit from RHF - this might not be directly used for submission button anymore
-	// The submission is now triggered by modal success callbacks.
+	/**
+	 * RHF의 기본 onSubmit 핸들러입니다. (주요 제출 경로는 아님)
+	 * 직접적인 결제 시작은 각 결제 버튼 핸들러에서 수행됩니다.
+	 */
 	const onSubmitRHF: SubmitHandler<SubscribeFormValues> = async (data) => {
-		console.log("RHF onSubmit triggered with:", data);
-		openModal("error");
+		console.log("RHF onSubmit triggered (should not be primary submission path):", data);
+		openModal("error"); // Fallback error if this path is somehow used for submission
 	};
 
-	// 구독 버튼 클릭 핸들러 - Opens the new choice modal
-	const handleSubscribe = () => {
-		if (isSubscribed) return;
+	/**
+	 * "멤버십 가입하기" 버튼 클릭 시 결제 수단 선택 모달을 엽니다.
+	 */
+	const handleSubscribeButtonClick = () => {
+		if (isMembership) return;
 		setIsPaymentChoiceModalOpen(true);
 	};
 
-	// --- Handler for Toss/Card direct PortOne invocation ---
-	const initiateTossCardPayment = useCallback(async () => {
-		if (typeof window === "undefined") return;
+	/** 빌링키 발급 요청에 필요한 공통 인자들 */
+	const commonBillingKeyArgs = useMemo(
+		(): Omit<BaseBillingKeyIssueArgs, "redirectUrl"> => ({
+			orderName: subscriptionIssueName,
+			amount: currentAmount,
+			customer: {
+				// TODO: 실제 고객 ID로 교체 필요. 현재는 플레이스홀더.
+				// 이 값이 없다면 PortOne SDK에서 customerId를 자동으로 생성해줍니다.
+				// 특정 고객을 지정해야 하는 경우에만 사용합니다.
+				customerId: "customer_123_test_id",
+			},
+		}),
+		[subscriptionIssueName, currentAmount],
+	);
 
-		setIsProcessingTossCard(true);
-		setTossCardError(null);
+	/**
+	 * 지정된 PortOne 결제 수단으로 빌링키 발급을 시작하고 후속 처리를 진행합니다.
+	 * @param paymentGatewayType PortOne 결제 게이트웨이 타입 (예: 'CARD', 'TOSS_EASY_PAY')
+	 * @param setButtonProcessing 해당 버튼의 로딩 상태를 설정하는 함수
+	 */
+	const initiatePortOnePayment = useCallback(
+		async (paymentGatewayType: PaymentGatewayType, setButtonProcessing: (isLoading: boolean) => void) => {
+			if (typeof window === "undefined") return;
+			setButtonProcessing(true);
 
-		try {
-			console.log("PortOne.requestIssueBillingKey for Toss/Card directly invoked...");
-			const response = await PortOne.requestIssueBillingKey({
-				storeId: process.env.NEXT_PUBLIC_PORTONE_STORE_ID!,
-				channelKey: process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_RECURRING!,
-				billingKeyMethod: "CARD",
-				issueName: subscriptionIssueName,
-				redirectUrl: `${window.location.origin}/subscribe/callback`,
-			});
+			const billingKeyArgs: BaseBillingKeyIssueArgs = {
+				...commonBillingKeyArgs,
+				// Callback URL은 PortOne 대시보드에 등록된 값과 일치해야 할 수 있습니다.
+				// 또한, 실제 환경에서는 HTTPS를 사용해야 합니다.
+				redirectUrl: `${window.location.origin}/subscribe/callback/${paymentGatewayType.toLowerCase()}`,
+			};
 
-			if (!response) {
-				console.error("Toss/Card Billing Key: No response from PortOne");
-				setTossCardError("결제 서비스로부터 응답을 받지 못했습니다.");
-				setIsProcessingTossCard(false);
+			console.log(`Calling hook's initiateBillingKeyIssue for ${paymentGatewayType}...`);
+
+			try {
+				const billingKey = await initiateBillingKeyIssue(paymentGatewayType, billingKeyArgs);
+
+				if (billingKey) {
+					console.log(`${paymentGatewayType} Billing Key Issued via hook:`, billingKey);
+					await processSubscriptionWithBillingKey(billingKey, paymentGatewayType);
+				} else {
+					console.error(`${paymentGatewayType} Billing Key issuance failed (as reported by hook).`);
+					// Error modal is opened by the hook
+				}
+			} catch (error) {
+				console.error(`Error during ${paymentGatewayType} Billing Key issuance:`, error);
 				openModal("error");
-				return;
+			} finally {
+				setButtonProcessing(false); // Reset button-specific loading state regardless of outcome
 			}
+		},
+		[commonBillingKeyArgs, initiateBillingKeyIssue, processSubscriptionWithBillingKey],
+	);
 
-			if (response.code != null) {
-				console.error("Toss/Card Billing Key Failed:", response);
-				setTossCardError(response.message || "카드 정보 연동 중 오류가 발생했습니다.");
-				setIsProcessingTossCard(false);
-				openModal("error"); // Open generic error modal
-			} else if (response.billingKey) {
-				console.log("Toss/Card Billing Key Issued directly:", response.billingKey);
-				// No setIsProcessingTossCard(false) here yet, do it in processSubscription
-				await processSubscription(response.billingKey, "tossOrCard");
-			} else {
-				console.error("Toss/Card Billing Key: response missing billingKey or code:", response);
-				setTossCardError("카드 정보 연동 중 알 수 없는 문제가 발생했습니다.");
-				setIsProcessingTossCard(false);
-				openModal("error");
-			}
-		} catch (err: unknown) {
-			console.error("Error during Toss/Card direct billing key request:", err);
-			setTossCardError(err instanceof Error ? err.message : "카드 정보 연동 중 예기치 않은 오류가 발생했습니다.");
-			setIsProcessingTossCard(false);
-			openModal("error");
-		}
-	}, [subscriptionIssueName, openModal, processSubscription]); // Added reset, processSubscription
-
+	// Modal close handlers
 	const handleClosePaymentChoiceModal = () => setIsPaymentChoiceModalOpen(false);
 
-	const handleSelectTossCard = () => {
+	// Payment selection handlers
+	const handleSelectCard = () => {
 		setIsPaymentChoiceModalOpen(false);
-		initiateTossCardPayment(); // Directly call the PortOne invocation
+		initiatePortOnePayment("CARD", setIsInitiatingCard);
+	};
+
+	const handleSelectToss = () => {
+		setIsPaymentChoiceModalOpen(false);
+		initiatePortOnePayment("TOSS_EASY_PAY", setIsInitiatingToss);
 	};
 
 	const handleSelectPaypal = () => {
@@ -169,22 +201,21 @@ export const SubscribeFormContent = () => {
 		setIsPaypalModalOpen(true);
 	};
 
+	// PayPal modal handlers
 	const handlePaypalSuccess = (billingKey: string) => {
 		setIsPaypalModalOpen(false);
-		processSubscription(billingKey, "paypal");
+		processSubscriptionWithBillingKey(billingKey, "PAYPAL");
 	};
-
 	const handlePaypalError = (errorMessage?: string) => {
 		setIsPaypalModalOpen(false);
-		// If PortonePassErrorModal is designed to take a message, pass it.
-		// Otherwise, openModal("error") might be generic.
 		console.error("PayPal Error Reported:", errorMessage);
-		openModal("error");
+		openModal("error"); // Open generic error modal
 	};
 	const handlePaypalClose = () => setIsPaypalModalOpen(false);
 
-	// 구독 기간 변경 시 알림 표시
+	// 구독 기간 변경 시 알림 (토스트 메시지) 표시
 	useEffect(() => {
+		// This effect provides user feedback on period change, not directly related to submission logic
 		if (recurringPeriod === RecurringPeriod.YEARLY) {
 			toast({
 				description: (
@@ -208,23 +239,29 @@ export const SubscribeFormContent = () => {
 		}
 	}, [recurringPeriod, toast]);
 
+	// Determine if any payment process is active for disabling the main button
+	const isAnyPaymentProcessing = isFinalSubmitting || isProcessingPayment || isInitiatingCard || isInitiatingToss;
+
 	return (
 		<FormProvider {...methods}>
 			<form
-				onSubmit={handleSubmit(onSubmitRHF as any)}
+				onSubmit={handleSubmit(onSubmitRHF)}
 				className="flex flex-col items-center justify-center w-full py-25px gap-20px"
 			>
 				<div className="flex flex-col items-start justify-start gap-6 w-full max-w-[627px]">
+					{/* Header: Period Toggle & Title */}
 					<div className="inline-flex items-start self-stretch justify-between h-6">
 						<SubscribeFormHeader
-							isSubscribed={isSubscribed}
+							isSubscribed={isMembership}
 							recurringPeriod={recurringPeriod}
 							onPeriodChange={(period) => setValue("recurringPeriod", period)}
 						/>
 					</div>
 
-					<SubscribeBenefitBody isSubscribed={isSubscribed} />
+					{/* Benefits Section */}
+					<SubscribeBenefitBody isSubscribed={isMembership} />
 
+					{/* Pricing & Call to Action */}
 					<div className="self-stretch flex flex-col justify-start items-start gap-2.5">
 						<div className="h-6 flex flex-col justify-start items-center gap-[494px]">
 							<div className="justify-start text-xl font-bold leading-none tracking-tight text-black uppercase font-suit">
@@ -233,10 +270,10 @@ export const SubscribeFormContent = () => {
 						</div>
 						<div className="inline-flex items-end self-stretch justify-between">
 							<SubscribePrice
-								isSubscribed={isSubscribed}
+								isSubscribed={isMembership}
 								recurringPeriod={recurringPeriod}
 							/>
-							{!isSubscribed && (
+							{!isMembership && (
 								<div className="h-6 px-3.5 py-[3px] bg-white rounded-[30px] flex justify-center items-center gap-2.5">
 									<button
 										type="button"
@@ -250,7 +287,7 @@ export const SubscribeFormContent = () => {
 						</div>
 						<div className="self-stretch flex flex-col justify-start items-center gap-2.5">
 							<div className="flex flex-col justify-start items-end gap-2.5">
-								{!isSubscribed ? (
+								{!isMembership ? (
 									<button
 										type="button"
 										className={cn(
@@ -260,10 +297,10 @@ export const SubscribeFormContent = () => {
 											"hover:bg-[#3884FF] hover:outline-[#3884FF] cursor-pointer",
 											"text-base font-black leading-relaxed text-white font-suit",
 										)}
-										onClick={handleSubscribe}
-										disabled={isSubmitting || isProcessingTossCard}
+										onClick={handleSubscribeButtonClick}
+										disabled={isAnyPaymentProcessing}
 									>
-										{isSubmitting || isProcessingTossCard ? "처리 중..." : "멤버십 가입하기"}
+										{isAnyPaymentProcessing ? "처리 중..." : "멤버십 가입하기"}
 									</button>
 								) : (
 									<Link
@@ -280,8 +317,8 @@ export const SubscribeFormContent = () => {
 						</div>
 					</div>
 
+					{/* Divider & Logo */}
 					<div className="outline-[3px] outline-hbc-black w-full" />
-
 					<HBCGray />
 				</div>
 
@@ -294,10 +331,13 @@ export const SubscribeFormContent = () => {
 					<SubscribePaymentChoiceModal
 						isOpen={isPaymentChoiceModalOpen}
 						onClose={handleClosePaymentChoiceModal}
-						onSelectTossCard={handleSelectTossCard}
+						onSelectCard={handleSelectCard}
+						onSelectToss={handleSelectToss}
 						onSelectPaypal={handleSelectPaypal}
 						recurringPeriod={recurringPeriod}
 						promotionCode={promotionCode}
+						isInitiatingCard={isInitiatingCard}
+						isInitiatingToss={isInitiatingToss}
 					/>
 				)}
 

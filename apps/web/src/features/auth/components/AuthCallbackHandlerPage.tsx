@@ -6,12 +6,15 @@ import Link from "next/link";
 
 const DEBUG = process.env.NODE_ENV === "development";
 
-export const AuthCallbackHandlerPage = (): React.ReactNode => {
+interface AuthCallbackHandlerPageProps {
+	authType: string;
+}
+
+export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPageProps): React.ReactNode => {
 	const [authCompleted, setAuthCompleted] = useState(false);
 	const [authError, setAuthError] = useState<string | null>(null);
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const authType = searchParams.get("authType");
 	const loginState = searchParams.get("login");
 
 	const sampleHandler = (): Promise<void> => {
