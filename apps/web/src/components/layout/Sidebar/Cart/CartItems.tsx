@@ -10,7 +10,7 @@ const CartItems = memo(() => {
 		queryKey: ["demo", "cart", "items"],
 		queryFn: () => {
 			return Promise.resolve(
-				Array.from({ length: 15 }, (_, i) => ({
+				Array.from({ length: 0 }, (_, i) => ({
 					id: i,
 					imageUrl: "https://placehold.co/60x60.png",
 				})),

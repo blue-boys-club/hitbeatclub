@@ -1,4 +1,4 @@
-"use client";
+えっ"use client";
 
 import { useState, memo } from "react";
 import { Beat, Like, PauseCircle, PlayCircle, ShoppingBag, SmallEqualizer } from "@/assets/svgs";
