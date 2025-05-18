@@ -24,8 +24,9 @@ export const OrderProductItem = ({ product, artistInfo, className }: OrderProduc
 	const { toast } = useToast();
 
 	const handleDownload = () => {
-		// TODO: some logic to download the product
-		//...
+		// create a tag and download the file
+		window.open(product.downloadUrl, "_blank");
+
 		toast({
 			description: "파일이 다운로드 되었습니다.",
 		});
