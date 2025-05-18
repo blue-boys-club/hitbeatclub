@@ -5,6 +5,8 @@ import * as PortOne from "@portone/browser-sdk/v2";
 import * as Popup from "@/components/ui/Popup";
 import { cn } from "@/common/utils";
 import { type PaymentError, type PaymentResponse } from "@portone/browser-sdk/v2";
+import { PORTONE_STORE_ID } from "@/lib/payment.constant";
+import { PORTONE_CHANNEL_KEY } from "@/lib/payment.constant";
 
 /**
  * 결제 수단 선택 모달 컴포넌트 Props
@@ -212,12 +214,12 @@ export const PaymentSelectModal = ({
 		try {
 			const paymentId = crypto.randomUUID();
 			const paymentConfig: PortOne.PaymentRequest = {
-				storeId: process.env.NEXT_PUBLIC_PORTONE_STORE_ID!,
+				storeId: PORTONE_STORE_ID,
 				paymentId,
 				orderName,
 				totalAmount: total,
 				currency: PortOne.Entity.Currency.KRW,
-				channelKey: process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_PAYMENT!,
+				channelKey: PORTONE_CHANNEL_KEY.PAYMENT,
 				payMethod: selectedMethod.method as PortOne.Entity.PayMethod,
 				customer: {
 					fullName: "고객명",
@@ -317,12 +319,12 @@ export const PaymentSelectModal = ({
 				const response = await PortOne.loadPaymentUI(
 					{
 						uiType: "PAYPAL_SPB",
-						storeId: process.env.NEXT_PUBLIC_PORTONE_STORE_ID!,
+						storeId: PORTONE_STORE_ID,
 						paymentId: crypto.randomUUID(),
 						orderName,
 						totalAmount: total / 10,
 						currency: PortOne.Entity.Currency.USD,
-						channelKey: process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_PAYPAL!,
+						channelKey: PORTONE_CHANNEL_KEY.PAYPAL,
 					},
 					{
 						onPaymentSuccess: (response) => {
