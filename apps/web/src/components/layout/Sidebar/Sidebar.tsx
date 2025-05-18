@@ -31,7 +31,7 @@ export const Sidebar = memo(() => {
 				className={cn(
 					"flex flex-col",
 					"bg-hbc-white border-r-2 border-hbc-black",
-					"overflow-hidden",
+					"overflow-hidden flex-1",
 					"@container/sidebar",
 				)}
 			>
