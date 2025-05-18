@@ -58,6 +58,7 @@ export type Product = {
 	price: number;
 	downloadStatus: "available" | "downloaded" | "unavailable"; // Example status
 	licenseUrl: string;
+	downloadUrl: string;
 };
 
 export type ProductsByArtist = Record<string, { artistInfo: ArtistInfo; products: Product[] }>;
