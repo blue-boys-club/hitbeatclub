@@ -4,6 +4,7 @@ import { useFormContext } from "react-hook-form";
 import PortOne from "@portone/browser-sdk/v2";
 import { RecurringPeriod, SubscribeFormValues } from "../../schema";
 import { useSubscription } from "../../hooks/useSubscription";
+import { PORTONE_CHANNEL_KEY, PORTONE_STORE_ID } from "../../../../lib/payment.constant";
 
 interface SubscribePaypalModalProps {
 	isOpen: boolean;
@@ -43,10 +44,10 @@ export const SubscribePaypalModal = memo(({ isOpen, onClose, onSuccess, onError 
 			await PortOne.loadIssueBillingKeyUI(
 				{
 					uiType: "PAYPAL_RT",
-					storeId: process.env.NEXT_PUBLIC_PORTONE_STORE_ID!,
+					storeId: PORTONE_STORE_ID,
 					issueName: subscriptionIssueName,
 					billingKeyMethod: "PAYPAL",
-					channelKey: process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY_PAYPAL!,
+					channelKey: PORTONE_CHANNEL_KEY.PAYPAL,
 					// issueId: `paypal-issue-${crypto.randomUUID()}` // Optional: for better tracking
 				},
 				{

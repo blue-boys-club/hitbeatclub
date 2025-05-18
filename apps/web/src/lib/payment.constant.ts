@@ -1,8 +1,3 @@
-// NEXT_PUBLIC_PORTONE_STORE_ID=store-c9824a41-6612-4e07-863c-07a9f0cc0ee4
-// NEXT_PUBLIC_PORTONE_CHANNEL_KEY_PAYPAL=channel-key-9322e092-e9a0-4a8d-bf12-c349b5db5c23
-// NEXT_PUBLIC_PORTONE_CHANNEL_KEY_PAYMENT=channel-key-f9e94e27-c30e-4134-88e7-a7beaae591d4
-// NEXT_PUBLIC_PORTONE_CHANNEL_KEY_RECURRING=channel-key-dd409e47-d49f-459a-b379-ae1442531c6a
-
 const environment = process.env.NODE_ENV as "development" | "production";
 
 export const PORTONE_STORE_ID = "store-c9824a41-6612-4e07-863c-07a9f0cc0ee4";

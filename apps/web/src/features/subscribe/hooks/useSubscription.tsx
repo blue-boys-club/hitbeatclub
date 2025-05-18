@@ -3,7 +3,7 @@ import { SubscribeFormValues } from "../schema";
 import { useLayoutStore } from "@/stores/layout";
 import { useShallow } from "zustand/react/shallow";
 import PortOne, { Entity } from "@portone/browser-sdk/v2";
-import { PORTONE_STORE_ID, PORTONE_CHANNEL_KEY } from "../constant";
+import { PORTONE_STORE_ID, PORTONE_CHANNEL_KEY } from "../../../lib/payment.constant";
 
 /**
  * 사용 가능한 모달 유형
