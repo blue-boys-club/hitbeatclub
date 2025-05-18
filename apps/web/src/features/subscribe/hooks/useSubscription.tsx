@@ -190,38 +190,30 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 				return null;
 			}
 
-			try {
-				const payload = {
-					storeId: PORTONE_STORE_ID,
-					channelKey: config.channelKey,
-					billingKeyMethod: config.billingKeyMethod,
-					orderName: args.orderName,
-					issueName: args.orderName,
-					currency: Entity.Currency.KRW,
-					displayAmount: args.amount,
-					redirectUrl: args.redirectUrl,
-					customer: args.customer,
-					issueId: `${crypto.randomUUID()}`,
-				};
-				console.log(`Requesting ${paymentGateway} billing key with payload:`, payload);
-				const response = await PortOne.requestIssueBillingKey(payload);
+			const payload = {
+				storeId: PORTONE_STORE_ID,
+				channelKey: config.channelKey,
+				billingKeyMethod: config.billingKeyMethod,
+				orderName: args.orderName,
+				issueName: args.orderName,
+				currency: Entity.Currency.KRW,
+				displayAmount: args.amount,
+				redirectUrl: args.redirectUrl,
+				customer: args.customer,
+				issueId: `${crypto.randomUUID()}`,
+			};
+			console.log(`Requesting ${paymentGateway} billing key with payload:`, payload);
+			const response = await PortOne.requestIssueBillingKey(payload);
 
-				console.log(`${paymentGateway} Billing key issuance response:`, response);
+			console.log(`${paymentGateway} Billing key issuance response:`, response);
 
-				if (!response?.code && response?.billingKey) {
-					console.log(`${paymentGateway} Billing key issued:`, response.billingKey);
-					setIsProcessingPayment(false);
-					return response.billingKey;
-				} else {
-					console.error(`${paymentGateway} billing key issuance failed:`, response);
-					setPaymentError(response?.message || `${paymentGateway} billing key issuance failed.`);
-					openModal("error");
-					setIsProcessingPayment(false);
-					return null;
-				}
-			} catch (error: any) {
-				console.error(`${paymentGateway} billing key issuance error:`, error);
-				setPaymentError(error.message || "An unexpected error occurred.");
+			if (!response?.code && response?.billingKey) {
+				console.log(`${paymentGateway} Billing key issued:`, response.billingKey);
+				setIsProcessingPayment(false);
+				return response.billingKey;
+			} else {
+				console.error(`${paymentGateway} billing key issuance failed:`, response);
+				setPaymentError(response?.message || `${paymentGateway} billing key issuance failed.`);
 				openModal("error");
 				setIsProcessingPayment(false);
 				return null;

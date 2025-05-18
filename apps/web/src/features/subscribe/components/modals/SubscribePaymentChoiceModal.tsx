@@ -9,7 +9,7 @@ import {
 	PopupDescription,
 } from "@/components/ui/Popup";
 import { RecurringPeriod } from "../../schema";
-
+import Image from "next/image";
 /**
  * `SubscribePaymentChoiceModal` 컴포넌트의 Props 정의
  */
@@ -108,7 +108,7 @@ export const SubscribePaymentChoiceModal = memo(
 							<div className="grid grid-cols-1 gap-4 mb-4 sm:grid-cols-2">
 								<button
 									onClick={onSelectCard}
-									className="flex flex-col items-center justify-center p-6 text-lg font-semibold text-white transition-colors bg-blue-500 rounded-lg shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50"
+									className="flex flex-col cursor-pointer items-center justify-center p-6 text-lg font-semibold text-white transition-colors bg-blue-500 rounded-lg shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50"
 									disabled={isInitiatingCard || isInitiatingToss}
 								>
 									<span>💳</span>
@@ -116,13 +116,15 @@ export const SubscribePaymentChoiceModal = memo(
 								</button>
 								<button
 									onClick={onSelectPaypal}
-									className="flex flex-col items-center justify-center p-6 text-lg font-semibold text-white transition-colors bg-sky-500 rounded-lg shadow hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-50 disabled:opacity-50"
+									className="flex flex-col cursor-pointer items-center justify-center p-6 text-lg font-semibold text-white transition-colors bg-sky-500 rounded-lg shadow hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-50 disabled:opacity-50"
 									disabled={isInitiatingCard || isInitiatingToss}
 								>
 									<span>
-										<img
-											src="/assets/images/paypal-mark.png"
+										<Image
+											src="/assets/paypal-logo.png"
 											alt="PayPal"
+											width={24}
+											height={24}
 											className="w-6 h-6"
 										/>
 									</span>
@@ -134,10 +136,16 @@ export const SubscribePaymentChoiceModal = memo(
 							<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 								<button
 									onClick={onSelectToss}
-									className="flex flex-col items-center justify-center p-6 text-lg font-semibold text-white transition-colors bg-cyan-500 rounded-lg shadow hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-50 sm:col-start-1 disabled:opacity-50"
+									className="flex flex-col cursor-pointer items-center justify-center p-6 text-lg font-semibold transition-colors rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-50 sm:col-start-1 disabled:opacity-50"
 									disabled={isInitiatingToss || isInitiatingCard}
 								>
-									<span className="text-2xl">토</span>
+									<Image
+										src="/assets/toss-logo.png"
+										alt="Toss"
+										width={24}
+										height={24}
+										className="w-6 h-6"
+									/>
 									<span className="mt-2">{isInitiatingToss ? "처리중..." : "토스페이"}</span>
 								</button>
 								{/* Future easy payment methods will go here */}
