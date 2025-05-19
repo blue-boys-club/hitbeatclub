@@ -7,6 +7,7 @@ import { HBCTopLogo, SidebarArrow } from "@/assets/svgs";
 import { CartSection } from "./Cart";
 import SidebarTabs from "./SidebarTabs";
 import { useLayoutStore } from "@/stores/layout";
+import Link from "next/link";
 
 export const Sidebar = memo(() => {
 	const { isOpen, setLeftSidebar } = useLayoutStore(
@@ -25,7 +26,9 @@ export const Sidebar = memo(() => {
 			className={cn("flex flex-col flex-1 h-full gap-5px transition-all duration-500 ", isOpen ? "w-305px" : "w-150px")}
 		>
 			<div className="flex-none px-13px pt-19px">
-				<HBCTopLogo />
+				<Link href="/">
+					<HBCTopLogo />
+				</Link>
 			</div>
 			<aside
 				className={cn(
