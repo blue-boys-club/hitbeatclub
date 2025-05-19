@@ -37,19 +37,20 @@ export const paypalCredentialSchema = z.object({
 export type CardCredential = z.infer<typeof cardCredentialSchema>;
 
 // 결제 방식 스키마
-export const paymentMethodSchema = z
-	.object({
-		card: z
-			.object({
-				credential: cardCredentialSchema,
-			})
-			.optional(),
-		paypal: paypalCredentialSchema.optional(),
-	})
-	.refine((data) => !(data.card || data.paypal), {
-		message: "신용카드 또는 페이팔 정보를 입력해주세요.",
-		path: ["card", "paypal"],
-	});
+export const paymentMethodSchema = z.discriminatedUnion("type", [
+	z.object({
+		type: z.literal("CARD"),
+		billingKey: z.string().min(1, "카드 빌링키를 입력해주세요."),
+	}),
+	z.object({
+		type: z.literal("TOSS"),
+		billingKey: z.string().min(1, "토스 빌링키를 입력해주세요."),
+	}),
+	z.object({
+		type: z.literal("PAYPAL"),
+		billingKey: z.string().min(1, "페이팔 빌링키를 입력해주세요."),
+	}),
+]);
 
 export type PaymentMethod = z.infer<typeof paymentMethodSchema>;
 

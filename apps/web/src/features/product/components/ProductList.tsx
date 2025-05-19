@@ -5,13 +5,13 @@ import { ProductSort } from "./ProductSort";
 import { ProductSearch } from "./ProductSearch";
 
 interface ProductListProps {
-	tracks: number[]; //Temp
+	products: number[]; //Temp
 	onFiltersChange?: () => void;
 	onSortChange?: () => void;
 	onSearch?: (query: string) => void;
 }
 
-export const ProductList = memo(({ onFiltersChange, onSortChange, onSearch, tracks }: ProductListProps) => {
+export const ProductList = memo(({ products, onFiltersChange, onSortChange, onSearch }: ProductListProps) => {
 	return (
 		<>
 			<div className="mb-3">
@@ -23,9 +23,9 @@ export const ProductList = memo(({ onFiltersChange, onSortChange, onSearch, trac
 			</div>
 
 			<div className="flex flex-col gap-2.5 mb-3">
-				{tracks.map((track, index) => (
-					<ProductItem key={index} />
-				))}
+				{products?.map((product, index) => {
+					return <ProductItem key={index} />;
+				})}
 			</div>
 		</>
 	);

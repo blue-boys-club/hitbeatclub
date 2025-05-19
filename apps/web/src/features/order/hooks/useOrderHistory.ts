@@ -23,8 +23,8 @@ const defaultArtist1: ArtistInfo = {
 const defaultProducts1: Product[] = [
 	{
 		id: "prod-1",
-		imageUrl: "https://placehold.co/79x79.png",
-		title: "빈지노 타입 아카펠라 #1",
+		imageUrl: "https://prod-assets.hitbeatclub.com/dummy/11.jpg",
+		title: "Paranoid instrumental (Fm bpm86)",
 		type: "acapella",
 		licenseType: "Exclusive (mp3, wav, stems)",
 		price: 140000,
@@ -32,11 +32,12 @@ const defaultProducts1: Product[] = [
 		licenseUrl: "#",
 		bpm: 130,
 		key: "A min",
+		downloadUrl: "https://prod-assets.hitbeatclub.com/dummy/NotJake+-+Paranoid+instrumental+(Fm+bpm86).mp3",
 	},
 	{
 		id: "prod-2",
-		imageUrl: "https://placehold.co/79x79.png",
-		title: "빈지노 타입 비트 #2",
+		imageUrl: "https://prod-assets.hitbeatclub.com/dummy/1111.jpg",
+		title: "Fadeaway instrumental (Em bpm80)",
 		type: "beat",
 		licenseType: "Basic (mp3)",
 		price: 30000,
@@ -44,6 +45,7 @@ const defaultProducts1: Product[] = [
 		licenseUrl: "#",
 		bpm: 130,
 		key: "A min",
+		downloadUrl: "https://prod-assets.hitbeatclub.com/dummy/NotJake+-+Fadeaway+instrumental+(Em+bpm80).mp3",
 	},
 ];
 
@@ -60,8 +62,8 @@ const defaultArtist2: ArtistInfo = {
 const defaultProducts2: Product[] = [
 	{
 		id: "prod-3",
-		imageUrl: "https://placehold.co/79x79.png",
-		title: "코드쿤스트 타입 비트 #3",
+		imageUrl: "https://prod-assets.hitbeatclub.com/dummy/333.jpg",
+		title: "Baby, show you instrumental (Em bpm60)",
 		type: "beat",
 		licenseType: "Exclusive (mp3, wav, stems)",
 		price: 150000,
@@ -69,6 +71,7 @@ const defaultProducts2: Product[] = [
 		licenseUrl: "#",
 		bpm: 90,
 		key: "C maj",
+		downloadUrl: "https://prod-assets.hitbeatclub.com/dummy/NotJake+-+Baby,+show+you+instrumental+(Em+bpm60).mp3",
 	},
 ];
 

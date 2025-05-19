@@ -6,6 +6,7 @@ import { Like, ShoppingBag } from "@/assets/svgs";
 import { AudioPlayer } from "./AudioPlayer";
 import { VolumeControl } from "./VolumeControl";
 import Image from "next/image";
+import { assetImageLoader } from "@/common/utils/image-loader";
 export const FooterPlayer = () => {
 	// UI-related state
 	const [like, setLike] = useState(false);
@@ -33,11 +34,12 @@ export const FooterPlayer = () => {
 							height={60}
 							alt="track"
 							className="border-black w-14 h-14"
-							src="https://placehold.co/60x60"
+							src="https://prod-assets.hitbeatclub.com/dummy/11.jpg"
+							loader={assetImageLoader}
 						/>
 						<div className="flex flex-col gap-1">
-							<div className="text-xl font-bold leading-none text-black">빈지노 타입비트...</div>
-							<div className="text-base font-bold leading-none w-36 text-black/70">빈지노</div>
+							<div className="text-xl font-bold leading-none text-black">Paranoid instrumental (Fm bpm86)</div>
+							<div className="text-base font-bold leading-none w-36 text-black/70">Not Jake</div>
 						</div>
 					</div>
 
@@ -71,7 +73,7 @@ export const FooterPlayer = () => {
 				<div className="flex justify-center flex-1 ">
 					<AudioPlayer
 						{...audioPlayerState}
-						url={"dummyMusic.mp3"}
+						url={"https://prod-assets.hitbeatclub.com/dummy/NotJake+-+Paranoid+instrumental+(Fm+bpm86).mp3"}
 					/>
 				</div>
 

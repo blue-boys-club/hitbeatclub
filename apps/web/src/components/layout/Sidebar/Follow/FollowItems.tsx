@@ -16,7 +16,7 @@ const FollowItems = memo(({ search, sort }: FollowItemsProps) => {
 		queryKey: ["demo", "follow", "items", search, sort],
 		queryFn: () => {
 			return Promise.resolve<FollowItemType[]>(
-				Array.from({ length: 15 }, (_, i) => ({
+				Array.from({ length: 0 }, (_, i) => ({
 					id: i,
 					name: `La Vie En Rose ${i}`,
 					imageUrl: "https://placehold.co/60x60.png",
@@ -35,6 +35,7 @@ const FollowItems = memo(({ search, sort }: FollowItemsProps) => {
 				"transition-all duration-300",
 				"ml-20px @200px/sidebar:ml-0px",
 				"@200px/sidebar:w-300px w-135px pl-2",
+				"@200px/sidebar:overflow-x-hidden overflow-x-auto",
 			)}
 		>
 			{items.data?.map((item) => (

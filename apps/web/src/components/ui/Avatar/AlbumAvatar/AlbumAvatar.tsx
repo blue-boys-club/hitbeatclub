@@ -1,6 +1,7 @@
 import { cn } from "@/common/utils";
 import { HTMLAttributes, memo } from "react";
 import Image from "next/image";
+import { assetImageLoader } from "@/common/utils/image-loader";
 
 export interface AlbumAvatarProps extends HTMLAttributes<HTMLImageElement> {
 	src: string;
@@ -42,6 +43,7 @@ export const AlbumAvatar = memo(function AlbumAvatar({
 				height={768}
 				loading="lazy"
 				data-testid="album-avatar-image"
+				loader={assetImageLoader}
 			/>
 		</div>
 	);

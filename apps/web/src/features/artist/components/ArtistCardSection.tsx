@@ -3,16 +3,23 @@ import { cn } from "@/common/utils";
 import { ArtistAvatar } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
 import React from "react";
-import { Artist, ArtistCardProps } from "../artist.types";
+import { Artist, ArtistCardProps, ViewType } from "../artist.types";
+import { useRouter } from "next/navigation";
 
-const ArtistCardSection = ({ activeView, artists }: ArtistCardProps) => {
+const ArtistCardSection = ({ artists, activeView }: ArtistCardProps) => {
 	const handleFollow = () => {};
+	const router = useRouter();
+
+	const onClickArtist = (artistId: string) => {
+		router.push(`/artists/${artistId}`);
+	};
+
 	return (
 		<section>
 			<ul
 				className={cn(
-					activeView === "grid" && "grid grid-cols-4 gap-auto gap-y-4",
-					activeView === "list" && "flex flex-col",
+					activeView === ViewType.GRID && "grid grid-cols-4 gap-auto gap-y-4",
+					activeView === ViewType.LIST && "flex flex-col",
 				)}
 			>
 				{artists.length > 0 ? (
@@ -20,14 +27,15 @@ const ArtistCardSection = ({ activeView, artists }: ArtistCardProps) => {
 						<li
 							key={artist.id}
 							className={cn(
-								activeView === "grid" && "flex flex-col items-center justify-center gap-2",
-								activeView === "list" && "flex items-center justify-between border-t-4px py-2",
+								activeView === ViewType.GRID && "flex flex-col items-center justify-center gap-2",
+								activeView === ViewType.LIST && "flex items-center justify-between border-t-4px py-2",
 							)}
+							onClick={() => onClickArtist(artist.id)}
 						>
 							<div
 								className={cn(
-									activeView === "grid" && "flex flex-col gap-2",
-									activeView === "list" && "flex items-center gap-4",
+									activeView === ViewType.GRID && "flex flex-col gap-2",
+									activeView === ViewType.LIST && "flex items-center gap-4",
 								)}
 							>
 								<div className="flex items-center justify-center pt-2">
@@ -35,16 +43,16 @@ const ArtistCardSection = ({ activeView, artists }: ArtistCardProps) => {
 										src={artist.image}
 										alt={artist.name}
 										className={cn(
-											activeView === "grid" && "size-[174px]",
-											activeView === "list" && "size-[59px]",
+											activeView === ViewType.GRID && "size-[174px]",
+											activeView === ViewType.LIST && "size-[59px]",
 											"bg-black",
 										)}
 									/>
 								</div>
 								<div
 									className={cn(
-										activeView === "grid" && "flex flex-col",
-										activeView === "list" && "flex flex-col items-start",
+										activeView === ViewType.GRID && "flex flex-col",
+										activeView === ViewType.LIST && "flex flex-col items-start",
 									)}
 								>
 									<p

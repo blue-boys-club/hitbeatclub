@@ -6,8 +6,10 @@ import { AlbumCoverCard } from "@/components/ui";
 import { TagButton } from "@/components/ui/TagButton";
 import { cn } from "@/common/utils";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 interface ProductItemProps {
+	productId?: string;
 	title?: string;
 	artist?: string;
 	albumImgSrc?: string;
@@ -26,6 +28,7 @@ interface ProductItemProps {
  */
 export const ProductItem = memo(
 	({
+		productId = "123",
 		title = "La Vie En Rose",
 		artist = "Moon River",
 		albumImgSrc = "https://placehold.co/70x70.png",
@@ -34,9 +37,14 @@ export const ProductItem = memo(
 		onLike,
 		onAddToCart,
 	}: ProductItemProps) => {
+		const router = useRouter();
 		const [status, setStatus] = useState<"playing" | "paused" | "default">("paused");
 		const [isLiked, setIsLiked] = useState(false);
 		const [cart, setCart] = useState(false);
+
+		const onClickProduct = () => {
+			router.push(`/products/${productId}`);
+		};
 
 		const onClickLike = () => {
 			setIsLiked(!isLiked);
@@ -80,7 +88,10 @@ export const ProductItem = memo(
 						</div>
 					</div>
 
-					<div className="flex flex-col">
+					<div
+						className="flex flex-col"
+						onClick={onClickProduct}
+					>
 						<p className="flex items-center gap-2.5 text-16px font-bold">
 							{title}
 							<Beat />

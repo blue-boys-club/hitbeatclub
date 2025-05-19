@@ -16,7 +16,7 @@ const LikeItems = memo(({ search, sort }: LikeItemsProps) => {
 		queryKey: ["demo", "like", "items", search, sort],
 		queryFn: () => {
 			return Promise.resolve<ProductItem[]>(
-				Array.from({ length: 15 }, (_, i) => ({
+				Array.from({ length: 0 }, (_, i) => ({
 					id: i,
 					title: `La Vie En Rose ${i}`,
 					artist: "Moon River",
@@ -34,6 +34,7 @@ const LikeItems = memo(({ search, sort }: LikeItemsProps) => {
 				"transition-all duration-300",
 				"ml-20px @200px/sidebar:ml-0px",
 				"@200px/sidebar:w-300px w-135px pl-2",
+				"@200px/sidebar:overflow-x-hidden overflow-x-auto",
 			)}
 		>
 			{items.data?.map((item) => (
