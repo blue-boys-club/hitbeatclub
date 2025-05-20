@@ -6,7 +6,7 @@ import { Beat, Like, RedPlayCircle } from "@/assets/svgs";
 import { AlbumAvatar, FreeDownloadButton, PurchaseButton, UserAvatar } from "@/components/ui";
 import { GenreButton } from "@/components/ui/GenreButton";
 import { TagButton } from "@/components/ui/TagButton";
-import { ProductDetailLicense } from "../features/product/components/ProductDetailLicense";
+import { LicenseNote, ProductDetailLicense } from "../features/product/components/ProductDetailLicense";
 import { ProductDetailLicenseModal } from "../features/product/components/modal/ProductDetailLicenseModal";
 import { LicenseColor, LicenseType } from "../features/product/product.constants";
 import { useRouter } from "next/navigation";
@@ -119,7 +119,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 						<div className="flex justify-between items-center">
 							<div className="flex items-center gap-2">
 								<UserAvatar
-									src="https://placehold.co/51x51"
+									src={product?.artistImgSrc || "https://placehold.co/51x51"}
 									className="w-[51px] h-[51px] bg-black"
 									size="large"
 								/>
@@ -209,10 +209,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 								<ProductDetailLicense
 									type={license.name as LicenseType}
 									price={license.price.toLocaleString()}
-									specialNote={{
-										text: license.specialNote.text,
-										color: license.specialNote.color as LicenseColor,
-									}}
+									notes={license.notes as LicenseNote[]}
 									isClickable={false}
 								/>
 							</div>
@@ -223,7 +220,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 
 			{product && (
 				<ProductDetailLicenseModal
-					item={{ id: product.id, name: product.title }}
+					productId={product.id}
 					isOpen={isLicenseModalOpen}
 					onClose={() => setIsLicenseModalOpen(false)}
 				/>

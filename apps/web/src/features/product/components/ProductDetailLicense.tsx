@@ -3,15 +3,12 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/common/utils";
 import { LicenseColor, LicenseType } from "../product.constants";
 
-interface SpecialNote {
-	text: string;
-	color: LicenseColor;
-}
+export type LicenseNote = string | { text: string; color: LicenseColor };
 
 interface ProductDetailLicenseProps {
 	type: LicenseType;
 	price: string;
-	specialNote: SpecialNote;
+	notes: LicenseNote[];
 	isClickable?: boolean;
 }
 
@@ -25,18 +22,8 @@ interface LicenseTypePriceProps {
 
 interface LicenseUsageRightsProps {
 	type: LicenseType;
-	specialNote: SpecialNote;
+	notes: LicenseNote[];
 }
-
-const LICENSE_USAGE_RIGHTS = [
-	"무제한 뮤직비디오 제작 가능",
-	"상업적 라이브 공연에서 자유롭게 사용 가능",
-	"라디오 방송 권한 (무제한 방송국 포함)",
-	"온라인 오디오 스트리밍 무제한 가능",
-	"음원 복제 및 유통 수량 제한 없음",
-	"음악 녹음 및 발매용 사용 가능",
-	"상업적 이용 가능",
-] as const;
 
 const LicenseTypePrice = memo(({ type, price, isSelected, isClickable = true, onClick }: LicenseTypePriceProps) => {
 	return (
@@ -58,7 +45,7 @@ const LicenseTypePrice = memo(({ type, price, isSelected, isClickable = true, on
 
 LicenseTypePrice.displayName = "LicenseTypePrice";
 
-const LicenseUsageRights = memo(({ type, specialNote }: LicenseUsageRightsProps) => {
+const LicenseUsageRights = memo(({ type, notes }: LicenseUsageRightsProps) => {
 	return (
 		<div className="flex flex-col gap-2.5">
 			<h3 className="text-16px font-bold leading-[25.6px] -tracking-0.32px">{type} 라이센스 사용범위</h3>
@@ -66,17 +53,17 @@ const LicenseUsageRights = memo(({ type, specialNote }: LicenseUsageRightsProps)
 				className="flex flex-col gap-2.5"
 				role="list"
 			>
-				{LICENSE_USAGE_RIGHTS.map((right) => (
+				{notes.map((right, index) => (
 					<li
-						key={right}
-						className="text-12px font-semibold leading-[18px] tracking-0.12px"
+						key={index}
+						className={cn(
+							"text-12px font-semibold leading-[18px] tracking-0.12px",
+							typeof right === "object" && right.color,
+						)}
 					>
-						{right}
+						{typeof right === "string" ? right : right.text}
 					</li>
 				))}
-				<li className={cn("text-[12px] font-semibold leading-[18px] tracking-0.12px", specialNote.color)}>
-					{specialNote.text}
-				</li>
 			</ul>
 		</div>
 	);
@@ -84,7 +71,7 @@ const LicenseUsageRights = memo(({ type, specialNote }: LicenseUsageRightsProps)
 
 LicenseUsageRights.displayName = "LicenseUsageRights";
 
-const ProductDetailLicense = memo(({ type, price, specialNote, isClickable }: ProductDetailLicenseProps) => {
+const ProductDetailLicense = memo(({ type, price, notes, isClickable }: ProductDetailLicenseProps) => {
 	return (
 		<div className="flex flex-1 gap-5">
 			<LicenseTypePrice
@@ -94,7 +81,7 @@ const ProductDetailLicense = memo(({ type, price, specialNote, isClickable }: Pr
 			/>
 			<LicenseUsageRights
 				type={type}
-				specialNote={specialNote}
+				notes={notes}
 			/>
 		</div>
 	);
@@ -103,4 +90,3 @@ const ProductDetailLicense = memo(({ type, price, specialNote, isClickable }: Pr
 ProductDetailLicense.displayName = "ProductDetailLicense";
 
 export { ProductDetailLicense, LicenseTypePrice, LicenseUsageRights };
-export type { SpecialNote };

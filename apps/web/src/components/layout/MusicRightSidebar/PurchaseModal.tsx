@@ -1,21 +1,18 @@
 "use client";
 
 import * as Popup from "@/components/ui/Popup";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback, memo } from "react";
 import { cn } from "@/common/utils";
-import { PaymentSuccessModal } from "@/features/cart/components/modal/PaymentSuccessModal";
-import { PaymentFailureModal } from "@/features/cart/components/modal/PaymentFailureModal";
-import { PaymentSelectModal } from "@/features/cart/components/modal/PaymentSelectModal";
+import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { getProductQueryOption } from "@/apis/product/query/product.query-option"; // Assuming this path
+import { useCartStore } from "@/stores/cart";
+import { useShallow } from "zustand/react/shallow";
 
 interface PurchaseModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	item: {
-		id: number;
-		name: string;
-		price: number;
-	};
-	licenses?: LicenseOption[];
+	productId: number; // Changed from item
 }
 
 type LicenseOption = {
@@ -23,100 +20,79 @@ type LicenseOption = {
 	name: string;
 	description: string;
 	price: number;
-	benefits?: string[];
+	notes?: (string | { text: string; color?: string })[]; // Changed from benefits
 };
 
-const licenseOptions: LicenseOption[] = [
-	{
-		id: 1,
-		name: "Exclusive",
-		description: "MP3, WAV, Stems",
-		price: 100000,
-		benefits: [
-			"무제한 뮤직비디오 제작 가능",
-			"상업적 라이브 공연에서 자유롭게 사용 가능",
-			"라디오 방송 권한 (무제한 방송국 포함)",
-			"온라인 오디오 스트리밍 무제한 가능",
-			"음원 복제 및 유통 수량 제한 없음",
-			"음악 녹음 및 발매용 사용 가능",
-			"상업적 이용 가능",
-			"저작권 표기 필수",
-		],
-	},
-	{
-		id: 2,
-		name: "Master",
-		description: "MP3, WAV, Stems",
-		price: 15000,
-		benefits: [
-			"무제한 뮤직비디오 제작 가능",
-			"상업적 라이브 공연에서 자유롭게 사용 가능",
-			"라디오 방송 권한 (무제한 방송국 포함)",
-			"온라인 오디오 스트리밍 무제한 가능",
-			"음원 복제 및 유통 수량 제한 없음",
-			"음악 녹음 및 발매용 사용 가능",
-			"상업적 이용 가능",
-			"저작권 표기 필수",
-		],
-	},
-];
+export const PurchaseModal = memo(({ isOpen, onClose, productId }: PurchaseModalProps) => {
+	const router = useRouter();
+	const { data: product } = useQuery({
+		...getProductQueryOption(productId),
+		enabled: isOpen && !!productId,
+	});
 
-export const PurchaseModal = ({ isOpen, onClose, item, licenses = licenseOptions }: PurchaseModalProps) => {
-	const [selectedLicenseId, setSelectedLicenseId] = useState<number>(licenses![0]!.id!);
+	const licenses = useMemo(() => product?.licenses as LicenseOption[] | undefined, [product]); // Cast if necessary
+
+	const [selectedLicenseId, setSelectedLicenseId] = useState<number>(licenses?.[0]?.id ?? 0);
 	const selectedLicense = useMemo(
-		() => licenses.find((license) => license.id === selectedLicenseId),
+		() => licenses?.find((license) => license.id === selectedLicenseId),
 		[licenses, selectedLicenseId],
 	);
 
-	const price = useMemo(() => selectedLicense?.price, [selectedLicense]);
-
-	const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-	const [successModalOpen, setSuccessModalOpen] = useState(false);
-	const [failureModalOpen, setFailureModalOpen] = useState(false);
-	const [paymentResult, setPaymentResult] = useState<any>(null);
-	const [paymentError, setPaymentError] = useState<any>(null);
-
-	const handlePaymentComplete = (result: any) => {
-		console.log("Payment completed:", result);
-
-		// 만약 PaymentSelectModal에서 놓친 에러 코드가 있다면 여기서 한 번 더 확인
-		if (result && result.code && typeof result.code === "string" && result.code.startsWith("FAILURE")) {
-			handlePaymentError({
-				message: result.message || "결제가 실패했습니다.",
-				code: result.code,
-				...result,
-			});
-			return;
+	useEffect(() => {
+		if (licenses && licenses.length > 0) {
+			const currentSelectionIsValid = licenses.some((l) => l.id === selectedLicenseId);
+			if (!currentSelectionIsValid || selectedLicenseId === 0) {
+				setSelectedLicenseId(licenses[0]!.id);
+			}
+		} else if (!licenses) {
+			setSelectedLicenseId(0);
 		}
+	}, [licenses, selectedLicenseId]);
 
-		setPaymentResult({
-			amount: price,
-			orderId: result.paymentId || crypto.randomUUID(),
-			method: result.payMethod || "CARD",
-			approvedAt: new Date().toISOString(),
-			...result,
-		});
-		setPaymentModalOpen(false);
-		setSuccessModalOpen(true);
+	const { addItem } = useCartStore(
+		useShallow((state) => ({
+			addItem: state.addItem,
+		})),
+	);
+
+	const addToCart = useCallback(() => {
+		if (selectedLicenseId && product) {
+			addItem({
+				id: productId, // or product.id
+				licenseId: selectedLicenseId,
+			});
+		}
+	}, [addItem, productId, product, selectedLicenseId]);
+
+	const handleCart = useCallback(() => {
+		addToCart();
 		onClose();
-		// 여기서 결제 완료 후 처리 로직 구현
-	};
+	}, [addToCart, onClose]);
 
-	const handlePaymentError = (error: any) => {
-		console.error("Payment error:", error);
-		setPaymentError({
-			message: error?.message || "결제 중 오류가 발생했습니다.",
-			code: error?.code || "ERROR",
-			...error,
-		});
-		setPaymentModalOpen(false);
-		setFailureModalOpen(true);
+	const handlePurchase = useCallback(() => {
+		addToCart();
+		router.push("/cart");
 		onClose();
-	};
+	}, [addToCart, router, onClose]);
 
-	const handleCart = () => {
-		alert("장바구니 추가 개발예정");
-	};
+	if (!product || !licenses || licenses.length === 0) {
+		return isOpen ? (
+			<Popup.Popup
+				open={isOpen}
+				onOpenChange={onClose}
+			>
+				<Popup.PopupContent className="w-[500px] max-w-[500px]">
+					<Popup.PopupHeader>
+						<Popup.PopupTitle className="font-bold">라이센스 선택</Popup.PopupTitle>
+					</Popup.PopupHeader>
+					<div className="p-4 text-center">라이센스 정보를 불러오는 중이거나, 사용할 수 있는 라이센스가 없습니다.</div>
+					<Popup.PopupFooter>
+						<Popup.PopupButton onClick={onClose}>닫기</Popup.PopupButton>
+					</Popup.PopupFooter>
+				</Popup.PopupContent>
+			</Popup.Popup>
+		) : null;
+	}
 
 	return (
 		<>
@@ -174,19 +150,16 @@ export const PurchaseModal = ({ isOpen, onClose, item, licenses = licenseOptions
 									{selectedLicense?.name} 라이센스 사용범위
 								</div>
 								<div className="flex flex-col items-start justify-center gap-10px">
-									{selectedLicense?.benefits?.map((benefit, index) => (
+									{selectedLicense?.notes?.map((note, index) => (
 										<div
 											key={index}
 											className={cn(
 												"text-[12px] font-bold font-suit leading-150% tracking-012px",
-												benefit.includes("저작권 표기")
-													? benefit.includes("필수")
-														? "text-hbc-red"
-														: "text-hbc-blue"
-													: "text-hbc-gray-400",
+												"text-hbc-gray-400",
+												typeof note === "object" && note.color,
 											)}
 										>
-											{benefit}
+											{typeof note === "string" ? note : note.text}
 										</div>
 									))}
 								</div>
@@ -195,48 +168,13 @@ export const PurchaseModal = ({ isOpen, onClose, item, licenses = licenseOptions
 					</div>
 
 					<Popup.PopupFooter>
-						<Popup.PopupButton onClick={handleCart}>장바구니 추가</Popup.PopupButton>
-						<Popup.PopupButton onClick={() => setPaymentModalOpen(true)}>구매하기</Popup.PopupButton>
+						<Popup.PopupButton onClick={handleCart}>장바구니 담기</Popup.PopupButton>
+						<Popup.PopupButton onClick={handlePurchase}>구매하기</Popup.PopupButton>
 					</Popup.PopupFooter>
 				</Popup.PopupContent>
 			</Popup.Popup>
-
-			<PaymentSelectModal
-				total={price!}
-				orderName={`${item.name} 라이센스 구매`}
-				// orderData={[]}
-				open={paymentModalOpen}
-				onOpenChange={setPaymentModalOpen}
-				onPaymentComplete={handlePaymentComplete}
-				onPaymentError={handlePaymentError}
-				trigger={<Popup.PopupButton>구매하기</Popup.PopupButton>}
-			/>
-
-			{/* 결제 완료 모달 */}
-			<PaymentSuccessModal
-				isOpen={successModalOpen}
-				onClose={() => setSuccessModalOpen(false)}
-				paymentResult={
-					paymentResult || {
-						amount: price!,
-						orderId: "SAMPLE-ORDER-ID",
-						method: "CARD",
-						approvedAt: new Date().toISOString(),
-					}
-				}
-			/>
-
-			{/* 결제 실패 모달 */}
-			<PaymentFailureModal
-				isOpen={failureModalOpen}
-				onClose={() => setFailureModalOpen(false)}
-				error={
-					paymentError || {
-						message: "결제 처리 중 오류가 발생했습니다.",
-						code: "PAYMENT_ERROR",
-					}
-				}
-			/>
 		</>
 	);
-};
+});
+
+PurchaseModal.displayName = "PurchaseModal";

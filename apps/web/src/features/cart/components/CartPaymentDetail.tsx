@@ -8,57 +8,35 @@ import { useState } from "react";
 import { PaymentSelectModal } from "./modal/PaymentSelectModal";
 import { PaymentSuccessModal } from "./modal/PaymentSuccessModal";
 import { PaymentFailureModal } from "./modal/PaymentFailureModal";
+import { useCartStore } from "@/stores/cart";
+import { PRODUCTS_MAP } from "@/apis/product/product.dummy";
+import Link from "next/link";
 
-type CartItem = {
+export type CheckoutItem = {
 	id: number;
 	imageUrl: string;
 	title: string;
 	price: number;
 };
 
-type CartPaymentDetailProps = {
-	items?: CartItem[];
-	subtotal?: number;
-	serviceFee?: number;
-	total?: number;
-};
+interface CartPaymentDetailProps {
+	checkoutItems: CheckoutItem[];
+	subtotal: number;
+	serviceFee: number;
+	total: number;
+}
 
-const defaultItems: CartItem[] = [
-	{
-		id: 1,
-		imageUrl: "https://placehold.co/55x55.png",
-		title: "Baby, show you",
-		price: 8000,
-	},
-	{
-		id: 2,
-		imageUrl: "https://placehold.co/55x55.png",
-		title: "Baby, show you",
-		price: 8000,
-	},
-	{
-		id: 3,
-		imageUrl: "https://placehold.co/55x55.png",
-		title: "Baby, show you",
-		price: 8000,
-	},
-];
-
-export const CartPaymentDetail = ({
-	items = defaultItems,
-	subtotal = 140000,
-	serviceFee = 0,
-	total = 32000,
-}: CartPaymentDetailProps) => {
+export const CartPaymentDetail = ({ checkoutItems, subtotal, serviceFee = 0, total }: CartPaymentDetailProps) => {
 	const [checkPayment, setCheckPayment] = useState(false);
 	const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 	const [successModalOpen, setSuccessModalOpen] = useState(false);
 	const [failureModalOpen, setFailureModalOpen] = useState(false);
 	const [paymentResult, setPaymentResult] = useState<any>(null);
 	const [paymentError, setPaymentError] = useState<any>(null);
+	const clearCart = useCartStore((state) => state.clearCart);
 
 	const handlePaymentClick = () => {
-		if (!items.length) {
+		if (!checkoutItems.length) {
 			alert("상품을 추가해주세요.");
 			return;
 		}
@@ -74,7 +52,6 @@ export const CartPaymentDetail = ({
 	const handlePaymentComplete = (result: any) => {
 		console.log("Payment completed:", result);
 
-		// 만약 PaymentSelectModal에서 놓친 에러 코드가 있다면 여기서 한 번 더 확인
 		if (result && result.code && typeof result.code === "string" && result.code.startsWith("FAILURE")) {
 			handlePaymentError({
 				message: result.message || "결제가 실패했습니다.",
@@ -93,7 +70,7 @@ export const CartPaymentDetail = ({
 		});
 		setPaymentModalOpen(false);
 		setSuccessModalOpen(true);
-		// 여기서 결제 완료 후 처리 로직 구현
+		clearCart();
 	};
 
 	const handlePaymentError = (error: any) => {
@@ -108,7 +85,8 @@ export const CartPaymentDetail = ({
 	};
 
 	const getOrderName = () => {
-		return items[0]?.title + (items.length > 1 ? ` 외 ${items.length - 1}개` : "");
+		if (!checkoutItems || checkoutItems.length === 0) return "";
+		return checkoutItems[0]?.title + (checkoutItems.length > 1 ? ` 외 ${checkoutItems.length - 1}개` : "");
 	};
 
 	return (
@@ -117,16 +95,16 @@ export const CartPaymentDetail = ({
 				<div className="flex flex-col items-start self-stretch gap-4">
 					<div className="text-2xl font-bold tracking-tight text-black uppercase font-suisse">Checkout</div>
 					<div className="flex flex-col items-start self-stretch">
-						{items.map((item, index) => (
+						{checkoutItems.map((item, index) => (
 							<div
 								key={item.id}
-								className={cn("py-3 inline-flex items-center gap-2.5 w-64 border-t-2 border-black ")}
+								className={cn("py-3 inline-flex items-center gap-2.5 w-259px border-t-2 border-black ")}
 							>
-								<div className={cn("relative w-62px h-62px")}>
+								<div className={cn("relative w-66px h-66px")}>
 									<div
 										className={cn(
 											"absolute top-0 left-0 border-2 border-hbc-black border-solid",
-											"w-62px h-62px",
+											"w-66px h-66px",
 											"rounded-12px",
 										)}
 										aria-hidden="true"
@@ -138,13 +116,13 @@ export const CartPaymentDetail = ({
 										height={240}
 										className={cn(
 											"absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
-											"@200px/sidebar:w-55px @200px/sidebar:h-55px w-50px h-50px",
+											"w-55px h-55px object-cover",
 											"rounded-6px",
 										)}
 									/>
 								</div>
 								<div className="flex flex-col items-start">
-									<div className="font-black text-hbc-black leading-24px tracking-016px text-16px font-suisse">
+									<div className="font-black text-hbc-black leading-24px tracking-016px text-16px font-suisse truncate w-180px">
 										{item.title}
 									</div>
 									<div className="font-bold text-hbc-black text-14px leading-24px tracking-014px font-suisse">
@@ -172,9 +150,8 @@ export const CartPaymentDetail = ({
 							<TooltipPrimitive.Provider>
 								<TooltipPrimitive.Root delayDuration={100}>
 									<TooltipPrimitive.Trigger asChild>
-										{/* Use a span or div instead of button for non-interactive trigger */}
 										<span className="inline-flex items-center justify-center cursor-help">
-											<Tooltip /> {/* Assuming Tooltip is the SVG icon component */}
+											<Tooltip />
 										</span>
 									</TooltipPrimitive.Trigger>
 									<TooltipPrimitive.Portal>
@@ -182,13 +159,10 @@ export const CartPaymentDetail = ({
 											sideOffset={5}
 											className={cn(
 												"z-50 overflow-hidden rounded-md border border-hbc-gray-100 bg-hbc-white px-2 py-1 text-xs text-hbc-black shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-												// Custom styles for the tooltip popover
 												"font-suit",
 											)}
 										>
-											{/* Replace "개발 예정" with actual tooltip content */}
 											서비스 이용 수수료 상세 정보 (개발 예정)
-											{/* <TooltipPrimitive.Arrow className="fill-hbc-white" /> */}
 										</TooltipPrimitive.Content>
 									</TooltipPrimitive.Portal>
 								</TooltipPrimitive.Root>
@@ -213,28 +187,54 @@ export const CartPaymentDetail = ({
 					</div>
 				</div>
 			</div>
-			<div className="flex flex-col items-start w-full gap-2">
+			<div className="flex flex-col items-start gap-2 w-259px">
 				<div className="text-[9px] font-semibold font-suit text-hbc-gray-400 self-stretch">
-					디지털 음원 구매 후, 다운로드 또는 스트리밍을 시작하지 않은 경우에 <br />
+					구매시 주문목록 페이지를 통해 다운로드하여 바로 사용할 수 있으며,
+					<br />
+					구매 후 1년간 다운로드가 가능합니다.
+					<br />
+					음원 구매 후, 다운로드 또는 스트리밍을 시작하지 않은 경우에 <br />
 					한해 구매일로부터 7일 이내 환불 요청이 가능합니다.
+					<br />
 				</div>
-				<button
-					className="inline-flex items-center justify-between cursor-pointer gap-10px"
-					onClick={() => setCheckPayment(!checkPayment)}
-				>
-					{checkPayment ? <Checkbox /> : <EmptyCheckbox />}
-					<div className="text-[9px] font-semibold font-suit leading-none text-hbc-gray-400">
-						결제 관련 이용약관을 확인하였으며, 이에 동의합니다.
+				<div className="inline-flex items-start gap-[10px] self-stretch">
+					<button
+						type="button"
+						onClick={() => setCheckPayment(!checkPayment)}
+						className="flex-shrink-0 cursor-pointer"
+					>
+						{checkPayment ? <Checkbox /> : <EmptyCheckbox />}
+					</button>
+					<div className="text-[9px] font-semibold font-suit leading-10px text-hbc-gray-400">
+						<Link
+							href={"/refund-policy"}
+							className="text-hbc-blue cursor-pointer"
+						>
+							[환불 및 취소정책]
+						</Link>
+						{" 및 "}
+						<Link
+							href={"/terms-of-service"}
+							className="text-hbc-blue cursor-pointer" // Corrected "cursor-" to "cursor-pointer"
+						>
+							[서비스이용약관]
+						</Link>{" "}
+						을 확인하였으며,
+						<br />
+						이에 동의합니다.
 					</div>
-				</button>
+				</div>
 				<PaymentSelectModal
 					total={total}
 					orderName={getOrderName()}
-					// orderData={items}
 					onPaymentComplete={handlePaymentComplete}
 					onPaymentError={handlePaymentError}
 					trigger={
-						<button className="flex justify-center items-center h-10 bg-black rounded-[5px] outline-1 outline-offset-[-1px] outline-black self-stretch cursor-pointer">
+						<button
+							onClick={handlePaymentClick}
+							disabled={!checkoutItems.length || !checkPayment}
+							className="flex justify-center items-center h-10 bg-black rounded-[5px] outline-1 outline-offset-[-1px] outline-black self-stretch cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+						>
 							<div className="font-bold leading-none tracking-tight text-white uppercase text-16px font-suisse">
 								결제하러 가기
 							</div>
@@ -243,7 +243,6 @@ export const CartPaymentDetail = ({
 				/>
 			</div>
 
-			{/* 결제 완료 모달 */}
 			<PaymentSuccessModal
 				isOpen={successModalOpen}
 				onClose={() => setSuccessModalOpen(false)}
@@ -257,7 +256,6 @@ export const CartPaymentDetail = ({
 				}
 			/>
 
-			{/* 결제 실패 모달 */}
 			<PaymentFailureModal
 				isOpen={failureModalOpen}
 				onClose={() => setFailureModalOpen(false)}

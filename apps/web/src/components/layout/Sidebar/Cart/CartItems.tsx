@@ -1,21 +1,35 @@
 import { cn } from "@/common/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { memo } from "react";
 import CartItem from "./CartItem";
+import { useCartStore } from "@/stores/cart";
+import { useShallow } from "zustand/react/shallow";
+import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 
 const CartItems = memo(() => {
-	const items = useQuery({
-		/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
-		/* @ts-ignore TODO: Implement proper cart items query */
-		queryKey: ["demo", "cart", "items"],
-		queryFn: () => {
-			return Promise.resolve(
-				Array.from({ length: 0 }, (_, i) => ({
-					id: i,
-					imageUrl: "https://placehold.co/60x60.png",
-				})),
-			);
-		},
+	// const items = useQuery({
+	// 	/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
+	// 	/* @ts-ignore TODO: Implement proper cart items query */
+	// 	queryKey: ["demo", "cart", "items"],
+	// 	queryFn: () => {
+	// 		return Promise.resolve(
+	// 			Array.from({ length: 0 }, (_, i) => ({
+	// 				id: i,
+	// 				imageUrl: "https://placehold.co/60x60.png",
+	// 			})),
+	// 		);
+	// 	},
+	// });
+	const { items } = useCartStore(
+		useShallow((state) => ({
+			items: state.items,
+		})),
+	);
+
+	const productQueries = useQueries({
+		queries: items.map((item) => ({
+			...getProductQueryOption(item.id),
+		})),
 	});
 
 	return (
@@ -27,15 +41,15 @@ const CartItems = memo(() => {
 				"@200px/sidebar:w-291px w-139px",
 			)}
 		>
-			{items.data?.map((item, index) => (
+			{productQueries.map((query, index) => (
 				<CartItem
-					key={item.id}
+					key={`${index}-${query.data?.id}`}
 					// TODO: Implement proper status
-					status={index === 0 ? "playing" : index === 1 ? "paused" : "default"}
+					status={"default"}
 					// TODO: Implement proper type
-					type={index % 2 === 0 ? "single" : "artist"}
-					imageUrl={item.imageUrl}
-					alt={`Cart item ${item.id}`}
+					type={"single"}
+					imageUrl={query.data?.albumImgSrc}
+					alt={query.data?.title}
 				/>
 			))}
 		</div>
