@@ -90,4 +90,3 @@ const ProductDetailLicense = memo(({ type, price, notes, isClickable }: ProductD
 ProductDetailLicense.displayName = "ProductDetailLicense";
 
 export { ProductDetailLicense, LicenseTypePrice, LicenseUsageRights };
-export type { SpecialNote };

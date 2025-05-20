@@ -119,7 +119,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 						<div className="flex justify-between items-center">
 							<div className="flex items-center gap-2">
 								<UserAvatar
-									src="https://placehold.co/51x51"
+									src={product?.artistImgSrc || "https://placehold.co/51x51"}
 									className="w-[51px] h-[51px] bg-black"
 									size="large"
 								/>

@@ -7,6 +7,7 @@ type Product = {
 	albumImgSrc: string;
 	genres?: string[];
 	downloadUrl: string;
+	type: "acapella" | "beat";
 	licenses: {
 		id: number;
 		name: string;
@@ -33,6 +34,7 @@ const PRODUCTS: Array<Product> = [
 		albumImgSrc: "https://prod-assets.hitbeatclub.com/dummy/11.jpg",
 		downloadUrl: "https://prod-assets.hitbeatclub.com/dummy/NotJake+-+Paranoid+instrumental+(Fm+bpm86).mp3",
 		genres: ["Hip-Hop", "R&B", "Pop", "Rock"],
+		type: "beat",
 		licenses: [
 			{
 				id: 1,
@@ -84,6 +86,7 @@ const PRODUCTS: Array<Product> = [
 		albumImgSrc: "https://prod-assets.hitbeatclub.com/dummy/1111.jpg",
 		downloadUrl: "https://prod-assets.hitbeatclub.com/dummy/NotJake+-+Fadeaway+instrumental+(Em+bpm80).mp3",
 		genres: ["Hip-Hop", "R&B", "Pop", "Rock"],
+		type: "acapella",
 		licenses: [
 			{
 				id: 1,
@@ -134,6 +137,7 @@ const PRODUCTS: Array<Product> = [
 			"Baby, show you instrumental (Em bpm60) Baby, show you instrumental (Em bpm60)Baby, show you instrumental (Em bpm60) Baby, show you instrumental (Em bpm60) Baby, show you instrumental (Em bpm60)",
 		albumImgSrc: "https://prod-assets.hitbeatclub.com/dummy/333.jpg",
 		downloadUrl: "https://prod-assets.hitbeatclub.com/dummy/NotJake+-+Baby,+show+you+instrumental+(Em+bpm60).mp3",
+		type: "beat",
 		licenses: [
 			{
 				id: 1,
