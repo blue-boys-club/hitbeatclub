@@ -177,11 +177,7 @@ export const MusicRightSidebar = memo(() => {
 			<PurchaseModal
 				isOpen={isPaymentModalOpen}
 				onClose={() => setIsPaymentModalOpen(false)}
-				item={{
-					id: 1,
-					name: currentTrack?.title || "",
-					price: cheapestLicensePrice || 0,
-				}}
+				productId={Number(currentTrackId)}
 			/>
 		</div>
 	);

@@ -3,6 +3,7 @@ import * as React from "react";
 import { memo } from "react";
 import Image from "next/image";
 import { CartPause, CartPlay } from "@/assets/svgs";
+import { assetImageLoader } from "@/common/utils/image-loader";
 interface CartItemProps {
 	type: "single" | "artist";
 	status?: "playing" | "paused" | "default";
@@ -35,11 +36,12 @@ const CartItem = memo(function CartItem({ status = "default", type, imageUrl, al
 						width={240}
 						height={240}
 						className={cn(
-							"absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+							"absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 object-cover",
 							"@200px/sidebar:w-55px @200px/sidebar:h-55px w-50px h-50px",
 							type === "single" && "rounded-6px",
 							type === "artist" && "rounded-full",
 						)}
+						loader={assetImageLoader}
 					/>
 				)}
 
