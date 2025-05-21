@@ -166,7 +166,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 									Free Download
 								</FreeDownloadButton>
 								<PurchaseButton
-									iconColor="hbc-white"
+									iconColor="var(--hbc-white)"
 									className="outline-4 outline-hbc-black font-suisse"
 									onClick={onClickPurchase}
 								>

@@ -55,7 +55,7 @@ export const ProductDetailLicenseModal = memo(({ isOpen, onClose, productId }: P
 			title: "장바구니에 추가되었습니다.",
 		});
 		onClose();
-	}, [addToCart, onClose]);
+	}, [addToCart, onClose, toast]);
 
 	const handlePurchase = useCallback(() => {
 		addToCart();

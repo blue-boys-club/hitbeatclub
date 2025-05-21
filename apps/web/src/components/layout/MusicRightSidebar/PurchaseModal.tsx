@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option"; // Assuming this path
 import { useCartStore } from "@/stores/cart";
 import { useShallow } from "zustand/react/shallow";
+import { useToast } from "@/hooks/use-toast";
 
 interface PurchaseModalProps {
 	isOpen: boolean;
@@ -29,6 +30,8 @@ export const PurchaseModal = memo(({ isOpen, onClose, productId }: PurchaseModal
 		...getProductQueryOption(productId),
 		enabled: isOpen && !!productId,
 	});
+
+	const { toast } = useToast();
 
 	const licenses = useMemo(() => product?.licenses as LicenseOption[] | undefined, [product]); // Cast if necessary
 
@@ -66,8 +69,11 @@ export const PurchaseModal = memo(({ isOpen, onClose, productId }: PurchaseModal
 
 	const handleCart = useCallback(() => {
 		addToCart();
+		toast({
+			title: "장바구니에 추가되었습니다.",
+		});
 		onClose();
-	}, [addToCart, onClose]);
+	}, [addToCart, onClose, toast]);
 
 	const handlePurchase = useCallback(() => {
 		addToCart();
