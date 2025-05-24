@@ -1,62 +1,61 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { AuthJwtAccessPayloadDto } from './dto/request/auth.jwt.access-payload.dto';
-import {
-  AUTH_FIND_GOOGLE_TOKEN_ERROR,
-  AUTH_VERIFY_ID_TOKEN_ERROR,
-} from './auth.error';
-import { LoginTicket, OAuth2Client, TokenPayload } from 'google-auth-library';
-import { ConfigService } from '@nestjs/config';
-import { AuthGoogleLoginResponseDto } from './dto/response/auth.google.login.response.dto';
-import { HelperEncryptionService } from 'src/common/helper/services/helper.encryption.service';
-import { ENUM_EMAIL } from '../email/constants/email.enum.constant';
-import { IAuthHash } from './interfaces/auth.interface';
-import { HelperHashService } from 'src/common/helper/services/helper.hash.service';
-import { HelperDateService } from 'src/common/helper/services/helper.date.service';
+import { BadRequestException, Injectable } from "@nestjs/common";
+import { AuthJwtAccessPayloadDto } from "./dto/request/auth.jwt.access-payload.dto";
+import { AUTH_FIND_GOOGLE_TOKEN_ERROR, AUTH_LOGIN_OR_SIGNUP_ERROR, AUTH_VERIFY_ID_TOKEN_ERROR } from "./auth.error";
+import { LoginTicket, OAuth2Client, TokenPayload } from "google-auth-library";
+import { ConfigService } from "@nestjs/config";
+import { AuthGoogleLoginResponseDto } from "./dto/response/auth.google.login.response.dto";
+import { HelperEncryptionService } from "src/common/helper/services/helper.encryption.service";
+import { ENUM_EMAIL } from "../email/constants/email.enum.constant";
+import { IAuthHash } from "./interfaces/auth.interface";
+import { HelperHashService } from "src/common/helper/services/helper.hash.service";
+import { HelperDateService } from "src/common/helper/services/helper.date.service";
+import { UserService } from "../user/user.service";
 
 @Injectable()
 export class AuthService {
-  // google
-  private readonly googleClient: OAuth2Client;
+	// google
+	private readonly googleClient: OAuth2Client;
 
-  private readonly hashInfo: object;
+	private readonly hashInfo: object;
 
-  constructor(
-    private readonly helperHashService: HelperHashService,
-    private readonly helperDateService: HelperDateService,
-    private readonly configService: ConfigService,
-    private readonly helperEncryptionService: HelperEncryptionService,
-  ) {
-    // google
-    this.googleClient = new OAuth2Client(
-      this.configService.get<string>('auth.google.clientId'),
-      this.configService.get<string>('auth.google.clientSecret'),
-      'postmessage',
-    );
+	constructor(
+		private readonly helperHashService: HelperHashService,
+		private readonly helperDateService: HelperDateService,
+		private readonly configService: ConfigService,
+		private readonly helperEncryptionService: HelperEncryptionService,
+		private readonly userService: UserService,
+	) {
+		// google
+		this.googleClient = new OAuth2Client(
+			this.configService.get<string>("auth.google.clientId"),
+			this.configService.get<string>("auth.google.clientSecret"),
+			"postmessage",
+		);
 
-    this.hashInfo = {
-      [ENUM_EMAIL.CHANGE_PASSWORD]: {
-        expiredIn: this.configService.get<number>('auth.password.expiredIn'),
-        saltLength: this.configService.get<number>('auth.password.saltLength'),
-      },
-      [ENUM_EMAIL.EMAIL]: {
-        expiredIn: this.configService.get<number>('auth.email.expiredIn'),
-        saltLength: this.configService.get<number>('auth.email.saltLength'),
-      },
-      [ENUM_EMAIL.SIGN_UP]: {
-        signUp: this.configService.get<number>('auth.email.signUp'),
-        saltLength: this.configService.get<number>('auth.signUp.saltLength'),
-      },
-    };
-  }
+		this.hashInfo = {
+			[ENUM_EMAIL.CHANGE_PASSWORD]: {
+				expiredIn: this.configService.get<number>("auth.password.expiredIn"),
+				saltLength: this.configService.get<number>("auth.password.saltLength"),
+			},
+			[ENUM_EMAIL.EMAIL]: {
+				expiredIn: this.configService.get<number>("auth.email.expiredIn"),
+				saltLength: this.configService.get<number>("auth.email.saltLength"),
+			},
+			[ENUM_EMAIL.SIGN_UP]: {
+				signUp: this.configService.get<number>("auth.email.signUp"),
+				saltLength: this.configService.get<number>("auth.signUp.saltLength"),
+			},
+		};
+	}
 
-  validateUser(payload: AuthJwtAccessPayloadDto) {
-    return payload;
-  }
+	validateUser(payload: AuthJwtAccessPayloadDto) {
+		return payload;
+	}
 
-  async googleGetToken(code) {
-    try {
-      const { tokens } = await this.googleClient.getToken(code);
-      /**
+	async googleGetToken(code) {
+		try {
+			const { tokens } = await this.googleClient.getToken(code);
+			/**
          tokens response
          {
             access_token: 'ya29.a0AcM612z5bGS_xAEHFamNYzsT8RukJ2FdtSNedr9gDeA4i0CdViSheHUzzl0RgPMGBeY82XF34u-SRebQbXn87kPCGl5CDWkcjLGjGV8WyQgpxGLlvlaivbORpFC2oGPnaaM0jmxSuGQXAsD853SOM51FrNRcF09M5q9hAfLOaCgYKAeYSARMSFQHGX2MiwHeGq6VxNcLF_9aoOYMm1A0175',
@@ -68,106 +67,116 @@ export class AuthService {
         }
          */
 
-      return tokens;
-    } catch (e) {
-      throw new BadRequestException({
-        ...AUTH_FIND_GOOGLE_TOKEN_ERROR,
-        message: e.message,
-      });
-    }
-  }
+			return tokens;
+		} catch (e) {
+			throw new BadRequestException({
+				...AUTH_FIND_GOOGLE_TOKEN_ERROR,
+				message: e.message,
+			});
+		}
+	}
 
-  async googleVerifyIdToken(idToken: string): Promise<TokenPayload> {
-    try {
-      const login: LoginTicket = await this.googleClient.verifyIdToken({
-        idToken,
-      });
+	async googleVerifyIdToken(idToken: string): Promise<TokenPayload> {
+		try {
+			const login: LoginTicket = await this.googleClient.verifyIdToken({
+				idToken,
+			});
 
-      const payload = login.getPayload();
-      if (!payload) {
-        throw new BadRequestException({
-          ...AUTH_VERIFY_ID_TOKEN_ERROR,
-          message: 'Invalid token payload',
-        });
-      }
-      return payload;
-    } catch (e) {
-      throw new BadRequestException({
-        ...AUTH_VERIFY_ID_TOKEN_ERROR,
-        message: e.message,
-      });
-    }
-  }
+			const payload = login.getPayload();
+			if (!payload) {
+				throw new BadRequestException({
+					...AUTH_VERIFY_ID_TOKEN_ERROR,
+					message: "Invalid token payload",
+				});
+			}
+			return payload;
+		} catch (e) {
+			throw new BadRequestException({
+				...AUTH_VERIFY_ID_TOKEN_ERROR,
+				message: e.message,
+			});
+		}
+	}
 
-  async googleLogin(code: string): Promise<AuthGoogleLoginResponseDto> {
-    try {
-      // 1. Get Google tokens
-      const tokens = await this.googleGetToken(code);
-      if (!tokens.id_token) {
-        throw new BadRequestException('Invalid Google token');
-      }
+	async createSalt(length: number): Promise<string> {
+		return this.helperHashService.randomSalt(length);
+	}
 
-      // 2. Verify ID token
-      const tokenPayload = await this.googleVerifyIdToken(tokens.id_token);
+	/**
+	 * 해시 정보 생성
+	 * @param type
+	 * @param text
+	 * @returns
+	 */
+	async createHashInfo(type: ENUM_EMAIL, text: string): Promise<IAuthHash> {
+		const salt: string = await this.createSalt(this.hashInfo[type].saltLength);
+		const expired: Date = this.helperDateService.forwardInSeconds(this.hashInfo[type].expiredIn);
 
-      // 3. Generate JWT tokens
-      const accessToken = this.helperEncryptionService.jwtEncrypt(
-        { email: tokenPayload.email },
-        {
-          secretKey: this.configService.get('auth.jwt.secretKey'),
-          expiredIn: '7d',
-          audience: this.configService.get('auth.jwt.audience'),
-          issuer: this.configService.get('auth.jwt.issuer'),
-          subject: this.configService.get('auth.jwt.subject'),
-        },
-      );
+		const created: Date = this.helperDateService.create();
+		const hash = this.helperHashService.bcrypt(text, salt);
 
-      const refreshToken = this.helperEncryptionService.jwtEncrypt(
-        { email: tokenPayload.email },
-        {
-          secretKey: this.configService.get('JWT_SECRET'),
-          expiredIn: '30d',
-          audience: this.configService.get('auth.jwt.audience'),
-          issuer: this.configService.get('auth.jwt.issuer'),
-          subject: this.configService.get('auth.jwt.subject'),
-        },
-      );
+		return {
+			hash,
+			expired,
+			hashCreated: created,
+			salt,
+		};
+	}
 
-      return {
-        accessToken,
-        refreshToken,
-        email: tokenPayload.email || '',
-        name: tokenPayload.name || '',
-      };
-    } catch (error) {
-      throw new BadRequestException(error.message);
-    }
-  }
+	/**
+	 * 사용자 이메일로 확인 후 로그인 또는 회원가입 처리
+	 * @param tokenPayload 구글 인증 정보
+	 * @returns 액세스 토큰, 리프레시 토큰, 사용자 정보
+	 */
+	async loginOrSignUp(tokenPayload: TokenPayload): Promise<AuthGoogleLoginResponseDto> {
+		try {
+			let user;
+			// 사용자 조회
+			user = await this.userService.findByEmail(tokenPayload.email);
 
-  async createSalt(length: number): Promise<string> {
-    return this.helperHashService.randomSalt(length);
-  }
+			// 새 사용자라면 회원가입 처리
+			if (!user) {
+				user = await this.userService.create({
+					email: tokenPayload.email,
+				});
+			}
 
-  /**
-   * 해시 정보 생성
-   * @param type
-   * @param text
-   * @returns
-   */
-  async createHashInfo(type: ENUM_EMAIL, text: string): Promise<IAuthHash> {
-    const salt: string = await this.createSalt(this.hashInfo[type].saltLength);
-    const expired: Date = this.helperDateService.forwardInSeconds(
-      this.hashInfo[type].expiredIn,
-    );
+			// 토큰 생성
+			const payload = {
+				email: tokenPayload.email,
+				id: user.id,
+			};
 
-    const created: Date = this.helperDateService.create();
-    const hash = this.helperHashService.bcrypt(text, salt);
+			const accessToken = this.helperEncryptionService.jwtEncrypt(payload, {
+				secretKey: this.configService.get("auth.jwt.accessToken.secretKey"),
+				expiredIn: this.configService.get("auth.jwt.accessToken.expirationTime"),
+				audience: this.configService.get("auth.jwt.audience"),
+				issuer: this.configService.get("auth.jwt.issuer"),
+				subject: this.configService.get("auth.jwt.subject"),
+			});
 
-    return {
-      hash,
-      expired,
-      hashCreated: created,
-      salt,
-    };
-  }
+			const refreshToken = this.helperEncryptionService.jwtEncrypt(payload, {
+				secretKey: this.configService.get("auth.jwt.refreshToken.secretKey"),
+				expiredIn: this.configService.get("auth.jwt.refreshToken.expirationTime"),
+				audience: this.configService.get("auth.jwt.audience"),
+				issuer: this.configService.get("auth.jwt.issuer"),
+				subject: this.configService.get("auth.jwt.subject"),
+			});
+
+			return {
+				userId: user.id,
+				accessToken,
+				refreshToken,
+				email: user.email,
+			};
+		} catch (e: any) {
+			if (e?.response) {
+				throw new BadRequestException(e.response);
+			}
+			throw new BadRequestException({
+				...AUTH_LOGIN_OR_SIGNUP_ERROR,
+				message: e.message,
+			});
+		}
+	}
 }

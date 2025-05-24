@@ -7,169 +7,179 @@ datasource db {
   url      = env("DB_URL")
 }
 
-model user {
-  id                       BigInt                @id @default(autoincrement())
-  email                    String                @db.VarChar(255)
-  name                     String                @db.VarChar(100)
-  password                 String?               @db.VarChar(255)
-  phone_number             String                @db.VarChar(20)
-  gender                   String?               @db.Char(1)
-  birth_date               DateTime              @db.Timestamp(0)
-  profile_url              String?               @db.VarChar(255)
-  country                  String                @db.VarChar(4)
-  region                   String                @db.VarChar(100)
-  access_token             String?               @db.VarChar(255)
-  refresh_token            String?               @db.VarChar(255)
-  agreed_terms_at          DateTime              @db.Timestamp(0)
-  agreed_privacy_policy_at DateTime              @db.Timestamp(0)
-  agreed_email_at          DateTime?             @db.Timestamp(0)
-  created_at               DateTime?             @default(now()) @db.Timestamp(0)
-  updated_at               DateTime?             @default(now()) @db.Timestamp(0)
-  deleted_at               DateTime?             @db.Timestamp(0)
-  artist                   artist[]
-  cart                     cart[]
-  order                    order[]
-  payments                 payments[]
-  user_social_account      user_social_account[]
+model User {
+  id                     BigInt                @id @default(autoincrement())
+  email                  String                @db.VarChar(255)
+  name                   String                @db.VarChar(100)
+  password               String?               @db.VarChar(255)
+  phoneNumber            String                @map("phone_number") @db.VarChar(20)
+  gender                 String?               @db.Char(1)
+  birthDate              DateTime              @map("birth_date") @db.Timestamp(0)
+  profileUrl             String?               @map("profile_url") @db.VarChar(255)
+  country                String                @db.VarChar(4)
+  region                 String                @db.VarChar(100)
+  accessToken            String?               @map("access_token") @db.VarChar(255)
+  refreshToken           String?               @map("refresh_token") @db.VarChar(255)
+  agreedTermsAt          DateTime              @map("agreed_terms_at") @db.Timestamp(0)
+  agreedPrivacyPolicyAt  DateTime              @map("agreed_privacy_policy_at") @db.Timestamp(0)
+  agreedEmailAt          DateTime?             @map("agreed_email_at") @db.Timestamp(0)
+  lastLoginAt            DateTime?             @map("last_login_at") @db.Timestamp(0)
+  createdAt              DateTime?             @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt              DateTime?             @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt              DateTime?             @map("deleted_at") @db.Timestamp(0)
+  artist                 Artist[]
+  cart                   Cart[]
+  order                  Order[]
+  payments               Payments[]
+  userSocialAccount      UserSocialAccount[]
+
+  @@map("user")
 }
 
-model artist {
-  id                                BigInt    @id @default(autoincrement())
-  user_id                           BigInt    @unique
-  stage_name                        String?   @db.VarChar(30)
-  slug                              String?   @db.VarChar(20)
-  description                       String?   @db.Text
-  profile_image_url                 String?   @db.VarChar(255)
-  instagram_account                 String?   @db.VarChar(30)
-  youtube_account                   String?   @db.VarChar(30)
-  tiktok_account                    String?   @db.VarChar(30)
-  soundcloud_account                String?   @db.VarChar(30)
-  kakao_account                     String?   @db.VarChar(30)
-  line_account                      String?   @db.VarChar(30)
-  discord_account                   String?   @db.VarChar(30)
-  country                           String?   @db.VarChar(3)
-  city                              String?   @db.VarChar(100)
-  created_at                        DateTime? @default(now()) @db.Timestamp(0)
-  updated_at                        DateTime? @default(now()) @db.Timestamp(0)
-  deleted_at                        DateTime? @db.Timestamp(0)
-  user                              user      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_TO_artist_1")
-  product_product_seller_idToartist product[] @relation("product_seller_idToartist")
-  product_product_user_idToartist   product[] @relation("product_user_idToartist")
+model Artist {
+  id                         BigInt    @id @default(autoincrement())
+  userId                     BigInt    @unique @map("user_id")
+  stageName                  String?   @map("stage_name") @db.VarChar(30)
+  slug                       String?   @db.VarChar(20)
+  description                String?   @db.Text
+  profileImageUrl            String?   @map("profile_image_url") @db.VarChar(255)
+  instagramAccount           String?   @map("instagram_account") @db.VarChar(30)
+  youtubeAccount             String?   @map("youtube_account") @db.VarChar(30)
+  tiktokAccount              String?   @map("tiktok_account") @db.VarChar(30)
+  soundcloudAccount          String?   @map("soundcloud_account") @db.VarChar(30)
+  kakaoAccount               String?   @map("kakao_account") @db.VarChar(30)
+  lineAccount                String?   @map("line_account") @db.VarChar(30)
+  discordAccount             String?   @map("discord_account") @db.VarChar(30)
+  country                    String?   @db.VarChar(3)
+  city                       String?   @db.VarChar(100)
+  createdAt                  DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt                  DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt                  DateTime? @map("deleted_at") @db.Timestamp(0)
+  user                       User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_TO_artist_1")
+  productSellerIdToArtist    Product[] @relation("product_seller_idToartist")
+  productUserIdToArtist      Product[] @relation("product_user_idToartist")
 
-  @@index([user_id], map: "FK_user_TO_artist_1")
+  @@index([userId], map: "FK_user_TO_artist_1")
+  @@map("artist")
 }
 
-model cart {
-  id         BigInt    @id @default(autoincrement())
-  product_id BigInt
-  user_id    BigInt
-  quantity   Int?
-  created_at DateTime? @default(now()) @db.Timestamp(0)
-  updated_at DateTime? @default(now()) @db.Timestamp(0)
-  deleted_at DateTime? @db.Timestamp(0)
-  product    product   @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_product_TO_cart_1")
-  user       user      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_product_TO_cart_3")
+model Cart {
+  id        BigInt    @id @default(autoincrement())
+  productId BigInt    @map("product_id")
+  userId    BigInt    @map("user_id")
+  quantity  Int?
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamp(0)
+  product   Product   @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_product_TO_cart_1")
+  user      User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_product_TO_cart_3")
 
-  @@index([product_id], map: "FK_product_TO_cart_1")
-  @@index([user_id], map: "FK_product_TO_cart_3")
+  @@index([productId], map: "FK_product_TO_cart_1")
+  @@index([userId], map: "FK_product_TO_cart_3")
+  @@map("cart")
 }
 
-model order {
-  id           BigInt         @id @default(autoincrement())
-  buyer_id     BigInt
-  order_number String?        @db.VarChar(100)
-  total_price  Int?
-  status       String?        @db.VarChar(20)
-  created_at   DateTime?      @default(now()) @db.Timestamp(0)
-  updated_at   DateTime?      @default(now()) @db.Timestamp(0)
-  deleted_at   DateTime?      @db.Timestamp(0)
-  user         user           @relation(fields: [buyer_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_TO_order_1")
-  order_detail order_detail[]
-  payments     payments[]
+model Order {
+  id          BigInt        @id @default(autoincrement())
+  buyerId     BigInt        @map("buyer_id")
+  orderNumber String?       @map("order_number") @db.VarChar(100)
+  totalPrice  Int?          @map("total_price")
+  status      String?       @db.VarChar(20)
+  createdAt   DateTime?     @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime?     @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt   DateTime?     @map("deleted_at") @db.Timestamp(0)
+  user        User          @relation(fields: [buyerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_TO_order_1")
+  orderDetail OrderDetail[]
+  payments    Payments[]
 
-  @@index([buyer_id], map: "FK_user_TO_order_1")
+  @@index([buyerId], map: "FK_user_TO_order_1")
+  @@map("order")
 }
 
-model order_detail {
-  id         BigInt    @id @default(autoincrement())
-  order_id   BigInt
-  quantity   Int?      @db.TinyInt
-  unit_price Int?
-  created_at DateTime? @default(now()) @db.Timestamp(0)
-  updated_at DateTime? @default(now()) @db.Timestamp(0)
-  deleted_at DateTime? @db.Timestamp(0)
-  order      order     @relation(fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_order_TO_order_detail_1")
+model OrderDetail {
+  id        BigInt    @id @default(autoincrement())
+  orderId   BigInt    @map("order_id")
+  quantity  Int?      @db.TinyInt
+  unitPrice Int?      @map("unit_price")
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamp(0)
+  order     Order     @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_order_TO_order_detail_1")
 
-  @@index([order_id], map: "FK_order_TO_order_detail_1")
+  @@index([orderId], map: "FK_order_TO_order_detail_1")
+  @@map("order_detail")
 }
 
-model payments {
+model Payments {
+  id            BigInt    @id @default(autoincrement())
+  orderId       BigInt    @map("order_id")
+  userId        BigInt    @map("user_id")
+  paymentMethod String?   @map("payment_method") @db.VarChar(50)
+  paymentKey    String?   @map("payment_key") @db.VarChar(255)
+  amount        Int?
+  status        String?   @db.VarChar(50)
+  paidAt        DateTime? @map("paid_at") @db.Timestamp(0)
+  createdAt     DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt     DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamp(0)
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_order_TO_payments_1")
+  user          User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_order_TO_payments_2")
+
+  @@index([orderId], map: "FK_order_TO_payments_1")
+  @@index([userId], map: "FK_order_TO_payments_2")
+  @@map("payments")
+}
+
+model Product {
+  id                        BigInt    @id @default(autoincrement())
+  sellerId                  BigInt    @map("seller_id")
+  userId                    BigInt    @map("user_id")
+  productName               String?   @map("product_name") @db.VarChar(255)
+  description               String?   @db.Text
+  price                     Int?
+  imageUrl                  String?   @map("image_url") @db.VarChar(255)
+  title                     String?   @db.VarChar(50)
+  type                      String?   @db.VarChar(10)
+  genre                     String?   @db.VarChar(100)
+  tags                      Json?
+  bpm                       Int?
+  tonality                  String?   @db.VarChar(10)
+  licenseType               String?   @map("license_type") @db.VarChar(100)
+  licensePrice              Int?      @map("license_price")
+  currency                  String?   @db.VarChar(10)
+  coverImageUrl             String?   @map("cover_image_url") @db.VarChar(255)
+  audioFileUrl              String?   @map("audio_file_url") @db.VarChar(255)
+  zipFileUrl                String?   @map("zip_file_url") @db.VarChar(255)
+  isFreeDownload            Boolean?  @map("is_free_download")
+  isPublic                  Boolean?  @map("is_public")
+  createdAt                 DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt                 DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt                 DateTime? @map("deleted_at") @db.Timestamp(0)
+  cart                      Cart[]
+  artistSellerIdToArtist    Artist    @relation("product_seller_idToartist", fields: [sellerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_artist_TO_product_1")
+  artistUserIdToArtist      Artist    @relation("product_user_idToartist", fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction, map: "FK_artist_TO_product_2")
+
+  @@index([sellerId], map: "FK_artist_TO_product_1")
+  @@index([userId], map: "FK_artist_TO_product_2")
+  @@map("product")
+}
+
+model UserSocialAccount {
   id             BigInt    @id @default(autoincrement())
-  order_id       BigInt
-  user_id        BigInt
-  payment_method String?   @db.VarChar(50)
-  payment_key    String?   @db.VarChar(255)
-  amount         Int?
-  status         String?   @db.VarChar(50)
-  paid_at        DateTime? @db.Timestamp(0)
-  created_at     DateTime? @default(now()) @db.Timestamp(0)
-  updated_at     DateTime? @default(now()) @db.Timestamp(0)
-  deleted_at     DateTime? @db.Timestamp(0)
-  order          order     @relation(fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_order_TO_payments_1")
-  user           user      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_order_TO_payments_2")
+  userId         BigInt    @map("user_id")
+  provider       String    @db.VarChar(20)
+  providerUserId BigInt    @map("provider_user_id")
+  email          String?   @db.VarChar(255)
+  profileImage   String?   @map("profile_image") @db.VarChar(255)
+  name           String?   @db.VarChar(100)
+  accessToken    String    @map("access_token") @db.VarChar(255)
+  refreshToken   String    @map("refresh_token") @db.VarChar(255)
+  connectedAt    DateTime  @map("connected_at") @db.Timestamp(0)
+  createdAt      DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt      DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamp(0)
+  user           User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_TO_user_social_account_1")
 
-  @@index([order_id], map: "FK_order_TO_payments_1")
-  @@index([user_id], map: "FK_order_TO_payments_2")
-}
-
-model product {
-  id                               BigInt    @id @default(autoincrement())
-  seller_id                        BigInt
-  user_id                          BigInt
-  product_name                     String?   @db.VarChar(255)
-  description                      String?   @db.Text
-  price                            Int?
-  image_url                        String?   @db.VarChar(255)
-  title                            String?   @db.VarChar(50)
-  type                             String?   @db.VarChar(10)
-  genre                            String?   @db.VarChar(100)
-  tags                             Json?
-  bpm                              Int?
-  tonality                         String?   @db.VarChar(10)
-  license_type                     String?   @db.VarChar(100)
-  license_price                    Int?
-  currency                         String?   @db.VarChar(10)
-  cover_image_url                  String?   @db.VarChar(255)
-  audio_file_url                   String?   @db.VarChar(255)
-  zip_file_url                     String?   @db.VarChar(255)
-  is_free_download                 Boolean?
-  is_public                        Boolean?
-  created_at                       DateTime? @default(now()) @db.Timestamp(0)
-  updated_at                       DateTime? @default(now()) @db.Timestamp(0)
-  deleted_at                       DateTime? @db.Timestamp(0)
-  cart                             cart[]
-  artist_product_seller_idToartist artist    @relation("product_seller_idToartist", fields: [seller_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_artist_TO_product_1")
-  artist_product_user_idToartist   artist    @relation("product_user_idToartist", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK_artist_TO_product_2")
-
-  @@index([seller_id], map: "FK_artist_TO_product_1")
-  @@index([user_id], map: "FK_artist_TO_product_2")
-}
-
-model user_social_account {
-  id               BigInt    @id @default(autoincrement())
-  user_id          BigInt
-  provider         String    @db.VarChar(20)
-  provider_user_id BigInt
-  email            String?   @db.VarChar(255)
-  profile_image    String?   @db.VarChar(255)
-  name             String?   @db.VarChar(100)
-  access_token     String    @db.VarChar(255)
-  refresh_token    String    @db.VarChar(255)
-  connected_at     DateTime  @db.Timestamp(0)
-  created_at       DateTime? @default(now()) @db.Timestamp(0)
-  updated_at       DateTime? @default(now()) @db.Timestamp(0)
-  deleted_at       DateTime? @db.Timestamp(0)
-  user             user      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_TO_user_social_account_1")
-
-  @@index([user_id], map: "FK_user_TO_user_social_account_1")
+  @@index([userId], map: "FK_user_TO_user_social_account_1")
+  @@map("user_social_account")
 }

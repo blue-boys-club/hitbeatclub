@@ -1,16 +1,55 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AuthModule } from '../modules/auth/auth.module';
-import { CommonModule } from 'src/common/common.module';
-import { AppMiddlewareModule } from './app.middleware.module';
+import { Module } from "@nestjs/common";
+import { AppController } from "./app.controller";
+import { AuthModule } from "../modules/auth/auth.module";
+import { CommonModule } from "src/common/common.module";
+import { AppMiddlewareModule } from "./app.middleware.module";
+import { LoggerModule } from "nestjs-pino";
+import { RouterModule } from "src/router/router.module";
 
 @Module({
-    imports: [
-        AuthModule,
-        CommonModule,
-        AppMiddlewareModule,
-    ],
-    controllers: [AppController],
-    providers: [],
+	imports: [
+		AuthModule,
+		CommonModule,
+		AppMiddlewareModule,
+		RouterModule.forRoot(),
+		LoggerModule.forRoot({
+			pinoHttp: {
+				// add user context
+				customProps: (req) => {
+					const user = (
+						req as unknown as {
+							user?: { id: number; email: string };
+						}
+					).user;
+
+					if (!user) {
+						return {};
+					}
+
+					return {
+						user: {
+							userId: user.id,
+							userEmail: user.email,
+						},
+					};
+				},
+
+				// remove bearer token
+				redact: ["req.headers.authorization"],
+				autoLogging: {
+					ignore: (req) => {
+						if (process.env.NODE_ENV === "development" && req.url) {
+							return true;
+						}
+						return false;
+					},
+				},
+
+				transport: process.env.NODE_ENV !== "production" ? { target: "pino-pretty" } : undefined,
+			},
+		}),
+	],
+	controllers: [AppController],
+	providers: [],
 })
 export class AppModule {}

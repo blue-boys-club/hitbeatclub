@@ -1,42 +1,44 @@
-import { HttpStatus } from '@nestjs/common';
-import { IFileRows } from 'src/common/file/interfaces/file.interface';
-import { ENUM_HELPER_FILE_EXCEL_TYPE } from 'src/common/helper/constants/helper.enum.constant';
+import { HttpStatus } from "@nestjs/common";
+import { IFileRows } from "src/common/file/interfaces/file.interface";
+import { ENUM_HELPER_FILE_EXCEL_TYPE } from "src/common/helper/constants/helper.enum.constant";
 
 export interface IResponseCustomProperty {
-    statusCode?: number;
-    message?: string;
-    httpStatus?: HttpStatus;
+	statusCode?: number;
+	message?: string;
+	httpStatus?: HttpStatus;
 }
 
 // metadata
 export interface IResponseMetadata {
-    customProperty?: IResponseCustomProperty;
-    [key: string]: any;
+	customProperty?: IResponseCustomProperty;
+	[key: string]: any;
 }
 
 export interface IResponseFileExcelOptions {
-    type?: ENUM_HELPER_FILE_EXCEL_TYPE;
-    password?: string;
+	type?: ENUM_HELPER_FILE_EXCEL_TYPE;
+	password?: string;
 }
 
 // response
 export interface IResponse<T = void> {
-    _metadata?: IResponseMetadata;
-    data?: T;
+	_metadata?: IResponseMetadata;
+	statusCode?: number;
+	message?: string;
+	data?: T;
 }
 
 // response pagination
 export interface IResponsePagingPagination {
-    totalPage: number;
-    total: number;
+	totalPage: number;
+	total: number;
 }
 
 export interface IResponsePaging<T> {
-    _metadata?: IResponseMetadata;
-    _pagination: IResponsePagingPagination;
-    data: T[] | T;
+	_metadata?: IResponseMetadata;
+	_pagination: IResponsePagingPagination;
+	data: T[] | T;
 }
 
 export interface IResponseFileExcel {
-    data: IFileRows[];
+	data: IFileRows[];
 }
