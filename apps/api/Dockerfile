@@ -40,6 +40,8 @@ WORKDIR /app
 COPY --from=installer /app/ .
 COPY --from=builder /app/out/full/ .
 COPY .gitignore .gitignore
+# Generate Prisma client before building
+RUN cd apps/api && pnpm prisma generate --schema=prisma/schema.prisma && cd ../..
 RUN pnpm turbo run build
 
 # Production stage

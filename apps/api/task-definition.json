@@ -1,0 +1,62 @@
+{
+	"family": "hitbeatclub-api-task",
+	"containerDefinitions": [
+		{
+			"name": "hitbeatclub-api",
+			"image": "765923357633.dkr.ecr.ap-northeast-2.amazonaws.com/blueboysclub/hitbeatclub-api:latest",
+			"cpu": 0,
+			"portMappings": [
+				{
+					"name": "hitbeatclub-api-4000-tcp",
+					"containerPort": 4000,
+					"hostPort": 4000,
+					"protocol": "tcp",
+					"appProtocol": "http"
+				}
+			],
+			"essential": true,
+			"environment": [],
+			"environmentFiles": [
+				{
+					"value": "arn:aws:s3:::hitbeatclub-environment/api/development.env",
+					"type": "s3"
+				}
+			],
+			"mountPoints": [],
+			"volumesFrom": [],
+			"ulimits": [],
+			"logConfiguration": {
+				"logDriver": "awslogs",
+				"options": {
+					"awslogs-group": "/ecs/hitbeatclub-api-task",
+					"mode": "non-blocking",
+					"awslogs-create-group": "true",
+					"max-buffer-size": "25m",
+					"awslogs-region": "ap-northeast-2",
+					"awslogs-stream-prefix": "ecs"
+				},
+				"secretOptions": []
+			},
+			"healthCheck": {
+				"command": ["CMD-SHELL", "curl -f http://localhost:4000/v1/health || exit 1"],
+				"interval": 30,
+				"timeout": 5,
+				"retries": 3
+			},
+			"systemControls": []
+		}
+	],
+	"taskRoleArn": "arn:aws:iam::765923357633:role/ecsTaskRole",
+	"executionRoleArn": "arn:aws:iam::765923357633:role/ecsTaskExecutionRole",
+	"networkMode": "awsvpc",
+	"volumes": [],
+	"placementConstraints": [],
+	"requiresCompatibilities": ["EC2"],
+	"cpu": "512",
+	"memory": "384",
+	"runtimePlatform": {
+		"cpuArchitecture": "X86_64",
+		"operatingSystemFamily": "LINUX"
+	},
+	"enableFaultInjection": false
+}

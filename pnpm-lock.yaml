@@ -83,6 +83,12 @@ importers:
       bcryptjs:
         specifier: ^3.0.2
         version: 3.0.2
+      body-parser:
+        specifier: ^2.2.0
+        version: 2.2.0
+      bytes:
+        specifier: ^3.1.2
+        version: 3.1.2
       cache-manager:
         specifier: ^6.4.2
         version: 6.4.3
@@ -92,6 +98,9 @@ importers:
       class-validator:
         specifier: ^0.14.1
         version: 0.14.1
+      cors:
+        specifier: ^2.8.5
+        version: 2.8.5
       crypto-js:
         specifier: ^4.2.0
         version: 4.2.0
@@ -113,6 +122,9 @@ importers:
       json-bigint:
         specifier: ^1.0.0
         version: 1.0.0
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
       moment:
         specifier: ^2.30.1
         version: 2.30.1
@@ -146,6 +158,9 @@ importers:
       pino-pretty:
         specifier: ^13.0.0
         version: 13.0.0
+      qs:
+        specifier: ^6.14.0
+        version: 6.14.0
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -16320,7 +16335,7 @@ snapshots:
 
   ext-list@2.2.2:
     dependencies:
-      mime-db: 1.52.0
+      mime-db: 1.54.0
 
   ext-name@5.0.0:
     dependencies:
