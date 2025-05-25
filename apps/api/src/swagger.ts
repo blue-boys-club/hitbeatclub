@@ -42,7 +42,7 @@ export default async function (app: NestApplication) {
 			deepScanRoutes: true,
 		});
 
-		writeFileSync("swagger.json", JSON.stringify(document));
+		// writeFileSync("swagger.json", JSON.stringify(document));
 		SwaggerModule.setup(docPrefix, app, document, {
 			jsonDocumentUrl: `${docPrefix}/json`,
 			yamlDocumentUrl: `${docPrefix}/yaml`,
