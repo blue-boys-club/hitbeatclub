@@ -1,0 +1,249 @@
+# NestJS Controller Rules
+
+## 기본 원칙
+
+- 모든 Controller는 명확한 책임 분리와 일관된 구조를 가져야 함
+- Swagger 문서화를 위한 데코레이터 필수 사용
+- shared-types의 Zod 스키마를 활용한 타입 안전성 보장
+- 표준화된 응답 형식 사용
+
+## Controller 작성 규칙
+
+### 1. 기본 구조
+
+```typescript
+import { Controller, Post, Get, Put, Delete, Req, Body, Param, Query } from "@nestjs/common";
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { createApiResponseFromZodSchema } from "src/common/swagger/swagger.util";
+import { IResponse } from "src/common/response/interfaces/response.interface";
+
+@ApiTags("[module].public")
+@Controller("[module]")
+@ApiBearerAuth()
+export class [Module]PublicController {
+  constructor(
+    private readonly [module]Service: [Module]Service,
+  ) {}
+}
+```
+
+### 2. 엔드포인트 패턴
+
+```typescript
+@Post("[action]")
+@ApiOperation({ summary: "[Action description]" })
+@DocAuth({ [authType]: true })
+@[AuthDecorator]()
+@ApiResponse({
+  status: 200,
+  description: "[Success description]",
+  schema: createApiResponseFromZodSchema([ResponseSchema], "[success message]", 200),
+})
+async [actionName](@Req() req: any, @Body() body: [RequestType]): Promise<IResponse<[ResponseType]>> {
+  // 1. 요청 데이터 추출
+  const user = req.user;
+
+  // 2. 비즈니스 로직 실행
+  const result = await this.[module]Service.[method](user, body);
+
+  // 3. 추가 작업 (필요시)
+  await this.[relatedService].[additionalMethod](result.id);
+
+  // 4. 표준 응답 반환
+  return {
+    statusCode: 200,
+    message: "[success message]",
+    data: {
+      // 응답 데이터 매핑
+    },
+  };
+}
+```
+
+### 3. HTTP 메서드별 패턴
+
+#### GET (조회)
+
+```typescript
+@Get()
+@ApiOperation({ summary: "Get [entity] list" })
+@ApiResponse({
+  status: 200,
+  description: "Successfully retrieved [entity] list",
+  schema: createApiResponseFromZodSchema([EntityListResponseSchema], "success", 200),
+})
+async getList(@Query() query: [EntityListQuery]): Promise<IResponse<[EntityListResponse]>> {
+  const result = await this.[entity]Service.getList(query);
+
+  return {
+    statusCode: 200,
+    message: "success",
+    data: result,
+  };
+}
+```
+
+#### POST (생성)
+
+```typescript
+@Post()
+@ApiOperation({ summary: "Create [entity]" })
+@ApiResponse({
+  status: 201,
+  description: "[Entity] created successfully",
+  schema: createApiResponseFromZodSchema([EntityCreateResponseSchema], "created successfully", 201),
+})
+async create(@Body() body: [EntityCreateRequest]): Promise<IResponse<[EntityCreateResponse]>> {
+  const result = await this.[entity]Service.create(body);
+
+  return {
+    statusCode: 201,
+    message: "created successfully",
+    data: result,
+  };
+}
+```
+
+#### PUT (수정)
+
+```typescript
+@Put(":id")
+@ApiOperation({ summary: "Update [entity]" })
+@ApiResponse({
+  status: 200,
+  description: "[Entity] updated successfully",
+  schema: createApiResponseFromZodSchema([EntityUpdateResponseSchema], "updated successfully", 200),
+})
+async update(
+  @Param("id") id: number,
+  @Body() body: [EntityUpdateRequest]
+): Promise<IResponse<[EntityUpdateResponse]>> {
+  const result = await this.[entity]Service.update(id, body);
+
+  return {
+    statusCode: 200,
+    message: "updated successfully",
+    data: result,
+  };
+}
+```
+
+#### DELETE (삭제)
+
+```typescript
+@Delete(":id")
+@ApiOperation({ summary: "Delete [entity]" })
+@ApiResponse({
+  status: 200,
+  description: "[Entity] deleted successfully",
+  schema: createApiResponseFromZodSchema([EntityDeleteResponseSchema], "deleted successfully", 200),
+})
+async delete(@Param("id") id: number): Promise<IResponse<[EntityDeleteResponse]>> {
+  await this.[entity]Service.delete(id);
+
+  return {
+    statusCode: 200,
+    message: "deleted successfully",
+    data: { id },
+  };
+}
+```
+
+### 4. 인증 데코레이터 패턴
+
+```typescript
+// Google OAuth
+@DocAuth({ google: true })
+@AuthSocialGoogleProtected()
+
+// JWT 인증
+@DocAuth({ jwtAccessToken: true })
+@AuthJwtAccessProtected()
+
+// 관리자 권한
+@DocAuth({ admin: true })
+@AuthAdminProtected()
+
+// 공개 엔드포인트
+@DocAuth({ public: true })
+```
+
+### 5. 에러 처리 패턴
+
+```typescript
+@ApiResponse({ status: 400, description: "Bad Request" })
+@ApiResponse({ status: 401, description: "Unauthorized" })
+@ApiResponse({ status: 403, description: "Forbidden" })
+@ApiResponse({ status: 404, description: "Not Found" })
+@ApiResponse({ status: 500, description: "Internal Server Error" })
+```
+
+### 6. 실제 예시 (Google 로그인)
+
+```typescript
+@Post("google")
+@ApiOperation({ summary: "Google login" })
+@DocAuth({ google: true })
+@AuthSocialGoogleProtected()
+@ApiResponse({
+  status: 200,
+  description: "Google login successful",
+  schema: createApiResponseFromZodSchema(AuthGoogleLoginResponseSchema, "success google login", 200),
+})
+async loginWithGoogle(@Req() req: any): Promise<IResponse<AuthGoogleLoginResponse>> {
+  const user = req.user;
+
+  const auth = await this.authService.loginOrSignUp(user);
+
+  await this.userService.updateToken(auth.userId, auth.accessToken, auth.refreshToken);
+
+  await this.userService.updateLastLoginAt(auth.userId);
+
+  return {
+    statusCode: 200,
+    message: "success google login",
+    data: {
+      userId: auth.userId,
+      accessToken: auth.accessToken,
+      refreshToken: auth.refreshToken,
+      email: auth.email,
+    },
+  };
+}
+```
+
+### 7. 네이밍 컨벤션
+
+- **Controller**: `[Module]PublicController`, `[Module]AdminController`
+- **Method**: `create`, `getList`, `getDetail`, `update`, `delete`, `[customAction]`
+- **Route**: RESTful 패턴 준수 (`/users`, `/users/:id`, `/auth/google`)
+
+### 8. 필수 Import
+
+```typescript
+// NestJS Core
+import { Controller, Post, Get, Put, Delete, Req, Body, Param, Query } from "@nestjs/common";
+
+// Swagger
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+
+// Custom
+import { createApiResponseFromZodSchema } from "src/common/swagger/swagger.util";
+import { IResponse } from "src/common/response/interfaces/response.interface";
+
+// Shared Types
+import { [Schema], [Type] } from "@hitbeatclub/shared-types/[module]";
+
+// Auth Decorators
+import { DocAuth } from "src/common/doc/decorators/doc.decorator";
+import { [AuthDecorator] } from "src/modules/auth/decorators/[auth].decorator";
+```
+
+### 9. 주의사항
+
+- 모든 엔드포인트에 적절한 Swagger 문서화 추가
+- shared-types의 Zod 스키마 활용으로 타입 안전성 보장
+- 표준화된 응답 형식 (`IResponse<T>`) 사용
+- 비즈니스 로직은 Service 계층에 위임
+- 적절한 HTTP 상태 코드 사용
+- 에러 응답도 문서화

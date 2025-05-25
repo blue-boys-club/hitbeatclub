@@ -2,8 +2,6 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/common/prisma/prisma.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
-import { TokenPayload } from "google-auth-library";
-import { AuthGoogleLoginResponseDto } from "../auth/dto/response/auth.google.login.response.dto";
 
 @Injectable()
 export class UserService {

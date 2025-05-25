@@ -3,7 +3,7 @@ import { AuthJwtAccessPayloadDto } from "./dto/request/auth.jwt.access-payload.d
 import { AUTH_FIND_GOOGLE_TOKEN_ERROR, AUTH_LOGIN_OR_SIGNUP_ERROR, AUTH_VERIFY_ID_TOKEN_ERROR } from "./auth.error";
 import { LoginTicket, OAuth2Client, TokenPayload } from "google-auth-library";
 import { ConfigService } from "@nestjs/config";
-import { AuthGoogleLoginResponseDto } from "./dto/response/auth.google.login.response.dto";
+import { AuthGoogleLoginResponse } from "@hitbeatclub/shared-types/auth";
 import { HelperEncryptionService } from "src/common/helper/services/helper.encryption.service";
 import { ENUM_EMAIL } from "../email/constants/email.enum.constant";
 import { IAuthHash } from "./interfaces/auth.interface";
@@ -128,7 +128,7 @@ export class AuthService {
 	 * @param tokenPayload 구글 인증 정보
 	 * @returns 액세스 토큰, 리프레시 토큰, 사용자 정보
 	 */
-	async loginOrSignUp(tokenPayload: TokenPayload): Promise<AuthGoogleLoginResponseDto> {
+	async loginOrSignUp(tokenPayload: TokenPayload): Promise<AuthGoogleLoginResponse> {
 		try {
 			let user;
 			// 사용자 조회

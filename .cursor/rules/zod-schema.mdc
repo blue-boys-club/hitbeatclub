@@ -1,0 +1,126 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Zod Schema Rules
+
+## 기본 원칙
+
+- 모든 API 요청/응답 타입은 Zod 스키마로 정의
+- 스키마는 `packages/shared-types/src` 하위에 모듈별로 구성
+- 타입과 스키마를 함께 export하여 프론트엔드-백엔드 간 일관성 보장
+
+## 스키마 작성 규칙
+
+### 1. 기본 구조
+
+```typescripts
+import { z } from "zod";
+
+export const [EntityName][Action]Schema = z.object({
+  // 필드 정의
+});
+
+export type [EntityName][Action] = z.infer<typeof [EntityName][Action]Schema>;
+```
+
+### 2. 필드 정의 규칙
+
+- **description**: 모든 필드에 `.describe()` 추가하여 Swagger 문서화
+- **default**: 예제 데이터를 위해 `.default()` 값 제공
+- **validation**: 적절한 유효성 검사 추가 (email, min, max 등)
+
+### 3. 예시 패턴
+
+```typescript
+export const AuthGoogleLoginResponseSchema = z.object({
+	userId: z.number().describe("User ID").default(1),
+	accessToken: z.string().describe("Access token").default("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
+	refreshToken: z.string().describe("Refresh token").default("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
+	email: z.string().email().describe("User email").default("user@example.com"),
+});
+```
+
+### 4. 네이밍 컨벤션
+
+- **Request**: `[Entity][Action]RequestSchema` (예: `UserCreateRequestSchema`)
+- **Response**: `[Entity][Action]ResponseSchema` (예: `UserCreateResponseSchema`)
+- **Query**: `[Entity][Action]QuerySchema` (예: `UserListQuerySchema`)
+- **Params**: `[Entity][Action]ParamsSchema` (예: `UserDetailParamsSchema`)
+
+### 5. 파일 구조
+
+```
+packages/shared-types/src/
+├── auth/
+│   └── index.ts          # 인증 관련 스키마
+├── user/
+│   └── index.ts          # 사용자 관련 스키마
+├── product/
+│   └── index.ts          # 상품 관련 스키마
+└── index.ts              # 전체 re-export
+```
+
+### 6. 공통 스키마 활용
+
+```typescript
+// 공통 응답 래퍼
+export const ApiResponseSchema = <T extends z.ZodType>(dataSchema: T) =>
+	z.object({
+		statusCode: z.number().describe("HTTP status code").default(200),
+		message: z.string().describe("Response message").default("success"),
+		data: dataSchema,
+	});
+
+// 페이지네이션
+export const PaginationSchema = z.object({
+	page: z.number().min(1).describe("Page number").default(1),
+	limit: z.number().min(1).max(100).describe("Items per page").default(10),
+	total: z.number().describe("Total items count").default(0),
+});
+```
+
+### 7. 유효성 검사 예시
+
+```typescript
+export const UserCreateRequestSchema = z.object({
+	email: z.string().email().describe("User email"),
+	password: z.string().min(8).describe("Password (min 8 characters)"),
+	name: z.string().min(1).max(50).describe("User name"),
+	age: z.number().min(0).max(150).optional().describe("User age"),
+});
+```
+
+### 8. 백엔드 사용법
+
+```typescript
+// Controller에서
+@ApiResponse({
+  status: 200,
+  description: "Success",
+  schema: createApiResponseFromZodSchema(AuthGoogleLoginResponseSchema, "success", 200),
+})
+async login(): Promise<IResponse<AuthGoogleLoginResponse>> {
+  // 구현
+}
+```
+
+### 9. 프론트엔드 사용법
+
+```typescript
+// API 호출 시 타입 안전성
+const response: AuthGoogleLoginResponse = await api.post("/auth/google");
+
+// 폼 유효성 검사
+const form = useForm<UserCreateRequest>({
+	resolver: zodResolver(UserCreateRequestSchema),
+});
+```
+
+### 10. 주의사항
+
+- 스키마 변경 시 `pnpm run build --filter="./packages/*"` 실행
+- default 값은 실제 사용 가능한 예시 데이터로 설정
+- 민감한 정보(실제 토큰 등)는 default에 포함하지 않음
+- 스키마 이름은 명확하고 일관성 있게 작성

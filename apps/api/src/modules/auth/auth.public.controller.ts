@@ -1,11 +1,12 @@
-import { Body, Controller, Post, Req } from "@nestjs/common";
+import { Controller, Post, Req } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
-import { AuthGoogleLoginResponseDto } from "./dto/response/auth.google.login.response.dto";
+import { AuthGoogleLoginResponse, AuthGoogleLoginResponseSchema } from "@hitbeatclub/shared-types/auth";
 import { DocAuth } from "src/common/doc/decorators/doc.decorator";
 import { IResponse } from "src/common/response/interfaces/response.interface";
 import { UserService } from "../user/user.service";
 import { AuthSocialGoogleProtected } from "./decorators/auth.social.decorator";
+import { createApiResponseFromZodSchema } from "src/common/swagger/swagger.util";
 
 @ApiTags("auth.public")
 @Controller("auth")
@@ -23,9 +24,9 @@ export class AuthPublicController {
 	@ApiResponse({
 		status: 200,
 		description: "Google login successful",
-		type: AuthGoogleLoginResponseDto,
+		schema: createApiResponseFromZodSchema(AuthGoogleLoginResponseSchema, "success google login", 200),
 	})
-	async loginWithGoogle(@Req() req: any): Promise<IResponse<AuthGoogleLoginResponseDto>> {
+	async loginWithGoogle(@Req() req: any): Promise<IResponse<AuthGoogleLoginResponse>> {
 		const user = req.user;
 
 		const auth = await this.authService.loginOrSignUp(user);
