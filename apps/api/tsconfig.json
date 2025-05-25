@@ -1,13 +1,13 @@
 {
 	"compilerOptions": {
-		"module": "Node16",
+		"module": "ESNext",
 		"declaration": true,
 		"removeComments": true,
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
 		"allowSyntheticDefaultImports": true,
 		"useDefineForClassFields": false,
-		"target": "ESNext",
+		"target": "ES2022",
 		"sourceMap": true,
 		"outDir": "./dist",
 		"baseUrl": "./",
@@ -15,7 +15,7 @@
 		"skipLibCheck": true,
 		"allowJs": false,
 		"esModuleInterop": true,
-		"moduleResolution": "node16",
+		"moduleResolution": "node",
 		"resolveJsonModule": true
 	},
 	"include": ["src", "test"],
