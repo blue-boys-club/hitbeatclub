@@ -32,7 +32,7 @@ export class UserService {
 			agreedPrivacyPolicyAt: Date | null;
 			agreedEmailAt: Date | null;
 		},
-	): Promise<User> {
+	) {
 		// 비밀번호가 있는 경우에만 암호화
 		let hashedPassword: string | undefined;
 		if (createUserDto.password) {

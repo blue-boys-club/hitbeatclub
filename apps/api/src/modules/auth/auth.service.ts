@@ -148,21 +148,7 @@ export class AuthService {
 				id: user.id,
 			};
 
-			const accessToken = this.helperEncryptionService.jwtEncrypt(payload, {
-				secretKey: this.configService.get("auth.jwt.accessToken.secretKey"),
-				expiredIn: this.configService.get("auth.jwt.accessToken.expirationTime"),
-				audience: this.configService.get("auth.jwt.audience"),
-				issuer: this.configService.get("auth.jwt.issuer"),
-				subject: this.configService.get("auth.jwt.subject"),
-			});
-
-			const refreshToken = this.helperEncryptionService.jwtEncrypt(payload, {
-				secretKey: this.configService.get("auth.jwt.refreshToken.secretKey"),
-				expiredIn: this.configService.get("auth.jwt.refreshToken.expirationTime"),
-				audience: this.configService.get("auth.jwt.audience"),
-				issuer: this.configService.get("auth.jwt.issuer"),
-				subject: this.configService.get("auth.jwt.subject"),
-			});
+			const { accessToken, refreshToken } = this.createToken(payload);
 
 			return {
 				userId: user.id,
@@ -248,5 +234,25 @@ export class AuthService {
 		await this.userService.updatePassword(Number(user.id), hashedNewPassword);
 
 		return true;
+	}
+
+	createToken(payload: { email: string; id: number }) {
+		const accessToken = this.helperEncryptionService.jwtEncrypt(payload, {
+			secretKey: this.configService.get("auth.jwt.accessToken.secretKey"),
+			expiredIn: this.configService.get("auth.jwt.accessToken.expirationTime"),
+			audience: this.configService.get("auth.jwt.audience"),
+			issuer: this.configService.get("auth.jwt.issuer"),
+			subject: this.configService.get("auth.jwt.subject"),
+		});
+
+		const refreshToken = this.helperEncryptionService.jwtEncrypt(payload, {
+			secretKey: this.configService.get("auth.jwt.refreshToken.secretKey"),
+			expiredIn: this.configService.get("auth.jwt.refreshToken.expirationTime"),
+			audience: this.configService.get("auth.jwt.audience"),
+			issuer: this.configService.get("auth.jwt.issuer"),
+			subject: this.configService.get("auth.jwt.subject"),
+		});
+
+		return { accessToken, refreshToken };
 	}
 }

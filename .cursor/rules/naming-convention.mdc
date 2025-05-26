@@ -1,0 +1,112 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 커서 스타일 가이드
+
+이 문서는 프로젝트의 코드 작성 규칙과 네이밍 컨벤션을 정의합니다.
+
+## DTO 네이밍 규칙
+
+DTO(Data Transfer Object) 파일은 다음 패턴을 따릅니다:
+
+### 요청(Request) DTO
+
+```
+{module_name}.{action}.dto.ts
+```
+
+예시:
+- `task.create.dto.ts`
+- `task.update.dto.ts`
+- `user.register.dto.ts`
+
+### 응답(Response) DTO
+
+```
+{module_name}.{형태}.response.dto.ts
+```
+
+응답 DTO 유형별 네이밍:
+
+1. **목록 조회**: `{module_name}.list.response.dto.ts`
+   - 예: `task.list.response.dto.ts`
+
+2. **단일 항목 조회**: `{module_name}.detail.response.dto.ts`
+   - 예: `task.detail.response.dto.ts`
+
+3. **생성 응답**: `{module_name}.create.response.dto.ts`
+   - 예: `task.create.response.dto.ts`
+
+4. **수정 응답**: `{module_name}.update.response.dto.ts`
+   - 예: `task.update.response.dto.ts`
+
+5. **특정 관계의 목록**: `{module_name}.{relation}.list.response.dto.ts`
+   - 예: `task.subtask.list.response.dto.ts`
+
+6. **통계/집계 데이터**: `{module_name}.stats.response.dto.ts`
+   - 예: `task.stats.response.dto.ts`
+
+### 클래스 네이밍
+
+각 DTO 클래스는 다음 규칙을 따릅니다:
+
+```
+{모듈명}{행위/형태}[Response]Dto
+```
+
+예시:
+- `TaskCreateDto` - 태스크 생성 요청
+- `TaskDetailResponseDto` - 태스크 상세 조회 응답
+- `TaskListResponseDto` - 태스크 목록 조회 응답
+
+## 파일 구조
+
+### DTO 그룹화
+
+DTO는 모듈별로 다음과 같이 그룹화합니다:
+
+```
+src/modules/{모듈명}/dto/
+  request/
+    {모듈명}.create.dto.ts
+    {모듈명}.update.dto.ts
+  response/
+    {모듈명}.list.response.dto.ts
+    {모듈명}.detail.response.dto.ts
+    {모듈명}.create.response.dto.ts
+```
+
+## 코드 스타일
+
+### 들여쓰기
+- 2칸 공백 사용
+
+### 세미콜론
+- 문장 끝에 세미콜론 필수
+
+### 따옴표
+- 문자열은 작은따옴표(') 사용
+
+### 변수 네이밍
+- camelCase 사용
+- 약어도 camelCase 적용 (예: `userId`, `htmlElement`)
+
+### 클래스/인터페이스 네이밍
+- PascalCase 사용
+
+### 상수
+- UPPER_SNAKE_CASE 사용
+
+## API 응답 포맷
+
+모든 API 응답은 다음 구조를 따릅니다:
+
+```typescript
+{
+  status: number;     // HTTP 상태 코드
+  message: string;    // 응답 메시지
+  data: T | null;     // 응답 데이터 (generic 타입)
+}
+``` 

@@ -7,7 +7,6 @@ import { EmailService } from "src/modules/email/services/email.service";
 import { ENUM_EMAIL } from "src/modules/email/constants/email.enum.constant";
 import { AuthService } from "src/modules/auth/auth.service";
 import { HelperHashService } from "src/common/helper/services/helper.hash.service";
-import { EMAIL_SEND_ERROR } from "../email.error";
 
 @ApiTags("modules.email")
 @Controller({
@@ -45,7 +44,6 @@ export class EmailController {
 			}
 
 			throw new BadRequestException({
-				...EMAIL_SEND_ERROR,
 				message: e.message,
 			});
 		}

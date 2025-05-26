@@ -114,10 +114,10 @@ export class AuthPublicController {
 	@ApiBody({
 		type: UserUpdateDto,
 	})
-	@DocResponse<DatabaseIdResponseDto>(userMessage.update.success, {
-		dto: DatabaseIdResponseDto,
+	@DocResponse<AuthLoginResponseDto>(userMessage.update.success, {
+		dto: AuthLoginResponseDto,
 	})
-	async join(@Body() userUpdatePayload: UserUpdateDto): Promise<DatabaseIdResponseDto> {
+	async join(@Body() userUpdatePayload: UserUpdateDto): Promise<IResponse<AuthLoginResponseDto>> {
 		const { isAgreedTerms, isAgreedPrivacyPolicy, isAgreedEmail } = userUpdatePayload;
 		const agreedTermsAt = isAgreedTerms ? new Date() : null;
 		const agreedPrivacyPolicyAt = isAgreedPrivacyPolicy ? new Date() : null;
@@ -134,11 +134,23 @@ export class AuthPublicController {
 			agreedEmailAt,
 		});
 
+		const { accessToken, refreshToken } = this.authService.createToken({
+			email: user.email,
+			id: user.id,
+		});
+
+		await this.userService.updateToken(user.id, accessToken, refreshToken);
+		await this.userService.updateLastLoginAt(user.id);
+
 		return {
 			statusCode: 200,
 			message: userMessage.update.success,
 			data: {
-				id: Number(user.id),
+				userId: user.id,
+				accessToken,
+				refreshToken,
+				email: user.email,
+				phoneNumber: user.phoneNumber,
 			},
 		};
 	}
