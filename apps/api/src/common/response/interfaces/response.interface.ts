@@ -27,6 +27,12 @@ export interface IResponse<T = void> {
 	data?: T;
 }
 
+export interface IResponsePagination<T> {
+	_metadata?: IResponseMetadata;
+	_pagination: IResponsePagingPagination;
+	data: T[] | T;
+}
+
 // response pagination
 export interface IResponsePagingPagination {
 	totalPage: number;

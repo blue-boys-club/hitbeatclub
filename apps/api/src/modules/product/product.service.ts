@@ -4,6 +4,7 @@ import { Product } from "@prisma/client";
 import { ENUM_PRODUCT_FILE_TYPE } from "./product.enum";
 import { ProductUpdateDto } from "./dto/request/product.update.dto";
 import { FileService } from "../file/file.service";
+import { ProductListQueryRequestDto } from "./dto/request/project.list.request.dto";
 
 @Injectable()
 export class ProductService {
@@ -12,14 +13,18 @@ export class ProductService {
 		private readonly fileService: FileService,
 	) {}
 
-	async findAll(): Promise<Product[]> {
+	async findAll({ page, limit, type }: ProductListQueryRequestDto) {
 		try {
-			return await this.prisma.product
+			const products = await this.prisma.product
 				.findMany({
-					where: { deletedAt: null },
+					where: { deletedAt: null, ...(type === "null" ? {} : { type }) },
 					orderBy: { createdAt: "desc" },
+					skip: (page - 1) * limit,
+					take: limit,
 				})
-				.then((data) => this.prisma.serializeBigInt(data) as Product[]);
+				.then((data) => this.prisma.serializeBigInt(data));
+
+			return products;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -79,14 +84,14 @@ export class ProductService {
 		}
 	}
 
-	async softDelete(id: number): Promise<Product> {
+	async softDelete(id: number) {
 		try {
 			return await this.prisma.product
 				.update({
 					where: { id },
 					data: { deletedAt: new Date() },
 				})
-				.then((data) => this.prisma.serializeBigInt(data) as Product);
+				.then((data) => this.prisma.serializeBigInt(data));
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -166,5 +171,12 @@ export class ProductService {
 					}
 				: null,
 		};
+	}
+
+	async getTotal({ page, limit, type }: ProductListQueryRequestDto) {
+		const total = await this.prisma.product.count({
+			where: { deletedAt: null, ...(type === "null" ? {} : { type }) },
+		});
+		return total;
 	}
 }

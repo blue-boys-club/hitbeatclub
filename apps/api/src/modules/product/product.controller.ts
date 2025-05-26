@@ -9,13 +9,14 @@ import {
 	Req,
 	UploadedFile,
 	NotFoundException,
+	Query,
 } from "@nestjs/common";
 import { ProductService } from "./product.service";
-import { ApiOperation, ApiTags, ApiConsumes } from "@nestjs/swagger";
+import { ApiOperation, ApiTags, ApiConsumes, ApiQuery } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
 import { DocAuth, DocRequestFile, DocResponse } from "src/common/doc/decorators/doc.decorator";
 import { AuthJwtAccessProtected } from "../auth/decorators/auth.jwt.decorator";
-import { IResponse } from "src/common/response/interfaces/response.interface";
+import { IResponse, IResponsePagination } from "src/common/response/interfaces/response.interface";
 import { productMessage } from "./product.message";
 import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
 import { ProductCreateDto } from "./dto/request/product.create.request.dto";
@@ -37,6 +38,10 @@ import { FileSingleUploadDto } from "src/common/file/dtos/request/file.upload.dt
 import { ProductUpdateDto } from "./dto/request/product.update.dto";
 import { ProductDetailResponseDto } from "./dto/response/product.detail.response.dto";
 import { PRODUCT_NOT_FOUND_ERROR } from "./product.error";
+import { ProductListResponseDto } from "./dto/response/product.list.response.dto";
+import { ProductListQueryRequestDto } from "./dto/request/project.list.request.dto";
+import { ENUM_PRODUCT_TYPE } from "./product.enum";
+import { Product } from "@prisma/client";
 
 @Controller("product")
 @ApiTags("product")
@@ -49,8 +54,40 @@ export class ProductController {
 
 	@Get()
 	@ApiOperation({ summary: "상품 목록 조회" })
-	async findAll() {
-		return this.productService.findAll();
+	@DocAuth({ jwtAccessToken: true })
+	@ApiQuery({ name: "page", type: String, required: true, description: "페이지", example: 1 })
+	@ApiQuery({ name: "limit", type: String, required: true, description: "페이지당 항목 수", example: 10 })
+	@ApiQuery({
+		name: "type",
+		type: String,
+		required: false,
+		description: "상품 타입 (null 가능)",
+		example: ENUM_PRODUCT_TYPE.BEAT,
+		nullable: true,
+	})
+	@AuthJwtAccessProtected()
+	@DocResponse<ProductListResponseDto>(productMessage.find.success, {
+		dto: ProductListResponseDto,
+	})
+	async findAll(
+		@Req() req: AuthenticatedRequest,
+		@Query() query: ProductListQueryRequestDto,
+	): Promise<IResponsePagination<ProductListResponseDto>> {
+		const products = await this.productService.findAll(query);
+
+		const total = await this.productService.getTotal(query);
+
+		return {
+			_metadata: {
+				statusCode: 200,
+				message: productMessage.find.success,
+			},
+			_pagination: {
+				totalPage: Math.ceil(total / query.limit),
+				total,
+			},
+			data: products,
+		};
 	}
 
 	@Get(":id")
@@ -74,7 +111,8 @@ export class ProductController {
 			message: productMessage.find.success,
 			data: {
 				...product,
-				...productFiles,
+				audioFile: productFiles.audioFile,
+				coverImage: productFiles.coverImage,
 			},
 		};
 	}

@@ -4,7 +4,6 @@ export const ProductCreateSchema = z.object({
 	productName: z.string().min(1).max(255).default("Sample Product").describe("상품명"),
 	description: z.string().max(1000).describe("곡 설명 /가사").default("곡 설명 /가사"),
 	price: z.number().int().min(0).describe("가격").default(10000),
-	title: z.string().max(50).describe("타이틀").default("Sample Title").optional(),
 	type: z.string().max(10).describe("타입(BAET, ACAPELA) 기본값: BAET").default("BAET"),
 	genre: z.string().max(100).describe("장르").default("Hip-hop"),
 	tags: z.any().describe("태그").optional().default("tag"),
@@ -22,5 +21,12 @@ export const ProductCreateSchema = z.object({
 
 export const ProductUpdateSchema = ProductCreateSchema.partial();
 
+export const ProductListQuerySchema = z.object({
+	page: z.string().default("1").transform(Number).pipe(z.number().min(1)),
+	limit: z.string().default("10").transform(Number).pipe(z.number().min(1)),
+	type: z.string().default("BEAT").optional().nullable(),
+});
+
 export type ProductCreateRequest = z.infer<typeof ProductCreateSchema>;
 export type ProductUpdateRequest = z.infer<typeof ProductUpdateSchema>;
+export type ProductListQueryRequest = z.infer<typeof ProductListQuerySchema>;
