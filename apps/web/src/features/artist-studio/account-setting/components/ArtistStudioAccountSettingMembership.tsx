@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ArrowRight } from "@/assets/svgs";
 import { cn } from "@/common/utils";
 import { Button } from "@/components/ui/Button";
@@ -10,15 +10,14 @@ import { ArtistStudioAccountSettingPlanChangeCancelModal } from "@/features/arti
 import { ArtistStudioAccountSettingCancelMembershipModal } from "@/features/artist/components/modal/ArtistStudioAccountSettingCancelMembershipModal";
 import { ArtistStudioAccountSettingCancelMembershipConfirmModal } from "@/features/artist/components/modal/ArtistStudioAccountSettingCancelMembershipConfirmModal";
 import { ArtistStudioAccountSettingCancelMembershipCompleteModal } from "@/features/artist/components/modal/ArtistStudioAccountSettingCancelMembershipCompleteModal";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { useQuery } from "@tanstack/react-query";
 
 export const ArtistStudioAccountSettingMembership = () => {
-	// const [isMembership, setIsMembership] = useState(true);
-	const { isMembership, setMembership } = useLayoutStore(
-		useShallow((state) => ({
-			isMembership: state.isMembership,
-			setMembership: state.setMembership,
-		})),
-	);
+	const { data: user } = useQuery(getUserMeQueryOption());
+	const isMembership = useMemo(() => {
+		return !!user?.subscribedAt;
+	}, [user?.subscribedAt]);
 	const [isExpired, setIsExpired] = useState(true);
 
 	// 요금제 전환 관련 상태

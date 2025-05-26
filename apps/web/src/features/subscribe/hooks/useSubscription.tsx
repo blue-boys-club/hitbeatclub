@@ -1,9 +1,11 @@
-import { useState, useCallback, useEffect, createContext, useContext, ReactNode } from "react";
+import { useState, useCallback, useEffect, createContext, useContext, ReactNode, useMemo } from "react";
 import { SubscribeFormValues } from "../schema";
 import { useLayoutStore } from "@/stores/layout";
 import { useShallow } from "zustand/react/shallow";
 import PortOne, { Entity } from "@portone/browser-sdk/v2";
 import { PORTONE_STORE_ID, PORTONE_CHANNEL_KEY } from "../../../lib/payment.constant";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { useQuery } from "@tanstack/react-query";
 
 /**
  * 사용 가능한 모달 유형
@@ -128,12 +130,10 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 	const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 	const [paymentError, setPaymentError] = useState<string | null>(null);
 
-	const { setMembership, isMembership } = useLayoutStore(
-		useShallow((state) => ({
-			isMembership: state.isMembership,
-			setMembership: state.setMembership,
-		})),
-	);
+	const { data: user } = useQuery(getUserMeQueryOption());
+	const isMembership = useMemo(() => {
+		return !!user?.subscribedAt;
+	}, [user?.subscribedAt]);
 
 	/**
 	 * 지정된 타입의 모달을 엽니다.
@@ -258,7 +258,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 			try {
 				await new Promise((resolve) => setTimeout(resolve, 1500));
 				console.log("Subscription process complete for type:", data.paymentMethodType);
-				setMembership(true); // Update membership status
+				// setMembership(true); // Update membership status TODO: 멤버십 상태 업데이트 로직 추가
 				openModal("success"); // Show success modal
 			} catch (error: any) {
 				console.error("Subscription submission error:", error);
@@ -268,7 +268,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 				setIsSubmitting(false);
 			}
 		},
-		[validatePromotionCode, openModal, setMembership],
+		[validatePromotionCode, openModal],
 	);
 
 	// Log modal state changes for debugging

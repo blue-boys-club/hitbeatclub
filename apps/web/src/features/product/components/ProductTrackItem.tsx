@@ -3,15 +3,16 @@ import { checkIsPureEnglish } from "@/common/utils";
 import { cn } from "@/common/utils/tailwind";
 import Link from "next/link";
 import { AlbumCoverCard } from "@/components/ui";
-import { Product } from "../product.types";
+import { ProductDetailResponse, ProductListResponse, ProductResponse } from "@hitbeatclub/shared-types/product";
 
 interface ProductTrackItemProps {
-	track: Product;
+	track: ProductResponse;
 }
 export const ProductTrackItem = ({ track }: ProductTrackItemProps) => {
-	const { title, artist, albumImgSrc, isHit } = track;
-	const isTitlePureEnglish = checkIsPureEnglish(title);
-	const isArtistPureEnglish = checkIsPureEnglish(artist);
+	// const { title, artist, albumImgSrc, isHit } = track;
+	const { name, 
+	const isTitlePureEnglish = checkIsPureEnglish(name);
+	const isArtistPureEnglish = checkIsPureEnglish(seller?.stageName || "");
 
 	return (
 		<Link
@@ -20,7 +21,7 @@ export const ProductTrackItem = ({ track }: ProductTrackItemProps) => {
 			className="inline-flex flex-col items-start justify-start w-48 gap-6px"
 		>
 			<AlbumCoverCard
-				albumImgSrc={albumImgSrc}
+				albumImgSrc={imageUrl || ""}
 				size="xl"
 				rounded="none"
 				border="main"
@@ -33,9 +34,9 @@ export const ProductTrackItem = ({ track }: ProductTrackItemProps) => {
 							isTitlePureEnglish ? "font-suisse" : "font-suit",
 						)}
 					>
-						{title}
+						{name}
 					</div>
-					{isHit && <Hit />}
+					{/* {isHit && <Hit />} */}
 				</div>
 				<div
 					className={cn(
@@ -43,7 +44,7 @@ export const ProductTrackItem = ({ track }: ProductTrackItemProps) => {
 						isArtistPureEnglish ? "font-suisse" : "font-suit",
 					)}
 				>
-					{artist}
+					{seller?.stageName}
 				</div>
 			</div>
 		</Link>

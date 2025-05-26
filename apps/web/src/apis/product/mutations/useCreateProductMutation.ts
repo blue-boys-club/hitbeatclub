@@ -1,5 +1,5 @@
-import { createProduct } from "../product.api";
-import { MUTATION_KEYS } from "@/apis/query-keys";
+import { createProduct } from "@/apis/product/product.api";
+import { MUTATION_KEYS } from "@/apis/mutation-keys";
 import { useMutation } from "@tanstack/react-query";
 
 export const useCreateProductMutation = () => {

@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { PurchaseModal } from "./PurchaseModal";
 import { useQuery } from "@tanstack/react-query";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 
 /**
  * 음악 상세 정보를 보여주는 우측 사이드바 컴포넌트
@@ -26,15 +27,15 @@ import { getProductQueryOption } from "@/apis/product/query/product.query-option
  */
 export const MusicRightSidebar = memo(() => {
 	const router = useRouter();
+	const { data: user } = useQuery(getUserMeQueryOption());
+
 	const {
 		isOpen,
 		setRightSidebar,
-		isSubscribed,
 		currentTrackId = 1,
 	} = useLayoutStore(
 		useShallow((state) => ({
 			isOpen: state.rightSidebar.isOpen,
-			isSubscribed: state.isMembership, // TODO: remove this and verify from server
 			setRightSidebar: state.setRightSidebar,
 			currentTrackId: state.rightSidebar.trackId,
 		})),
@@ -43,9 +44,12 @@ export const MusicRightSidebar = memo(() => {
 	const { data: currentTrack } = useQuery({
 		...getProductQueryOption(Number(currentTrackId)),
 		enabled: !!currentTrackId,
+		select: (data) => data.data,
 	});
 
-	const cheapestLicensePrice = currentTrack?.licenses.reduce((min, license) => Math.min(min, license.price), Infinity);
+	// TODO: 라이센스 가격 조회 로직 추가
+	// const cheapestLicensePrice = currentTrack?.licenses.reduce((min, license) => Math.min(min, license.price), Infinity);
+	const cheapestLicensePrice = 10000;
 
 	const handleToggleOpen = () => {
 		setRightSidebar(!isOpen);
@@ -60,11 +64,11 @@ export const MusicRightSidebar = memo(() => {
 	};
 
 	const onClickFreeDownload = () => {
-		if (!isSubscribed) {
+		if (!user?.subscribedAt) {
 			router.push("/subscribe");
 		} else {
 			// alert("준비중입니다.");
-			window.open(currentTrack?.downloadUrl, "_blank");
+			// window.open(currentTrack?.downloadUrl, "_blank");
 		}
 	};
 
@@ -87,16 +91,16 @@ export const MusicRightSidebar = memo(() => {
 				</button>
 
 				<div className="flex items-center justify-center mt-12 mb-6">
-					<AlbumAvatar src={currentTrack?.albumImgSrc || "https://placehold.co/360x360.png"} />
+					{/* <AlbumAvatar src={currentTrack?.albumImgSrc || "https://placehold.co/360x360.png"} /> */}
 				</div>
 
 				<div className="px-6">
 					<div className="w-full mb-2 text-hbc-black text-[32px] font-suisse font-bold tracking-[0.32px] leading-[40px]">
-						{currentTrack?.title}
+						{currentTrack?.name}
 					</div>
 
 					<div className="flex items-center justify-between gap-2 mb-4">
-						<div className="text-lg font-suisse">{currentTrack?.artist}</div>
+						<div className="text-lg font-suisse">{currentTrack?.seller.stageName}</div>
 						<div>
 							<Beat className="w-16 h-4" />
 						</div>
@@ -114,12 +118,12 @@ export const MusicRightSidebar = memo(() => {
 						</div>
 
 						<div className="flex flex-wrap gap-2">
-							{currentTrack?.genres?.map((genre) => (
+							{/* {currentTrack?.genres?.map((genre) => (
 								<GenreButton
 									key={genre}
 									name={genre}
 								/>
-							))}
+							))} */}
 						</div>
 					</ScrollArea.Viewport>
 					<ScrollArea.Scrollbar

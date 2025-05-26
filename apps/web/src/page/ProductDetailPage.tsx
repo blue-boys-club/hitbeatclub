@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import Image from "next/image";
 import { Beat, Like, RedPlayCircle } from "@/assets/svgs";
 import { AlbumAvatar, FreeDownloadButton, PurchaseButton, UserAvatar } from "@/components/ui";
@@ -14,6 +14,7 @@ import { useLayoutStore } from "@/stores/layout";
 import { useShallow } from "zustand/react/shallow";
 import { useQuery } from "@tanstack/react-query";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 
 // interface TrackInfo {
 // 	title: string;
@@ -65,11 +66,10 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 	});
 
 	const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
-	const { isSubscribed } = useLayoutStore(
-		useShallow((state) => ({
-			isSubscribed: state.isMembership, // TODO: remove this and verify from server
-		})),
-	);
+	const { data: user } = useQuery(getUserMeQueryOption());
+	const isSubscribed = useMemo(() => {
+		return !!user?.subscribedAt;
+	}, [user?.subscribedAt]);
 
 	const onLikeClick = () => {
 		setIsLiked(!isLiked);

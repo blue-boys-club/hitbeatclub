@@ -2,14 +2,20 @@
 import { Dropdown, Input, Toggle } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
-import React, { memo, useState } from "react";
+import React, { memo, useMemo, useState } from "react";
 import UserChangePasswordModal from "./modal/UserChangePasswordModal";
 import UserDeleteAccountModal from "./modal/UserDeleteAccountModal";
 import UserDeleteCompleteModal from "./modal/UserDeleteCompleteModal";
 import { useToast } from "@/hooks/use-toast";
 import UserCancelMembershipModal from "./modal/UserCancelMembershipModal";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { useQuery } from "@tanstack/react-query";
+
 const UserAccountForm = memo(() => {
-	const [isMembership, setIsMembership] = useState(true);
+	const { data: user } = useQuery(getUserMeQueryOption());
+	const isMembership = useMemo(() => {
+		return !!user?.subscribedAt;
+	}, [user?.subscribedAt]);
 	const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
 	const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
 	const [isDeleteCompleteModalOpen, setIsDeleteCompleteModalOpen] = useState(false);

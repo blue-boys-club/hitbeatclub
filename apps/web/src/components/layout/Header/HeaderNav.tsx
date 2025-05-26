@@ -53,13 +53,7 @@ export const HeaderNav = memo(() => {
 	);
 	const { data: user } = useQuery(getUserMeQueryOption());
 
-	const [userProfileImage, setUserProfileImage] = useState(false);
 	const [notificationOptions, setNotificationOptions] = useState<NotificationOption[]>([]);
-	const { isSubscribed } = useLayoutStore(
-		useShallow((state) => ({
-			isSubscribed: state.isMembership,
-		})),
-	);
 
 	const signOut = useCallback(() => {
 		logout();
@@ -93,8 +87,8 @@ export const HeaderNav = memo(() => {
 				<>
 					<SubscribeButton
 						component="Link"
-						href={isSubscribed ? "/artist-studio" : "/subscribe"}
-						isSubscribed={isSubscribed}
+						href={user?.subscribedAt ? "/artist-studio" : "/subscribe"}
+						isSubscribed={!!user?.subscribedAt}
 					/>
 
 					<div className={cn("size-10 flex items-center justify-center cursor-pointer relative")}>
@@ -140,9 +134,9 @@ export const HeaderNav = memo(() => {
 						}))}
 						onSelect={handelDropdownOptionSelect}
 					>
-						{userProfileImage ? (
+						{user?.profileUrl ? (
 							<UserAvatar
-								src={""}
+								src={user.profileUrl}
 								alt="사용자 프로필 이미지"
 								className="w-10 h-10"
 							/>
