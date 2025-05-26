@@ -1,4 +1,4 @@
-import client from "../client";
+import client from "@/apis/api.client";
 import { PRODUCTS } from "./product.dummy";
 
 // TODO: Type package로 공유 타입 정의

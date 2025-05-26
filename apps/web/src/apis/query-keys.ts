@@ -1,6 +1,7 @@
 type QueryKey = Array<string | number | Record<string, string | number | Array<number | string>>>;
 
 const QUERY_KEYS = {
+	_root: [],
 	user: {
 		_key: ["user"],
 		info: ["user", "info"],
