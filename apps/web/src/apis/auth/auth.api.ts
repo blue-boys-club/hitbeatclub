@@ -44,7 +44,7 @@ export const signInWithEmail = async (payload: z.input<typeof AuthLoginPayloadSc
  */
 export const checkEmail = async (payload: z.input<typeof AuthCheckEmailRequestSchema>) => {
 	const parsed = AuthCheckEmailRequestSchema.parse(payload);
-	const response = await axiosInstance.get<AuthCheckEmailResponse>(`/auth/check-email`, {
+	const response = await axiosInstance.get<CommonResponse<AuthCheckEmailResponse>>(`/auth/check-email`, {
 		params: parsed,
 	});
 	return response.data;
@@ -57,7 +57,7 @@ export const checkEmail = async (payload: z.input<typeof AuthCheckEmailRequestSc
  */
 export const findEmail = async (payload: z.input<typeof AuthFindIdPayloadSchema>) => {
 	const parsed = AuthFindIdPayloadSchema.parse(payload);
-	const response = await axiosInstance.get<AuthFindIdResponse>(`/auth/find-email`, {
+	const response = await axiosInstance.get<CommonResponse<AuthFindIdResponse>>(`/auth/find-email`, {
 		params: parsed,
 	});
 	return response.data;

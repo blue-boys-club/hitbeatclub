@@ -13,12 +13,4 @@ const QUERY_KEYS = {
 	},
 };
 
-const MUTATION_KEYS = {
-	product: {
-		create: ["product", "create"],
-		update: (productId: number): QueryKey => ["product", "update", productId],
-		delete: (productId: number): QueryKey => ["product", "delete", productId],
-	},
-};
-
-export { QUERY_KEYS, MUTATION_KEYS };
+export { QUERY_KEYS };

@@ -10,6 +10,10 @@ import { UserProfile } from "@/assets/svgs/UserProfile";
 import { cn } from "@/common/utils";
 import { LoginButton, SubscribeButton, TagDropdown, UserAvatar } from "@/components/ui";
 import { useLayoutStore } from "@/stores/layout";
+import { useAuthStore } from "@/stores/auth";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 interface NotificationOption {
 	label: string;
@@ -19,6 +23,7 @@ interface NotificationOption {
 interface HeaderNavOption {
 	label: string;
 	value: string;
+	href?: string;
 	className?: string;
 }
 
@@ -39,8 +44,15 @@ const headerNavOptions: HeaderNavOption[] = [
 
 export const HeaderNav = memo(() => {
 	const router = useRouter();
+	const { toast } = useToast();
+	const { isLoggedIn, logout } = useAuthStore(
+		useShallow((state) => ({
+			isLoggedIn: !!state.user?.userId,
+			logout: state.makeLogout,
+		})),
+	);
+	const { data: user } = useQuery(getUserMeQueryOption());
 
-	const [isLogined, setIsLogined] = useState(true);
 	const [userProfileImage, setUserProfileImage] = useState(false);
 	const [notificationOptions, setNotificationOptions] = useState<NotificationOption[]>([]);
 	const { isSubscribed } = useLayoutStore(
@@ -50,10 +62,11 @@ export const HeaderNav = memo(() => {
 	);
 
 	const signOut = useCallback(() => {
-		console.log("로그아웃");
-		router.push("/auth/login");
-		// TODO: 실제 로그아웃 로직 구현
-	}, [router]);
+		logout();
+		toast({
+			title: "로그아웃 되었습니다.",
+		});
+	}, [logout, toast]);
 
 	const handelDropdownOptionSelect = useCallback(
 		(value: string) => {
@@ -76,7 +89,7 @@ export const HeaderNav = memo(() => {
 			className={cn("flex items-center gap-5")}
 			role="navigation"
 		>
-			{isLogined ? (
+			{isLoggedIn ? (
 				<>
 					<SubscribeButton
 						component="Link"
@@ -143,7 +156,7 @@ export const HeaderNav = memo(() => {
 				</>
 			) : (
 				<Link
-					href={"/login"}
+					href={"/auth/login"}
 					className={cn("h-10 flex items-center justify-center")}
 					aria-label="로그인"
 				>

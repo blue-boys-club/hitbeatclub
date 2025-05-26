@@ -14,6 +14,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useSocialJoinUserMutation as useCompleteSocialProfileMutation } from "@/apis/user/mutations/useSocialJoinUserMutation";
 // Assuming useJoinUserMutation.ts exports a mutation for email sign up, aliasing for clarity
 import { useSocialJoinUserMutation as useEmailSignupMutation } from "@/apis/auth/mutations/useJoinUserMutation";
+import { useCheckEmailMutation } from "@/apis/auth/mutations/useCheckEmailMutation";
 import { signInOnSuccess } from "@/apis/auth/auth.utils"; // For email signup success handling
 import { cn } from "@/common/utils";
 import {
@@ -24,6 +25,7 @@ import {
 	DAY_OPTIONS,
 	getRegionOptionsByCountry,
 } from "../auth.constants";
+import Link from "next/link";
 
 // 폼 데이터 타입 정의
 interface FormData {
@@ -43,6 +45,26 @@ interface FormData {
 	isAgreedEmail: boolean;
 	musicType?: "BEAT" | "ACAPELLA";
 }
+
+const FieldInfo = ({ field }: { field: any }) => {
+	return (
+		<>
+			{field.state.meta.isTouched && !field.state.meta.isValid ? (
+				<em className="mt-1 text-sm text-hbc-red">
+					{field.state.meta.errors
+						.map((error: string | { message: string }) => {
+							if (typeof error === "string") {
+								return error;
+							}
+							return error.message;
+						})
+						.join(", ")}
+				</em>
+			) : null}
+			{/* {field.state.meta.isValidating ? "Validating..." : null} */}
+		</>
+	);
+};
 
 // 폼 검증 스키마
 const createFormSchema = (isSocialJoin: boolean) => {
@@ -65,18 +87,6 @@ const createFormSchema = (isSocialJoin: boolean) => {
 			isAgreedEmail: z.boolean().optional(),
 			musicType: z.enum(["BEAT", "ACAPELLA"]).optional(),
 		})
-		.refine(
-			(data) => {
-				if (!isSocialJoin && "password" in data && "passwordConfirm" in data && data.password && data.passwordConfirm) {
-					return data.password === data.passwordConfirm;
-				}
-				return true;
-			},
-			{
-				message: "비밀번호가 일치하지 않습니다.",
-				path: ["passwordConfirm"],
-			},
-		)
 		.superRefine((data, ctx) => {
 			if (data.year && data.month && data.day) {
 				const dateStr = `${data.year}-${data.month.padStart(2, "0")}-${data.day.padStart(2, "0")}`;
@@ -92,12 +102,31 @@ const createFormSchema = (isSocialJoin: boolean) => {
 		});
 
 	if (!isSocialJoin) {
-		const extendedSchema = z.object({
-			email: z.string().email("유효한 이메일 주소를 입력해주세요."),
-			password: z.string().min(8, "비밀번호는 8자 이상이어야 합니다.").max(255),
-			passwordConfirm: z.string().min(8, "비밀번호 확인을 입력해주세요.").max(255),
-		});
-		return baseSchema.pipe(extendedSchema);
+		const extendedSchema = z
+			.object({
+				email: z.string().email("유효한 이메일 주소를 입력해주세요."),
+				password: z.string().min(8, "비밀번호는 8자 이상이어야 합니다.").max(255),
+				passwordConfirm: z.string().min(8, "비밀번호 확인을 입력해주세요.").max(255),
+			})
+			.refine(
+				(data) => {
+					if (
+						!isSocialJoin &&
+						"password" in data &&
+						"passwordConfirm" in data &&
+						data.password &&
+						data.passwordConfirm
+					) {
+						return data.password === data.passwordConfirm;
+					}
+					return true;
+				},
+				{
+					message: "비밀번호가 일치하지 않습니다.",
+					path: ["passwordConfirm"],
+				},
+			);
+		return extendedSchema.and(baseSchema);
 	}
 
 	return baseSchema;
@@ -113,9 +142,12 @@ export const AuthSignup = () => {
 	const [isPopupOpen, setIsPopupOpen] = useState(false);
 	const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
 	const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
+	const [isEmailVerified, setIsEmailVerified] = useState(false);
+	const [lastVerifiedEmail, setLastVerifiedEmail] = useState<string>("");
 
 	const completeSocialProfileMutation = useCompleteSocialProfileMutation();
 	const emailSignupMutation = useEmailSignupMutation();
+	const checkEmailMutation = useCheckEmailMutation();
 
 	const onSubmit = useCallback(
 		(value: FormData) => {
@@ -190,6 +222,14 @@ export const AuthSignup = () => {
 			onSubmit: createFormSchema(isSocialJoin),
 		},
 		onSubmit: async ({ value }) => {
+			// 일반 가입의 경우 이메일 인증 확인
+			if (!isSocialJoin) {
+				const currentEmail = value.email;
+				if (!isEmailVerified || lastVerifiedEmail !== currentEmail) {
+					alert("이메일 중복 확인을 먼저 진행해주세요.");
+					return;
+				}
+			}
 			onSubmit(value);
 		},
 	});
@@ -201,6 +241,45 @@ export const AuthSignup = () => {
 			country: state.values.country,
 		};
 	});
+
+	const { email } = useStore(form.store, (state) => {
+		return {
+			email: state.values.email,
+		};
+	});
+
+	// 이메일 중복 확인 함수
+	const handleEmailVerification = useCallback(() => {
+		if (!email || !email.includes("@")) {
+			setEmailAvailable(false);
+			return;
+		}
+		console.log("currentEmail", email);
+
+		checkEmailMutation.mutateAsync(
+			{ email },
+			{
+				onSuccess: (response) => {
+					// success: true면 사용 가능, false면 이미 존재
+					const isAvailable = response.data.success === true;
+					setEmailAvailable(isAvailable);
+					if (isAvailable) {
+						setIsEmailVerified(true);
+						setLastVerifiedEmail(email);
+					} else {
+						setIsEmailVerified(false);
+						setLastVerifiedEmail("");
+					}
+				},
+				onError: (error) => {
+					console.error("Email verification error:", error);
+					setEmailAvailable(false);
+					setIsEmailVerified(false);
+					setLastVerifiedEmail("");
+				},
+			},
+		);
+	}, [checkEmailMutation, email]);
 
 	const { error } = useStore(form.store, (state) => {
 		return {
@@ -228,6 +307,23 @@ export const AuthSignup = () => {
 			form.setFieldValue("region", undefined);
 		}
 	}, [country, form]);
+
+	// 이메일 변경 시 인증 상태 리셋
+	useEffect(() => {
+		if (!isSocialJoin && email !== lastVerifiedEmail) {
+			setIsEmailVerified(false);
+			setEmailAvailable(null);
+		}
+	}, [email, lastVerifiedEmail, isSocialJoin]);
+
+	// 소셜 가입일 때 이메일 인증 자동 완료
+	useEffect(() => {
+		if (isSocialJoin && authUser?.email) {
+			setIsEmailVerified(true);
+			setEmailAvailable(true);
+			setLastVerifiedEmail(authUser.email);
+		}
+	}, [isSocialJoin, authUser?.email]);
 
 	const onAllAgreements = () => {
 		const allCurrentlyChecked =
@@ -294,34 +390,31 @@ export const AuthSignup = () => {
 									)}
 								</div>
 								<div className="relative">
-									{isSocialJoin && (
-										<div className="absolute px-2 py-1 text-sm font-semibold -translate-y-1/2 rounded-md cursor-pointer left-1 top-1/2">
-											{authUser?.email}
-										</div>
-									)}
 									<input
 										id={field.name}
 										name={field.name}
-										value={field.state.value}
+										value={isSocialJoin ? authUser?.email || "" : field.state.value}
 										onBlur={field.handleBlur}
-										onChange={(e) => field.handleChange(e.target.value)}
+										onChange={(e) => !isSocialJoin && field.handleChange(e.target.value)}
 										type="email"
 										required
 										readOnly={isSocialJoin}
-										className="w-full px-3 py-[5px] border border-hbc-black rounded-md focus:outline-none"
+										className={`w-full px-3 py-[5px] border border-hbc-black rounded-md focus:outline-none ${
+											isSocialJoin ? "bg-gray-50 text-gray-600" : ""
+										}`}
 									/>
 									{!isSocialJoin && (
 										<button
 											type="button"
 											className="absolute px-2 py-1 text-sm font-semibold -translate-y-1/2 rounded-md cursor-pointer right-2 top-1/2 text-hbc-blue"
+											onClick={handleEmailVerification}
+											disabled={checkEmailMutation.isPending}
 										>
-											중복 확인
+											{checkEmailMutation.isPending ? "확인 중..." : "중복 확인"}
 										</button>
 									)}
 								</div>
-								{field.state.meta.errors && (
-									<div className="mt-1 text-sm text-hbc-red">{field.state.meta.errors.join(", ")}</div>
-								)}
+								<FieldInfo field={field} />
 							</div>
 						)}
 					</form.Field>
@@ -348,9 +441,7 @@ export const AuthSignup = () => {
 											required
 											className="w-full px-3 py-[5px] border border-hbc-black rounded-md focus:outline-none"
 										/>
-										{field.state.meta.errors && (
-											<div className="mt-1 text-sm text-hbc-red">{field.state.meta.errors.join(", ")}</div>
-										)}
+										<FieldInfo field={field} />
 									</div>
 								)}
 							</form.Field>
@@ -385,9 +476,7 @@ export const AuthSignup = () => {
 											required
 											className="w-full px-3 py-[5px] border border-hbc-black rounded-md focus:outline-none"
 										/>
-										{field.state.meta.errors && (
-											<div className="mt-1 text-sm text-hbc-red">{field.state.meta.errors.join(", ")}</div>
-										)}
+										<FieldInfo field={field} />
 									</div>
 								)}
 							</form.Field>
@@ -414,9 +503,7 @@ export const AuthSignup = () => {
 									required
 									className="w-full px-3 py-[5px] border border-hbc-black rounded-md focus:outline-none"
 								/>
-								{field.state.meta.errors && (
-									<div className="mt-1 text-sm text-hbc-red">{field.state.meta.errors.join(", ")}</div>
-								)}
+								<FieldInfo field={field} />
 							</div>
 						)}
 					</form.Field>
@@ -450,9 +537,7 @@ export const AuthSignup = () => {
 											인증
 										</button>
 									</div>
-									{field.state.meta.errors && (
-										<div className="mt-1 text-sm text-hbc-red">{field.state.meta.errors.join(", ")}</div>
-									)}
+									<FieldInfo field={field} />
 								</div>
 							)}
 						</form.Field>
@@ -470,9 +555,7 @@ export const AuthSignup = () => {
 										onChange={(val) => field.handleChange(val as "M" | "F")}
 										placeholder="성별을 선택하세요"
 									/>
-									{field.state.meta.errors && (
-										<div className="mt-1 text-sm text-hbc-red">{field.state.meta.errors.join(", ")}</div>
-									)}
+									<FieldInfo field={field} />
 								</div>
 							)}
 						</form.Field>
@@ -498,9 +581,7 @@ export const AuthSignup = () => {
 											/>
 											<span>년</span>
 										</div>
-										{field.state.meta.errors && (
-											<div className="mt-1 text-sm text-hbc-red">{field.state.meta.errors.join(", ")}</div>
-										)}
+										<FieldInfo field={field} />
 									</div>
 								)}
 							</form.Field>
@@ -518,9 +599,7 @@ export const AuthSignup = () => {
 											/>
 											<span>월</span>
 										</div>
-										{field.state.meta.errors && (
-											<div className="mt-1 text-sm text-hbc-red">{field.state.meta.errors.join(", ")}</div>
-										)}
+										<FieldInfo field={field} />
 									</div>
 								)}
 							</form.Field>
@@ -538,9 +617,7 @@ export const AuthSignup = () => {
 											/>
 											<span>일</span>
 										</div>
-										{field.state.meta.errors && (
-											<div className="mt-1 text-sm text-hbc-red">{field.state.meta.errors.join(", ")}</div>
-										)}
+										<FieldInfo field={field} />
 									</div>
 								)}
 							</form.Field>
@@ -561,9 +638,7 @@ export const AuthSignup = () => {
 										onChange={(val) => field.handleChange(val)}
 										placeholder="국가를 선택하세요"
 									/>
-									{field.state.meta.errors && (
-										<div className="mt-1 text-sm text-hbc-red">{field.state.meta.errors.join(", ")}</div>
-									)}
+									<FieldInfo field={field} />
 								</div>
 							)}
 						</form.Field>
@@ -579,9 +654,7 @@ export const AuthSignup = () => {
 										onChange={(val) => field.handleChange(val)}
 										placeholder="지역을 선택하세요"
 									/>
-									{field.state.meta.errors && (
-										<div className="mt-1 text-sm text-hbc-red">{field.state.meta.errors.join(", ")}</div>
-									)}
+									<FieldInfo field={field} />
 								</div>
 							)}
 						</form.Field>
@@ -642,12 +715,19 @@ export const AuthSignup = () => {
 										>
 											{field.state.value ? <Checkbox /> : <EmptyCheckbox />}
 											<span>
-												[필수] 히트비트클럽 <span className="underline">서비스 이용약관</span>에 동의합니다.
+												[필수] 히트비트클럽{" "}
+												<Link
+													href="/terms-of-service"
+													target="_blank"
+													rel="noopener noreferrer"
+													className="underline text-hbc-blue"
+												>
+													서비스 이용약관
+												</Link>
+												에 동의합니다.
 											</span>
 										</div>
-										{field.state.meta.errors && (
-											<div className="block mt-1 text-sm text-hbc-red">{field.state.meta.errors.join(", ")}</div>
-										)}
+										<FieldInfo field={field} />
 									</>
 								)}
 							</form.Field>
@@ -663,12 +743,19 @@ export const AuthSignup = () => {
 										>
 											{field.state.value ? <Checkbox /> : <EmptyCheckbox />}
 											<span>
-												[필수] 히트비트클럽 <span className="underline">개인정보처리방침</span>에 동의합니다.
+												[필수] 히트비트클럽{" "}
+												<Link
+													href="/privacy-policy"
+													target="_blank"
+													rel="noopener noreferrer"
+													className="underline text-hbc-blue"
+												>
+													개인정보처리방침
+												</Link>
+												에 동의합니다.
 											</span>
 										</div>
-										{field.state.meta.errors && (
-											<div className="block mt-1 text-sm text-hbc-red">{field.state.meta.errors.join(", ")}</div>
-										)}
+										<FieldInfo field={field} />
 									</>
 								)}
 							</form.Field>
@@ -685,9 +772,7 @@ export const AuthSignup = () => {
 											{field.state.value ? <Checkbox /> : <EmptyCheckbox />}
 											<span>이메일 수신에 동의합니다. (선택)</span>
 										</div>
-										{field.state.meta.errors && (
-											<div className="block mt-1 text-sm text-hbc-red">{field.state.meta.errors.join(", ")}</div>
-										)}
+										<FieldInfo field={field} />
 									</>
 								)}
 							</form.Field>

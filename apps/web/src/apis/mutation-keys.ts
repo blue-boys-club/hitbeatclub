@@ -1,18 +1,21 @@
 export const MUTATION_KEYS = {
 	auth: {
+		signup: {
+			checkEmail: ["auth", "signup", "checkEmail"],
+			join: {
+				email: ["auth", "signup", "join", "email"],
+				social: ["auth", "signup", "join", "social"],
+			},
+		},
 		login: {
 			google: ["auth", "login", "google"],
+			email: ["auth", "login", "email"],
+			naver: ["auth", "login", "naver"],
+			kakao: ["auth", "login", "kakao"],
+			// apple: ["auth", "login", "apple"],
 		},
-	},
-	attendances: {
-		checkIn: ["attendances", "checkIn"],
-		checkOut: ["attendances", "checkOut"],
-	},
-	projects: {
-		create: ["projects", "create"],
-		delete: ["projects", "delete"],
-	},
-	emails: {
-		send: ["emails", "send"],
+
+		findEmail: ["auth", "findEmail"],
+		resetPassword: ["auth", "resetPassword"],
 	},
 };
