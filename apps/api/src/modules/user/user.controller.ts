@@ -9,7 +9,6 @@ import { IResponse } from "src/common/response/interfaces/response.interface";
 import userMessage from "./user.message";
 import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
-import { UserFindMeResponse, UserFindMeResponseSchema } from "@hitbeatclub/shared-types/user";
 import { UserFindMeResponseDto } from "./dto/response/user.find-me.response.dto";
 
 @Controller("user")

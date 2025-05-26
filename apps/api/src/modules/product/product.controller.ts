@@ -23,6 +23,7 @@ import { FileTypePipe } from "src/common/file/pipes/file.type.pipe";
 import { FileUploadResponseDto } from "../file/dto/response/file.upload.response.dto";
 import { FileService } from "../file/file.service";
 import { FileSingleUploadDto } from "src/common/file/dtos/request/file.upload.dto";
+import { ProductUpdateDto } from "./dto/request/product.update.dto";
 
 @Controller("product")
 @ApiTags("product")
@@ -55,13 +56,24 @@ export class ProductController {
 	async create(
 		@Req() req: AuthenticatedRequest,
 		@Body() createProductDto: ProductCreateDto,
-	): Promise<IResponse<{ id: number }>> {
-		delete createProductDto?.imageFileId;
+	): Promise<DatabaseIdResponseDto> {
+		const fileIds = {
+			audioFileFileId: createProductDto?.audioFileFileId || null,
+			coverImageFileId: createProductDto?.coverImageFileId || null,
+			zipFileId: createProductDto?.zipFileId || null,
+		};
+
 		delete createProductDto?.audioFileFileId;
 		delete createProductDto?.coverImageFileId;
 		delete createProductDto?.zipFileId;
 
 		const product = await this.productService.create(req.user.id, createProductDto);
+
+		await this.productService.uploadProductFile({
+			uploaderId: req.user.id,
+			productId: product.id,
+			fileIds,
+		});
 
 		return {
 			statusCode: 201,
@@ -79,8 +91,28 @@ export class ProductController {
 	@DocResponse<DatabaseIdResponseDto>(productMessage.update.success, {
 		dto: DatabaseIdResponseDto,
 	})
-	async update(@Param("id") id: number, @Body() updateProductDto: any): Promise<IResponse<{ id: number }>> {
+	async update(
+		@Req() req: AuthenticatedRequest,
+		@Param("id") id: number,
+		@Body() updateProductDto: ProductUpdateDto,
+	): Promise<DatabaseIdResponseDto> {
+		const fileIds = {
+			audioFileFileId: updateProductDto?.audioFileFileId || null,
+			coverImageFileId: updateProductDto?.coverImageFileId || null,
+			zipFileId: updateProductDto?.zipFileId || null,
+		};
+
+		delete updateProductDto?.audioFileFileId;
+		delete updateProductDto?.coverImageFileId;
+		delete updateProductDto?.zipFileId;
+
 		const product = await this.productService.update(id, updateProductDto);
+
+		await this.productService.uploadProductFile({
+			uploaderId: req.user.id,
+			productId: product.id,
+			fileIds,
+		});
 
 		return {
 			statusCode: 200,
@@ -134,6 +166,7 @@ export class ProductController {
 				ENUM_FILE_MIME_AUDIO.MPEG,
 				ENUM_FILE_MIME_AUDIO.MP3,
 				ENUM_FILE_MIME_AUDIO.WAV,
+				ENUM_FILE_MIME_AUDIO.ZIP,
 				ENUM_FILE_MIME_VIDEO.M4A,
 				ENUM_FILE_MIME_VIDEO.MP4,
 			]),

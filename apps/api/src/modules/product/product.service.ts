@@ -1,12 +1,16 @@
 import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/common/prisma/prisma.service";
 import { Product } from "@prisma/client";
-import { ProductCreateRequest } from "@hitbeatclub/shared-types/product";
-import { ProductCreateDto } from "./dto/request/product.create.request.dto";
+import { ENUM_PRODUCT_FILE_TYPE } from "./product.enum";
+import { ProductUpdateDto } from "./dto/request/product.update.dto";
+import { FileService } from "../file/file.service";
 
 @Injectable()
 export class ProductService {
-	constructor(private readonly prisma: PrismaService) {}
+	constructor(
+		private readonly prisma: PrismaService,
+		private readonly fileService: FileService,
+	) {}
 
 	async findAll(): Promise<Product[]> {
 		try {
@@ -49,18 +53,17 @@ export class ProductService {
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
 
-		console.log("product", product);
 		return product;
 	}
 
-	async update(id: number, updateProductDto: any): Promise<Product> {
+	async update(id: number, updateProductDto: ProductUpdateDto) {
 		try {
 			return await this.prisma.product
 				.update({
 					where: { id },
 					data: updateProductDto,
 				})
-				.then((data) => this.prisma.serializeBigInt(data) as Product);
+				.then((data) => this.prisma.serializeBigInt(data));
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -76,6 +79,50 @@ export class ProductService {
 				.then((data) => this.prisma.serializeBigInt(data) as Product);
 		} catch (error) {
 			throw new BadRequestException(error);
+		}
+	}
+
+	async uploadProductFile({
+		uploaderId,
+		productId,
+		fileIds,
+	}: {
+		uploaderId: number;
+		productId: number;
+		fileIds: {
+			audioFileFileId: number;
+			coverImageFileId: number;
+			zipFileId: number;
+		};
+	}) {
+		if (fileIds?.audioFileFileId) {
+			await this.fileService.updateFileEnabledAndDelete({
+				uploaderId,
+				newFileId: fileIds.audioFileFileId,
+				targetTable: "product",
+				targetId: productId,
+				type: ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE,
+			});
+		}
+
+		if (fileIds?.coverImageFileId) {
+			await this.fileService.updateFileEnabledAndDelete({
+				uploaderId,
+				newFileId: fileIds.coverImageFileId,
+				targetTable: "product",
+				targetId: productId,
+				type: ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE,
+			});
+		}
+
+		if (fileIds?.zipFileId) {
+			await this.fileService.updateFileEnabledAndDelete({
+				uploaderId,
+				newFileId: fileIds.zipFileId,
+				targetTable: "product",
+				targetId: productId,
+				type: ENUM_PRODUCT_FILE_TYPE.PRODUCT_ZIP_FILE,
+			});
 		}
 	}
 }

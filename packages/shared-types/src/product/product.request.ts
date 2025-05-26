@@ -13,7 +13,6 @@ export const ProductCreateSchema = z.object({
 	licenseType: z.string().max(10).describe("라이선스 타입(Master, Exclusive)").default("Master"),
 	licensePrice: z.number().int().describe("라이선스 가격").default(10000),
 	currency: z.string().max(10).describe("통화").default("KRW"),
-	imageFileId: z.number().describe("상품 이미지 URL").default(1).optional(),
 	coverImageFileId: z.number().describe("커버 이미지 URL").default(1).optional(),
 	audioFileFileId: z.number().describe("오디오 파일 URL").default(1).optional(),
 	zipFileId: z.number().describe("ZIP 파일 URL").default(1).optional(),
@@ -21,8 +20,7 @@ export const ProductCreateSchema = z.object({
 	isPublic: z.number().describe("공개 여부").default(0),
 });
 
+export const ProductUpdateSchema = ProductCreateSchema.partial();
+
 export type ProductCreateRequest = z.infer<typeof ProductCreateSchema>;
-
-export const ProductUpdateRequestSchema = ProductCreateSchema.partial();
-
-export type ProductUpdateRequest = z.infer<typeof ProductUpdateRequestSchema>;
+export type ProductUpdateRequest = z.infer<typeof ProductUpdateSchema>;
