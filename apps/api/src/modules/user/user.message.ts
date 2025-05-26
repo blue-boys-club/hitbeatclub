@@ -23,6 +23,9 @@ const userMessage = {
 	findEmail: {
 		success: "success user find email",
 	},
+	checkEmail: {
+		success: "success user check email",
+	},
 };
 
 export default userMessage;

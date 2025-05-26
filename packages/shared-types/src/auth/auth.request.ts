@@ -22,6 +22,10 @@ export const AuthFindIdPayloadSchema = z.object({
 	phoneNumber: z.string().min(1).max(11).describe("연락처"),
 });
 
+export const AuthCheckEmailRequestSchema = z.object({
+	email: z.string().email().describe("이메일"),
+});
+
 export type AuthLoginPayload = z.infer<typeof AuthLoginPayloadSchema>;
 export type AuthResetPasswordPayload = z.infer<typeof AuthResetPasswordPayloadSchema>;
 export type AuthFindIdPayload = z.infer<typeof AuthFindIdPayloadSchema>;

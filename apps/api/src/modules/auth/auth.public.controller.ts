@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	Body,
 	Controller,
 	Get,
@@ -11,7 +12,6 @@ import {
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
-import { AuthGoogleLoginResponse } from "@hitbeatclub/shared-types/auth";
 import { DocAuth, DocResponse } from "src/common/doc/decorators/doc.decorator";
 import { IResponse } from "src/common/response/interfaces/response.interface";
 import { UserService } from "../user/user.service";
@@ -23,11 +23,13 @@ import userMessage from "../user/user.message";
 import { UserUpdateDto } from "../user/dto/request/user.update.request.dto";
 import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
 import { AuthLoginDto } from "./dto/request/auth.login.reqeust.dto";
-import { USER_INVALID_PASSWORD_ERROR, USER_NOT_FOUND_ERROR } from "../user/user.error";
+import { USER_EMAIL_ALREADY_EXISTS_ERROR, USER_INVALID_PASSWORD_ERROR, USER_NOT_FOUND_ERROR } from "../user/user.error";
 import { AuthResetPasswordRequestDto } from "./dto/request/auth.reset-password.request.dto";
 import { HelperHashService } from "src/common/helper/services/helper.hash.service";
 import { AuthFindIdDto } from "./dto/request/auth.find-id.request.dto";
 import { AuthFindIdResponseDto } from "./dto/response/auth.find-response.dto";
+import { AuthCheckEmailResponseDto } from "./dto/response/auth.check-email.response.dto";
+import { AuthCheckEmailRequestDto } from "./dto/request/auth.check-email.request.dto";
 
 @ApiTags("auth.public")
 @Controller("auth")
@@ -88,7 +90,7 @@ export class AuthPublicController {
 		description: "Google login successful",
 		type: AuthLoginResponseDto,
 	})
-	async loginWithGoogle(@Req() req: AuthenticatedRequest): Promise<IResponse<AuthGoogleLoginResponse>> {
+	async loginWithGoogle(@Req() req: AuthenticatedRequest): Promise<IResponse<AuthLoginResponseDto>> {
 		const user = req.user;
 
 		const auth = await this.authService.loginOrSignUp(user);
@@ -177,6 +179,30 @@ export class AuthPublicController {
 			data: {
 				email: user.email,
 			},
+		};
+	}
+
+	// 이메일 중복 확인
+	@Get("check-email")
+	@ApiOperation({ summary: "이메일 중복 확인" })
+	@ApiQuery({
+		name: "email",
+		type: String,
+		required: true,
+		description: "이메일",
+	})
+	@ApiResponse({
+		status: 200,
+		description: userMessage.checkEmail.success,
+		type: AuthCheckEmailResponseDto,
+	})
+	async checkEmail(@Query() checkEmailDto: AuthCheckEmailRequestDto): Promise<IResponse<AuthCheckEmailResponseDto>> {
+		const user = await this.userService.findByEmail(checkEmailDto.email);
+
+		return {
+			statusCode: 200,
+			message: userMessage.checkEmail.success,
+			data: { success: user ? false : true },
 		};
 	}
 

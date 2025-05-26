@@ -1,4 +1,4 @@
 import { createZodDto } from "nestjs-zod";
-import { AuthGoogleLoginResponseSchema } from "@hitbeatclub/shared-types/auth";
+import { AuthLoginResponseSchema } from "@hitbeatclub/shared-types/auth";
 
-export class AuthLoginResponseDto extends createZodDto(AuthGoogleLoginResponseSchema) {}
+export class AuthLoginResponseDto extends createZodDto(AuthLoginResponseSchema) {}

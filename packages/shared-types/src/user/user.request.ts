@@ -37,6 +37,7 @@ export const UserUpdatePayloadSchema = z.object({
 			message: "개인정보처리방침에 동의해야 합니다",
 		}),
 	isAgreedEmail: z.number().describe("이메일 수신 동의 여부").optional().default(0),
+	musicType: z.enum(["BEAT", "ACAPELLA"]).describe("음악 타입").optional(),
 });
 
 export type UserUpdatePayload = z.infer<typeof UserUpdatePayloadSchema>;

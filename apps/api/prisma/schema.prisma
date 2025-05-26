@@ -27,6 +27,7 @@ model User {
   createdAt              DateTime?             @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt              DateTime?             @default(now()) @map("updated_at") @db.Timestamp(0)
   deletedAt              DateTime?             @map("deleted_at") @db.Timestamp(0)
+  musicType              String?               @db.VarChar(10)
   artist                 Artist[]
   file                   File[]
   cart                   Cart[]

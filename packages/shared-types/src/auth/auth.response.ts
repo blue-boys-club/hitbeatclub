@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const AuthGoogleLoginResponseSchema = z.object({
+export const AuthLoginResponseSchema = z.object({
 	userId: z.number().describe("사용자 ID").default(1),
 	accessToken: z
 		.string()
@@ -22,5 +22,10 @@ export const AuthFindIdResponseSchema = z.object({
 	email: z.string().email().describe("이메일 주소").default("user@example.com"),
 });
 
-export type AuthGoogleLoginResponse = z.infer<typeof AuthGoogleLoginResponseSchema>;
+export const AuthCheckEmailResponseSchema = z.object({
+	success: z.boolean().describe("이메일 중복 확인 성공 여부"),
+});
+
+export type AuthLoginResponse = z.infer<typeof AuthLoginResponseSchema>;
 export type AuthFindIdResponse = z.infer<typeof AuthFindIdResponseSchema>;
+export type AuthCheckEmailResponse = z.infer<typeof AuthCheckEmailResponseSchema>;
