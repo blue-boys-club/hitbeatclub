@@ -33,7 +33,7 @@ export const signInWithGoogle = async ({ code }: { code: string }) => {
  */
 export const signInWithEmail = async (payload: z.input<typeof AuthLoginPayloadSchema>) => {
 	const parsed = AuthLoginPayloadSchema.parse(payload);
-	const response = await axiosInstance.post<CommonResponse<AuthLoginResponse>>("/auth/email", parsed);
+	const response = await axiosInstance.post<CommonResponse<AuthLoginResponse>>("/auth/login", parsed);
 	return response.data;
 };
 

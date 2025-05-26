@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useForm, useStore } from "@tanstack/react-form";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Checkbox, Correct, EmptyCheckbox, HBCLoginMain, Incorrect } from "@/assets/svgs";
 import { Button } from "@/components/ui/Button";
-import { Dropdown, type DropdownOption } from "@/components/ui/Dropdown";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { AuthSignupCompletionModal } from "./Modal/AuthSignupCompletionModal";
 import { UserUpdatePayload } from "@hitbeatclub/shared-types/user";
 import { z } from "zod";
@@ -26,10 +27,11 @@ import {
 	getRegionOptionsByCountry,
 } from "../auth.constants";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // 폼 데이터 타입 정의
 interface FormData {
-	email: string;
+	email?: string;
 	password?: string;
 	passwordConfirm?: string;
 	name: string;
@@ -42,29 +44,9 @@ interface FormData {
 	region?: string;
 	isAgreedTerms: boolean;
 	isAgreedPrivacyPolicy: boolean;
-	isAgreedEmail: boolean;
+	isAgreedEmail?: boolean;
 	musicType?: "BEAT" | "ACAPELLA";
 }
-
-const FieldInfo = ({ field }: { field: any }) => {
-	return (
-		<>
-			{field.state.meta.isTouched && !field.state.meta.isValid ? (
-				<em className="mt-1 text-sm text-hbc-red">
-					{field.state.meta.errors
-						.map((error: string | { message: string }) => {
-							if (typeof error === "string") {
-								return error;
-							}
-							return error.message;
-						})
-						.join(", ")}
-				</em>
-			) : null}
-			{/* {field.state.meta.isValidating ? "Validating..." : null} */}
-		</>
-	);
-};
 
 // 폼 검증 스키마
 const createFormSchema = (isSocialJoin: boolean) => {
@@ -134,7 +116,7 @@ const createFormSchema = (isSocialJoin: boolean) => {
 
 export const AuthSignup = () => {
 	const { user: authUser } = useAuthStore(useShallow((state) => ({ user: state.user })));
-	console.log("authUser", authUser);
+	const router = useRouter();
 
 	// AuthLoginResponse에는 phoneNumber가 null일 때 소셜 가입 완료 단계로 판단
 	const isSocialJoin = !!authUser?.userId && authUser?.phoneNumber === null;
@@ -148,6 +130,45 @@ export const AuthSignup = () => {
 	const completeSocialProfileMutation = useCompleteSocialProfileMutation();
 	const emailSignupMutation = useEmailSignupMutation();
 	const checkEmailMutation = useCheckEmailMutation();
+
+	const form = useForm<FormData>({
+		resolver: zodResolver(createFormSchema(isSocialJoin)),
+		defaultValues: {
+			email: "",
+			password: "",
+			passwordConfirm: "",
+			name: "",
+			phoneNumber: "",
+			gender: undefined,
+			year: "",
+			month: "",
+			day: "",
+			country: "KR", // 기본값
+			region: undefined,
+			isAgreedTerms: false,
+			isAgreedPrivacyPolicy: false,
+			isAgreedEmail: false,
+			musicType: undefined,
+		},
+		mode: "onSubmit",
+	});
+
+	const {
+		register,
+		handleSubmit,
+		formState: { errors, isSubmitting },
+		setValue,
+		watch,
+	} = form;
+
+	// Watch specific fields for real-time updates
+	const password = watch("password");
+	const passwordConfirm = watch("passwordConfirm");
+	const country = watch("country");
+	const email = watch("email");
+	const isAgreedTerms = watch("isAgreedTerms");
+	const isAgreedPrivacyPolicy = watch("isAgreedPrivacyPolicy");
+	const isAgreedEmail = watch("isAgreedEmail");
 
 	const onSubmit = useCallback(
 		(value: FormData) => {
@@ -187,7 +208,8 @@ export const AuthSignup = () => {
 				// 이메일 회원가입
 				emailSignupMutation.mutate(payload as UserUpdatePayload, {
 					onSuccess: (response) => {
-						signInOnSuccess(response.data, "email");
+						signInOnSuccess(response.data, "email", false);
+						setIsPopupOpen(true);
 					},
 					onError: (error: unknown) => {
 						console.error("Email signup error:", error);
@@ -199,53 +221,16 @@ export const AuthSignup = () => {
 		[authUser, completeSocialProfileMutation, emailSignupMutation, isSocialJoin],
 	);
 
-	const form = useForm({
-		defaultValues: {
-			email: "",
-			password: "",
-			passwordConfirm: "",
-			name: "",
-			phoneNumber: "",
-			gender: undefined,
-			year: "",
-			month: "",
-			day: "",
-			country: "KR", // 기본값
-			region: undefined,
-			isAgreedTerms: false,
-			isAgreedPrivacyPolicy: false,
-			isAgreedEmail: false,
-			musicType: undefined,
-		} as FormData,
-		validators: {
-			// @ts-expect-error due to zod
-			onSubmit: createFormSchema(isSocialJoin),
-		},
-		onSubmit: async ({ value }) => {
-			// 일반 가입의 경우 이메일 인증 확인
-			if (!isSocialJoin) {
-				const currentEmail = value.email;
-				if (!isEmailVerified || lastVerifiedEmail !== currentEmail) {
-					alert("이메일 중복 확인을 먼저 진행해주세요.");
-					return;
-				}
+	const onFormSubmit = handleSubmit((data) => {
+		// 일반 가입의 경우 이메일 인증 확인
+		if (!isSocialJoin) {
+			const currentEmail = data.email;
+			if (!isEmailVerified || lastVerifiedEmail !== currentEmail) {
+				alert("이메일 중복 확인을 먼저 진행해주세요.");
+				return;
 			}
-			onSubmit(value);
-		},
-	});
-
-	const { password, passwordConfirm, country } = useStore(form.store, (state) => {
-		return {
-			password: state.values.password,
-			passwordConfirm: state.values.passwordConfirm,
-			country: state.values.country,
-		};
-	});
-
-	const { email } = useStore(form.store, (state) => {
-		return {
-			email: state.values.email,
-		};
+		}
+		onSubmit(data as FormData);
 	});
 
 	// 이메일 중복 확인 함수
@@ -281,15 +266,6 @@ export const AuthSignup = () => {
 		);
 	}, [checkEmailMutation, email]);
 
-	const { error } = useStore(form.store, (state) => {
-		return {
-			error: state.errors,
-		};
-	});
-	useEffect(() => {
-		console.log("error", error);
-	}, [error]);
-
 	// 비밀번호 확인 체크
 	useEffect(() => {
 		if (!isSocialJoin && password && passwordConfirm) {
@@ -299,14 +275,14 @@ export const AuthSignup = () => {
 		} else {
 			setPasswordsMatch(null);
 		}
-	}, [form, password, passwordConfirm, isSocialJoin]);
+	}, [password, passwordConfirm, isSocialJoin]);
 
 	// 국가 변경 시 지역 리셋
 	useEffect(() => {
 		if (country) {
-			form.setFieldValue("region", undefined);
+			setValue("region", undefined);
 		}
-	}, [country, form]);
+	}, [country, setValue]);
 
 	// 이메일 변경 시 인증 상태 리셋
 	useEffect(() => {
@@ -325,29 +301,28 @@ export const AuthSignup = () => {
 		}
 	}, [isSocialJoin, authUser?.email]);
 
-	const onAllAgreements = () => {
-		const allCurrentlyChecked =
-			form.getFieldValue("isAgreedTerms") &&
-			form.getFieldValue("isAgreedPrivacyPolicy") &&
-			form.getFieldValue("isAgreedEmail");
-
-		const newAgreementValue = !allCurrentlyChecked;
-		form.setFieldValue("isAgreedTerms", newAgreementValue);
-		form.setFieldValue("isAgreedPrivacyPolicy", newAgreementValue);
-		form.setFieldValue("isAgreedEmail", newAgreementValue);
-	};
+	const onAllAgreements = useCallback(() => {
+		setValue("isAgreedTerms", !isAgreedTerms);
+		setValue("isAgreedPrivacyPolicy", !isAgreedPrivacyPolicy);
+		setValue("isAgreedEmail", !isAgreedEmail);
+	}, [isAgreedTerms, isAgreedPrivacyPolicy, isAgreedEmail, setValue]);
 
 	// 전체 동의 체크박스 상태
-	const allAgreementsChecked =
-		form.getFieldValue("isAgreedTerms") &&
-		form.getFieldValue("isAgreedPrivacyPolicy") &&
-		form.getFieldValue("isAgreedEmail");
+	// const allAgreementsChecked = isAgreedTerms && isAgreedPrivacyPolicy && isAgreedEmail;
+	const allAgreementsChecked = useMemo(() => {
+		return isAgreedTerms && isAgreedPrivacyPolicy && isAgreedEmail;
+	}, [isAgreedTerms, isAgreedPrivacyPolicy, isAgreedEmail]);
 
 	// 현재 선택된 국가에 따른 지역 옵션
-	const regionOptions = country ? getRegionOptionsByCountry(country) : [];
+	// const regionOptions = country ? getRegionOptionsByCountry(country) : [];
+	const regionOptions = useMemo(() => {
+		return country ? getRegionOptionsByCountry(country) : [];
+	}, [country]);
 
 	// 옵션들
-	const yearOptions = generateYearOptions();
+	const yearOptions = useMemo(() => {
+		return generateYearOptions();
+	}, []);
 
 	return (
 		<>
@@ -360,24 +335,20 @@ export const AuthSignup = () => {
 				</div>
 
 				<form
-					onSubmit={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						form.handleSubmit();
-					}}
+					onSubmit={onFormSubmit}
 					className="space-y-4"
 				>
 					{/* 이메일 필드 */}
-					<form.Field name="email">
-						{(field) => (
-							<div>
-								<div className="flex items-center justify-between">
-									<label
-										htmlFor={field.name}
-										className="relative mb-1 font-semibold"
-									>
-										이메일 주소 <span className="absolute text-red-500 -top-2 -right-2">*</span>
-									</label>
+					<div>
+						<div className="flex items-center justify-between">
+							<label
+								htmlFor="email"
+								className="relative mb-1 font-semibold"
+							>
+								이메일 주소 <span className="absolute text-red-500 -top-2 -right-2">*</span>
+							</label>
+							{!isSocialJoin && (
+								<>
 									{emailAvailable === true && (
 										<div className="flex items-center gap-1 text-sm text-[#3884FF] font-semibold">
 											<Correct /> 사용할 수 있는 이메일입니다.
@@ -388,177 +359,145 @@ export const AuthSignup = () => {
 											<Incorrect /> 사용할 수 없는 이메일입니다.
 										</div>
 									)}
-								</div>
-								<div className="relative">
-									<input
-										id={field.name}
-										name={field.name}
-										value={isSocialJoin ? authUser?.email || "" : field.state.value}
-										onBlur={field.handleBlur}
-										onChange={(e) => !isSocialJoin && field.handleChange(e.target.value)}
-										type="email"
-										required
-										readOnly={isSocialJoin}
-										className={`w-full px-3 py-[5px] border border-hbc-black rounded-md focus:outline-none ${
-											isSocialJoin ? "bg-gray-50 text-gray-600" : ""
-										}`}
-									/>
-									{!isSocialJoin && (
-										<button
-											type="button"
-											className="absolute px-2 py-1 text-sm font-semibold -translate-y-1/2 rounded-md cursor-pointer right-2 top-1/2 text-hbc-blue"
-											onClick={handleEmailVerification}
-											disabled={checkEmailMutation.isPending}
-										>
-											{checkEmailMutation.isPending ? "확인 중..." : "중복 확인"}
-										</button>
-									)}
-								</div>
-								<FieldInfo field={field} />
-							</div>
-						)}
-					</form.Field>
+								</>
+							)}
+						</div>
+						<div className="relative">
+							<input
+								id="email"
+								{...register("email")}
+								type="email"
+								required
+								readOnly={isSocialJoin}
+								value={isSocialJoin ? authUser?.email || "" : undefined}
+								className={`w-full px-3 py-[5px] border border-hbc-black rounded-md focus:outline-none ${
+									isSocialJoin ? "bg-gray-50 text-gray-600" : ""
+								}`}
+							/>
+							{!isSocialJoin && (
+								<button
+									type="button"
+									className="absolute px-2 py-1 text-sm font-semibold -translate-y-1/2 rounded-md cursor-pointer right-2 top-1/2 text-hbc-blue"
+									onClick={handleEmailVerification}
+									disabled={checkEmailMutation.isPending}
+								>
+									{checkEmailMutation.isPending ? "확인 중..." : "중복 확인"}
+								</button>
+							)}
+						</div>
+						{errors.email && <em className="mt-1 text-sm text-hbc-red">{errors.email.message}</em>}
+					</div>
 
 					{/* 비밀번호 필드 (소셜 가입이 아닐 때만) */}
 					{!isSocialJoin && (
 						<>
-							<form.Field name="password">
-								{(field) => (
-									<div>
-										<label
-											htmlFor={field.name}
-											className="relative mb-1 font-semibold"
-										>
-											비밀번호 <span className="absolute text-red-500 -top-2 -right-2">*</span>
-										</label>
-										<input
-											id={field.name}
-											name={field.name}
-											value={field.state.value}
-											onBlur={field.handleBlur}
-											onChange={(e) => field.handleChange(e.target.value)}
-											type="password"
-											required
-											className="w-full px-3 py-[5px] border border-hbc-black rounded-md focus:outline-none"
-										/>
-										<FieldInfo field={field} />
-									</div>
-								)}
-							</form.Field>
-							<form.Field name="passwordConfirm">
-								{(field) => (
-									<div>
-										<div className="flex justify-between">
-											<label
-												htmlFor={field.name}
-												className="relative mb-1 font-semibold"
-											>
-												비밀번호 확인 <span className="absolute text-red-500 -top-2 -right-2">*</span>
-											</label>
-											{passwordsMatch === true && (
-												<div className="flex items-center gap-1 text-sm text-[#3884FF] font-semibold">
-													<Correct /> 비밀번호가 같습니다.
-												</div>
-											)}
-											{passwordsMatch === false && form.getFieldValue("passwordConfirm") && (
-												<div className="flex items-center gap-1 text-sm font-semibold text-hbc-red">
-													<Incorrect /> 비밀번호가 같지 않습니다.
-												</div>
-											)}
+							<div>
+								<label
+									htmlFor="password"
+									className="relative mb-1 font-semibold"
+								>
+									비밀번호 <span className="absolute text-red-500 -top-2 -right-2">*</span>
+								</label>
+								<input
+									id="password"
+									{...register("password")}
+									type="password"
+									required
+									className="w-full px-3 py-[5px] border border-hbc-black rounded-md focus:outline-none"
+								/>
+								{errors.password && <em className="mt-1 text-sm text-hbc-red">{errors.password.message}</em>}
+							</div>
+							<div>
+								<div className="flex justify-between">
+									<label
+										htmlFor="passwordConfirm"
+										className="relative mb-1 font-semibold"
+									>
+										비밀번호 확인 <span className="absolute text-red-500 -top-2 -right-2">*</span>
+									</label>
+									{passwordsMatch === true && (
+										<div className="flex items-center gap-1 text-sm text-[#3884FF] font-semibold">
+											<Correct /> 비밀번호가 같습니다.
 										</div>
-										<input
-											id={field.name}
-											name={field.name}
-											value={field.state.value}
-											onBlur={field.handleBlur}
-											onChange={(e) => field.handleChange(e.target.value)}
-											type="password"
-											required
-											className="w-full px-3 py-[5px] border border-hbc-black rounded-md focus:outline-none"
-										/>
-										<FieldInfo field={field} />
-									</div>
+									)}
+									{passwordsMatch === false && passwordConfirm && (
+										<div className="flex items-center gap-1 text-sm font-semibold text-hbc-red">
+											<Incorrect /> 비밀번호가 같지 않습니다.
+										</div>
+									)}
+								</div>
+								<input
+									id="passwordConfirm"
+									{...register("passwordConfirm")}
+									type="password"
+									required
+									className="w-full px-3 py-[5px] border border-hbc-black rounded-md focus:outline-none"
+								/>
+								{errors.passwordConfirm && (
+									<em className="mt-1 text-sm text-hbc-red">{errors.passwordConfirm.message}</em>
 								)}
-							</form.Field>
+							</div>
 						</>
 					)}
 
 					{/* 이름 필드 */}
-					<form.Field name="name">
-						{(field) => (
-							<div>
-								<label
-									htmlFor={field.name}
-									className="relative mb-1 font-semibold"
-								>
-									이름 <span className="absolute text-red-500 -top-2 -right-2">*</span>
-								</label>
-								<input
-									id={field.name}
-									name={field.name}
-									value={field.state.value}
-									onBlur={field.handleBlur}
-									onChange={(e) => field.handleChange(e.target.value)}
-									type="text"
-									required
-									className="w-full px-3 py-[5px] border border-hbc-black rounded-md focus:outline-none"
-								/>
-								<FieldInfo field={field} />
-							</div>
-						)}
-					</form.Field>
+					<div>
+						<label
+							htmlFor="name"
+							className="relative mb-1 font-semibold"
+						>
+							이름 <span className="absolute text-red-500 -top-2 -right-2">*</span>
+						</label>
+						<input
+							id="name"
+							{...register("name")}
+							type="text"
+							required
+							className="w-full px-3 py-[5px] border border-hbc-black rounded-md focus:outline-none"
+						/>
+						{errors.name && <em className="mt-1 text-sm text-hbc-red">{errors.name.message}</em>}
+					</div>
 
 					<div className="flex gap-4">
 						{/* 연락처 필드 */}
-						<form.Field name="phoneNumber">
-							{(field) => (
-								<div className="w-1/2">
-									<label
-										htmlFor={field.name}
-										className="relative mb-1 font-semibold"
-									>
-										연락처 <span className="absolute text-red-500 -top-2 -right-2">*</span>
-									</label>
-									<div className="relative">
-										<input
-											id={field.name}
-											name={field.name}
-											value={field.state.value}
-											onBlur={field.handleBlur}
-											onChange={(e) => field.handleChange(e.target.value)}
-											type="tel"
-											required
-											className="w-full px-3 py-[5px] pr-20 border border-hbc-black rounded-md focus:outline-none"
-										/>
-										<button
-											type="button"
-											className="absolute px-2 py-1 text-sm font-semibold -translate-y-1/2 rounded-md cursor-pointer right-2 top-1/2 text-hbc-blue"
-										>
-											인증
-										</button>
-									</div>
-									<FieldInfo field={field} />
-								</div>
-							)}
-						</form.Field>
+						<div className="w-1/2">
+							<label
+								htmlFor="phoneNumber"
+								className="relative mb-1 font-semibold"
+							>
+								연락처 <span className="absolute text-red-500 -top-2 -right-2">*</span>
+							</label>
+							<div className="relative">
+								<input
+									id="phoneNumber"
+									{...register("phoneNumber")}
+									type="tel"
+									required
+									className="w-full px-3 py-[5px] pr-20 border border-hbc-black rounded-md focus:outline-none"
+								/>
+								<button
+									type="button"
+									className="absolute px-2 py-1 text-sm font-semibold -translate-y-1/2 rounded-md cursor-pointer right-2 top-1/2 text-hbc-blue"
+								>
+									인증
+								</button>
+							</div>
+							{errors.phoneNumber && <em className="mt-1 text-sm text-hbc-red">{errors.phoneNumber.message}</em>}
+						</div>
 
 						{/* 성별 필드 */}
-						<form.Field name="gender">
-							{(field) => (
-								<div className="w-1/2">
-									<label className="mb-1 font-semibold">성별</label>
-									<Dropdown
-										className="w-full"
-										optionsClassName="max-h-240px"
-										options={GENDER_OPTIONS}
-										value={field.state.value}
-										onChange={(val) => field.handleChange(val as "M" | "F")}
-										placeholder="성별을 선택하세요"
-									/>
-									<FieldInfo field={field} />
-								</div>
-							)}
-						</form.Field>
+						<div className="w-1/2">
+							<label className="mb-1 font-semibold">성별</label>
+							<Dropdown
+								className="w-full"
+								optionsClassName="max-h-240px"
+								options={GENDER_OPTIONS}
+								value={watch("gender")}
+								onChange={(val) => setValue("gender", val as "M" | "F")}
+								placeholder="성별을 선택하세요"
+							/>
+							{errors.gender && <em className="mt-1 text-sm text-hbc-red">{errors.gender.message}</em>}
+						</div>
 					</div>
 
 					{/* 생년월일 필드 */}
@@ -567,125 +506,101 @@ export const AuthSignup = () => {
 							생년월일 <span className="absolute text-red-500 -top-2 -right-2">*</span>
 						</label>
 						<div className="flex justify-between w-full">
-							<form.Field name="year">
-								{(field) => (
-									<div className="flex flex-col items-start">
-										<div className="flex items-center justify-center gap-1">
-											<Dropdown
-												className="w-140px"
-												optionsClassName="max-h-240px"
-												options={yearOptions}
-												value={field.state.value}
-												onChange={(val) => field.handleChange(val)}
-												placeholder="년"
-											/>
-											<span>년</span>
-										</div>
-										<FieldInfo field={field} />
-									</div>
-								)}
-							</form.Field>
-							<form.Field name="month">
-								{(field) => (
-									<div className="flex flex-col items-start">
-										<div className="flex items-center justify-center gap-1">
-											<Dropdown
-												className="w-100px"
-												optionsClassName="max-h-240px"
-												options={MONTH_OPTIONS}
-												value={field.state.value}
-												onChange={(val) => field.handleChange(val)}
-												placeholder="월"
-											/>
-											<span>월</span>
-										</div>
-										<FieldInfo field={field} />
-									</div>
-								)}
-							</form.Field>
-							<form.Field name="day">
-								{(field) => (
-									<div className="flex flex-col items-start">
-										<div className="flex items-center justify-center gap-1">
-											<Dropdown
-												className="w-100px"
-												optionsClassName="max-h-240px"
-												options={DAY_OPTIONS}
-												value={field.state.value}
-												onChange={(val) => field.handleChange(val)}
-												placeholder="일"
-											/>
-											<span>일</span>
-										</div>
-										<FieldInfo field={field} />
-									</div>
-								)}
-							</form.Field>
+							<div className="flex flex-col items-start">
+								<div className="flex items-center justify-center gap-1">
+									<Dropdown
+										className="w-140px"
+										optionsClassName="max-h-240px"
+										options={yearOptions}
+										value={watch("year")}
+										onChange={(val) => setValue("year", val)}
+										placeholder="년"
+									/>
+									<span>년</span>
+								</div>
+								{errors.year && <em className="mt-1 text-sm text-hbc-red">{errors.year.message}</em>}
+							</div>
+							<div className="flex flex-col items-start">
+								<div className="flex items-center justify-center gap-1">
+									<Dropdown
+										className="w-100px"
+										optionsClassName="max-h-240px"
+										options={MONTH_OPTIONS}
+										value={watch("month")}
+										onChange={(val) => setValue("month", val)}
+										placeholder="월"
+									/>
+									<span>월</span>
+								</div>
+								{errors.month && <em className="mt-1 text-sm text-hbc-red">{errors.month.message}</em>}
+							</div>
+							<div className="flex flex-col items-start">
+								<div className="flex items-center justify-center gap-1">
+									<Dropdown
+										className="w-100px"
+										optionsClassName="max-h-240px"
+										options={DAY_OPTIONS}
+										value={watch("day")}
+										onChange={(val) => setValue("day", val)}
+										placeholder="일"
+									/>
+									<span>일</span>
+								</div>
+								{errors.day && <em className="mt-1 text-sm text-hbc-red">{errors.day.message}</em>}
+							</div>
 						</div>
 					</div>
 
 					{/* 국가 및 지역 필드 */}
 					<div className="flex gap-4">
-						<form.Field name="country">
-							{(field) => (
-								<div className="w-1/2">
-									<label className="block mb-1 font-semibold">국가</label>
-									<Dropdown
-										className="w-full"
-										optionsClassName="max-h-240px"
-										options={COUNTRY_OPTIONS}
-										value={field.state.value}
-										onChange={(val) => field.handleChange(val)}
-										placeholder="국가를 선택하세요"
-									/>
-									<FieldInfo field={field} />
-								</div>
-							)}
-						</form.Field>
-						<form.Field name="region">
-							{(field) => (
-								<div className="w-1/2">
-									<label className="block mb-1 font-semibold">지역</label>
-									<Dropdown
-										className="w-full"
-										optionsClassName="max-h-240px"
-										options={regionOptions}
-										value={field.state.value}
-										onChange={(val) => field.handleChange(val)}
-										placeholder="지역을 선택하세요"
-									/>
-									<FieldInfo field={field} />
-								</div>
-							)}
-						</form.Field>
+						<div className="w-1/2">
+							<label className="block mb-1 font-semibold">국가</label>
+							<Dropdown
+								className="w-full"
+								optionsClassName="max-h-240px"
+								options={COUNTRY_OPTIONS}
+								value={watch("country")}
+								onChange={(val) => setValue("country", val)}
+								placeholder="국가를 선택하세요"
+							/>
+							{errors.country && <em className="mt-1 text-sm text-hbc-red">{errors.country.message}</em>}
+						</div>
+						<div className="w-1/2">
+							<label className="block mb-1 font-semibold">지역</label>
+							<Dropdown
+								className="w-full"
+								optionsClassName="max-h-240px"
+								options={regionOptions}
+								value={watch("region")}
+								onChange={(val) => setValue("region", val)}
+								placeholder="지역을 선택하세요"
+							/>
+							{errors.region && <em className="mt-1 text-sm text-hbc-red">{errors.region.message}</em>}
+						</div>
 					</div>
 
 					<div className="w-full h-[1px] bg-hbc-black my-8"></div>
 					<div className="text-center">어떤 서비스를 선호하시나요?</div>
-					<form.Field name="musicType">
-						{(field) => (
-							<div className="flex gap-4">
-								<Button
-									type="button"
-									className={cn("w-full text-lg py-2 font-suisse")}
-									variant={field.state.value === "ACAPELLA" ? "fill" : "outline"}
-									rounded="full"
-									onClick={() => field.handleChange("ACAPELLA")}
-								>
-									ACAPPELLA
-								</Button>
-								<Button
-									type="button"
-									className={cn("w-full text-lg py-2 font-suisse")}
-									variant={field.state.value === "BEAT" ? "fill" : "outline"}
-									rounded="full"
-									onClick={() => field.handleChange("BEAT")}
-								>
-									BEAT
-								</Button>
-							</div>
-						)}
-					</form.Field>
+					<div className="flex gap-4">
+						<Button
+							type="button"
+							className={cn("w-full text-lg py-2 font-suisse")}
+							variant={watch("musicType") === "ACAPELLA" ? "fill" : "outline"}
+							rounded="full"
+							onClick={() => setValue("musicType", "ACAPELLA")}
+						>
+							ACAPPELLA
+						</Button>
+						<Button
+							type="button"
+							className={cn("w-full text-lg py-2 font-suisse")}
+							variant={watch("musicType") === "BEAT" ? "fill" : "outline"}
+							rounded="full"
+							onClick={() => setValue("musicType", "BEAT")}
+						>
+							BEAT
+						</Button>
+					</div>
 
 					<div className="w-full h-[1px] bg-hbc-black my-8"></div>
 
@@ -703,79 +618,69 @@ export const AuthSignup = () => {
 						</div>
 
 						<div className="pl-4 space-y-2">
-							<form.Field name="isAgreedTerms">
-								{(field) => (
-									<>
-										<div
-											className="inline-flex items-center gap-2 cursor-pointer"
-											onClick={() => field.handleChange(!field.state.value)}
-											role="button"
-											tabIndex={0}
-											onKeyDown={(e) => e.key === "Enter" && field.handleChange(!field.state.value)}
+							<div>
+								<div
+									className="inline-flex items-center gap-2 cursor-pointer"
+									onClick={() => setValue("isAgreedTerms", !isAgreedTerms)}
+									role="button"
+									tabIndex={0}
+									onKeyDown={(e) => e.key === "Enter" && setValue("isAgreedTerms", !isAgreedTerms)}
+								>
+									{isAgreedTerms ? <Checkbox /> : <EmptyCheckbox />}
+									<span>
+										[필수] 히트비트클럽{" "}
+										<Link
+											href="/terms-of-service"
+											target="_blank"
+											rel="noopener noreferrer"
+											className="underline text-hbc-blue"
 										>
-											{field.state.value ? <Checkbox /> : <EmptyCheckbox />}
-											<span>
-												[필수] 히트비트클럽{" "}
-												<Link
-													href="/terms-of-service"
-													target="_blank"
-													rel="noopener noreferrer"
-													className="underline text-hbc-blue"
-												>
-													서비스 이용약관
-												</Link>
-												에 동의합니다.
-											</span>
-										</div>
-										<FieldInfo field={field} />
-									</>
-								)}
-							</form.Field>
-							<form.Field name="isAgreedPrivacyPolicy">
-								{(field) => (
-									<>
-										<div
-											className="inline-flex items-center gap-2 cursor-pointer"
-											onClick={() => field.handleChange(!field.state.value)}
-											role="button"
-											tabIndex={0}
-											onKeyDown={(e) => e.key === "Enter" && field.handleChange(!field.state.value)}
+											서비스 이용약관
+										</Link>
+										에 동의합니다.
+									</span>
+								</div>
+								{errors.isAgreedTerms && <em className="mt-1 text-sm text-hbc-red">{errors.isAgreedTerms.message}</em>}
+							</div>
+							<div>
+								<div
+									className="inline-flex items-center gap-2 cursor-pointer"
+									onClick={() => setValue("isAgreedPrivacyPolicy", !isAgreedPrivacyPolicy)}
+									role="button"
+									tabIndex={0}
+									onKeyDown={(e) => e.key === "Enter" && setValue("isAgreedPrivacyPolicy", !isAgreedPrivacyPolicy)}
+								>
+									{isAgreedPrivacyPolicy ? <Checkbox /> : <EmptyCheckbox />}
+									<span>
+										[필수] 히트비트클럽{" "}
+										<Link
+											href="/privacy-policy"
+											target="_blank"
+											rel="noopener noreferrer"
+											className="underline text-hbc-blue"
 										>
-											{field.state.value ? <Checkbox /> : <EmptyCheckbox />}
-											<span>
-												[필수] 히트비트클럽{" "}
-												<Link
-													href="/privacy-policy"
-													target="_blank"
-													rel="noopener noreferrer"
-													className="underline text-hbc-blue"
-												>
-													개인정보처리방침
-												</Link>
-												에 동의합니다.
-											</span>
-										</div>
-										<FieldInfo field={field} />
-									</>
+											개인정보처리방침
+										</Link>
+										에 동의합니다.
+									</span>
+								</div>
+								{errors.isAgreedPrivacyPolicy && (
+									<em className="mt-1 text-sm text-hbc-red">{errors.isAgreedPrivacyPolicy.message}</em>
 								)}
-							</form.Field>
-							<form.Field name="isAgreedEmail">
-								{(field) => (
-									<>
-										<div
-											className="inline-flex items-center gap-2 cursor-pointer"
-											onClick={() => field.handleChange(!field.state.value)}
-											role="button"
-											tabIndex={0}
-											onKeyDown={(e) => e.key === "Enter" && field.handleChange(!field.state.value)}
-										>
-											{field.state.value ? <Checkbox /> : <EmptyCheckbox />}
-											<span>이메일 수신에 동의합니다. (선택)</span>
-										</div>
-										<FieldInfo field={field} />
-									</>
-								)}
-							</form.Field>
+							</div>
+							<div>
+								<div
+									className="inline-flex items-center gap-2 cursor-pointer"
+									onClick={() => setValue("isAgreedEmail", !isAgreedEmail)}
+									role="button"
+									tabIndex={0}
+									onKeyDown={(e) => e.key === "Enter" && setValue("isAgreedEmail", !isAgreedEmail)}
+								>
+									{isAgreedEmail ? <Checkbox /> : <EmptyCheckbox />}
+									<span>이메일 수신에 동의합니다. (선택)</span>
+								</div>
+								{errors.isAgreedEmail && <em className="mt-1 text-sm text-hbc-red">{errors.isAgreedEmail.message}</em>}
+							</div>
 						</div>
 					</div>
 
@@ -787,23 +692,19 @@ export const AuthSignup = () => {
 							type="button"
 							onClick={() => {
 								// TODO: 취소 로직 구현
-								console.log("Cancel clicked");
+								router.push("/");
 							}}
 						>
 							취소
 						</Button>
-						<form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
-							{([canSubmit, isSubmitting]) => (
-								<Button
-									size="lg"
-									className="w-full py-2.5 font-extrabold"
-									type="submit"
-									disabled={!canSubmit || isSubmitting}
-								>
-									{isSubmitting ? "처리 중..." : "완료"}
-								</Button>
-							)}
-						</form.Subscribe>
+						<Button
+							size="lg"
+							className="w-full py-2.5 font-extrabold"
+							type="submit"
+							disabled={isSubmitting}
+						>
+							{isSubmitting ? "처리 중..." : "완료"}
+						</Button>
 					</div>
 				</form>
 			</div>

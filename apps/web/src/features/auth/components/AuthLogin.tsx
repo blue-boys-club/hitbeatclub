@@ -4,13 +4,45 @@ import { GoogleLogin, HBCLoginMain, KaKaoTalkLogin, NaverLogin } from "@/assets/
 import { cn } from "@/common/utils";
 import { Button } from "@/components/ui/Button";
 import { useGoogleAuth } from "@/hooks/use-google-auth";
+import { useSignInWithEmail } from "@/apis/auth/mutations";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AuthLoginPayloadSchema } from "@hitbeatclub/shared-types/auth";
+import { z } from "zod";
 import Link from "next/link";
+import { useState } from "react";
+
+type FormData = z.infer<typeof AuthLoginPayloadSchema>;
 
 export const AuthLogin = () => {
 	const { handleGoogleLogin, isReady: isGoogleReady } = useGoogleAuth();
+	const [loginError, setLoginError] = useState<string>("");
 
-	const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
+	const signInMutation = useSignInWithEmail({
+		onError: (error) => {
+			console.error("Login error:", error);
+			setLoginError("로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.");
+		},
+		onSuccess: () => {
+			setLoginError("");
+		},
+	});
+
+	const {
+		register,
+		handleSubmit,
+		formState: { errors, isSubmitting },
+	} = useForm<FormData>({
+		resolver: zodResolver(AuthLoginPayloadSchema),
+		defaultValues: {
+			email: "",
+			password: "",
+		},
+	});
+
+	const onSubmit = (data: FormData) => {
+		setLoginError("");
+		signInMutation.mutate(data);
 	};
 
 	return (
@@ -27,7 +59,7 @@ export const AuthLogin = () => {
 
 			<form
 				className="mt-20 space-y-6"
-				onSubmit={onSubmit}
+				onSubmit={handleSubmit(onSubmit)}
 			>
 				<div className="space-y-4">
 					<div>
@@ -38,12 +70,15 @@ export const AuthLogin = () => {
 							이메일 주소 <span className="absolute text-red-500 -top-2 -right-2">*</span>
 						</label>
 						<input
+							{...register("email")}
 							id="email"
-							name="email"
 							type="email"
-							required
-							className="w-full px-3 py-2 border rounded-md border-hbc-black focus:outline-none"
+							className={cn(
+								"w-full px-3 py-2 border rounded-md border-hbc-black focus:outline-none",
+								errors.email && "border-red-500",
+							)}
 						/>
+						{errors.email && <div className="text-red-500 text-sm mt-1">{errors.email.message}</div>}
 					</div>
 
 					<div>
@@ -54,14 +89,19 @@ export const AuthLogin = () => {
 							비밀번호 <span className="absolute text-red-500 -top-2 -right-2">*</span>
 						</label>
 						<input
+							{...register("password")}
 							id="password"
-							name="password"
 							type="password"
-							required
-							className="w-full px-3 py-2 border rounded-md border-hbc-black focus:outline-none"
+							className={cn(
+								"w-full px-3 py-2 border rounded-md border-hbc-black focus:outline-none",
+								errors.password && "border-red-500",
+							)}
 						/>
+						{errors.password && <div className="text-red-500 text-sm mt-1">{errors.password.message}</div>}
 					</div>
 				</div>
+
+				{loginError && <div className="text-red-500 text-sm text-center">{loginError}</div>}
 
 				<div>
 					<div className="mt-12 mb-2.5 flex justify-end space-x-2.5 text-md font-semibold tracking-[-0.32px]">
@@ -81,9 +121,10 @@ export const AuthLogin = () => {
 
 					<Button
 						type="submit"
+						disabled={isSubmitting || signInMutation.isPending}
 						className="w-full h-[56px] py-2.5 text-2xl font-extrabold"
 					>
-						로그인
+						{signInMutation.isPending ? "로그인 중..." : "로그인"}
 					</Button>
 				</div>
 

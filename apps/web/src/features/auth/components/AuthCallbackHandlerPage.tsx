@@ -37,7 +37,7 @@ export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPagePro
 		}
 		signInWithGoogle({ code: googleAuth.code })
 			.then((data) => {
-				setAuthNeedSignup(!!data.data.phoneNumber);
+				setAuthNeedSignup(!data.data.phoneNumber);
 				setAuthCompleted(true);
 			})
 			.catch((error) => {
@@ -76,6 +76,7 @@ export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPagePro
 
 		// check server info
 		if (authNeedSignup) {
+			console.log("authNeedSignup", authNeedSignup);
 			router.push("/auth/signup");
 		} else {
 			router.push("/");
