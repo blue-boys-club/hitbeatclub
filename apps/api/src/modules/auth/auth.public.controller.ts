@@ -43,8 +43,6 @@ export class AuthPublicController {
 
 	@Post("login")
 	@ApiOperation({ summary: "로그인" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
 	@ApiBody({
 		type: AuthLoginDto,
 	})
