@@ -1,7 +1,3 @@
-export interface Product {
-	id: number;
-	title: string;
-	artist: string;
-	albumImgSrc: string;
-	isHit?: boolean;
-}
+import { ProductListResponse } from "@hitbeatclub/shared-types/product";
+
+export type ProductListItem = ProductListResponse["products"][number];

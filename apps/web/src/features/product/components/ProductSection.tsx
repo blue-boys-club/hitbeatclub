@@ -7,10 +7,11 @@ import { Carousel, CarouselContent, CarouselItem, type CarouselPlugin } from "@/
 import { memo, useEffect, useState } from "react";
 import { ProductTrackItem } from "./ProductTrackItem";
 import { ProductDetailResponse } from "@hitbeatclub/shared-types/product";
+import { ProductListItem } from "../product.types";
 
 interface ShopSectionProps {
 	sectionHeader: Omit<SectionHeaderProps, "size">;
-	products: ProductDetailResponse[];
+	products: ProductListItem[];
 }
 
 export const ProductSection = memo(({ sectionHeader, products }: ShopSectionProps) => {

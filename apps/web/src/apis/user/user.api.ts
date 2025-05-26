@@ -7,7 +7,7 @@ import axiosInstance from "@/apis/api.client";
  * @returns 내 정보
  */
 export const getUserMe = async (): Promise<CommonResponse<UserFindMeResponse>> => {
-	const response = await axiosInstance.get<CommonResponse<UserFindMeResponse>>("/user/me");
+	const response = await axiosInstance.get<CommonResponse<UserFindMeResponse>>("/users/me");
 	return response.data;
 };
 
@@ -24,7 +24,7 @@ export const getUserMe = async (): Promise<CommonResponse<UserFindMeResponse>> =
  * 회원 탈퇴
  */
 export const leaveMe = async (userId: number): Promise<CommonResponseId> => {
-	const response = await axiosInstance.delete<CommonResponseId>(`/user/${userId}`);
+	const response = await axiosInstance.delete<CommonResponseId>(`/users/${userId}`);
 	return response.data;
 };
 
@@ -33,7 +33,7 @@ export const leaveMe = async (userId: number): Promise<CommonResponseId> => {
 //  * @returns 로그아웃
 //  */
 // export const logoutMe = async (): Promise<BaseResponse<void>> => {
-// 	const response = await axiosInstance.post<BaseResponse<void>>("/user/logout");
+// 	const response = await axiosInstance.post<BaseResponse<void>>("/users/logout");
 // 	return response.data;
 // };
 
@@ -47,7 +47,7 @@ export const leaveMe = async (userId: number): Promise<CommonResponseId> => {
 // 	userId: number,
 // 	data: UserUpdatePayload,
 // ): Promise<CommonResponse<UserFindMeResponse>> => {
-// 	const response = await axiosInstance.patch<CommonResponse<UserFindMeResponse>>(`/user/${userId}`, data);
+// 	const response = await axiosInstance.patch<CommonResponse<UserFindMeResponse>>(`/users/${userId}`, data);
 // 	return response.data;
 // };
 
@@ -59,6 +59,6 @@ export const leaveMe = async (userId: number): Promise<CommonResponseId> => {
  */
 export const socialJoinUser = async (userId: number, data: UserUpdatePayload): Promise<CommonResponseId> => {
 	const parsed = UserUpdatePayloadSchema.parse(data);
-	const response = await axiosInstance.patch<CommonResponseId>(`/user/${userId}/social-join`, parsed);
+	const response = await axiosInstance.patch<CommonResponseId>(`/users/${userId}/social-join`, parsed);
 	return response.data;
 };

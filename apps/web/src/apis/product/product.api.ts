@@ -14,7 +14,7 @@ import type { CommonResponse, CommonResponseId } from "@/apis/api.type";
  * @returns 상품 목록
  */
 export const getProductList = async () => {
-	const response = await client.get<CommonResponse<ProductListResponse>>("/product");
+	const response = await client.get<ProductListResponse>("/products");
 	return response.data;
 };
 
@@ -25,7 +25,7 @@ export const getProductList = async () => {
  * @returns 상품 상세 정보
  */
 export const getProduct = async (productId: number) => {
-	const response = await client.get<CommonResponse<ProductDetailResponse>>(`/product/${productId}`);
+	const response = await client.get<CommonResponse<ProductDetailResponse>>(`/products/${productId}`);
 	return response.data;
 };
 
@@ -37,7 +37,7 @@ export const getProduct = async (productId: number) => {
  */
 export const createProduct = async (product: z.infer<typeof ProductCreateSchema>) => {
 	const parsed = ProductCreateSchema.parse(product);
-	const response = await client.post<CommonResponseId>("/product", parsed);
+	const response = await client.post<CommonResponseId>("/products", parsed);
 	return response.data;
 };
 
@@ -50,7 +50,7 @@ export const createProduct = async (product: z.infer<typeof ProductCreateSchema>
  */
 export const updateProduct = async (productId: number, product: z.infer<typeof ProductUpdateSchema>) => {
 	const parsed = ProductUpdateSchema.parse(product);
-	const response = await client.put<CommonResponseId>(`/product/${productId}`, parsed);
+	const response = await client.put<CommonResponseId>(`/products/${productId}`, parsed);
 	return response.data;
 };
 
@@ -61,6 +61,6 @@ export const updateProduct = async (productId: number, product: z.infer<typeof P
  * @returns 삭제된 상품 정보
  */
 export const deleteProduct = async (productId: number) => {
-	const response = await client.delete<CommonResponseId>(`/product/${productId}`);
+	const response = await client.delete<CommonResponseId>(`/products/${productId}`);
 	return response.data;
 };

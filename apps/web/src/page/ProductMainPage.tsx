@@ -11,6 +11,7 @@ export default function ProductMainPage() {
 	const { data: products = [] } = useQuery({
 		...getProductListQueryOption(),
 		placeholderData: keepPreviousData,
+		select: (data) => data.data,
 	});
 
 	return (
