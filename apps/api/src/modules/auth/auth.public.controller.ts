@@ -113,8 +113,6 @@ export class AuthPublicController {
 
 	@Post("join")
 	@ApiOperation({ summary: "회원가입" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
 	@ApiBody({
 		type: UserUpdateDto,
 	})
