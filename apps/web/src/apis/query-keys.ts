@@ -1,6 +1,8 @@
 type QueryKey = Array<string | number | Record<string, string | number | Array<number | string>>>;
 
 const QUERY_KEYS = {
+	_root: [] as const,
+
 	user: {
 		_key: ["user"],
 		info: ["user", "info"],
@@ -14,6 +16,11 @@ const QUERY_KEYS = {
 };
 
 const MUTATION_KEYS = {
+	auth: {
+		login: {
+			google: ["auth", "login", "google"],
+		},
+	},
 	product: {
 		create: ["product", "create"],
 		update: (productId: number): QueryKey => ["product", "update", productId],

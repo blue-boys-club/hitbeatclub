@@ -4,13 +4,41 @@ import { GoogleLogin, HBCLoginMain, KaKaoTalkLogin, NaverLogin } from "@/assets/
 import { cn } from "@/common/utils";
 import { Button } from "@/components/ui/Button";
 import { useGoogleAuth } from "@/hooks/use-google-auth";
+import { useAuthStore } from "@/stores/auth";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useShallow } from "zustand/react/shallow";
 
 export const AuthLogin = () => {
-	const { handleGoogleLogin, isReady: isGoogleReady } = useGoogleAuth();
+	const { isReady: isGoogleReady, handleGoogleLogin } = useGoogleAuth();
 
-	const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+	const searchParams = useSearchParams();
+	const router = useRouter();
+	const redirect = searchParams.get("redirect") ?? "";
+
+	const { setRedirect } = useAuthStore(
+		useShallow((state) => ({
+			setRedirect: state.setRedirect,
+		})),
+	);
+
+	const onBeforeHandleLogin = () => {
+		setRedirect(redirect);
+	};
+
+	const onHandleGoogleLogin = () => {
+		onBeforeHandleLogin();
+		handleGoogleLogin();
+	};
+
+	const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+		const formData = new FormData(e.currentTarget);
+		const email = formData.get("email") as string;
+		const password = formData.get("password") as string;
+
+		// TODO: 로그인 로직 구현
+		console.log({ email, password });
 	};
 
 	return (
@@ -93,6 +121,10 @@ export const AuthLogin = () => {
 					<button
 						type="button"
 						className="flex justify-center items-center gap-2 w-full h-10 py-2 px-4 rounded-md bg-[#FEE500] font-semibold cursor-pointer"
+						onClick={() => {
+							onBeforeHandleLogin();
+							// TODO: 카카오 로그인 구현
+						}}
 					>
 						<KaKaoTalkLogin className="w-[18px] h-[18px]" />
 						카카오 로그인
@@ -101,6 +133,10 @@ export const AuthLogin = () => {
 					<button
 						type="button"
 						className="flex justify-center items-center gap-2 w-full h-10 py-2 px-4 rounded-md bg-[#03C75A] text-white font-semibold cursor-pointer"
+						onClick={() => {
+							onBeforeHandleLogin();
+							// TODO: 네이버 로그인 구현
+						}}
 					>
 						<NaverLogin className="w-[18px] h-[18px]" />
 						네이버 로그인
@@ -109,10 +145,11 @@ export const AuthLogin = () => {
 					<button
 						type="button"
 						className={cn(
-							"flex items-center justify-center w-full h-10 gap-2 px-4 py-2 font-semibold bg-white border border-gray-300 rounded-md",
-							isGoogleReady ? "cursor-pointer" : "cursor-not-allowed",
+							"flex items-center justify-center w-full h-10 gap-2 px-4 py-2 font-semibold bg-white border border-gray-300 rounded-md transition-colors",
+							isGoogleReady ? "hover:bg-gray-50 cursor-pointer" : "cursor-not-allowed opacity-70",
 						)}
-						onClick={handleGoogleLogin}
+						onClick={onHandleGoogleLogin}
+						disabled={!isGoogleReady}
 					>
 						<GoogleLogin className="w-[24px] h-[24px]" />
 						구글 로그인

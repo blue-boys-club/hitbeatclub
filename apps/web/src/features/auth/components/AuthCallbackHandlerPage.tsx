@@ -1,42 +1,55 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSignInWithGoogle } from "@/apis/auth/mutations";
+import { cn } from "@/common/utils";
+import UI from "@/components/ui";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useEffect, useState, useRef } from "react";
 
 const DEBUG = process.env.NODE_ENV === "development";
 
-interface AuthCallbackHandlerPageProps {
-	authType: string;
-}
-
-export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPageProps): React.ReactNode => {
+export const AuthCallbackHandlerPage = () => {
 	const [authCompleted, setAuthCompleted] = useState(false);
+	const [authSignUpCompleted, setAuthSignUpCompleted] = useState(false);
 	const [authError, setAuthError] = useState<string | null>(null);
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const loginState = searchParams.get("login");
+	const loginAttempted = useRef(false);
 
-	const sampleHandler = (): Promise<void> => {
-		return new Promise((resolve, reject) => {
-			setTimeout(() => {
-				// russian roulette
-				if (Math.random() < 0.2) {
-					reject(new Error("Auth failed"));
+	const { mutateAsync: signInWithGoogle } = useSignInWithGoogle();
+
+	// URL에서 authType과 code를 가져옵니다
+	const authType = searchParams.get("authType");
+	const code = searchParams.get("code");
+
+	const loginHandler = async (): Promise<void> => {
+		if (loginAttempted.current) return;
+		loginAttempted.current = true;
+
+		try {
+			switch (authType) {
+				case "google": {
+					if (!code) {
+						throw new Error("No code found");
+					}
+					const response = await signInWithGoogle({ code });
+					setAuthSignUpCompleted(!!response.data.name);
+					setAuthCompleted(true);
+					break;
 				}
-				resolve();
-			}, 1000);
-		});
+				default:
+					throw new Error("Invalid auth type");
+			}
+		} catch (error) {
+			setAuthError(error instanceof Error ? error.message : "Unknown error");
+			if (process.env.NODE_ENV === "production") {
+				router.replace("/auth/login");
+			}
+		}
 	};
 
 	useEffect(() => {
-		sampleHandler()
-			.then(() => {
-				setAuthCompleted(true);
-			})
-			.catch((error) => {
-				setAuthError(error instanceof Error ? error.message : "Unknown error");
-			});
+		void loginHandler();
 	}, []);
 
 	useEffect(() => {
@@ -44,19 +57,19 @@ export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPagePro
 			return;
 		}
 
-		// check server info
-		if (true) {
-			// TODO: check from store
-			const redirect = `/auth/${authType}/callback`;
-			router.push(`${redirect}?login=`);
+		if (authSignUpCompleted) {
+			// TODO: 회원가입이 완료된 경우의 리다이렉트 처리
+			router.replace("/");
+		} else {
+			// TODO: 로그인만 완료된 경우의 리다이렉트 처리
+			router.replace("/");
 		}
-	}, [authCompleted, authType, router]);
+	}, [authCompleted, authSignUpCompleted, router]);
 
 	return (
-		<div className="flex flex-col items-center justify-center min-h-screen">
-			{!authCompleted && (
+		<div className={cn("flex flex-col items-center justify-center min-h-screen")}>
+			{!authError && (
 				<>
-					{/* Flowbite Spinner for now */}
 					<svg
 						aria-hidden="true"
 						className="w-8 h-8 text-accent-blue01 animate-spin fill-accent-blue04"
@@ -74,39 +87,29 @@ export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPagePro
 						/>
 					</svg>
 
-					<div className="mt-4 text-2xl font-bold">로그인 진행중 입니다...</div>
+					<UI.Heading2 className="mt-4">로그인 진행중 입니다...</UI.Heading2>
 				</>
 			)}
 			{authError && (
 				<>
-					<div className="mt-4 text-2xl font-bold">로그인 실패</div>
-					<div className="mt-4 text-xl">{authError}</div>
-				</>
-			)}
-			{authCompleted && !authError && (
-				<>
-					<div className="mt-4 text-2xl font-bold">로그인 완료, 리다이렉트 중...</div>
-					<Link href="/">
-						<div className="text-accent-blue03 underline underline-offset-2 text-xl">
-							자동으로 이동하지 않으면 여기를 클릭하세요.
-						</div>
-					</Link>
+					<UI.Heading2 className="mt-4">로그인 실패</UI.Heading2>
+					<UI.Heading3 className="mt-4">{authError}</UI.Heading3>
 				</>
 			)}
 
 			{DEBUG && (
 				<div className="flex flex-col gap-2 max-w-[500px] mt-4">
-					<div className="text-xl font-bold">DEBUG INFO</div>
+					<UI.Heading3>DEBUG INFO</UI.Heading3>
 					{[
 						{ title: "authType", data: authType, key: "authType" },
+						{ title: "code", data: code, key: "code" },
 						{ title: "searchParams", data: Object.fromEntries(searchParams.entries()), key: "searchParams" },
-						{ title: "loginState", data: loginState, key: "loginState" },
 					].map((item) => (
 						<div
 							key={item.key}
 							className="flex flex-col gap-2"
 						>
-							<div className="text-lg font-semibold">{item.title}:</div>
+							<UI.Heading4>{item.title}:</UI.Heading4>
 							<code className="text-lable max-w-[500px] text-left text-wrap overflow-auto max-h-[120px] whitespace-pre-wrap">
 								{item.data !== undefined ? JSON.stringify(item.data, null, 2) : "undefined"}
 							</code>

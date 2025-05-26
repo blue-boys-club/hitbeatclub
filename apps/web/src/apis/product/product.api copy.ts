@@ -1,4 +1,4 @@
-import client from "../client";
+import client from "../api.client";
 
 // TODO: Type package로 공유 타입 정의
 /**

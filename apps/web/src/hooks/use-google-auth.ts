@@ -1,7 +1,5 @@
-// import { useNavigate } from "@tanstack/react-router";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useCallback } from "react";
 import { useScript } from "usehooks-ts";
 
 const GOOGLE_SCOPES = [
@@ -19,18 +17,24 @@ export const useGoogleAuth = () => {
 		removeOnUnmount: false,
 	});
 
+	useEffect(() => {
+		if (scriptStatus === "ready" && window.google) {
+			setIsReady(true);
+		}
+	}, [scriptStatus]);
+
 	const handleGoogleLogin = useCallback(() => {
 		setIsLoading(true);
 		setError(null);
 		if (scriptStatus === "ready" && window.google) {
 			const client = window.google?.accounts.oauth2.initCodeClient({
-				client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
+				client_id: process.env.NEXT_PUBLIC_AUTH_SOCIAL_GOOGLE_CLIENT_ID || "",
 				scope: GOOGLE_SCOPES.join(" "),
 				redirect_uri: `${window.location.origin}/auth/google/callback`,
 				callback: (response) => {
 					try {
 						if (response && response.code) {
-							router.push(`/auth/google/callback?code=${response.code}`);
+							router.push(`/auth/callback?authType=google&code=${response.code}`);
 						}
 					} catch (error) {
 						console.error(error);
@@ -41,7 +45,6 @@ export const useGoogleAuth = () => {
 			});
 
 			client.requestCode();
-			setIsReady(true);
 		} else {
 			setError("Google 로그인 준비가 아직 안됐어요.");
 			setIsLoading(false);
