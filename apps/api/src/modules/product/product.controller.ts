@@ -42,7 +42,7 @@ import { ProductListResponseDto } from "./dto/response/product.list.response.dto
 import { ProductListQueryRequestDto } from "./dto/request/project.list.request.dto";
 import { ENUM_PRODUCT_TYPE } from "./product.enum";
 
-@Controller("product")
+@Controller("products")
 @ApiTags("product")
 @ApiBearerAuth()
 export class ProductController {
@@ -72,13 +72,10 @@ export class ProductController {
 		example: "RECENT",
 		nullable: true,
 	})
-	@DocResponse<ProductListResponseDto>(productMessage.find.success, {
-		dto: ProductListResponseDto,
-	})
 	async findAll(
 		@Req() req: AuthenticatedRequest,
 		@Query() query: ProductListQueryRequestDto,
-	): Promise<ProductListResponseDto> {
+	): Promise<IResponsePagination<ProductListResponseDto>> {
 		const products = await this.productService.findAll(query);
 
 		const total = await this.productService.getTotal(query);
