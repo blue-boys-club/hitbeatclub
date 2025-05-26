@@ -18,6 +18,21 @@ export class ProductService {
 			const products = await this.prisma.product
 				.findMany({
 					where: { deletedAt: null, ...(type === "null" ? {} : { type }) },
+					select: {
+						id: true,
+						productName: true,
+						description: true,
+						price: true,
+						createdAt: true,
+						updatedAt: true,
+						artistSellerIdToArtist: {
+							select: {
+								id: true,
+								stageName: true,
+								profileImageUrl: true,
+							},
+						},
+					},
 					orderBy: { createdAt: sort === ENUM_PRODUCT_SORT.RECENT ? "desc" : "asc" },
 					skip: (page - 1) * limit,
 					take: limit,

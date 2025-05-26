@@ -40,9 +40,9 @@ import { ProductDetailResponseDto } from "./dto/response/product.detail.response
 import { PRODUCT_NOT_FOUND_ERROR } from "./product.error";
 import { ProductListResponseDto } from "./dto/response/product.list.response.dto";
 import { ProductListQueryRequestDto } from "./dto/request/project.list.request.dto";
-import { ENUM_PRODUCT_TYPE } from "./product.enum";
+import { ENUM_PRODUCT_SORT, ENUM_PRODUCT_TYPE } from "./product.enum";
 
-@Controller("product")
+@Controller("products")
 @ApiTags("product")
 @ApiBearerAuth()
 export class ProductController {
@@ -69,7 +69,7 @@ export class ProductController {
 		type: String,
 		required: false,
 		description: "정렬 기준",
-		example: "RECENT",
+		example: ENUM_PRODUCT_SORT.RECENT,
 		nullable: true,
 	})
 	@DocResponse<ProductListResponseDto>(productMessage.find.success, {

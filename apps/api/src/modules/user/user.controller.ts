@@ -11,7 +11,7 @@ import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
 import { UserFindMeResponseDto } from "./dto/response/user.find-me.response.dto";
 
-@Controller("user")
+@Controller("users")
 @ApiTags("user")
 @ApiBearerAuth()
 export class UserController {
