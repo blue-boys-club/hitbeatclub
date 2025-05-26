@@ -9,7 +9,6 @@ export const ProductResponseSchema = z.object({
 	category: z.string().describe("카테고리").default("음악").optional(),
 	isActive: z.boolean().describe("활성 상태").default(true),
 	createdAt: z.string().datetime().describe("생성 시간").default("2024-01-01T00:00:00Z"),
-	updatedAt: z.string().datetime().describe("수정 시간").default("2024-01-01T00:00:00Z"),
 });
 
 export const ProductListResponseSchema = z.object({

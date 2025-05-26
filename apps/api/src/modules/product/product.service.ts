@@ -18,13 +18,7 @@ export class ProductService {
 			const products = await this.prisma.product
 				.findMany({
 					where: { deletedAt: null, ...(type === "null" ? {} : { type }) },
-					select: {
-						id: true,
-						productName: true,
-						description: true,
-						price: true,
-						createdAt: true,
-						updatedAt: true,
+					include: {
 						artistSellerIdToArtist: {
 							select: {
 								id: true,
@@ -32,14 +26,46 @@ export class ProductService {
 								profileImageUrl: true,
 							},
 						},
-					},
+						files: {
+							where: {
+								isEnabled: 1,
+								deletedAt: null,
+								targetTable: "product",
+								type: {
+									in: ["PRODUCT_COVER_IMAGE", "PRODUCT_AUDIO_FILE"],
+								},
+							},
+							select: {
+								id: true,
+								type: true,
+								url: true,
+							},
+						},
+					} as any,
 					orderBy: { createdAt: sort === ENUM_PRODUCT_SORT.RECENT ? "desc" : "asc" },
 					skip: (page - 1) * limit,
 					take: limit,
 				})
 				.then((data) => this.prisma.serializeBigInt(data));
 
-			return products;
+			return products.map((product) => {
+				const seller = product.artistSellerIdToArtist;
+				delete product.artistSellerIdToArtist;
+
+				return {
+					id: product.id,
+					type: product.type,
+					productName: product.productName,
+					description: product.description,
+					price: product.price,
+					category: product.category,
+					isActive: product.isActive,
+					createdAt: product.createdAt,
+					seller,
+					audioFile: product.files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE),
+					coverImage: product.files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE),
+				};
+			});
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

@@ -40,9 +40,9 @@ import { ProductDetailResponseDto } from "./dto/response/product.detail.response
 import { PRODUCT_NOT_FOUND_ERROR } from "./product.error";
 import { ProductListResponseDto } from "./dto/response/product.list.response.dto";
 import { ProductListQueryRequestDto } from "./dto/request/project.list.request.dto";
-import { ENUM_PRODUCT_SORT, ENUM_PRODUCT_TYPE } from "./product.enum";
+import { ENUM_PRODUCT_TYPE } from "./product.enum";
 
-@Controller("products")
+@Controller("product")
 @ApiTags("product")
 @ApiBearerAuth()
 export class ProductController {
@@ -69,7 +69,7 @@ export class ProductController {
 		type: String,
 		required: false,
 		description: "정렬 기준",
-		example: ENUM_PRODUCT_SORT.RECENT,
+		example: "RECENT",
 		nullable: true,
 	})
 	@DocResponse<ProductListResponseDto>(productMessage.find.success, {
@@ -78,7 +78,7 @@ export class ProductController {
 	async findAll(
 		@Req() req: AuthenticatedRequest,
 		@Query() query: ProductListQueryRequestDto,
-	): Promise<IResponsePagination<ProductListResponseDto>> {
+	): Promise<ProductListResponseDto> {
 		const products = await this.productService.findAll(query);
 
 		const total = await this.productService.getTotal(query);
@@ -98,6 +98,7 @@ export class ProductController {
 
 	@Get(":id")
 	@ApiOperation({ summary: "상품 상세 조회" })
+	@DocAuth({ jwtAccessToken: true })
 	@DocResponse<ProductDetailResponseDto>(productMessage.find.success, {
 		dto: ProductDetailResponseDto,
 	})
