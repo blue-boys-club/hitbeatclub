@@ -25,6 +25,7 @@ export const ProductListQuerySchema = z.object({
 	page: z.string().default("1").transform(Number).pipe(z.number().min(1)),
 	limit: z.string().default("10").transform(Number).pipe(z.number().min(1)),
 	type: z.string().default("BEAT").optional().nullable(),
+	sort: z.string().default("RECENT").optional().nullable(),
 });
 
 export type ProductCreateRequest = z.infer<typeof ProductCreateSchema>;

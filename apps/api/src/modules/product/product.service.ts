@@ -142,9 +142,8 @@ export class ProductService {
 		}
 	}
 
-	async findProductFiles(uploaderId: number, id: number) {
+	async findProductFiles(id: number) {
 		const files = await this.fileService.findFilesByTargetId({
-			uploaderId,
 			targetId: id,
 			targetTable: "product",
 		});

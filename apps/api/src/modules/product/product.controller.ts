@@ -41,7 +41,6 @@ import { PRODUCT_NOT_FOUND_ERROR } from "./product.error";
 import { ProductListResponseDto } from "./dto/response/product.list.response.dto";
 import { ProductListQueryRequestDto } from "./dto/request/project.list.request.dto";
 import { ENUM_PRODUCT_TYPE } from "./product.enum";
-import { Product } from "@prisma/client";
 
 @Controller("product")
 @ApiTags("product")
@@ -104,7 +103,7 @@ export class ProductController {
 			throw new NotFoundException(PRODUCT_NOT_FOUND_ERROR);
 		}
 
-		const productFiles = await this.productService.findProductFiles(req.user.id, id);
+		const productFiles = await this.productService.findProductFiles(id);
 
 		return {
 			statusCode: 200,

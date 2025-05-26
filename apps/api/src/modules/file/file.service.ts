@@ -134,19 +134,10 @@ export class FileService {
 			.then((data) => this.prisma.serializeBigInt(data));
 	}
 
-	async findFilesByTargetId({
-		uploaderId,
-		targetId,
-		targetTable,
-	}: {
-		uploaderId: number;
-		targetId: number;
-		targetTable: string;
-	}) {
+	async findFilesByTargetId({ targetId, targetTable }: { targetId: number; targetTable: string }) {
 		return await this.prisma.file
 			.findMany({
 				where: {
-					uploaderId,
 					deletedAt: null,
 					targetId,
 					targetTable,
