@@ -57,6 +57,6 @@ export const ProductDetailResponseSchema = z.object({
 	}),
 });
 
-export type ProductListResponse = z.infer<typeof ProductListResponseSchema>;
+export type ProductListPagingResponse = z.infer<typeof ProductListPagingResponseSchema>;
 export type ProductResponse = z.infer<typeof ProductResponseSchema>;
 export type ProductDetailResponse = z.infer<typeof ProductDetailResponseSchema>;
