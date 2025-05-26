@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { AuthSignupCompletionModal } from "./Modal/AuthSignupCompletionModal";
 import { UserUpdatePayload } from "@hitbeatclub/shared-types/user";
-import { z } from "zod";
+import { set, z } from "zod";
 import moment from "moment-timezone";
 import { useAuthStore } from "@/stores/auth";
 import { useShallow } from "zustand/react/shallow";
@@ -115,7 +115,9 @@ const createFormSchema = (isSocialJoin: boolean) => {
 };
 
 export const AuthSignup = () => {
-	const { user: authUser } = useAuthStore(useShallow((state) => ({ user: state.user })));
+	const { user: authUser, setPhoneNumber } = useAuthStore(
+		useShallow((state) => ({ user: state.user, setPhoneNumber: state.setPhoneNumber })),
+	);
 	const router = useRouter();
 
 	// AuthLoginResponse에는 phoneNumber가 null일 때 소셜 가입 완료 단계로 판단
@@ -197,6 +199,7 @@ export const AuthSignup = () => {
 				console.log("newPayload", newPayload);
 				completeSocialProfileMutation.mutate(newPayload as UserUpdatePayload, {
 					onSuccess: () => {
+						setPhoneNumber(authUser?.phoneNumber || "");
 						setIsPopupOpen(true);
 					},
 					onError: (error: unknown) => {
@@ -218,7 +221,7 @@ export const AuthSignup = () => {
 				});
 			}
 		},
-		[authUser, completeSocialProfileMutation, emailSignupMutation, isSocialJoin],
+		[authUser, completeSocialProfileMutation, emailSignupMutation, isSocialJoin, setPhoneNumber],
 	);
 
 	const onFormSubmit = handleSubmit((data) => {

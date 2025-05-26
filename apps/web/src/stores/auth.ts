@@ -16,6 +16,7 @@ export interface AuthState {
 
 export interface AuthActions {
 	setUser: (updater: ((prevUser: AuthLoginResponse | undefined) => AuthLoginResponse) | AuthLoginResponse) => void;
+	setPhoneNumber: (phoneNumber: string) => void;
 	// setCurrentWorkspaceId: (currentWorkspaceId: number) => void;
 
 	setLastLoginMethod: (lastLoginMethod: AllowedLastMethod) => void;
@@ -46,6 +47,12 @@ export const useAuthStore = create<AuthStore>()(
 							state.user = userOrUpdater(state.user);
 						} else {
 							state.user = userOrUpdater;
+						}
+					}),
+				setPhoneNumber: (phoneNumber: string) =>
+					set((state) => {
+						if (state.user) {
+							state.user.phoneNumber = phoneNumber;
 						}
 					}),
 				setRedirect: (redirect: string) => set({ redirect }),
