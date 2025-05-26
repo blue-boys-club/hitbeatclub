@@ -1,11 +1,12 @@
 import { NestApplication, NestFactory } from "@nestjs/core";
 import { AppModule } from "./app/app.module";
 import "dayjs/locale/ko";
-import { Logger, ValidationPipe, VersioningType } from "@nestjs/common";
+import { Logger, VersioningType } from "@nestjs/common";
 import { useContainer } from "class-validator";
 import swaggerInit from "src/swagger";
 import { ConfigService } from "@nestjs/config";
 import { Logger as PinoLogger } from "nestjs-pino";
+import { ZodValidationPipe } from "nestjs-zod";
 
 async function bootstrap() {
 	const logger = new Logger();
@@ -50,16 +51,8 @@ async function bootstrap() {
 
 	useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-	app.useGlobalPipes(
-		new ValidationPipe({
-			whitelist: true,
-			forbidNonWhitelisted: true,
-			transform: true,
-			transformOptions: {
-				enableImplicitConversion: true,
-			},
-		}),
-	);
+	// nestjs-zod validation pipe 사용
+	app.useGlobalPipes(new ZodValidationPipe());
 
 	app.useLogger(app.get(PinoLogger));
 

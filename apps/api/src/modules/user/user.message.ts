@@ -1,4 +1,4 @@
-const user = {
+const userMessage = {
 	create: {
 		success: "success user create",
 	},
@@ -16,4 +16,4 @@ const user = {
 	},
 };
 
-export default user;
+export default userMessage;

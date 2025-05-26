@@ -6,7 +6,8 @@ import { DocAuth } from "src/common/doc/decorators/doc.decorator";
 import { IResponse } from "src/common/response/interfaces/response.interface";
 import { UserService } from "../user/user.service";
 import { AuthSocialGoogleProtected } from "./decorators/auth.social.decorator";
-import { createApiResponseFromZodSchema } from "src/common/swagger/swagger.util";
+import { AuthenticatedRequest } from "./dto/request/auth.dto";
+import { AuthLoginResponseDto } from "./dto/response/auth.login.response.dto";
 
 @ApiTags("auth.public")
 @Controller("auth")
@@ -24,15 +25,14 @@ export class AuthPublicController {
 	@ApiResponse({
 		status: 200,
 		description: "Google login successful",
-		schema: createApiResponseFromZodSchema(AuthGoogleLoginResponseSchema, "success google login", 200),
+		type: AuthLoginResponseDto,
 	})
-	async loginWithGoogle(@Req() req: any): Promise<IResponse<AuthGoogleLoginResponse>> {
+	async loginWithGoogle(@Req() req: AuthenticatedRequest): Promise<IResponse<AuthGoogleLoginResponse>> {
 		const user = req.user;
 
 		const auth = await this.authService.loginOrSignUp(user);
 
 		await this.userService.updateToken(auth.userId, auth.accessToken, auth.refreshToken);
-
 		await this.userService.updateLastLoginAt(auth.userId);
 
 		return {

@@ -10,6 +10,7 @@ import { IAuthHash } from "./interfaces/auth.interface";
 import { HelperHashService } from "src/common/helper/services/helper.hash.service";
 import { HelperDateService } from "src/common/helper/services/helper.date.service";
 import { UserService } from "../user/user.service";
+import { AuthenticatedRequest } from "./dto/request/auth.dto";
 
 @Injectable()
 export class AuthService {
@@ -98,8 +99,9 @@ export class AuthService {
 		}
 	}
 
-	async createSalt(length: number): Promise<string> {
-		return this.helperHashService.randomSalt(length);
+	createSalt(length: number): any {
+		return "1234567890";
+		// return this.helperHashService.randomSalt(length);
 	}
 
 	/**
@@ -128,7 +130,7 @@ export class AuthService {
 	 * @param tokenPayload 구글 인증 정보
 	 * @returns 액세스 토큰, 리프레시 토큰, 사용자 정보
 	 */
-	async loginOrSignUp(tokenPayload: TokenPayload): Promise<AuthGoogleLoginResponse> {
+	async loginOrSignUp(tokenPayload: AuthenticatedRequest["user"]): Promise<AuthGoogleLoginResponse> {
 		try {
 			let user;
 			// 사용자 조회

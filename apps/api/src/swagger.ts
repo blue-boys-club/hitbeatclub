@@ -2,9 +2,9 @@ import { Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NestApplication } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import { writeFileSync } from "fs";
+import { patchNestJsSwagger } from "nestjs-zod";
 
-export default async function (app: NestApplication) {
+export default function (app: NestApplication) {
 	const configService = app.get(ConfigService);
 	const env: string = configService.get<string>("app.env");
 	const logger = new Logger();
@@ -14,8 +14,12 @@ export default async function (app: NestApplication) {
 	const docVersion: string = configService.get<string>("doc.version");
 	const docPrefix: string = configService.get<string>("doc.prefix");
 
+	// nestjs-zod Swagger 패치 적용
+	patchNestJsSwagger();
+
 	// if (env !== ENUM_APP_ENVIRONMENT.PRODUCTION) {
-	if (true) {
+	const isProduction = env === "production";
+	if (!isProduction) {
 		const documentBuild = new DocumentBuilder()
 			.setTitle(docName)
 			.setDescription(docDesc)
@@ -35,7 +39,6 @@ export default async function (app: NestApplication) {
 			//     { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
 			//     'refreshToken'
 			// )
-
 			.build();
 
 		const document = SwaggerModule.createDocument(app, documentBuild, {

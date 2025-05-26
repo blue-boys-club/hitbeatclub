@@ -1,15 +1,16 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body } from "@nestjs/common";
+import { Controller, Get, Patch, Delete, Param, Body, Req } from "@nestjs/common";
 import { UserService } from "./user.service";
-import { CreateUserDto } from "./dto/create-user.dto";
-import { ApiOperation, ApiResponse, ApiTags, ApiBody } from "@nestjs/swagger";
+import { ApiOperation, ApiTags, ApiBody } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
-import { DocAuth } from "src/common/doc/decorators/doc.decorator";
+import { DocAuth, DocResponse } from "src/common/doc/decorators/doc.decorator";
 import { AuthJwtAccessProtected } from "../auth/decorators/auth.jwt.decorator";
-import { createApiResponseFromZodSchema, createSwaggerSchemaFromZod } from "src/common/swagger/swagger.util";
+import { UserUpdateDto } from "./dto/request/user.update.request.dto";
 import { IResponse } from "src/common/response/interfaces/response.interface";
-// import { UserUpdatePayloadSchema, UserUpdateResponseSchema } from "@hitbeatclub/shared-types/user";
-// import { UserUpdatePayload, UserUpdateResponse } from "@hitbeatclub/shared-types/user";
-import user from "./user.message";
+import userMessage from "./user.message";
+import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
+import { AuthenticatedRequest } from "../auth/dto/request/auth.dto";
+import { UserFindMeResponse } from "@hitbeatclub/shared-types/user";
+import { UserFindMeResponseDto } from "./dto/response/user.find-me.response.dto";
 
 @Controller("user")
 @ApiTags("user")
@@ -17,46 +18,75 @@ import user from "./user.message";
 export class UserController {
 	constructor(private readonly userService: UserService) {}
 
-	@Get()
-	async findAll() {
-		return this.userService.findAll();
+	@Get("me")
+	@ApiOperation({ summary: "내 정보 조회" })
+	@DocAuth({ jwtAccessToken: true })
+	@AuthJwtAccessProtected()
+	@DocResponse<UserFindMeResponseDto>(userMessage.find.success, {
+		dto: UserFindMeResponseDto,
+	})
+	async getMe(@Req() req: AuthenticatedRequest): Promise<IResponse<UserFindMeResponse>> {
+		const user = await this.userService.findMe(req.user.id);
+
+		return {
+			statusCode: 200,
+			message: userMessage.find.success,
+			data: user,
+		};
 	}
 
-	@Post()
-	async create(@Body() createUserDto: CreateUserDto) {
-		return this.userService.create(createUserDto);
+	@Patch(":id")
+	@ApiOperation({ summary: "사용자 정보 수정" })
+	@DocAuth({ jwtAccessToken: true })
+	@AuthJwtAccessProtected()
+	@ApiBody({
+		type: UserUpdateDto,
+	})
+	@DocResponse<DatabaseIdResponseDto>(userMessage.update.success, {
+		dto: DatabaseIdResponseDto,
+	})
+	async update(@Param("id") id: number, @Body() userUpdatePayload: UserUpdateDto): Promise<DatabaseIdResponseDto> {
+		const { isAgreedTerms, isAgreedPrivacyPolicy, isAgreedEmail } = userUpdatePayload;
+		const agreedTermsAt = isAgreedTerms ? new Date() : null;
+		const agreedPrivacyPolicyAt = isAgreedPrivacyPolicy ? new Date() : null;
+		const agreedEmailAt = isAgreedEmail ? new Date() : null;
+
+		delete userUpdatePayload.isAgreedTerms;
+		delete userUpdatePayload.isAgreedPrivacyPolicy;
+		delete userUpdatePayload.isAgreedEmail;
+
+		const user = await this.userService.update(id, {
+			...userUpdatePayload,
+			agreedTermsAt,
+			agreedPrivacyPolicyAt,
+			agreedEmailAt,
+		});
+
+		return {
+			statusCode: 200,
+			message: userMessage.update.success,
+			data: {
+				id: Number(user.id),
+			},
+		};
 	}
 
-	@Get(":id")
-	async findOne(@Param("id") id: string) {
-		return this.userService.findOne(id);
-	}
-
-	// @Patch(":id")
-	// @ApiOperation({ summary: "사용자 정보 수정" })
-	// @DocAuth({ jwtAccessToken: true })
-	// @AuthJwtAccessProtected()
-	// @ApiBody({
-	// 	description: "사용자 정보 수정 요청",
-	// 	schema: createSwaggerSchemaFromZod(UserUpdatePayloadSchema),
-	// })
-	// @ApiResponse({
-	// 	status: 200,
-	// 	description: user.update.success,
-	// 	schema: createApiResponseFromZodSchema(UserUpdateResponseSchema, user.update.success, 200),
-	// })
-	// async update(@Param("id") id: string, @Body() payload: UserUpdatePayload): Promise<IResponse<UserUpdateResponse>> {
-	// 	// const result = await this.userService.update(id, payload);
-
-	// 	return {
-	// 		statusCode: 200,
-	// 		message: user.update.success,
-	// 		data: { id: parseInt(id), message: user.update.success },
-	// 	};
-	// }
-
+	@ApiOperation({ summary: "회원 탈퇴" })
+	@DocAuth({ jwtAccessToken: true })
+	@AuthJwtAccessProtected()
+	@DocResponse<DatabaseIdResponseDto>(userMessage.delete.success, {
+		dto: DatabaseIdResponseDto,
+	})
 	@Delete(":id")
-	async remove(@Param("id") id: string) {
-		return this.userService.remove(id);
+	async softDelete(@Param("id") id: number): Promise<DatabaseIdResponseDto> {
+		await this.userService.softDelete(id);
+
+		return {
+			statusCode: 200,
+			message: userMessage.delete.success,
+			data: {
+				id,
+			},
+		};
 	}
 }
