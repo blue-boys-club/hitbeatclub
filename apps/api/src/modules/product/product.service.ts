@@ -49,6 +49,7 @@ export class ProductService {
 
 			const seller = (product as any).artistSellerIdToArtist;
 			delete (product as any).artistSellerIdToArtist;
+
 			return {
 				...product,
 				seller,

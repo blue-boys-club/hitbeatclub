@@ -13,6 +13,14 @@ export const ProductResponseSchema = z.object({
 });
 
 export const ProductListResponseSchema = z.object({
+	_metadata: z.object({
+		statusCode: z.number().describe("상태 코드").default(200),
+		message: z.string().describe("메시지").default("상품 조회 성공"),
+	}),
+	_pagination: z.object({
+		totalPage: z.number().describe("총 페이지 수").default(1),
+		total: z.number().describe("총 상품 수").default(0),
+	}),
 	products: z
 		.array(
 			z.object({
@@ -38,9 +46,6 @@ export const ProductListResponseSchema = z.object({
 		)
 		.describe("상품 목록")
 		.default([]),
-	total: z.number().describe("전체 상품 수").default(0),
-	page: z.number().describe("현재 페이지").default(1),
-	limit: z.number().describe("페이지당 항목 수").default(10),
 });
 
 export const ProductDetailResponseSchema = z.object({

@@ -147,9 +147,6 @@ model Product {
   licenseType               String?   @map("license_type") @db.VarChar(10)
   licensePrice              Int?      @map("license_price")
   currency                  String?   @db.VarChar(10)
-  coverImageUrl             String?   @map("cover_image_url") @db.VarChar(255)
-  audioFileUrl              String?   @map("audio_file_url") @db.VarChar(255)
-  zipFileUrl                String?   @map("zip_file_url") @db.VarChar(255)
   isFreeDownload            Int?      @map("is_free_download") @db.TinyInt
   isPublic                  Int?      @map("is_public") @db.TinyInt
   createdAt                 DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
