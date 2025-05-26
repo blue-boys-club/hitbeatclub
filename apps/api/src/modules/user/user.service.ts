@@ -66,6 +66,7 @@ export class UserService {
 					agreedTermsAt: true,
 					agreedPrivacyPolicyAt: true,
 					agreedEmailAt: true,
+					subscribedAt: true,
 				},
 			})
 			.then((data) => this.prisma.serializeBigInt(data));

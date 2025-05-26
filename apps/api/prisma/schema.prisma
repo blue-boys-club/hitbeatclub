@@ -24,6 +24,7 @@ model User {
   agreedPrivacyPolicyAt  DateTime?              @map("agreed_privacy_policy_at") @db.Timestamp(0)
   agreedEmailAt          DateTime?             @map("agreed_email_at") @db.Timestamp(0)
   lastLoginAt            DateTime?             @map("last_login_at") @db.Timestamp(0)
+  subscribedAt           DateTime?             @map("subscribed_at") @db.Timestamp(0)
   createdAt              DateTime?             @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt              DateTime?             @default(now()) @map("updated_at") @db.Timestamp(0)
   deletedAt              DateTime?             @map("deleted_at") @db.Timestamp(0)

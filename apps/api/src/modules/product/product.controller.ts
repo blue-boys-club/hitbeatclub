@@ -9,7 +9,11 @@ import { productMessage } from "./product.message";
 import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
 import { ProductCreateDto } from "./dto/request/product.create.request.dto";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
-import { ENUM_FILE_MIME_DOCUMENT } from "src/common/file/constants/file.enum.constant";
+import {
+	ENUM_FILE_MIME_AUDIO,
+	ENUM_FILE_MIME_DOCUMENT,
+	ENUM_FILE_MIME_VIDEO,
+} from "src/common/file/constants/file.enum.constant";
 import { AuthenticationDoc } from "src/common/doc/decorators/auth.decorator";
 import { FileUploadSingle } from "src/common/file/decorators/file.decorator";
 import { FileSingleDto } from "src/common/file/dtos/file.single.dto";
@@ -127,25 +131,29 @@ export class ProductController {
 				ENUM_FILE_MIME_IMAGE.JPG,
 				ENUM_FILE_MIME_IMAGE.JPEG,
 				ENUM_FILE_MIME_IMAGE.PNG,
+				ENUM_FILE_MIME_AUDIO.MPEG,
+				ENUM_FILE_MIME_AUDIO.MP3,
+				ENUM_FILE_MIME_AUDIO.WAV,
+				ENUM_FILE_MIME_VIDEO.M4A,
+				ENUM_FILE_MIME_VIDEO.MP4,
 			]),
 		)
 		file: Express.Multer.File,
 	): Promise<IResponse<FileUploadResponseDto>> {
-		console.log(file, "file");
-		console.log(fileSingleUploadDto, "fileSingleUploadDto");
-		return;
 		const s3Obj = await this.fileService.putItemInBucket(file, {
-			path: "user",
+			path: "product",
 		});
+
 		const fileRow = await this.fileService.create({
 			targetTable: "product",
-			type: "product",
+			type: fileSingleUploadDto.type,
 			uploaderId: req.user.id,
 			url: s3Obj.url,
 			originalName: Buffer.from(file.originalname.normalize("NFC"), "ascii").toString("utf8"),
 			mimeType: file.mimetype,
 			size: file.size,
 		});
+
 		return {
 			statusCode: 200,
 			message: "success user photo upload",

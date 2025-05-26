@@ -15,6 +15,7 @@ export const UserFindMeResponseSchema = UserUpdatePayloadSchema.omit({
 	agreedTermsAt: z.date().describe("이용약관 동의 일시"),
 	agreedPrivacyPolicyAt: z.date().describe("개인정보처리방침 동의 일시"),
 	agreedEmailAt: z.date().describe("이메일 수신 동의 일시"),
+	subscribedAt: z.date().describe("구독 시작 일시").nullable().default(new Date("2025-05-27T00:00:00.000Z")),
 });
 
 export type UserFindMeResponse = z.infer<typeof UserFindMeResponseSchema>;
