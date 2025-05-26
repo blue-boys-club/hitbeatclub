@@ -402,46 +402,21 @@ export function DocResponsePaging<T>(messagePath: string, options: IDocResponseO
 	return applyDecorators(
 		ApiProduces("application/json"),
 		ApiQuery({
-			name: "search",
-			required: false,
-			allowEmptyValue: true,
-			type: "string",
-			description: "Search will base on _metadata.pagination._availableSearch with rule contains, and case insensitive",
-		}),
-		ApiQuery({
-			name: "perPage",
-			required: false,
-			allowEmptyValue: true,
-			example: 20,
-			type: "number",
-			description: "Data per page, max 100",
-		}),
-		ApiQuery({
 			name: "page",
 			required: false,
 			allowEmptyValue: true,
 			example: 1,
 			type: "number",
-			description: "page number, max 20",
+			description: "페이지 번호",
 		}),
 		ApiQuery({
-			name: "orderBy",
+			name: "limit",
 			required: false,
 			allowEmptyValue: true,
-			example: "createdAt",
-			type: "string",
-			description: "Order by base on _metadata.pagination.availableOrderBy",
+			example: 10,
+			type: "number",
+			description: "페이지당 항목 수",
 		}),
-		ApiQuery({
-			name: "orderDirection",
-			required: false,
-			allowEmptyValue: true,
-			example: ENUM_PAGINATION_ORDER_DIRECTION_TYPE.ASC,
-			enum: ENUM_PAGINATION_ORDER_DIRECTION_TYPE,
-			type: "string",
-			description: "Order direction base on _metadata.pagination.availableOrderDirection",
-		}),
-		ApiExtraModels(ResponsePagingDto),
 		ApiExtraModels(options.dto as any),
 		ApiResponse({
 			description: docs.httpStatus.toString(),
@@ -455,6 +430,19 @@ export function DocResponsePaging<T>(messagePath: string, options: IDocResponseO
 					statusCode: {
 						type: "number",
 						example: docs.statusCode,
+					},
+					_pagination: {
+						type: "object",
+						properties: {
+							totalPage: {
+								type: "number",
+								example: 1,
+							},
+							total: {
+								type: "number",
+								example: 0,
+							},
+						},
 					},
 					data: {
 						type: "array",

@@ -40,6 +40,8 @@ export interface IResponsePagingPagination {
 }
 
 export interface IResponsePaging<T> {
+	statusCode: number;
+	message: string;
 	_metadata?: IResponseMetadata;
 	_pagination: IResponsePagingPagination;
 	data: T[] | T;

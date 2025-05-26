@@ -11,14 +11,6 @@ export const ProductResponseSchema = z.object({
 	createdAt: z.string().datetime().describe("생성 시간").default("2024-01-01T00:00:00Z"),
 });
 
-// _metadata: z.object({
-// 	statusCode: z.number().describe("상태 코드").default(200),
-// 	message: z.string().describe("메시지").default("상품 조회 성공"),
-// }),
-// _pagination: z.object({
-// 	totalPage: z.number().describe("총 페이지 수").default(1),
-// 	total: z.number().describe("총 상품 수").default(0),
-// }),
 export const ProductListResponseSchema = z
 	.object({
 		...ProductResponseSchema.shape,
@@ -37,6 +29,16 @@ export const ProductListResponseSchema = z
 		}),
 	})
 	.describe("상품 목록");
+
+export const ProductListPagingResponseSchema = z.object({
+	statusCode: z.number().describe("상태 코드").default(200),
+	message: z.string().describe("메시지").default("상품 조회 성공"),
+	_pagination: z.object({
+		totalPage: z.number().describe("총 페이지 수").default(1),
+		total: z.number().describe("총 상품 수").default(0),
+	}),
+	data: z.array(ProductListResponseSchema),
+});
 
 export const ProductDetailResponseSchema = z.object({
 	...ProductResponseSchema.shape,
