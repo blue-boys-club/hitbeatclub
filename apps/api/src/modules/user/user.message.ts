@@ -14,6 +14,15 @@ const userMessage = {
 	delete: {
 		success: "success user delete",
 	},
+	joinSocial: {
+		success: "success user join social",
+	},
+	login: {
+		success: "success user login",
+	},
+	findEmail: {
+		success: "success user find email",
+	},
 };
 
 export default userMessage;

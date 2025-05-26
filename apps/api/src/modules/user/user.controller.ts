@@ -8,8 +8,8 @@ import { UserUpdateDto } from "./dto/request/user.update.request.dto";
 import { IResponse } from "src/common/response/interfaces/response.interface";
 import userMessage from "./user.message";
 import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
-import { AuthenticatedRequest } from "../auth/dto/request/auth.dto";
-import { UserFindMeResponse } from "@hitbeatclub/shared-types/user";
+import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
+import { UserFindMeResponse, UserFindMeResponseSchema } from "@hitbeatclub/shared-types/user";
 import { UserFindMeResponseDto } from "./dto/response/user.find-me.response.dto";
 
 @Controller("user")
@@ -25,7 +25,7 @@ export class UserController {
 	@DocResponse<UserFindMeResponseDto>(userMessage.find.success, {
 		dto: UserFindMeResponseDto,
 	})
-	async getMe(@Req() req: AuthenticatedRequest): Promise<IResponse<UserFindMeResponse>> {
+	async getMe(@Req() req: AuthenticatedRequest): Promise<IResponse<UserFindMeResponseDto>> {
 		const user = await this.userService.findMe(req.user.id);
 
 		return {
@@ -35,17 +35,17 @@ export class UserController {
 		};
 	}
 
-	@Patch(":id")
-	@ApiOperation({ summary: "사용자 정보 수정" })
+	@Patch(":id/social-join")
+	@ApiOperation({ summary: "소셜 사용자 회원가입" })
 	@DocAuth({ jwtAccessToken: true })
 	@AuthJwtAccessProtected()
 	@ApiBody({
 		type: UserUpdateDto,
 	})
-	@DocResponse<DatabaseIdResponseDto>(userMessage.update.success, {
+	@DocResponse<DatabaseIdResponseDto>(userMessage.joinSocial.success, {
 		dto: DatabaseIdResponseDto,
 	})
-	async update(@Param("id") id: number, @Body() userUpdatePayload: UserUpdateDto): Promise<DatabaseIdResponseDto> {
+	async joinSocial(@Param("id") id: number, @Body() userUpdatePayload: UserUpdateDto): Promise<DatabaseIdResponseDto> {
 		const { isAgreedTerms, isAgreedPrivacyPolicy, isAgreedEmail } = userUpdatePayload;
 		const agreedTermsAt = isAgreedTerms ? new Date() : null;
 		const agreedPrivacyPolicyAt = isAgreedPrivacyPolicy ? new Date() : null;
@@ -64,7 +64,7 @@ export class UserController {
 
 		return {
 			statusCode: 200,
-			message: userMessage.update.success,
+			message: userMessage.joinSocial.success,
 			data: {
 				id: Number(user.id),
 			},

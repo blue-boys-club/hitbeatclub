@@ -27,7 +27,7 @@ export class EmailController {
 		try {
 			const { type, to } = body;
 
-			const hashInfo = await this.authService.createHashInfo(type, to);
+			const hashInfo = this.authService.createHashInfo(type, to);
 
 			switch (type) {
 				case ENUM_EMAIL.CHANGE_PASSWORD:

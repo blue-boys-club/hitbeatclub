@@ -31,7 +31,7 @@ export const AuthFindIdPassword = () => {
 					<div className="text-2xl font-extrabold mb-9">아이디 / 비밀번호 찾기</div>
 				</div>
 
-				<div className="mb-5 text-xl font-bold tracking-[0.22px]">아이디 찾기</div>
+				<div className="mb-5 text-xl font-bold tracking-[0.22px]">이메일 찾기</div>
 
 				<form onSubmit={onSubmit}>
 					<div className="space-y-4 mb-9">
@@ -69,7 +69,7 @@ export const AuthFindIdPassword = () => {
 							className="w-[225px] p-2.5 font-extrabold"
 							onClick={onFindId}
 						>
-							아이디 찾기
+							이메일 찾기
 						</Button>
 					</div>
 

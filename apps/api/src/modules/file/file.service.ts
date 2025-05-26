@@ -1,0 +1,154 @@
+import { PutObjectCommand, PutObjectCommandInput, PutObjectCommandOutput, S3Client } from "@aws-sdk/client-s3";
+import { BadRequestException, Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { AwsS3Dto } from "src/common/aws/dtos/aws.s3.dto";
+import { IAwsS3PutItemOptions } from "src/common/aws/interfaces/aws.interface";
+import { IAwsS3PutItem } from "src/common/aws/interfaces/aws.interface";
+import { FILE_PUT_ITEM_IN_BUCKET_ERROR } from "./file.error";
+import { PrismaService } from "src/common/prisma/prisma.service";
+import { FileCreateRequestDto } from "./dto/request/file.create.dto";
+import { v4 as uuidv4 } from "uuid";
+
+@Injectable()
+export class FileService {
+	private s3Client: S3Client;
+	private readonly bucket: string;
+	private readonly s3Region: string;
+	private readonly s3BaseBucketUrl: string;
+
+	constructor(
+		private configService: ConfigService,
+		private readonly prisma: PrismaService,
+	) {
+		this.s3Client = new S3Client({
+			region: this.configService.get<string>("AWS_REGION"),
+			credentials: {
+				accessKeyId: this.configService.get<string>("AWS_ACCESS_KEY_ID"),
+				secretAccessKey: this.configService.get<string>("AWS_SECRET_ACCESS_KEY"),
+			},
+		});
+		this.bucket = this.configService.get("AWS_S3_BUCKET_NAME");
+		this.s3Region = this.configService.get("AWS_REGION");
+		this.s3BaseBucketUrl = `https://${this.bucket}.s3.${this.s3Region}.amazonaws.com`;
+	}
+
+	async create(fileCreateRequestDto: FileCreateRequestDto) {
+		return this.prisma.file
+			.create({
+				data: {
+					targetTable: fileCreateRequestDto.targetTable,
+					targetId: fileCreateRequestDto?.targetId || null,
+					type: fileCreateRequestDto.type,
+					uploaderId: fileCreateRequestDto.uploaderId,
+					url: fileCreateRequestDto.url,
+					originName: fileCreateRequestDto.originalName,
+					mimeType: fileCreateRequestDto.mimeType,
+					size: fileCreateRequestDto.size,
+					isEnabled: 0,
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+	}
+
+	async putItemInBucket(file: IAwsS3PutItem, options?: IAwsS3PutItemOptions): Promise<AwsS3Dto> {
+		let path: string = options?.path;
+		path = path?.startsWith("/") ? path.replace("/", "") : path;
+
+		const mime: string = file.originalname.substring(file.originalname.lastIndexOf(".") + 1, file.originalname.length);
+
+		const filename = uuidv4();
+
+		const content: string | Uint8Array | Buffer = file.buffer;
+		const key: string = path ? `${path}/${filename}` : filename;
+
+		const command: PutObjectCommand = new PutObjectCommand({
+			Bucket: this.bucket,
+			Key: key,
+			Body: content,
+		});
+
+		try {
+			await this.s3Client.send<PutObjectCommandInput, PutObjectCommandOutput>(command);
+
+			return {
+				bucket: this.bucket,
+				path,
+				pathWithFilename: key,
+				filename: filename,
+				url: `${this.s3BaseBucketUrl}/${key}`,
+				baseUrl: this.s3BaseBucketUrl,
+				mime,
+				size: file.size,
+			};
+		} catch (e: any) {
+			throw new BadRequestException({
+				...FILE_PUT_ITEM_IN_BUCKET_ERROR,
+				detail: e.message,
+			});
+		}
+	}
+
+	converterFileNameToNFCAndUTF8(name) {
+		return Buffer.from(name.normalize("NFC"), "ascii").toString("utf8");
+	}
+
+	/**
+	 * 1. 기존 파일을 삭제하고
+	 * 2. 새로운 파일 활성화 한다.
+	 */
+	async updateFileEnabledAndDelete({ uploaderId, newFileId, targetId, targetTable, type }) {
+		const files = await this.findFilesByTarget({
+			uploaderId,
+			targetTable,
+			type,
+		});
+
+		for (const file of files) {
+			await this.softDeleteFile(file.id);
+		}
+
+		return await this.prisma.file.update({
+			where: { id: newFileId },
+			data: { isEnabled: 1, targetId: targetId },
+		});
+	}
+
+	// 기존 파일을 찾는다.
+	async findFilesByTarget({
+		uploaderId,
+		targetTable,
+		type,
+	}: {
+		uploaderId: number;
+		targetTable: string;
+		type: string;
+	}) {
+		return this.prisma.file
+			.findMany({
+				where: {
+					uploaderId: uploaderId,
+					targetTable: targetTable,
+					type: type,
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+	}
+
+	async softDeleteFile(id: number): Promise<void> {
+		await this.prisma.file.update({
+			where: { id },
+			data: { isEnabled: 0, deletedAt: new Date() },
+		});
+	}
+
+	/**
+	 * 파일의 isEnabled를 변경하는 함수
+	 * @param id
+	 */
+	async updateIsEnabled(id: number, isEnabled: boolean): Promise<void> {
+		await this.prisma.file.update({
+			where: { id },
+			data: { isEnabled: Number(isEnabled) },
+		});
+	}
+}

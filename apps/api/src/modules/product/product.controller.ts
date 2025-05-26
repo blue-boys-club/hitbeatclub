@@ -1,20 +1,33 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Req } from "@nestjs/common";
+import { Controller, Get, Post, Patch, Delete, Param, Body, Req, UploadedFile } from "@nestjs/common";
 import { ProductService } from "./product.service";
-import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiOperation, ApiTags, ApiConsumes } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
-import { DocAuth, DocResponse } from "src/common/doc/decorators/doc.decorator";
+import { DocAuth, DocRequestFile, DocResponse } from "src/common/doc/decorators/doc.decorator";
 import { AuthJwtAccessProtected } from "../auth/decorators/auth.jwt.decorator";
 import { IResponse } from "src/common/response/interfaces/response.interface";
 import { productMessage } from "./product.message";
 import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
 import { ProductCreateDto } from "./dto/request/product.create.request.dto";
-import { AuthenticatedRequest } from "../auth/dto/request/auth.dto";
+import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
+import { ENUM_FILE_MIME_DOCUMENT } from "src/common/file/constants/file.enum.constant";
+import { AuthenticationDoc } from "src/common/doc/decorators/auth.decorator";
+import { FileUploadSingle } from "src/common/file/decorators/file.decorator";
+import { FileSingleDto } from "src/common/file/dtos/file.single.dto";
+import { ENUM_FILE_MIME_IMAGE } from "src/common/file/constants/file.enum.constant";
+import { FileRequiredPipe } from "src/common/file/pipes/file.required.pipe";
+import { FileTypePipe } from "src/common/file/pipes/file.type.pipe";
+import { FileUploadResponseDto } from "../file/dto/response/file.upload.response.dto";
+import { FileService } from "../file/file.service";
+import { FileSingleUploadDto } from "src/common/file/dtos/request/file.upload.dto";
 
 @Controller("product")
 @ApiTags("product")
 @ApiBearerAuth()
 export class ProductController {
-	constructor(private readonly productService: ProductService) {}
+	constructor(
+		private readonly productService: ProductService,
+		private readonly fileService: FileService,
+	) {}
 
 	@Get()
 	@ApiOperation({ summary: "상품 목록 조회" })
@@ -90,6 +103,53 @@ export class ProductController {
 			data: {
 				id,
 			},
+		};
+	}
+
+	@Post("/file")
+	@ApiOperation({ summary: "상품 파일 업로드" })
+	@ApiConsumes("multipart/form-data")
+	@AuthenticationDoc()
+	@FileUploadSingle()
+	@DocRequestFile({
+		dto: FileSingleDto,
+	})
+	@DocResponse<FileUploadResponseDto>("success user photo upload", {
+		dto: FileUploadResponseDto,
+	})
+	async uploadProductFile(
+		@Req() req: AuthenticatedRequest,
+		@Body() fileSingleUploadDto: FileSingleUploadDto,
+		@UploadedFile(
+			new FileRequiredPipe(),
+			new FileTypePipe([
+				ENUM_FILE_MIME_DOCUMENT.PDF,
+				ENUM_FILE_MIME_IMAGE.JPG,
+				ENUM_FILE_MIME_IMAGE.JPEG,
+				ENUM_FILE_MIME_IMAGE.PNG,
+			]),
+		)
+		file: Express.Multer.File,
+	): Promise<IResponse<FileUploadResponseDto>> {
+		console.log(file, "file");
+		console.log(fileSingleUploadDto, "fileSingleUploadDto");
+		return;
+		const s3Obj = await this.fileService.putItemInBucket(file, {
+			path: "user",
+		});
+		const fileRow = await this.fileService.create({
+			targetTable: "product",
+			type: "product",
+			uploaderId: req.user.id,
+			url: s3Obj.url,
+			originalName: Buffer.from(file.originalname.normalize("NFC"), "ascii").toString("utf8"),
+			mimeType: file.mimetype,
+			size: file.size,
+		});
+		return {
+			statusCode: 200,
+			message: "success user photo upload",
+			data: { id: fileRow.id, url: s3Obj.url },
 		};
 	}
 }

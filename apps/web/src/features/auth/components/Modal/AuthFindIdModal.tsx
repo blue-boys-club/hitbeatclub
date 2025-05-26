@@ -31,7 +31,7 @@ export const AuthFindIdModal = ({ isOpen, onCloseModal }: AuthFindIdModalProps) 
 			>
 				<PopupContent>
 					<PopupHeader>
-						<PopupTitle className="text-[26px] font-bold">아이디 찾기</PopupTitle>
+						<PopupTitle className="text-[26px] font-bold">이메일 찾기</PopupTitle>
 					</PopupHeader>
 
 					<PopupDescription>

@@ -28,6 +28,7 @@ model User {
   updatedAt              DateTime?             @default(now()) @map("updated_at") @db.Timestamp(0)
   deletedAt              DateTime?             @map("deleted_at") @db.Timestamp(0)
   artist                 Artist[]
+  file                   File[]
   cart                   Cart[]
   order                  Order[]
   payments               Payments[]
@@ -179,3 +180,25 @@ model UserSocialAccount {
   @@index([userId], map: "FK_user_TO_user_social_account_1")
   @@map("user_social_account")
 }
+
+model File {
+  id          BigInt    @id @default(autoincrement())
+  targetTable String?   @map("target_table") @db.VarChar(20)
+  targetId    BigInt?   @map("target_id")
+  type        String?   @db.VarChar(20)
+  url         String?   @db.VarChar(255)
+  originName  String    @map("origin_name") @db.VarChar(100)
+  mimeType    String?   @map("mime_type") @db.VarChar(50)
+  size        BigInt    @default(0) @db.UnsignedBigInt
+  uploaderId  BigInt?   @map("uploader_id")
+  isEnabled   Int       @map("is_enabled") @db.TinyInt
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamp(0)
+  user        User?     @relation(fields: [uploaderId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_file_uploader")
+
+  @@index([uploaderId], map: "idx_file_uploader")
+  @@map("file")
+}
+
+

@@ -10,7 +10,7 @@ import { IAuthHash } from "./interfaces/auth.interface";
 import { HelperHashService } from "src/common/helper/services/helper.hash.service";
 import { HelperDateService } from "src/common/helper/services/helper.date.service";
 import { UserService } from "../user/user.service";
-import { AuthenticatedRequest } from "./dto/request/auth.dto";
+import { AuthenticatedRequest } from "./dto/request/auth.dto.request";
 
 @Injectable()
 export class AuthService {
@@ -99,9 +99,8 @@ export class AuthService {
 		}
 	}
 
-	createSalt(length: number): any {
-		return "1234567890";
-		// return this.helperHashService.randomSalt(length);
+	createSalt(length: number): string {
+		return this.helperHashService.randomSalt(length);
 	}
 
 	/**
@@ -110,8 +109,8 @@ export class AuthService {
 	 * @param text
 	 * @returns
 	 */
-	async createHashInfo(type: ENUM_EMAIL, text: string): Promise<IAuthHash> {
-		const salt: string = await this.createSalt(this.hashInfo[type].saltLength);
+	createHashInfo(type: ENUM_EMAIL, text: string): IAuthHash {
+		const salt: string = this.createSalt(this.hashInfo[type].saltLength);
 		const expired: Date = this.helperDateService.forwardInSeconds(this.hashInfo[type].expiredIn);
 
 		const created: Date = this.helperDateService.create();
@@ -138,7 +137,7 @@ export class AuthService {
 
 			// 새 사용자라면 회원가입 처리
 			if (!user) {
-				user = await this.userService.create({
+				user = await this.userService.socialJoin({
 					email: tokenPayload.email,
 				});
 			}
@@ -170,6 +169,7 @@ export class AuthService {
 				accessToken,
 				refreshToken,
 				email: user.email,
+				phoneNumber: user.phoneNumber,
 			};
 		} catch (e: any) {
 			if (e?.response) {
@@ -180,5 +180,73 @@ export class AuthService {
 				message: e.message,
 			});
 		}
+	}
+
+	/**
+	 * 비밀번호 검증
+	 * @param password 원본 비밀번호
+	 * @param hashedPassword 해시된 비밀번호
+	 * @returns 일치 여부
+	 */
+	validatePassword(password: string, hashedPassword: string): boolean {
+		return this.helperHashService.comparePassword(password, hashedPassword);
+	}
+
+	/**
+	 * 비밀번호 변경
+	 * @param userId 사용자 ID
+	 * @param currentPassword 현재 비밀번호
+	 * @param newPassword 새 비밀번호
+	 * @returns 성공 여부
+	 */
+	async changePassword(userId: number, currentPassword: string, newPassword: string): Promise<boolean> {
+		// 사용자 조회
+		const user = await this.userService.findById(userId);
+		if (!user || !user.password) {
+			throw new BadRequestException("사용자를 찾을 수 없습니다.");
+		}
+
+		// 현재 비밀번호 검증
+		const isCurrentPasswordValid = this.validatePassword(currentPassword, user.password);
+		if (!isCurrentPasswordValid) {
+			throw new BadRequestException("현재 비밀번호가 올바르지 않습니다.");
+		}
+
+		// 새 비밀번호 해시화
+		const hashedNewPassword = this.helperHashService.hashPassword(newPassword);
+
+		// 비밀번호 업데이트
+		await this.userService.updatePassword(userId, hashedNewPassword);
+
+		return true;
+	}
+
+	/**
+	 * 비밀번호 재설정 (이메일 인증 후)
+	 * @param email 이메일
+	 * @param salt 인증 토큰
+	 * @param newPassword 새 비밀번호
+	 * @returns 성공 여부
+	 */
+	async resetPassword(email: string, salt: string, newPassword: string): Promise<boolean> {
+		// 사용자 조회
+		const user = await this.userService.findByEmail(email);
+		if (!user) {
+			throw new BadRequestException("사용자를 찾을 수 없습니다.");
+		}
+
+		// TODO: salt 검증 로직 추가 (실제 구현에서는 Redis나 DB에서 salt 검증)
+		// 현재는 간단히 salt가 있는지만 확인
+		if (!salt) {
+			throw new BadRequestException("유효하지 않은 인증 토큰입니다.");
+		}
+
+		// 새 비밀번호 해시화
+		const hashedNewPassword = this.helperHashService.hashPassword(newPassword);
+
+		// 비밀번호 업데이트
+		await this.userService.updatePassword(Number(user.id), hashedNewPassword);
+
+		return true;
 	}
 }

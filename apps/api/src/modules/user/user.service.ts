@@ -2,24 +2,54 @@ import { UserCreatePayload, UserFindMeResponse, UserUpdatePayload } from "@hitbe
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "src/common/prisma/prisma.service";
 import { User, Prisma } from "@prisma/client";
+import { UserFindMeResponseDto } from "./dto/response/user.find-me.response.dto";
+import { HelperHashService } from "src/common/helper/services/helper.hash.service";
 
 @Injectable()
 export class UserService {
-	constructor(private readonly prisma: PrismaService) {}
+	constructor(
+		private readonly prisma: PrismaService,
+		private readonly helperHashService: HelperHashService,
+	) {}
 
 	async findAll(): Promise<User[]> {
 		return this.prisma.user.findMany();
 	}
 
-	async create(createUserDto: UserCreatePayload): Promise<User> {
+	async socialJoin(createUserDto: UserCreatePayload): Promise<User> {
 		return this.prisma.user
 			.create({
-				data: createUserDto as Prisma.UserCreateInput,
+				data: {
+					...createUserDto,
+				},
 			})
-			.then((data) => this.prisma.serializeBigInt(data) as User);
+			.then((data) => this.prisma.serializeBigInt(data));
 	}
 
-	async findMe(id: number): Promise<UserFindMeResponse> {
+	async create(
+		createUserDto: UserUpdatePayload & {
+			agreedTermsAt: Date | null;
+			agreedPrivacyPolicyAt: Date | null;
+			agreedEmailAt: Date | null;
+		},
+	): Promise<User> {
+		// 비밀번호가 있는 경우에만 암호화
+		let hashedPassword: string | undefined;
+		if (createUserDto.password) {
+			hashedPassword = this.helperHashService.hashPassword(createUserDto.password);
+		}
+
+		return this.prisma.user
+			.create({
+				data: {
+					...createUserDto,
+					password: hashedPassword, // 해시된 비밀번호로 저장
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+	}
+
+	async findMe(id: number): Promise<UserFindMeResponseDto> {
 		return await this.prisma.user
 			.findUnique({
 				where: { id, deletedAt: null },
@@ -75,7 +105,27 @@ export class UserService {
 			.then((data) => this.prisma.serializeBigInt(data) as User);
 	}
 
-	async findByEmail(email: string): Promise<User | null> {
+	async findById(id: number): Promise<User | null> {
+		return this.prisma.user
+			.findFirst({
+				where: {
+					id: BigInt(id),
+					deletedAt: null,
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data) as User | null);
+	}
+
+	async updatePassword(id: number, hashedPassword: string): Promise<User> {
+		return this.prisma.user
+			.update({
+				where: { id: BigInt(id) },
+				data: { password: hashedPassword },
+			})
+			.then((data) => this.prisma.serializeBigInt(data) as User);
+	}
+
+	async findByEmail(email: string) {
 		return this.prisma.user
 			.findFirst({
 				where: {
@@ -83,7 +133,7 @@ export class UserService {
 					deletedAt: null,
 				},
 			})
-			.then((data) => this.prisma.serializeBigInt(data) as User | null);
+			.then((data) => this.prisma.serializeBigInt(data));
 	}
 
 	async updateToken(id: number, accessToken: string, refreshToken: string): Promise<User> {
@@ -105,5 +155,13 @@ export class UserService {
 				data: { lastLoginAt: new Date() },
 			})
 			.then((data) => this.prisma.serializeBigInt(data) as User);
+	}
+
+	async findByNameAndPhoneNumber(name: string, phoneNumber: string) {
+		return this.prisma.user
+			.findFirst({
+				where: { name, phoneNumber, deletedAt: null },
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
 	}
 }
