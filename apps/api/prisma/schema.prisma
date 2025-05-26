@@ -57,7 +57,6 @@ model Artist {
   deletedAt                  DateTime? @map("deleted_at") @db.Timestamp(0)
   user                       User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_TO_artist_1")
   productSellerIdToArtist    Product[] @relation("product_seller_idToartist")
-  productUserIdToArtist      Product[] @relation("product_user_idToartist")
 
   @@index([userId], map: "FK_user_TO_artist_1")
   @@map("artist")
@@ -132,8 +131,7 @@ model Payments {
 
 model Product {
   id                        BigInt    @id @default(autoincrement())
-  sellerId                  BigInt    @map("seller_id")
-  userId                    BigInt    @map("user_id")
+  sellerId                  BigInt?    @map("seller_id") 
   productName               String?   @map("product_name") @db.VarChar(255)
   description               String?   @db.Text
   price                     Int?
@@ -144,23 +142,21 @@ model Product {
   tags                      Json?
   bpm                       Int?
   tonality                  String?   @db.VarChar(10)
-  licenseType               String?   @map("license_type") @db.VarChar(100)
+  licenseType               String?   @map("license_type") @db.VarChar(10)
   licensePrice              Int?      @map("license_price")
   currency                  String?   @db.VarChar(10)
   coverImageUrl             String?   @map("cover_image_url") @db.VarChar(255)
   audioFileUrl              String?   @map("audio_file_url") @db.VarChar(255)
   zipFileUrl                String?   @map("zip_file_url") @db.VarChar(255)
-  isFreeDownload            Boolean?  @map("is_free_download")
-  isPublic                  Boolean?  @map("is_public")
+  isFreeDownload            Int?      @map("is_free_download") @db.TinyInt
+  isPublic                  Int?      @map("is_public") @db.TinyInt
   createdAt                 DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt                 DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
   deletedAt                 DateTime? @map("deleted_at") @db.Timestamp(0)
   cart                      Cart[]
-  artistSellerIdToArtist    Artist    @relation("product_seller_idToartist", fields: [sellerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_artist_TO_product_1")
-  artistUserIdToArtist      Artist    @relation("product_user_idToartist", fields: [userId], references: [userId], onDelete: NoAction, onUpdate: NoAction, map: "FK_artist_TO_product_2")
+  artistSellerIdToArtist    Artist?    @relation("product_seller_idToartist", fields: [sellerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_artist_TO_product_1")
 
   @@index([sellerId], map: "FK_artist_TO_product_1")
-  @@index([userId], map: "FK_artist_TO_product_2")
   @@map("product")
 }
 
