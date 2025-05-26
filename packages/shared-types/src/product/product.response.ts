@@ -21,7 +21,7 @@ export const ProductListResponseSchema = z.object({
 		totalPage: z.number().describe("총 페이지 수").default(1),
 		total: z.number().describe("총 상품 수").default(0),
 	}),
-	products: z
+	data: z
 		.array(
 			z.object({
 				...ProductResponseSchema.shape,
