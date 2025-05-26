@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useShallow } from "zustand/react/shallow";
 import { useTemporaryStore } from "@/stores/temp";
-import { signInWithGoogle } from "@/apis/auth/auth.api";
+import { useSignInWithGoogle } from "@/apis/auth/mutations/useSignInWithGoogle";
 
 const DEBUG = process.env.NODE_ENV === "development";
 
@@ -16,6 +16,7 @@ interface AuthCallbackHandlerPageProps {
 export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPageProps): React.ReactNode => {
 	const loginAttempted = useRef(false);
 	const [authCompleted, setAuthCompleted] = useState(false);
+	const [authNeedSignup, setAuthNeedSignup] = useState(false);
 	const [authError, setAuthError] = useState<string | null>(null);
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -26,6 +27,8 @@ export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPagePro
 		})),
 	);
 
+	const { mutateAsync: signInWithGoogle } = useSignInWithGoogle();
+
 	const googleAuthHandler = useCallback(async () => {
 		if (!googleAuth) {
 			setAuthError("잘못된 요청입니다.");
@@ -34,7 +37,7 @@ export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPagePro
 		}
 		signInWithGoogle({ code: googleAuth.code })
 			.then((data) => {
-				setAuthCompleted(!!data.data.name);
+				setAuthNeedSignup(!!data.data.phoneNumber);
 				setAuthCompleted(true);
 			})
 			.catch((error) => {
@@ -47,7 +50,7 @@ export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPagePro
 			.finally(() => {
 				resetGoogleAuth();
 			});
-	}, [googleAuth, resetGoogleAuth]);
+	}, [googleAuth, resetGoogleAuth, signInWithGoogle]);
 
 	const loginHandler = (): void => {
 		if (loginAttempted.current) return;
@@ -72,12 +75,12 @@ export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPagePro
 		}
 
 		// check server info
-		if (authCompleted) {
-			router.push("/");
-		} else {
+		if (authNeedSignup) {
 			router.push("/auth/signup");
+		} else {
+			router.push("/");
 		}
-	}, [authCompleted, authType, router]);
+	}, [authCompleted, authNeedSignup, router]);
 
 	return (
 		<div className="flex flex-col items-center justify-center min-h-screen">
@@ -86,7 +89,7 @@ export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPagePro
 					{/* Flowbite Spinner for now */}
 					<svg
 						aria-hidden="true"
-						className="w-8 h-8 text-accent-blue01 animate-spin fill-accent-blue04"
+						className="w-8 h-8 text-hbc-white animate-spin fill-hbc-black"
 						viewBox="0 0 100 101"
 						fill="none"
 						xmlns="http://www.w3.org/2000/svg"

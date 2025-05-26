@@ -1,4 +1,5 @@
 import type { CommonResponse as SharedCommonResponse } from "@hitbeatclub/shared-types/common";
+export type { CommonResponseId } from "@hitbeatclub/shared-types/common";
 
 export interface CommonResponse<T> extends SharedCommonResponse {
 	data: T;

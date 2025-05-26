@@ -1,12 +1,12 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
-import { AuthGoogleLoginResponse } from "@hitbeatclub/shared-types/auth";
+import { AuthLoginResponse } from "@hitbeatclub/shared-types/auth";
 
-type AllowedLastMethod = "google" | "email";
+export type AllowedLastMethod = "google" | "email";
 
 export interface AuthState {
-	user?: AuthGoogleLoginResponse;
+	user?: AuthLoginResponse;
 
 	redirect?: string;
 	// inviteCode?: string;
@@ -15,9 +15,7 @@ export interface AuthState {
 }
 
 export interface AuthActions {
-	setUser: (
-		updater: ((prevUser: AuthGoogleLoginResponse | undefined) => AuthGoogleLoginResponse) | AuthGoogleLoginResponse,
-	) => void;
+	setUser: (updater: ((prevUser: AuthLoginResponse | undefined) => AuthLoginResponse) | AuthLoginResponse) => void;
 	// setCurrentWorkspaceId: (currentWorkspaceId: number) => void;
 
 	setLastLoginMethod: (lastLoginMethod: AllowedLastMethod) => void;
@@ -41,9 +39,7 @@ export const useAuthStore = create<AuthStore>()(
 				...initialState,
 				setLastLoginMethod: (lastLoginMethod: AllowedLastMethod) => set({ lastLoginMethod }),
 				setUser: (
-					userOrUpdater:
-						| AuthGoogleLoginResponse
-						| ((prevUser: AuthGoogleLoginResponse | undefined) => AuthGoogleLoginResponse),
+					userOrUpdater: AuthLoginResponse | ((prevUser: AuthLoginResponse | undefined) => AuthLoginResponse),
 				) =>
 					set((state) => {
 						if (typeof userOrUpdater === "function") {

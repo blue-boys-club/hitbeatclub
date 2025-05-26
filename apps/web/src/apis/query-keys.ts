@@ -4,8 +4,7 @@ const QUERY_KEYS = {
 	_root: [],
 	user: {
 		_key: ["user"],
-		info: ["user", "info"],
-		one: (userId: number): QueryKey => ["user", userId],
+		me: ["user", "me"],
 	},
 	products: {
 		_key: ["products"],

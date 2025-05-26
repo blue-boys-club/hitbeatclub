@@ -1,13 +1,13 @@
-import { BaseResponse } from "@/apis/api.type";
-import { UpdateUserRequest, UploadUserPhotoRequest, UploadUserPhotoResponse, UserMeResponse } from "./user.type";
+import { CommonResponse, CommonResponseId } from "@/apis/api.type";
+import { UserFindMeResponse, UserUpdatePayload, UserUpdatePayloadSchema } from "@hitbeatclub/shared-types/user";
 import axiosInstance from "@/apis/api.client";
 
 /**
  * 내 정보 조회
  * @returns 내 정보
  */
-export const getUserMe = async (): Promise<BaseResponse<UserMeResponse>> => {
-	const response = await axiosInstance.get<BaseResponse<UserMeResponse>>("/user/me");
+export const getUserMe = async (): Promise<CommonResponse<UserFindMeResponse>> => {
+	const response = await axiosInstance.get<CommonResponse<UserFindMeResponse>>("/user/me");
 	return response.data;
 };
 
@@ -23,8 +23,8 @@ export const getUserMe = async (): Promise<BaseResponse<UserMeResponse>> => {
 /**
  * 회원 탈퇴
  */
-export const leaveMe = async (userId: number): Promise<BaseResponse<void>> => {
-	const response = await axiosInstance.delete<BaseResponse<void>>(`/user/${userId}`);
+export const leaveMe = async (userId: number): Promise<CommonResponseId> => {
+	const response = await axiosInstance.delete<CommonResponseId>(`/user/${userId}`);
 	return response.data;
 };
 
@@ -37,13 +37,28 @@ export const leaveMe = async (userId: number): Promise<BaseResponse<void>> => {
 // 	return response.data;
 // };
 
+// /**
+//  * 유저 정보 수정
+//  * @param userId 유저 아이디
+//  * @param data 유저 정보
+//  * @returns 유저 정보
+//  */
+// export const updateUser = async (
+// 	userId: number,
+// 	data: UserUpdatePayload,
+// ): Promise<CommonResponse<UserFindMeResponse>> => {
+// 	const response = await axiosInstance.patch<CommonResponse<UserFindMeResponse>>(`/user/${userId}`, data);
+// 	return response.data;
+// };
+
 /**
- * 유저 정보 수정
+ * social join
  * @param userId 유저 아이디
  * @param data 유저 정보
  * @returns 유저 정보
  */
-export const updateUser = async (userId: number, data: UpdateUserRequest): Promise<BaseResponse<UserMeResponse>> => {
-	const response = await axiosInstance.patch<BaseResponse<UserMeResponse>>(`/user/${userId}`, data);
+export const socialJoinUser = async (userId: number, data: UserUpdatePayload): Promise<CommonResponseId> => {
+	const parsed = UserUpdatePayloadSchema.parse(data);
+	const response = await axiosInstance.patch<CommonResponseId>(`/user/${userId}/social-join`, parsed);
 	return response.data;
 };
