@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "src/common/prisma/prisma.service";
 import { Product } from "@prisma/client";
-import { ENUM_PRODUCT_FILE_TYPE } from "./product.enum";
+import { ENUM_PRODUCT_FILE_TYPE, ENUM_PRODUCT_SORT } from "./product.enum";
 import { ProductUpdateDto } from "./dto/request/product.update.dto";
 import { FileService } from "../file/file.service";
 import { ProductListQueryRequestDto } from "./dto/request/project.list.request.dto";
@@ -13,12 +13,12 @@ export class ProductService {
 		private readonly fileService: FileService,
 	) {}
 
-	async findAll({ page, limit, type }: ProductListQueryRequestDto) {
+	async findAll({ page, limit, type, sort }: ProductListQueryRequestDto) {
 		try {
 			const products = await this.prisma.product
 				.findMany({
 					where: { deletedAt: null, ...(type === "null" ? {} : { type }) },
-					orderBy: { createdAt: "desc" },
+					orderBy: { createdAt: sort === ENUM_PRODUCT_SORT.RECENT ? "desc" : "asc" },
 					skip: (page - 1) * limit,
 					take: limit,
 				})

@@ -64,7 +64,14 @@ export class ProductController {
 		example: ENUM_PRODUCT_TYPE.BEAT,
 		nullable: true,
 	})
-	@AuthJwtAccessProtected()
+	@ApiQuery({
+		name: "sort",
+		type: String,
+		required: false,
+		description: "정렬 기준",
+		example: "RECENT",
+		nullable: true,
+	})
 	@DocResponse<ProductListResponseDto>(productMessage.find.success, {
 		dto: ProductListResponseDto,
 	})
@@ -91,8 +98,6 @@ export class ProductController {
 
 	@Get(":id")
 	@ApiOperation({ summary: "상품 상세 조회" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
 	@DocResponse<ProductDetailResponseDto>(productMessage.find.success, {
 		dto: ProductDetailResponseDto,
 	})

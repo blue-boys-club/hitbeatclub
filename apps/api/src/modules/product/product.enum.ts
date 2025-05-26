@@ -8,3 +8,8 @@ export enum ENUM_PRODUCT_TYPE {
 	BEAT = "BEAT",
 	ACAPELA = "ACAPELA",
 }
+
+export enum ENUM_PRODUCT_SORT {
+	RECENT = "RECENT",
+	RECOMMEND = "RECOMMEND",
+}

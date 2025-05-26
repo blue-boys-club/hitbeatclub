@@ -3,7 +3,7 @@ import { z } from "zod";
 export const ProductResponseSchema = z.object({
 	id: z.number().describe("상품 ID").default(1),
 	type: z.enum(["audio", "video", "zip"]).describe("상품 타입").default("audio"),
-	name: z.string().describe("상품명").default("Sample Product"),
+	productName: z.string().describe("상품명").default("Sample Product"),
 	description: z.string().describe("상품 설명").default("상품 설명입니다").optional(),
 	price: z.number().describe("가격").default(10000),
 	category: z.string().describe("카테고리").default("음악").optional(),

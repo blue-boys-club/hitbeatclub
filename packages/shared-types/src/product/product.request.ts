@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+const licenseTypeEnum = z.enum(["MASTER", "EXCLUSIVE"]);
+const productSortEnum = z.enum(["RECENT", "RECOMMEND", "null"]);
+const productTypeEnum = z.enum(["BEAT", "ACAPELA", "null"]);
+
 export const ProductCreateSchema = z.object({
 	productName: z.string().min(1).max(255).default("Sample Product").describe("상품명"),
 	description: z.string().max(1000).describe("곡 설명 /가사").default("곡 설명 /가사"),
@@ -9,7 +13,7 @@ export const ProductCreateSchema = z.object({
 	tags: z.any().describe("태그").optional().default("tag"),
 	bpm: z.number().int().describe("BPM").optional().default(120),
 	tonality: z.string().max(10).describe("조성").optional().default("C"),
-	licenseType: z.enum(["MASTER", "EXCLUSIVE"]).describe("라이선스 타입(MASTER, EXCLUSIVE)").default("MASTER"),
+	licenseType: licenseTypeEnum.describe("라이선스 타입(MASTER, EXCLUSIVE)").default("MASTER"),
 	licensePrice: z.number().int().describe("라이선스 가격").default(10000),
 	currency: z.string().max(10).describe("통화").default("KRW"),
 	coverImageFileId: z.number().describe("커버 이미지 URL").default(1).optional(),
@@ -24,8 +28,8 @@ export const ProductUpdateSchema = ProductCreateSchema.partial();
 export const ProductListQuerySchema = z.object({
 	page: z.string().default("1").transform(Number).pipe(z.number().min(1)),
 	limit: z.string().default("10").transform(Number).pipe(z.number().min(1)),
-	type: z.string().default("BEAT").optional().nullable(),
-	sort: z.string().default("RECENT").optional().nullable(),
+	type: productTypeEnum.default("BEAT").optional(),
+	sort: productSortEnum.default("RECENT").optional(),
 });
 
 export type ProductCreateRequest = z.infer<typeof ProductCreateSchema>;
