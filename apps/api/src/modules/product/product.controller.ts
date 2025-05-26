@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Req, UploadedFile } from "@nestjs/common";
+import {
+	Controller,
+	Get,
+	Post,
+	Patch,
+	Delete,
+	Param,
+	Body,
+	Req,
+	UploadedFile,
+	NotFoundException,
+} from "@nestjs/common";
 import { ProductService } from "./product.service";
 import { ApiOperation, ApiTags, ApiConsumes } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
@@ -24,6 +35,8 @@ import { FileUploadResponseDto } from "../file/dto/response/file.upload.response
 import { FileService } from "../file/file.service";
 import { FileSingleUploadDto } from "src/common/file/dtos/request/file.upload.dto";
 import { ProductUpdateDto } from "./dto/request/product.update.dto";
+import { ProductDetailResponseDto } from "./dto/response/product.detail.response.dto";
+import { PRODUCT_NOT_FOUND_ERROR } from "./product.error";
 
 @Controller("product")
 @ApiTags("product")
@@ -42,8 +55,28 @@ export class ProductController {
 
 	@Get(":id")
 	@ApiOperation({ summary: "상품 상세 조회" })
-	async findOne(@Param("id") id: number) {
-		return this.productService.findOne(id);
+	@DocAuth({ jwtAccessToken: true })
+	@AuthJwtAccessProtected()
+	@DocResponse<ProductDetailResponseDto>(productMessage.find.success, {
+		dto: ProductDetailResponseDto,
+	})
+	async findOne(@Req() req: AuthenticatedRequest, @Param("id") id: number) {
+		const product = await this.productService.findOne(id);
+
+		if (!product) {
+			throw new NotFoundException(PRODUCT_NOT_FOUND_ERROR);
+		}
+
+		const productFiles = await this.productService.findProductFiles(req.user.id, id);
+
+		return {
+			statusCode: 200,
+			message: productMessage.find.success,
+			data: {
+				...product,
+				...productFiles,
+			},
+		};
 	}
 
 	@Post()

@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
+import { Injectable, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "src/common/prisma/prisma.service";
 import { Product } from "@prisma/client";
 import { ENUM_PRODUCT_FILE_TYPE } from "./product.enum";
@@ -25,19 +25,29 @@ export class ProductService {
 		}
 	}
 
-	async findOne(id: number): Promise<Product> {
+	async findOne(id: number) {
 		try {
 			const product = await this.prisma.product
 				.findFirst({
 					where: { id, deletedAt: null },
+					include: {
+						artistSellerIdToArtist: {
+							select: {
+								id: true,
+								stageName: true,
+								profileImageUrl: true,
+							},
+						},
+					},
 				})
 				.then((data) => this.prisma.serializeBigInt(data) as Product);
 
-			if (!product) {
-				throw new NotFoundException("Product not found");
-			}
-
-			return product;
+			const seller = (product as any).artistSellerIdToArtist;
+			delete (product as any).artistSellerIdToArtist;
+			return {
+				...product,
+				seller,
+			};
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -124,5 +134,37 @@ export class ProductService {
 				type: ENUM_PRODUCT_FILE_TYPE.PRODUCT_ZIP_FILE,
 			});
 		}
+	}
+
+	async findProductFiles(uploaderId: number, id: number) {
+		const files = await this.fileService.findFilesByTargetId({
+			uploaderId,
+			targetId: id,
+			targetTable: "product",
+		});
+		const audioFile = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
+		const coverImageFile = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
+		const zipFile = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_ZIP_FILE);
+
+		return {
+			audioFile: audioFile
+				? {
+						id: audioFile?.id,
+						url: audioFile?.url,
+					}
+				: null,
+			coverImage: coverImageFile
+				? {
+						id: coverImageFile?.id,
+						url: coverImageFile?.url,
+					}
+				: null,
+			zipFile: zipFile
+				? {
+						id: zipFile?.id,
+						url: zipFile?.url,
+					}
+				: null,
+		};
 	}
 }

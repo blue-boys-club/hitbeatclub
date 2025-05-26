@@ -12,8 +12,6 @@ export const ProductResponseSchema = z.object({
 	updatedAt: z.string().datetime().describe("수정 시간").default("2024-01-01T00:00:00Z"),
 });
 
-export type ProductResponse = z.infer<typeof ProductResponseSchema>;
-
 export const ProductListResponseSchema = z.object({
 	products: z.array(ProductResponseSchema).describe("상품 목록").default([]),
 	total: z.number().describe("전체 상품 수").default(0),
@@ -21,4 +19,27 @@ export const ProductListResponseSchema = z.object({
 	limit: z.number().describe("페이지당 항목 수").default(10),
 });
 
+export const ProductDetailResponseSchema = z.object({
+	...ProductResponseSchema.shape,
+	seller: z.object({
+		id: z.number().describe("판매자 ID").default(1),
+		stageName: z.string().describe("판매자 닉네임").default("판매자"),
+		profileImageUrl: z.string().url().describe("판매자 프로필 이미지 URL").default("https://example.com/profile.jpg"),
+	}),
+	audioFile: z.object({
+		id: z.number().describe("오디오 파일 ID").default(1),
+		url: z.string().url().describe("오디오 파일 URL").default("https://example.com/audio.mp3"),
+	}),
+	coverImage: z.object({
+		id: z.number().describe("커버 이미지 ID").default(1),
+		url: z.string().url().describe("커버 이미지 URL").default("https://example.com/cover.jpg"),
+	}),
+	zipFile: z.object({
+		id: z.number().describe("ZIP 파일 ID").default(1),
+		url: z.string().url().describe("ZIP 파일 URL").default("https://example.com/zip.zip"),
+	}),
+});
+
 export type ProductListResponse = z.infer<typeof ProductListResponseSchema>;
+export type ProductResponse = z.infer<typeof ProductResponseSchema>;
+export type ProductDetailResponse = z.infer<typeof ProductDetailResponseSchema>;

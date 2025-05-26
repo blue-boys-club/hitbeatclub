@@ -10,7 +10,7 @@ export const ProductCreateSchema = z.object({
 	tags: z.any().describe("태그").optional().default("tag"),
 	bpm: z.number().int().describe("BPM").optional().default(120),
 	tonality: z.string().max(10).describe("조성").optional().default("C"),
-	licenseType: z.string().max(10).describe("라이선스 타입(Master, Exclusive)").default("Master"),
+	licenseType: z.enum(["MASTER", "EXCLUSIVE"]).describe("라이선스 타입(MASTER, EXCLUSIVE)").default("MASTER"),
 	licensePrice: z.number().int().describe("라이선스 가격").default(10000),
 	currency: z.string().max(10).describe("통화").default("KRW"),
 	coverImageFileId: z.number().describe("커버 이미지 URL").default(1).optional(),
