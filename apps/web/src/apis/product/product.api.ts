@@ -1,8 +1,8 @@
 import {
 	ProductCreateSchema,
 	ProductDetailResponse,
+	ProductListPagingResponse,
 	ProductUpdateSchema,
-	type ProductListResponse,
 } from "@hitbeatclub/shared-types/product";
 import client from "@/apis/api.client";
 import { z } from "zod";
@@ -14,7 +14,7 @@ import type { CommonResponse, CommonResponseId } from "@/apis/api.type";
  * @returns 상품 목록
  */
 export const getProductList = async () => {
-	const response = await client.get<ProductListResponse>("/products");
+	const response = await client.get<ProductListPagingResponse>("/products");
 	return response.data;
 };
 
