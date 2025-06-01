@@ -96,7 +96,7 @@ export const MusicRightSidebar = memo(() => {
 
 				<div className="px-6">
 					<div className="w-full mb-2 text-hbc-black text-[32px] font-suisse font-bold tracking-[0.32px] leading-[40px]">
-						{currentTrack?.name}
+						{currentTrack?.productName}
 					</div>
 
 					<div className="flex items-center justify-between gap-2 mb-4">

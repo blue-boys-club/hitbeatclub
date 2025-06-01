@@ -37,13 +37,12 @@ export const LicenseChangeModal = ({
 		isLoading,
 		isError,
 		error,
-	} = useQuery<Awaited<ReturnType<typeof queryOptions.queryFn>>, Error, LicenseOption[], typeof queryOptions.queryKey>({
+	} = useQuery({
 		...queryOptions,
 		select: (product) => {
-			if (!product || !product.licenses) {
-				return [];
-			}
-			return product.licenses as LicenseOption[];
+			// return product?.data?.licenses as LicenseOption[];
+			// TODO: 라이센스 데이터 받아오기
+			return [] as LicenseOption[];
 		},
 		enabled: isOpen && !!currentItemId,
 		staleTime: 5 * 60 * 1000,

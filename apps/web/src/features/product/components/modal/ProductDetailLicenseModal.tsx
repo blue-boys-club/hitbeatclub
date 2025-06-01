@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCartStore } from "@/stores/cart";
 import { useShallow } from "zustand/react/shallow";
 import { useToast } from "@/hooks/use-toast";
+import { LicenseOption } from "@/features/cart/components/modal/LicenseChangeModal";
 
 interface ProductDetailLicenseModalProps {
 	isOpen: boolean;
@@ -20,7 +21,9 @@ export const ProductDetailLicenseModal = memo(({ isOpen, onClose, productId }: P
 		...getProductQueryOption(productId),
 		enabled: isOpen && !!productId,
 	});
-	const licenses = useMemo(() => product?.licenses, [product]);
+	// TODO: 라이센스 데이터 받아오기
+	// const licenses = useMemo(() => product?.licenses, [product]);
+	const licenses = useMemo(() => [] as LicenseOption[], []);
 	const [selectedLicenseId, setSelectedLicenseId] = useState<number>(licenses?.[0]?.id ?? 0);
 	const selectedLicense = useMemo(
 		() => licenses?.find((license) => license.id === selectedLicenseId),

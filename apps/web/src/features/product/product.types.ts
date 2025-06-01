@@ -1,3 +1,4 @@
-import { ProductListResponse } from "@hitbeatclub/shared-types/product";
+import { ProductListPagingResponse as SharedProductListPagingResponse } from "@hitbeatclub/shared-types/product";
 
-export type ProductListItem = ProductListResponse["products"][number];
+export type ProductListPagingResponse = SharedProductListPagingResponse;
+export type ProductListItem = ProductListPagingResponse["data"][number];
