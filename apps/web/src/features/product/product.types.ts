@@ -1,7 +1,4 @@
-export interface Product {
-	id: number;
-	title: string;
-	artist: string;
-	albumImgSrc: string;
-	isHit?: boolean;
-}
+import { ProductListPagingResponse as SharedProductListPagingResponse } from "@hitbeatclub/shared-types/product";
+
+export type ProductListPagingResponse = SharedProductListPagingResponse;
+export type ProductListItem = ProductListPagingResponse["data"][number];

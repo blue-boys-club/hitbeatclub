@@ -1,10 +1,10 @@
 type QueryKey = Array<string | number | Record<string, string | number | Array<number | string>>>;
 
 const QUERY_KEYS = {
+	_root: [],
 	user: {
 		_key: ["user"],
-		info: ["user", "info"],
-		one: (userId: number): QueryKey => ["user", userId],
+		me: ["user", "me"],
 	},
 	products: {
 		_key: ["products"],
@@ -13,12 +13,4 @@ const QUERY_KEYS = {
 	},
 };
 
-const MUTATION_KEYS = {
-	product: {
-		create: ["product", "create"],
-		update: (productId: number): QueryKey => ["product", "update", productId],
-		delete: (productId: number): QueryKey => ["product", "delete", productId],
-	},
-};
-
-export { QUERY_KEYS, MUTATION_KEYS };
+export { QUERY_KEYS };

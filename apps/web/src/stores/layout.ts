@@ -17,7 +17,6 @@ export interface LayoutState {
 		currentType: SidebarType;
 		trackId?: string | number | null; // TODO: backend 협의 후 수정
 	};
-	isMembership: boolean;
 }
 
 export interface LayoutActions {
@@ -26,7 +25,7 @@ export interface LayoutActions {
 		isOpen: LayoutState["rightSidebar"]["isOpen"],
 		states?: Partial<Omit<LayoutState["rightSidebar"], "isOpen">>,
 	) => void;
-	setMembership: (isMembership: LayoutState["isMembership"]) => void;
+
 	init: () => void;
 }
 
@@ -40,9 +39,6 @@ const initialState: LayoutState = {
 		isOpen: true,
 		currentType: SidebarType.PLAYLIST,
 	},
-
-	// TODO: User information based （servers based). not here.
-	isMembership: false,
 };
 
 const name = "LayoutStore";
@@ -66,11 +62,6 @@ export const useLayoutStore = create<LayoutStore>()(
 							...states,
 						};
 					}
-				}),
-
-			setMembership: (isMembership) =>
-				set((state) => {
-					state.isMembership = isMembership;
 				}),
 
 			init: () => set(initialState),

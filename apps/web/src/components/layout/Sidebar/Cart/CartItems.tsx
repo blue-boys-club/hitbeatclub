@@ -48,8 +48,8 @@ const CartItems = memo(() => {
 					status={"default"}
 					// TODO: Implement proper type
 					type={"single"}
-					imageUrl={query.data?.albumImgSrc}
-					alt={query.data?.title}
+					imageUrl={query.data?.coverImage?.url}
+					alt={query.data?.productName}
 				/>
 			))}
 		</div>

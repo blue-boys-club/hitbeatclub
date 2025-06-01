@@ -1,5 +1,12 @@
-import client from "../client";
-import { PRODUCTS } from "./product.dummy";
+import {
+	ProductCreateSchema,
+	ProductDetailResponse,
+	ProductListPagingResponse,
+	ProductUpdateSchema,
+} from "@hitbeatclub/shared-types/product";
+import client from "@/apis/api.client";
+import { z } from "zod";
+import type { CommonResponse, CommonResponseId } from "@/apis/api.type";
 
 // TODO: Type package로 공유 타입 정의
 /**
@@ -7,9 +14,8 @@ import { PRODUCTS } from "./product.dummy";
  * @returns 상품 목록
  */
 export const getProductList = async () => {
-	// const response = await client.get("/products");
-	// return response.data;
-	return PRODUCTS;
+	const response = await client.get<ProductListPagingResponse>("/products");
+	return response.data;
 };
 
 // TODO: Type package로 공유 타입 정의
@@ -19,9 +25,8 @@ export const getProductList = async () => {
  * @returns 상품 상세 정보
  */
 export const getProduct = async (productId: number) => {
-	// const response = await client.get(`/products/${productId}`);
-	// return response.data;
-	return PRODUCTS.find((product) => product.id === productId);
+	const response = await client.get<CommonResponse<ProductDetailResponse>>(`/products/${productId}`);
+	return response.data;
 };
 
 // TODO: Type package로 공유 타입 정의
@@ -30,8 +35,9 @@ export const getProduct = async (productId: number) => {
  * @param product 상품 정보
  * @returns 생성된 상품 정보
  */
-export const createProduct = async (product: unknown) => {
-	const response = await client.post("/products", product);
+export const createProduct = async (product: z.infer<typeof ProductCreateSchema>) => {
+	const parsed = ProductCreateSchema.parse(product);
+	const response = await client.post<CommonResponseId>("/products", parsed);
 	return response.data;
 };
 
@@ -42,8 +48,9 @@ export const createProduct = async (product: unknown) => {
  * @param product 상품 정보
  * @returns 수정된 상품 정보
  */
-export const updateProduct = async (productId: number, product: unknown) => {
-	const response = await client.put(`/products/${productId}`, product);
+export const updateProduct = async (productId: number, product: z.infer<typeof ProductUpdateSchema>) => {
+	const parsed = ProductUpdateSchema.parse(product);
+	const response = await client.put<CommonResponseId>(`/products/${productId}`, parsed);
 	return response.data;
 };
 
@@ -54,6 +61,6 @@ export const updateProduct = async (productId: number, product: unknown) => {
  * @returns 삭제된 상품 정보
  */
 export const deleteProduct = async (productId: number) => {
-	const response = await client.delete(`/products/${productId}`);
+	const response = await client.delete<CommonResponseId>(`/products/${productId}`);
 	return response.data;
 };

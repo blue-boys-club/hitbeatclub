@@ -33,7 +33,25 @@ export const PurchaseModal = memo(({ isOpen, onClose, productId }: PurchaseModal
 
 	const { toast } = useToast();
 
-	const licenses = useMemo(() => product?.licenses as LicenseOption[] | undefined, [product]); // Cast if necessary
+	// TODO: 라이센스 데이터 받아오기
+	// const licenses = useMemo(() => product?.licenses as LicenseOption[] | undefined, [product]); // Cast if necessary
+	const licenses = useMemo(
+		() => [
+			{
+				id: 1,
+				name: "라이센스 1",
+				description: "라이센스 1 설명",
+				price: 10000,
+				notes: [
+					{
+						text: "라이센스 1 설명",
+						color: "red",
+					},
+				],
+			},
+		],
+		[],
+	);
 
 	const [selectedLicenseId, setSelectedLicenseId] = useState<number>(licenses?.[0]?.id ?? 0);
 	const selectedLicense = useMemo(

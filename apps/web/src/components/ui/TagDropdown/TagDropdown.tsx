@@ -12,13 +12,16 @@ import {
 	memo,
 	Children,
 	isValidElement,
+	ComponentProps,
 } from "react";
 import { BodyMedium } from "../Body";
 import * as Slot from "@radix-ui/react-slot";
+import Link from "next/link";
 
 export interface TagDropdownOption {
 	label: string;
 	value: string;
+	href?: string;
 	className?: string;
 }
 
@@ -145,6 +148,42 @@ export const TagDropdown = memo(function TagDropdown({
 		[className],
 	);
 
+	const renderedOptions = useMemo(() => {
+		return options.map((option) => {
+			const Comp = option.href ? Link : "button";
+
+			const props = {
+				onClick: () => handleOptionClick(option.value),
+				...(option.href ? { href: option.href! } : {}),
+			} as unknown as {
+				href: string;
+				onClick: () => void;
+			};
+
+			return (
+				<Comp
+					key={option.value}
+					className={cn(
+						"px-[10px] py-[6px]",
+						"rounded-[40px]",
+						"font-suit",
+						"cursor-pointer",
+						"text-left whitespace-nowrap",
+						"transition-colors duration-200",
+						"sm:px-2 sm:py-[3px]",
+						"hover:bg-black hover:text-white",
+						option.className,
+					)}
+					role="menuitem"
+					data-testid={`tag-dropdown-option-${option.value}`}
+					{...props}
+				>
+					<TextComponent>{option.label}</TextComponent>
+				</Comp>
+			);
+		});
+	}, [options]);
+
 	return (
 		<div
 			ref={dropdownRef}
@@ -175,27 +214,7 @@ export const TagDropdown = memo(function TagDropdown({
 					aria-labelledby="dropdown-button"
 					data-testid="tag-dropdown-menu"
 				>
-					{options.map((option) => (
-						<button
-							key={option.value}
-							onClick={() => handleOptionClick(option.value)}
-							className={cn(
-								"px-[10px] py-[6px]",
-								"rounded-[40px]",
-								"font-suit",
-								"cursor-pointer",
-								"text-left whitespace-nowrap",
-								"transition-colors duration-200",
-								"sm:px-2 sm:py-[3px]",
-								"hover:bg-black hover:text-white",
-								option.className,
-							)}
-							role="menuitem"
-							data-testid={`tag-dropdown-option-${option.value}`}
-						>
-							<TextComponent>{option.label}</TextComponent>
-						</button>
-					))}
+					{renderedOptions}
 				</div>
 			)}
 		</div>

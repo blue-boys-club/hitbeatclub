@@ -35,6 +35,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build
+        run: |
+          pnpm turbo run build --filter=@hitbeatclub/*
+
       - name: Type Check
         run: pnpm turbo run typecheck --filter=web
 

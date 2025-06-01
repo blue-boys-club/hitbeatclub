@@ -5,12 +5,13 @@ import { SectionHeaderProps } from "@/components/ui/SectionHeader/SectionHeader"
 import { ProductItem } from "./ProductItem";
 import { Carousel, CarouselContent, CarouselItem, type CarouselPlugin } from "@/components/ui/Carousel/Carousel";
 import { memo, useEffect, useState } from "react";
-import { Product } from "../product.types";
 import { ProductTrackItem } from "./ProductTrackItem";
+import { ProductDetailResponse } from "@hitbeatclub/shared-types/product";
+import { ProductListItem } from "../product.types";
 
 interface ShopSectionProps {
 	sectionHeader: Omit<SectionHeaderProps, "size">;
-	products: Product[];
+	products: ProductListItem[];
 }
 
 export const ProductSection = memo(({ sectionHeader, products }: ShopSectionProps) => {

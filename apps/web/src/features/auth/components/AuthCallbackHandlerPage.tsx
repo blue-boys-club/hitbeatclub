@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useShallow } from "zustand/react/shallow";
+import { useTemporaryStore } from "@/stores/temp";
+import { useSignInWithGoogle } from "@/apis/auth/mutations/useSignInWithGoogle";
 
 const DEBUG = process.env.NODE_ENV === "development";
 
@@ -11,32 +14,59 @@ interface AuthCallbackHandlerPageProps {
 }
 
 export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPageProps): React.ReactNode => {
+	const loginAttempted = useRef(false);
 	const [authCompleted, setAuthCompleted] = useState(false);
+	const [authNeedSignup, setAuthNeedSignup] = useState(false);
 	const [authError, setAuthError] = useState<string | null>(null);
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const loginState = searchParams.get("login");
+	const { googleAuth, resetGoogleAuth } = useTemporaryStore(
+		useShallow((state) => ({
+			googleAuth: state.googleAuth,
+			resetGoogleAuth: state.resetGoogleAuth,
+		})),
+	);
 
-	const sampleHandler = (): Promise<void> => {
-		return new Promise((resolve, reject) => {
-			setTimeout(() => {
-				// russian roulette
-				if (Math.random() < 0.2) {
-					reject(new Error("Auth failed"));
-				}
-				resolve();
-			}, 1000);
-		});
-	};
+	const { mutateAsync: signInWithGoogle } = useSignInWithGoogle();
 
-	useEffect(() => {
-		sampleHandler()
-			.then(() => {
+	const googleAuthHandler = useCallback(async () => {
+		if (!googleAuth) {
+			setAuthError("잘못된 요청입니다.");
+			resetGoogleAuth();
+			return;
+		}
+		signInWithGoogle({ code: googleAuth.code })
+			.then((data) => {
+				setAuthNeedSignup(!data.data.phoneNumber);
 				setAuthCompleted(true);
 			})
 			.catch((error) => {
 				setAuthError(error instanceof Error ? error.message : "Unknown error");
+				// reset router state when it is failed & prod env
+				if (process.env.NODE_ENV !== "production") {
+					console.log("reset router state", googleAuth);
+				}
+			})
+			.finally(() => {
+				resetGoogleAuth();
 			});
+	}, [googleAuth, resetGoogleAuth, signInWithGoogle]);
+
+	const loginHandler = (): void => {
+		if (loginAttempted.current) return;
+		loginAttempted.current = true;
+
+		switch (authType) {
+			case "google":
+				googleAuthHandler();
+				break;
+			default:
+				throw new Error("Invalid auth type");
+		}
+	};
+	useEffect(() => {
+		loginHandler();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	useEffect(() => {
@@ -45,12 +75,13 @@ export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPagePro
 		}
 
 		// check server info
-		if (true) {
-			// TODO: check from store
-			const redirect = `/auth/${authType}/callback`;
-			router.push(`${redirect}?login=`);
+		if (authNeedSignup) {
+			console.log("authNeedSignup", authNeedSignup);
+			router.push("/auth/signup");
+		} else {
+			router.push("/");
 		}
-	}, [authCompleted, authType, router]);
+	}, [authCompleted, authNeedSignup, router]);
 
 	return (
 		<div className="flex flex-col items-center justify-center min-h-screen">
@@ -59,7 +90,7 @@ export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPagePro
 					{/* Flowbite Spinner for now */}
 					<svg
 						aria-hidden="true"
-						className="w-8 h-8 text-accent-blue01 animate-spin fill-accent-blue04"
+						className="w-8 h-8 text-hbc-white animate-spin fill-hbc-black"
 						viewBox="0 0 100 101"
 						fill="none"
 						xmlns="http://www.w3.org/2000/svg"
@@ -83,16 +114,6 @@ export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPagePro
 					<div className="mt-4 text-xl">{authError}</div>
 				</>
 			)}
-			{authCompleted && !authError && (
-				<>
-					<div className="mt-4 text-2xl font-bold">로그인 완료, 리다이렉트 중...</div>
-					<Link href="/">
-						<div className="text-accent-blue03 underline underline-offset-2 text-xl">
-							자동으로 이동하지 않으면 여기를 클릭하세요.
-						</div>
-					</Link>
-				</>
-			)}
 
 			{DEBUG && (
 				<div className="flex flex-col gap-2 max-w-[500px] mt-4">
@@ -100,7 +121,7 @@ export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPagePro
 					{[
 						{ title: "authType", data: authType, key: "authType" },
 						{ title: "searchParams", data: Object.fromEntries(searchParams.entries()), key: "searchParams" },
-						{ title: "loginState", data: loginState, key: "loginState" },
+						{ title: "googleAuth", data: googleAuth, key: "googleAuth" },
 					].map((item) => (
 						<div
 							key={item.key}

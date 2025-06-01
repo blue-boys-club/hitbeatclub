@@ -1,5 +1,6 @@
 import { Popup, PopupContent, PopupDescription, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
 import { PopupButton } from "@/components/ui/PopupButton";
+import Link from "next/link";
 
 interface AuthSignupCompletionModalProps {
 	isPopupOpen: boolean;
@@ -24,8 +25,12 @@ export const AuthSignupCompletionModal = ({ isPopupOpen, onClosePopup }: AuthSig
 				</PopupDescription>
 
 				<PopupFooter>
-					<PopupButton className="py-2.5 font-bold">둘러보기</PopupButton>
-					<PopupButton className="py-2.5 font-bold bg-hbc-red">멤버십 가입하기</PopupButton>
+					<PopupButton className="py-2.5 font-bold">
+						<Link href="/">둘러보기</Link>
+					</PopupButton>
+					<PopupButton className="py-2.5 font-bold bg-hbc-red">
+						<Link href="/subscribe">멤버십 가입하기</Link>
+					</PopupButton>
 				</PopupFooter>
 			</PopupContent>
 		</Popup>

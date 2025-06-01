@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import Image from "next/image";
 import { Beat, Like, RedPlayCircle } from "@/assets/svgs";
 import { AlbumAvatar, FreeDownloadButton, PurchaseButton, UserAvatar } from "@/components/ui";
@@ -14,6 +14,7 @@ import { useLayoutStore } from "@/stores/layout";
 import { useShallow } from "zustand/react/shallow";
 import { useQuery } from "@tanstack/react-query";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 
 // interface TrackInfo {
 // 	title: string;
@@ -65,11 +66,10 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 	});
 
 	const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
-	const { isSubscribed } = useLayoutStore(
-		useShallow((state) => ({
-			isSubscribed: state.isMembership, // TODO: remove this and verify from server
-		})),
-	);
+	const { data: user } = useQuery(getUserMeQueryOption());
+	const isSubscribed = useMemo(() => {
+		return !!user?.subscribedAt;
+	}, [user?.subscribedAt]);
 
 	const onLikeClick = () => {
 		setIsLiked(!isLiked);
@@ -87,21 +87,24 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 		}
 	};
 
-	const cheapestLicensePrice = product?.licenses.reduce((min, license) => Math.min(min, license.price), Infinity);
+	// const cheapestLicensePrice = product?.licenses.reduce((min, license) => Math.min(min, license.price), Infinity);
+	const cheapestLicensePrice = 10000;
 
 	return (
 		<>
 			<main className="px-9 pt-10">
 				<article className="flex gap-10">
 					<aside>
-						<AlbumAvatar src={product?.albumImgSrc || "https://placehold.co/192x192"} />
+						<AlbumAvatar src={product?.coverImage?.url || "https://placehold.co/192x192"} />
 					</aside>
 
-					<section className="flex flex-col gap-5">
+					<section className="flex flex-col gap-5 w-full">
 						<header className="flex justify-between items-center gap-2">
 							<div className="flex items-center gap-2">
 								<div className="w-[400px] flex items-center gap-2">
-									<h1 className="text-32px font-extrabold leading-[40px] tracking-0.32px truncate">{product?.title}</h1>
+									<h1 className="text-32px font-extrabold leading-[40px] tracking-0.32px truncate">
+										{product?.productName}
+									</h1>
 									<div>
 										<Beat className="w-[48px] h-[13px]" />
 									</div>
@@ -119,11 +122,11 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 						<div className="flex justify-between items-center">
 							<div className="flex items-center gap-2">
 								<UserAvatar
-									src={product?.artistImgSrc || "https://placehold.co/51x51"}
+									src={product?.seller?.profileImageUrl || "https://placehold.co/51x51"}
 									className="w-[51px] h-[51px] bg-black"
 									size="large"
 								/>
-								<span className="text-16px font-bold">{product?.artist}</span>
+								<span className="text-16px font-bold">{product?.seller?.stageName}</span>
 							</div>
 
 							<button
@@ -149,12 +152,12 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 								className="flex flex-wrap gap-2"
 								aria-label="장르 목록"
 							>
-								{product?.genres?.map((genre) => (
+								{/* {product?.genres?.map((genre) => (
 									<GenreButton
 										key={genre}
 										name={genre}
 									/>
-								))}
+								))} */}
 							</nav>
 
 							<div className="flex flex-col gap-0.5">
@@ -184,13 +187,13 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 							className="flex flex-wrap gap-2"
 							aria-label="태그 목록"
 						>
-							{product?.genres?.map((genre) => (
+							{/* {product?.genres?.map((genre) => (
 								<TagButton
 									key={genre}
 									name={genre}
 									isClickable={false}
 								/>
-							))}
+							))} */}
 						</nav>
 					</section>
 				</article>
@@ -201,7 +204,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 					<h2 className="mb-2.5 text-26px font-bold leading-[32px] tracking-0.26px text-center">라이센스</h2>
 
 					<div className="flex gap-10 w-[787px] mx-auto py-10 border-t-2px border-hbc-black">
-						{product?.licenses.map((license) => (
+						{/* {product?.licenses.map((license) => (
 							<div
 								key={license.id}
 								className="flex flex-1 gap-5"
@@ -213,7 +216,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 									isClickable={false}
 								/>
 							</div>
-						))}
+						))} */}
 					</div>
 				</section>
 			</main>
