@@ -37,7 +37,7 @@ jobs:
 
       - name: Build
         run: |
-          pnpm turbo run build --filter=packages/*
+          pnpm turbo run build --filter=@hitbeatclub/*
 
       - name: Type Check
         run: pnpm turbo run typecheck --filter=web
