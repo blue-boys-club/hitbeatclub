@@ -41,6 +41,7 @@ export class SubscribeService {
 		}
 
 		// 이미 구독 중인지 확인
+		// TODO: Use Subscription Table to properly check if the user is subscribed
 		if (user.subscribedAt) {
 			throw new BadRequestException(USER_ALREADY_SUBSCRIBED_ERROR);
 		}

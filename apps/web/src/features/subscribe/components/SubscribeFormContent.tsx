@@ -4,7 +4,6 @@ import { cn } from "@/common/utils";
 import Link from "next/link";
 import { useForm, SubmitHandler, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { RecurringPeriod, subscribeFormSchema, type SubscribeFormValues } from "../schema";
 import {
 	useSubscription,
 	type AugmentedSubscribeFormValues,
@@ -22,12 +21,16 @@ import { SubscribeBenefitBody } from "./SubscribeBenefitBody";
 import { SubscribeFormHeader } from "./SubscribeFormHeader";
 import { SubscribePrice } from "./SubscribePrice";
 import { HBCGray } from "@/assets/svgs";
+import { SubscribeFormSchema, SubscribeFormValue } from "../schema";
+import { useQuery } from "@tanstack/react-query";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 
 /**
  * 구독 폼의 주요 콘텐츠를 렌더링하고 구독 과정을 처리하는 컴포넌트입니다.
  * 사용자의 입력, 결제 수단 선택, PortOne 연동, 모달 관리를 담당합니다.
  */
 export const SubscribeFormContent = () => {
+	const { data: userMe, isSuccess: isUserMeSuccess } = useQuery(getUserMeQueryOption());
 	const {
 		isMembership,
 		isSubmitting: isFinalSubmitting,
@@ -46,10 +49,10 @@ export const SubscribeFormContent = () => {
 	const [isInitiatingCard, setIsInitiatingCard] = useState(false);
 	const [isInitiatingToss, setIsInitiatingToss] = useState(false);
 
-	const methods = useForm<SubscribeFormValues>({
-		resolver: zodResolver(subscribeFormSchema),
+	const methods = useForm<SubscribeFormValue>({
+		resolver: zodResolver(SubscribeFormSchema),
 		defaultValues: {
-			recurringPeriod: RecurringPeriod.YEARLY,
+			recurringPeriod: "yearly",
 		},
 	});
 
@@ -60,12 +63,12 @@ export const SubscribeFormContent = () => {
 
 	/** 구독 상품명 (연간/월간) */
 	const subscriptionIssueName = useMemo(
-		() => (recurringPeriod === RecurringPeriod.YEARLY ? "HITBEAT 연간 멤버십" : "HITBEAT 월간 멤버십"),
+		() => (recurringPeriod === "yearly" ? "HITBEAT 연간 멤버십" : "HITBEAT 월간 멤버십"),
 		[recurringPeriod],
 	);
 
 	/** 현재 구독 상품 가격 */
-	const currentAmount = useMemo(() => (recurringPeriod === RecurringPeriod.YEARLY ? 189900 : 24990), [recurringPeriod]);
+	const currentAmount = useMemo(() => (recurringPeriod === "yearly" ? 189900 : 24990), [recurringPeriod]);
 
 	/**
 	 * 빌링키 발급 후 실제 구독 처리를 위해 `useSubscription`의 `submitSubscription`을 호출합니다.
@@ -74,6 +77,8 @@ export const SubscribeFormContent = () => {
 	 */
 	const processSubscriptionWithBillingKey = useCallback(
 		async (billingKey: string, paymentType: PaymentGatewayType | "PAYPAL") => {
+			if (!isUserMeSuccess) return;
+
 			console.log(`Local processSubscription with ${paymentType}, billingKey: ${billingKey}`);
 
 			// Map PaymentGatewayType to the string expected by the form schema for `method.type`
@@ -90,9 +95,9 @@ export const SubscribeFormContent = () => {
 				...currentFormValues,
 				paymentMethodType: paymentType, // This uses the full PaymentGatewayType | "PAYPAL"
 				// TODO: Collect these from actual form fields if they exist
-				customerName: (currentFormValues as any).customerName || "폼에서 고객명 필요",
-				email: (currentFormValues as any).email || "폼에서 이메일 필요",
-				phone: (currentFormValues as any).phone || "폼에서 전화번호 필요",
+				customerName: userMe.name,
+				email: userMe.email,
+				phone: userMe.phoneNumber,
 				method: { type: formMethodType, billingKey }, // Use mapped type for form data consistency
 			};
 
@@ -108,14 +113,14 @@ export const SubscribeFormContent = () => {
 				console.error("Error during handoff to hook's submitSubscription:", error);
 			}
 		},
-		[isMembership, reset, setValue, submitSubscription, watch],
+		[isMembership, reset, setValue, submitSubscription, watch, isUserMeSuccess, userMe],
 	);
 
 	/**
 	 * RHF의 기본 onSubmit 핸들러입니다. (주요 제출 경로는 아님)
 	 * 직접적인 결제 시작은 각 결제 버튼 핸들러에서 수행됩니다.
 	 */
-	const onSubmitRHF: SubmitHandler<SubscribeFormValues> = async (data) => {
+	const onSubmitRHF: SubmitHandler<SubscribeFormValue> = async (data) => {
 		console.log("RHF onSubmit triggered (should not be primary submission path):", data);
 		openModal("error"); // Fallback error if this path is somehow used for submission
 	};
@@ -179,7 +184,7 @@ export const SubscribeFormContent = () => {
 				setButtonProcessing(false); // Reset button-specific loading state regardless of outcome
 			}
 		},
-		[commonBillingKeyArgs, initiateBillingKeyIssue, processSubscriptionWithBillingKey],
+		[commonBillingKeyArgs, initiateBillingKeyIssue, processSubscriptionWithBillingKey, openModal],
 	);
 
 	// Modal close handlers
@@ -216,7 +221,7 @@ export const SubscribeFormContent = () => {
 	// 구독 기간 변경 시 알림 (토스트 메시지) 표시
 	useEffect(() => {
 		// This effect provides user feedback on period change, not directly related to submission logic
-		if (recurringPeriod === RecurringPeriod.YEARLY) {
+		if (recurringPeriod === "yearly") {
 			toast({
 				description: (
 					<span className="text-center text-16px justify-start text-hbc-black font-suit leading-150% tracking-016px">

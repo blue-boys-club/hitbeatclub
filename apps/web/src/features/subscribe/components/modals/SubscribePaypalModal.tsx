@@ -2,9 +2,9 @@ import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Popup, PopupContent, PopupFooter, PopupHeader, PopupTitle, PopupButton } from "@/components/ui/Popup";
 import { useFormContext } from "react-hook-form";
 import PortOne from "@portone/browser-sdk/v2";
-import { RecurringPeriod, SubscribeFormValues } from "../../schema";
 import { useSubscription } from "../../hooks/useSubscription";
 import { PORTONE_CHANNEL_KEY, PORTONE_STORE_ID } from "../../../../lib/payment.constant";
+import { SubscribeFormValue } from "../../schema";
 
 interface SubscribePaypalModalProps {
 	isOpen: boolean;
@@ -17,7 +17,7 @@ interface SubscribePaypalModalProps {
  * 페이팔 빌링키 발급 모달
  */
 export const SubscribePaypalModal = memo(({ isOpen, onClose, onSuccess, onError }: SubscribePaypalModalProps) => {
-	const { watch, setValue } = useFormContext<SubscribeFormValues>();
+	const { watch, setValue } = useFormContext<SubscribeFormValue>();
 	const recurringPeriod = watch("recurringPeriod");
 	const { isSubmitting: isParentSubmitting } = useSubscription(); // Renamed to avoid conflict
 
@@ -28,7 +28,7 @@ export const SubscribePaypalModal = memo(({ isOpen, onClose, onSuccess, onError 
 	);
 
 	const subscriptionIssueName = useMemo(
-		() => (recurringPeriod === RecurringPeriod.YEARLY ? "HITBEAT 연간 멤버십" : "HITBEAT 월간 멤버십"),
+		() => (recurringPeriod === "yearly" ? "HITBEAT 연간 멤버십" : "HITBEAT 월간 멤버십"),
 		[recurringPeriod],
 	);
 
