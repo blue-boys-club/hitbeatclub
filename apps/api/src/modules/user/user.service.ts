@@ -165,4 +165,12 @@ export class UserService {
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
 	}
+
+	// TODO: FIXME: Temporary function
+	async makeSubscribe(id: number): Promise<User> {
+		return this.prisma.user.update({
+			where: { id: BigInt(id) },
+			data: { subscribedAt: new Date() },
+		});
+	}
 }
