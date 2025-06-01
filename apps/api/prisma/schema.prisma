@@ -50,6 +50,7 @@ model Artist {
   youtubeAccount             String?   @map("youtube_account") @db.VarChar(30)
   tiktokAccount              String?   @map("tiktok_account") @db.VarChar(30)
   soundcloudAccount          String?   @map("soundcloud_account") @db.VarChar(30)
+  etcAccounts                Json?     @map("etc_accounts")
   kakaoAccount               String?   @map("kakao_account") @db.VarChar(30)
   lineAccount                String?   @map("line_account") @db.VarChar(30)
   discordAccount             String?   @map("discord_account") @db.VarChar(30)

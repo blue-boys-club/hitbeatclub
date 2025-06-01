@@ -88,30 +88,4 @@ export class UserController {
 			},
 		};
 	}
-
-	// TODO: FIXME: Temporary function
-	@ApiOperation({ summary: "[TEMP] 유저 구독 정보 삽입" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
-	@DocResponse<DatabaseIdResponseDto>(userMessage.update.success, {
-		dto: DatabaseIdResponseDto,
-	})
-	@Post("/subscribe")
-	async insertSubscribe(@Req() req: AuthenticatedRequest): Promise<DatabaseIdResponseDto> {
-		const { id } = req.user;
-
-		const user = await this.userService.findMe(id);
-
-		if (!user) {
-			throw new NotFoundException("User not found");
-		}
-
-		const subscribe = await this.userService.makeSubscribe(id);
-
-		return {
-			statusCode: 200,
-			message: subscribe.subscribedAt ? userMessage.update.success : userMessage.delete.success,
-			data: { id: Number(subscribe.id) },
-		};
-	}
 }

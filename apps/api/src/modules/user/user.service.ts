@@ -167,10 +167,10 @@ export class UserService {
 	}
 
 	// TODO: FIXME: Temporary function
-	async makeSubscribe(id: number): Promise<User> {
+	async updateSubscribedAt(id: number, subscribedAt: Date | null): Promise<User> {
 		return this.prisma.user.update({
 			where: { id: BigInt(id) },
-			data: { subscribedAt: new Date() },
+			data: { subscribedAt },
 		});
 	}
 }

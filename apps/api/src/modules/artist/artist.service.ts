@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from "@nestjs/comm
 import { PrismaService } from "src/common/prisma/prisma.service";
 import { Artist } from "@prisma/client";
 import { ArtistUpdateDto } from "./dto/request/artist.update.dto";
+import { ArtistCreateDto } from "./dto/request/artist.create.request.dto";
 
 @Injectable()
 export class ArtistService {
@@ -66,7 +67,7 @@ export class ArtistService {
 		}
 	}
 
-	async create(userId: number, createArtistDto) {
+	async create(userId: number, createArtistDto: ArtistCreateDto) {
 		const artist = await this.prisma.artist
 			.create({
 				data: {
