@@ -48,12 +48,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate shared types
-        run: |
-          cd packages/shared-types
-          pnpm build
-          cd ../..
-
       - name: Generate Prisma client
         run: |
           cd apps/api
