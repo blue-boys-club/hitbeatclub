@@ -1,4 +1,4 @@
-import { SubscribeMembershipRequestSchema } from "./../../../../../packages/shared-types/src/subscribe/subscribe.request";
+import { SubscribeMembershipRequestSchema } from "@hitbeatclub/shared-types/subscribe";
 import { z } from "zod";
 
 export const PaypalCredentialSchema = z.object({
