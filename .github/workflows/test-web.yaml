@@ -32,6 +32,12 @@ jobs:
           node-version: "22"
           cache: "pnpm"
 
+      - name: Generate shared types
+        run: |
+          cd packages/shared-types
+          pnpm build
+          cd ../..
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
