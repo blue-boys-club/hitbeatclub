@@ -4,12 +4,7 @@ export const ArtistCreateSchema = z.object({
 	stageName: z.string().min(1).max(30).describe("스테이지명").default("DJ Cool"),
 	slug: z.string().max(20).describe("슬러그").default("dj-cool").optional(),
 	description: z.string().max(1000).describe("아티스트 설명").default("안녕하세요! DJ Cool입니다.").optional(),
-	profileImageUrl: z
-		.string()
-		.max(255)
-		.describe("프로필 이미지 URL")
-		.default("https://example.com/profile.jpg")
-		.optional(),
+	profileImageFileId: z.number().describe("프로필 이미지 파일 ID").optional(),
 	instagramAccount: z.string().max(30).describe("인스타그램 계정").default("djcool").optional(),
 	youtubeAccount: z.string().max(30).describe("유튜브 계정").default("djcool").optional(),
 	tiktokAccount: z.string().max(30).describe("틱톡 계정").default("djcool").optional(),

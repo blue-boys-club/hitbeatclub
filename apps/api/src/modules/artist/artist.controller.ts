@@ -28,10 +28,9 @@ import { FileUploadResponseDto } from "../file/dto/response/file.upload.response
 import { FileService } from "../file/file.service";
 import { AuthenticationDoc } from "src/common/doc/decorators/auth.decorator";
 import { FileUploadSingle } from "src/common/file/decorators/file.decorator";
-import { FileSingleDto } from "src/common/file/dtos/file.single.dto";
-import { FileSingleUploadDto } from "src/common/file/dtos/request/file.upload.dto";
 import { ARTIST_NOT_FOUND_ERROR } from "./artist.error";
-@Controller("artist")
+import { ArtistUploadProfileRequestDto } from "./dto/request/artist.upload-profile.request.dto";
+@Controller("artists")
 @ApiTags("artist")
 @ApiBearerAuth()
 export class ArtistController {
@@ -49,19 +48,15 @@ export class ArtistController {
 	@Get("me")
 	@ApiOperation({ summary: "내 아티스트 정보 조회" })
 	@AuthenticationDoc()
-	@DocResponse<ArtistDetailResponseDto>(artistMessage.find.success, {
+	@DocResponse<ArtistDetailResponseDto>(artistMessage.findMe.success, {
 		dto: ArtistDetailResponseDto,
 	})
-	async findMe(@Req() req: AuthenticatedRequest) {
-		const artist = await this.artistService.findByUserId(req.user.id);
-
-		if (!artist) {
-			throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
-		}
+	async findMe(@Req() req: AuthenticatedRequest): Promise<IResponse<ArtistDetailResponseDto>> {
+		const artist = await this.artistService.findMe(req.user.id);
 
 		return {
 			statusCode: 200,
-			message: artistMessage.find.success,
+			message: artistMessage.findMe.success,
 			data: artist,
 		};
 	}
@@ -96,7 +91,19 @@ export class ArtistController {
 		@Req() req: AuthenticatedRequest,
 		@Body() createArtistDto: ArtistCreateDto,
 	): Promise<DatabaseIdResponseDto> {
+		const profileImageFileId = createArtistDto?.profileImageFileId || null;
+
+		delete createArtistDto?.profileImageFileId;
+
 		const artist = await this.artistService.create(req.user.id, createArtistDto);
+
+		if (profileImageFileId) {
+			await this.artistService.uploadArtistProfile({
+				uploaderId: req.user.id,
+				artistId: artist.id,
+				profileImageFileId,
+			});
+		}
 
 		return {
 			statusCode: 201,
@@ -118,7 +125,16 @@ export class ArtistController {
 		@Param("id") id: number,
 		@Body() updateArtistDto: ArtistUpdateDto,
 	): Promise<DatabaseIdResponseDto> {
+		const profileImageFileId = updateArtistDto?.profileImageFileId || null;
+		delete updateArtistDto?.profileImageFileId;
+
 		const artist = await this.artistService.update(id, updateArtistDto);
+
+		await this.artistService.uploadArtistProfile({
+			uploaderId: req.user.id,
+			artistId: artist.id,
+			profileImageFileId,
+		});
 
 		return {
 			statusCode: 200,
@@ -147,41 +163,33 @@ export class ArtistController {
 		};
 	}
 
-	@Post(":id/file")
-	@ApiOperation({ summary: "아티스트 파일 업로드" })
+	@Post("profile")
+	@ApiOperation({ summary: "아티스트 프로필 업로드" })
 	@ApiConsumes("multipart/form-data")
 	@AuthenticationDoc()
 	@FileUploadSingle()
 	@DocRequestFile({
-		dto: FileSingleDto,
+		dto: ArtistUploadProfileRequestDto,
 	})
 	@DocResponse<FileUploadResponseDto>("success artist photo upload", {
 		dto: FileUploadResponseDto,
 	})
-	async uploadProductFile(
+	async uploadProfileImage(
 		@Req() req: AuthenticatedRequest,
-		@Param("id") artistId: number,
-		@Body() fileSingleUploadDto: FileSingleUploadDto,
+		@Body() artistUploadProfileRequestDto: ArtistUploadProfileRequestDto,
 		@UploadedFile(
 			new FileRequiredPipe(),
 			new FileTypePipe([ENUM_FILE_MIME_IMAGE.JPG, ENUM_FILE_MIME_IMAGE.JPEG, ENUM_FILE_MIME_IMAGE.PNG]),
 		)
 		file: Express.Multer.File,
 	): Promise<IResponse<FileUploadResponseDto>> {
-		const artist = await this.artistService.findOne(artistId);
-
-		if (!artist) {
-			throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
-		}
-
 		const s3Obj = await this.fileService.putItemInBucket(file, {
-			path: `artist/${artistId}`,
+			path: `artist`,
 		});
 
 		const fileRow = await this.fileService.create({
 			targetTable: "artist",
-			targetId: artistId,
-			type: fileSingleUploadDto.type,
+			type: artistUploadProfileRequestDto.type,
 			uploaderId: req.user.id,
 			url: s3Obj.url,
 			originalName: Buffer.from(file.originalname.normalize("NFC"), "ascii").toString("utf8"),

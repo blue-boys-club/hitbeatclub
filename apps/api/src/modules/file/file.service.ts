@@ -109,7 +109,7 @@ export class FileService {
 
 		return await this.prisma.file.update({
 			where: { id: newFileId },
-			data: { isEnabled: 1, targetId: targetId },
+			data: { isEnabled: 1, targetId: targetId, deletedAt: null },
 		});
 	}
 
@@ -141,6 +141,7 @@ export class FileService {
 					deletedAt: null,
 					targetId,
 					targetTable,
+					isEnabled: 1,
 				},
 			})
 			.then((data) => this.prisma.serializeBigInt(data));

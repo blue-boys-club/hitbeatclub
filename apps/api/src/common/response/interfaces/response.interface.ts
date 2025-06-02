@@ -21,7 +21,7 @@ export interface IResponseFileExcelOptions {
 
 // response
 export interface IResponse<T = void> {
-	_metadata?: IResponseMetadata;
+	// _metadata?: IResponseMetadata;
 	statusCode?: number;
 	message?: string;
 	data?: T;
