@@ -11,6 +11,11 @@ const QUERY_KEYS = {
 		list: ["products", "list"],
 		one: (productId: number): QueryKey => ["products", productId],
 	},
+	artist: {
+		_key: ["artist"],
+		detail: (id: number): QueryKey => ["artist", id],
+		me: ["artist", "me"],
+	},
 };
 
 export { QUERY_KEYS };
