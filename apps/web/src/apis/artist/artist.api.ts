@@ -7,7 +7,7 @@ import type { CommonResponse } from "@/apis/api.type";
  * @returns 아티스트 정보
  */
 export const getArtistMe = async () => {
-	const response = await axiosInstance.get<CommonResponse<ArtistMeResponse>>(`/artist/me`);
+	const response = await axiosInstance.get<CommonResponse<ArtistMeResponse>>(`/artists/me`);
 	return response.data;
 };
 
@@ -17,7 +17,7 @@ export const getArtistMe = async () => {
  * @returns 아티스트 정보
  */
 export const getArtistDetail = async (id: number) => {
-	const response = await axiosInstance.get<CommonResponse<ArtistDetailResponse>>(`/artist/${id}`);
+	const response = await axiosInstance.get<CommonResponse<ArtistDetailResponse>>(`/artists/${id}`);
 	return response.data;
 };
 
@@ -27,7 +27,7 @@ export const getArtistDetail = async (id: number) => {
  * @returns 아티스트 생성 결과
  */
 export const createArtist = async (payload: ArtistCreatePayload) => {
-	const response = await axiosInstance.post(`/artist`, payload);
+	const response = await axiosInstance.post(`/artists`, payload);
 	return response.data;
 };
 
@@ -38,6 +38,6 @@ export const createArtist = async (payload: ArtistCreatePayload) => {
  * @returns 아티스트 수정 결과
  */
 export const updateArtist = async (id: number, payload: ArtistUpdatePayload) => {
-	const response = await axiosInstance.patch(`/artist/${id}`, payload);
+	const response = await axiosInstance.patch(`/artists/${id}`, payload);
 	return response.data;
 };

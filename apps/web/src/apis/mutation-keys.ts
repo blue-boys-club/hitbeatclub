@@ -25,6 +25,6 @@ export const MUTATION_KEYS = {
 	},
 	artist: {
 		create: ["artist", "create"],
-		update: (id: number) => ["artist", "update", id],
+		update: ["artist", "update"],
 	},
 };

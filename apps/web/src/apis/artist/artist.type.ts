@@ -19,13 +19,33 @@ export interface ArtistDetailResponse {
 	deletedAt: string;
 }
 
-export interface ArtistMeResponse extends ArtistDetailResponse {}
+export interface ArtistMeResponse {
+	id: number;
+	userId: number;
+	stageName: string;
+	slug: string;
+	description: string;
+	profileImageUrl: string;
+	instagramAccount: string;
+	youtubeAccount: string;
+	tiktokAccount: string;
+	soundcloudAccount: string;
+	etcAccounts: string[];
+	kakaoAccount: string;
+	lineAccount: string;
+	discordAccount: string;
+	country: string;
+	city: string;
+	createdAt: string;
+	updatedAt: string;
+	deletedAt: string | null;
+}
 
 export interface ArtistCreatePayload {
 	stageName: string;
 	slug: string;
-	description?: string;
-	profileImageUrl?: string;
+	description: string;
+	profileImageUrl: string;
 	instagramAccount?: string;
 	youtubeAccount?: string;
 	tiktokAccount?: string;
@@ -33,8 +53,9 @@ export interface ArtistCreatePayload {
 	kakaoAccount?: string;
 	lineAccount?: string;
 	discordAccount?: string;
-	country?: string;
-	city?: string;
+	etcAccounts?: string[];
+	country: string;
+	city: string;
 }
 
 export interface ArtistUpdatePayload {
