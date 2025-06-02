@@ -94,7 +94,6 @@ export class ProductController {
 
 	@Get(":id")
 	@ApiOperation({ summary: "상품 상세 조회" })
-	@DocAuth({ jwtAccessToken: true })
 	@DocResponse<ProductDetailResponseDto>(productMessage.find.success, {
 		dto: ProductDetailResponseDto,
 	})
@@ -120,8 +119,7 @@ export class ProductController {
 
 	@Post()
 	@ApiOperation({ summary: "상품 생성" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
+	@AuthenticationDoc()
 	@DocResponse<DatabaseIdResponseDto>(productMessage.create.success, {
 		dto: DatabaseIdResponseDto,
 	})
@@ -158,8 +156,7 @@ export class ProductController {
 
 	@Patch(":id")
 	@ApiOperation({ summary: "상품 정보 수정" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
+	@AuthenticationDoc()
 	@DocResponse<DatabaseIdResponseDto>(productMessage.update.success, {
 		dto: DatabaseIdResponseDto,
 	})
@@ -197,8 +194,7 @@ export class ProductController {
 
 	@Delete(":id")
 	@ApiOperation({ summary: "상품 삭제" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
+	@AuthenticationDoc()
 	@DocResponse<DatabaseIdResponseDto>(productMessage.delete.success, {
 		dto: DatabaseIdResponseDto,
 	})

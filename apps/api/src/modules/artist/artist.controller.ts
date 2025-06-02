@@ -13,8 +13,7 @@ import {
 import { ArtistService } from "./artist.service";
 import { ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
-import { DocAuth, DocRequestFile, DocResponse } from "src/common/doc/decorators/doc.decorator";
-import { AuthJwtAccessProtected } from "../auth/decorators/auth.jwt.decorator";
+import { DocRequestFile, DocResponse } from "src/common/doc/decorators/doc.decorator";
 import { IResponse } from "src/common/response/interfaces/response.interface";
 import { artistMessage } from "./artist.message";
 import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
@@ -22,7 +21,6 @@ import { ArtistCreateDto } from "./dto/request/artist.create.request.dto";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
 import { ArtistUpdateDto } from "./dto/request/artist.update.dto";
 import { ArtistDetailResponseDto } from "./dto/response/artist.detail.response.dto";
-import { ARTIST_NOT_FOUND_ERROR } from "./artist.error";
 import { ENUM_FILE_MIME_IMAGE } from "src/common/file/constants/file.enum.constant";
 import { FileRequiredPipe } from "src/common/file/pipes/file.required.pipe";
 import { FileTypePipe } from "src/common/file/pipes/file.type.pipe";
@@ -32,7 +30,7 @@ import { AuthenticationDoc } from "src/common/doc/decorators/auth.decorator";
 import { FileUploadSingle } from "src/common/file/decorators/file.decorator";
 import { FileSingleDto } from "src/common/file/dtos/file.single.dto";
 import { FileSingleUploadDto } from "src/common/file/dtos/request/file.upload.dto";
-
+import { ARTIST_NOT_FOUND_ERROR } from "./artist.error";
 @Controller("artist")
 @ApiTags("artist")
 @ApiBearerAuth()
@@ -50,8 +48,7 @@ export class ArtistController {
 
 	@Get("me")
 	@ApiOperation({ summary: "내 아티스트 정보 조회" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
+	@AuthenticationDoc()
 	@DocResponse<ArtistDetailResponseDto>(artistMessage.find.success, {
 		dto: ArtistDetailResponseDto,
 	})
@@ -70,6 +67,7 @@ export class ArtistController {
 	}
 
 	@Get(":id")
+	@AuthenticationDoc()
 	@ApiOperation({ summary: "아티스트 상세 조회" })
 	@DocResponse<ArtistDetailResponseDto>(artistMessage.find.success, {
 		dto: ArtistDetailResponseDto,
@@ -90,8 +88,7 @@ export class ArtistController {
 
 	@Post()
 	@ApiOperation({ summary: "아티스트 생성" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
+	@AuthenticationDoc()
 	@DocResponse<DatabaseIdResponseDto>(artistMessage.create.success, {
 		dto: DatabaseIdResponseDto,
 	})
@@ -112,8 +109,7 @@ export class ArtistController {
 
 	@Patch(":id")
 	@ApiOperation({ summary: "아티스트 정보 수정" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
+	@AuthenticationDoc()
 	@DocResponse<DatabaseIdResponseDto>(artistMessage.update.success, {
 		dto: DatabaseIdResponseDto,
 	})
@@ -135,8 +131,7 @@ export class ArtistController {
 
 	@Delete(":id")
 	@ApiOperation({ summary: "아티스트 삭제" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
+	@AuthenticationDoc()
 	@DocResponse<DatabaseIdResponseDto>(artistMessage.delete.success, {
 		dto: DatabaseIdResponseDto,
 	})

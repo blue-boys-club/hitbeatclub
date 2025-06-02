@@ -41,7 +41,7 @@ model User {
 
 model Artist {
   id                         BigInt    @id @default(autoincrement())
-  userId                     BigInt    @unique @map("user_id")
+  userId                     BigInt    @map("user_id")
   stageName                  String?   @map("stage_name") @db.VarChar(30)
   slug                       String?   @db.VarChar(20)
   description                String?   @db.Text
