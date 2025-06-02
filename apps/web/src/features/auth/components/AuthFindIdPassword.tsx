@@ -5,6 +5,7 @@ import { HBCLoginMain } from "@/assets/svgs";
 import { Button } from "@/components/ui/Button";
 import { AuthFindIdModal } from "./Modal/AuthFindIdModal";
 import { useFindEmailMutation } from "@/apis/auth/mutations";
+import Link from "next/link";
 
 export const AuthFindIdPassword = () => {
 	const [isIdModalOpen, setIsIdModalOpen] = useState(false);
@@ -111,9 +112,11 @@ export const AuthFindIdPassword = () => {
 						/>
 					</div>
 					<div className="flex justify-end mb-9">
-						<span className="text-sm font-semibold underline cursor-pointer text-hbc-gray-300">
-							도움이 필요하신가요?
-						</span>
+						<Link href="/support">
+							<span className="text-sm font-semibold underline cursor-pointer text-hbc-gray-300">
+								도움이 필요하신가요?
+							</span>
+						</Link>
 					</div>
 					<div className="flex justify-center">
 						<Button
