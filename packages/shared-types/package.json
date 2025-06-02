@@ -40,6 +40,11 @@
 			"types": "./dist/common/index.d.ts",
 			"import": "./dist/common/index.mjs",
 			"require": "./dist/common/index.js"
+		},
+		"./subscribe": {
+			"types": "./dist/subscribe/index.d.ts",
+			"import": "./dist/subscribe/index.mjs",
+			"require": "./dist/subscribe/index.js"
 		}
 	},
 	"files": [

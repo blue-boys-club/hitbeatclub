@@ -8,7 +8,7 @@ import {
 	PopupButton,
 	PopupDescription,
 } from "@/components/ui/Popup";
-import { RecurringPeriod } from "../../schema";
+import { RecurringPeriod } from "@hitbeatclub/shared-types/subscribe";
 import Image from "next/image";
 /**
  * `SubscribePaymentChoiceModal` 컴포넌트의 Props 정의
@@ -64,9 +64,7 @@ export const SubscribePaymentChoiceModal = memo(
 		const subscriptionPlanText = useMemo(() => {
 			const yearlyPrice = "189,900원";
 			const monthlyPrice = "24,990원/월";
-			return recurringPeriod === RecurringPeriod.YEARLY
-				? `연간 멤버십 (${yearlyPrice} 결제)`
-				: `월간 멤버십 (${monthlyPrice})`;
+			return recurringPeriod === "yearly" ? `연간 멤버십 (${yearlyPrice} 결제)` : `월간 멤버십 (${monthlyPrice})`;
 		}, [recurringPeriod]);
 
 		return (
@@ -93,10 +91,7 @@ export const SubscribePaymentChoiceModal = memo(
 							<h3 className="mb-2 text-base font-semibold text-gray-800">💳 정기 결제 안내</h3>
 							<ul className="ml-5 space-y-1 text-sm text-gray-700 list-disc">
 								<li>선택하신 결제수단으로 정기 결제가 이루어집니다.</li>
-								<li>
-									첫 결제 후 {recurringPeriod === RecurringPeriod.YEARLY ? "매년" : "매월"} 같은 날짜에 자동으로
-									결제됩니다.
-								</li>
+								<li>첫 결제 후 {recurringPeriod === "yearly" ? "매년" : "매월"} 같은 날짜에 자동으로 결제됩니다.</li>
 								<li>결제 정보는 안전하게 암호화되어 관리됩니다.</li>
 								<li>언제든지 멤버십을 취소할 수 있습니다.</li>
 							</ul>

@@ -9,6 +9,7 @@ export const ArtistCreateSchema = z.object({
 	youtubeAccount: z.string().max(30).describe("유튜브 계정").optional(),
 	tiktokAccount: z.string().max(30).describe("틱톡 계정").optional(),
 	soundcloudAccount: z.string().max(30).describe("사운드클라우드 계정").optional(),
+	etcAccounts: z.array(z.string().url()).nullable().describe("기타 계정들").optional(),
 	kakaoAccount: z.string().max(30).describe("카카오 계정").optional(),
 	lineAccount: z.string().max(30).describe("라인 계정").optional(),
 	discordAccount: z.string().max(30).describe("디스코드 계정").optional(),

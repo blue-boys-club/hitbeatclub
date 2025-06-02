@@ -11,6 +11,7 @@ export const ArtistResponseSchema = z.object({
 	youtubeAccount: z.string().nullable().describe("유튜브 계정"),
 	tiktokAccount: z.string().nullable().describe("틱톡 계정"),
 	soundcloudAccount: z.string().nullable().describe("사운드클라우드 계정"),
+	etcAccounts: z.array(z.string().url()).nullable().describe("기타 계정들"),
 	kakaoAccount: z.string().nullable().describe("카카오 계정"),
 	lineAccount: z.string().nullable().describe("라인 계정"),
 	discordAccount: z.string().nullable().describe("디스코드 계정"),
