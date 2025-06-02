@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useState, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlbumAvatar, Dropdown, Input } from "@/components/ui";
@@ -237,14 +237,14 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 	const { mutate: updateArtist } = useUpdateArtistMutation();
 	const { mutate: uploadProfile } = useUploadArtistProfileMutation();
 
-	const onChangeField = (field: keyof ProfileFormData, value: any) => {
+	const onChangeField = useCallback((field: keyof ProfileFormData, value: string | BaseItem) => {
 		setFormData((prev: ProfileFormData) => ({
 			...prev,
 			[field]: value,
 		}));
-	};
+	}, []);
 
-	const onAddSns = () => {
+	const onAddSns = useCallback(() => {
 		const { label, value } = selectedSns;
 		if (!label || !value) return;
 
@@ -281,9 +281,9 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 			}
 		});
 		setSelectedSns({ label: "", value: "" });
-	};
+	}, [selectedSns]);
 
-	const onRemoveSns = (label: string, value?: string) => {
+	const onRemoveSns = useCallback((label: string, value?: string) => {
 		setFormData((prev: ProfileFormData) => ({
 			...prev,
 			snsList: (prev.snsList || []).filter((sns: BaseItem) => {
@@ -296,9 +296,9 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 				}
 			}),
 		}));
-	};
+	}, []);
 
-	const onAddContact = () => {
+	const onAddContact = useCallback(() => {
 		const { label, value } = selectedContact;
 		if (!label || !value) return;
 
@@ -322,68 +322,74 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 			}
 		});
 		setSelectedContact({ label: "", value: "" });
-	};
+	}, [selectedContact]);
 
-	const onRemoveContact = (label: string) => {
+	const onRemoveContact = useCallback((label: string) => {
 		setFormData((prev: ProfileFormData) => ({
 			...prev,
 			contactList: (prev.contactList || []).filter((contact: BaseItem) => contact.label !== label),
 		}));
-	};
+	}, []);
 
-	const onSubmitForm = handleSubmit((data) => {
-		const { stageName, slug, description, profileImageFileId, country, city } = data;
-
-		const payload: ArtistUpdateRequest = {
-			stageName,
-			slug,
-			description,
-			profileImageFileId,
-			instagramAccount: (formData.snsList || []).find((sns: BaseItem) => sns.label === "instagram")?.value,
-			youtubeAccount: (formData.snsList || []).find((sns: BaseItem) => sns.label === "youtube")?.value,
-			tiktokAccount: (formData.snsList || []).find((sns: BaseItem) => sns.label === "tiktok")?.value,
-			soundcloudAccount: (formData.snsList || []).find((sns: BaseItem) => sns.label === "soundcloud")?.value,
-			etcAccounts: (formData.snsList || [])
-				.filter((sns: BaseItem) => sns.label === "etc")
-				.map((sns: BaseItem) => sns.value),
-			kakaoAccount: (formData.contactList || []).find((contact: BaseItem) => contact.label === "kakao")?.value,
-			lineAccount: (formData.contactList || []).find((contact: BaseItem) => contact.label === "line")?.value,
-			discordAccount: (formData.contactList || []).find((contact: BaseItem) => contact.label === "discord")?.value,
-			country: country?.value,
-			city: city?.value,
-		};
-
-		if (artistMe?.id) {
-			updateArtist({ id: artistMe.id, payload });
-			setIsPopupOpen(true);
-		}
-	});
-
-	const onClosePopup = () => {
+	const onClosePopup = useCallback(() => {
 		setIsPopupOpen(false);
-	};
+	}, []);
 
-	const onUploadProfileImage = (file: File) => {
-		uploadProfile(
-			{
-				file,
-				type: ENUM_FILE_TYPE.ARTIST_PROFILE_IMAGE,
-			},
-			{
-				onSuccess: (response) => {
-					// URL을 UI에 표시하고, fileId를 form data에 저장
-					setFormData((prev) => ({
-						...prev,
-						profileImageUrl: response.data.url,
-						profileImageFileId: response.data.id,
-					}));
+	const onUploadProfileImage = useCallback(
+		(file: File) => {
+			uploadProfile(
+				{
+					file,
+					type: ENUM_FILE_TYPE.ARTIST_PROFILE_IMAGE,
 				},
-				onError: (error) => {
-					console.error("파일 업로드 실패:", error);
+				{
+					onSuccess: (response) => {
+						// URL을 UI에 표시하고, fileId를 form data에 저장
+						setFormData((prev) => ({
+							...prev,
+							profileImageUrl: response.data.url,
+							profileImageFileId: response.data.id,
+						}));
+					},
+					onError: (error) => {
+						console.error("파일 업로드 실패:", error);
+					},
 				},
-			},
-		);
-	};
+			);
+		},
+		[uploadProfile],
+	);
+
+	const onSubmitForm = useCallback(
+		(data: ProfileFormData) => {
+			const { stageName, slug, description, profileImageFileId, country, city } = data;
+
+			const payload: ArtistUpdateRequest = {
+				stageName,
+				slug,
+				description,
+				profileImageFileId,
+				instagramAccount: (formData.snsList || []).find((sns: BaseItem) => sns.label === "instagram")?.value,
+				youtubeAccount: (formData.snsList || []).find((sns: BaseItem) => sns.label === "youtube")?.value,
+				tiktokAccount: (formData.snsList || []).find((sns: BaseItem) => sns.label === "tiktok")?.value,
+				soundcloudAccount: (formData.snsList || []).find((sns: BaseItem) => sns.label === "soundcloud")?.value,
+				etcAccounts: (formData.snsList || [])
+					.filter((sns: BaseItem) => sns.label === "etc")
+					.map((sns: BaseItem) => sns.value),
+				kakaoAccount: (formData.contactList || []).find((contact: BaseItem) => contact.label === "kakao")?.value,
+				lineAccount: (formData.contactList || []).find((contact: BaseItem) => contact.label === "line")?.value,
+				discordAccount: (formData.contactList || []).find((contact: BaseItem) => contact.label === "discord")?.value,
+				country: country?.value,
+				city: city?.value,
+			};
+
+			if (artistMe?.id) {
+				updateArtist({ id: artistMe.id, payload });
+				setIsPopupOpen(true);
+			}
+		},
+		[formData, artistMe, updateArtist],
+	);
 
 	useEffect(() => {
 		if (artistMe) {
@@ -426,7 +432,7 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 
 	return (
 		<>
-			<form onSubmit={onSubmitForm}>
+			<form onSubmit={handleSubmit(onSubmitForm)}>
 				<div className="flex gap-8">
 					<div className="flex flex-col items-center gap-4">
 						<AlbumAvatar src={formData.profileImageUrl || "https://placehold.co/252x252"} />
