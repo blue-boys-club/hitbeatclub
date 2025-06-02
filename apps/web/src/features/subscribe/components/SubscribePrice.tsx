@@ -1,3 +1,4 @@
+import { RecurringPeriod } from "@hitbeatclub/shared-types/subscribe";
 import { memo } from "react";
 
 /**
@@ -5,7 +6,7 @@ import { memo } from "react";
  */
 interface SubscribePriceProps {
 	isSubscribed: boolean;
-	recurringPeriod: "monthly" | "yearly";
+	recurringPeriod: RecurringPeriod;
 }
 
 export const SubscribePrice = memo(({ isSubscribed, recurringPeriod }: SubscribePriceProps) => {

@@ -4,7 +4,7 @@ import { PopupButton as BasicPopupButton } from "@/components/ui/PopupButton";
 import { cn } from "@/common/utils/tailwind";
 import { useSubscription } from "../../hooks/useSubscription";
 import { useFormContext } from "react-hook-form";
-import { SubscribeFormValues } from "../../schema";
+import { SubscribeFormValue } from "../../schema";
 import { Input } from "@/components/ui";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
  */
 export const PromotionCodeModal = memo(() => {
 	const { modals, closeModal, validatePromotionCode } = useSubscription();
-	const { setValue } = useFormContext<SubscribeFormValues>();
+	const { setValue } = useFormContext<SubscribeFormValue>();
 	const [code, setCode] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [isValidating, setIsValidating] = useState(false);
