@@ -1,20 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { HBCLoginMain } from "@/assets/svgs";
 import { Button } from "@/components/ui/Button";
 import { AuthFindIdModal } from "./Modal/AuthFindIdModal";
+import { useFindEmailMutation } from "@/apis/auth/mutations";
 
 export const AuthFindIdPassword = () => {
 	const [isIdModalOpen, setIsIdModalOpen] = useState(false);
+	const [name, setName] = useState("");
+	const [phoneNumber, setPhoneNumber] = useState("");
+	const [email, setEmail] = useState<string>("");
 
-	const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+	const { mutate: findEmail, isSuccess, isError, error, data } = useFindEmailMutation();
+
+	const onFindId = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+		findEmail({ name, phoneNumber });
 	};
 
-	const onFindId = () => {
-		setIsIdModalOpen(true);
-	};
+	useEffect(() => {
+		if (isSuccess && data?.data.email) {
+			setEmail(data.data.email);
+			setIsIdModalOpen(true);
+		}
+		if (isError) {
+			alert("이메일 찾기에 실패했습니다. 다시 시도해주세요.");
+		}
+	}, [isSuccess, data, isError, error]);
 
 	const onCloseModal = () => {
 		setIsIdModalOpen(false);
@@ -33,7 +46,7 @@ export const AuthFindIdPassword = () => {
 
 				<div className="mb-5 text-xl font-bold tracking-[0.22px]">이메일 찾기</div>
 
-				<form onSubmit={onSubmit}>
+				<form onSubmit={onFindId}>
 					<div className="space-y-4 mb-9">
 						<label
 							htmlFor="name"
@@ -47,6 +60,8 @@ export const AuthFindIdPassword = () => {
 							type="text"
 							required
 							className="w-full px-3 py-2 border rounded-md border-hbc-black focus:outline-none"
+							value={name}
+							onChange={(e) => setName(e.target.value)}
 						/>
 						<label
 							htmlFor="phone"
@@ -60,24 +75,26 @@ export const AuthFindIdPassword = () => {
 							type="text"
 							required
 							className="w-full px-3 py-2 border rounded-md border-hbc-black focus:outline-none"
+							value={phoneNumber}
+							onChange={(e) => setPhoneNumber(e.target.value)}
 						/>
 					</div>
-
 					<div className="flex justify-center">
 						<Button
 							size={"lg"}
 							className="w-[225px] p-2.5 font-extrabold"
-							onClick={onFindId}
 						>
 							이메일 찾기
 						</Button>
 					</div>
+				</form>
 
-					{/* divider */}
-					<div className="w-full h-[1px] bg-hbc-black my-17.5"></div>
+				{/* divider */}
+				<div className="w-full h-[1px] bg-hbc-black my-17.5"></div>
 
-					<div className="mb-5 text-xl font-bold tracking-[0.22px]">비밀번호 찾기</div>
+				<div className="mb-5 text-xl font-bold tracking-[0.22px]">비밀번호 찾기</div>
 
+				<form action="">
 					<div>
 						<label
 							htmlFor="email"
@@ -93,13 +110,11 @@ export const AuthFindIdPassword = () => {
 							className="w-full px-3 py-2 mb-2 border rounded-md border-hbc-black focus:outline-none"
 						/>
 					</div>
-
 					<div className="flex justify-end mb-9">
 						<span className="text-sm font-semibold underline cursor-pointer text-hbc-gray-300">
 							도움이 필요하신가요?
 						</span>
 					</div>
-
 					<div className="flex justify-center">
 						<Button
 							size={"lg"}
@@ -114,6 +129,7 @@ export const AuthFindIdPassword = () => {
 			<AuthFindIdModal
 				isOpen={isIdModalOpen}
 				onCloseModal={onCloseModal}
+				email={email}
 			/>
 		</>
 	);
