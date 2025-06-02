@@ -1,6 +1,7 @@
 import { FieldErrors } from "react-hook-form";
-import { ArtistUpdateRequest, ArtistUpdateSchema } from "@hitbeatclub/shared-types/artist";
+import { ArtistUpdateSchema } from "@hitbeatclub/shared-types/artist";
 import { z } from "zod";
+import { deepRemoveDefaults } from "@/lib/schema.utils";
 
 // Common Types
 export interface BaseItem {
@@ -10,6 +11,7 @@ export interface BaseItem {
 
 // UI 폼용 확장된 Zod 스키마 (ArtistUpdateSchema 기반)
 export const ProfileFormSchema = ArtistUpdateSchema.extend({
+	profileImageUrl: z.string().optional(), // UI 표시용
 	snsList: z
 		.array(
 			z.object({
@@ -43,6 +45,8 @@ export const ProfileFormSchema = ArtistUpdateSchema.extend({
 // Zod 스키마에서 타입 추론
 export type ProfileFormData = z.infer<typeof ProfileFormSchema>;
 
+export const ArtistUpdateSchemaWithoutDefaults = deepRemoveDefaults(ArtistUpdateSchema);
+
 export interface SnsSectionProps {
 	selectedSns: BaseItem;
 	userSnsList: BaseItem[];
@@ -50,7 +54,7 @@ export interface SnsSectionProps {
 	onChangeLabel: (label: string) => void;
 	onChangeValue: (value: string) => void;
 	onAddSns: () => void;
-	onRemoveSns: (label: string) => void;
+	onRemoveSns: (label: string, value?: string) => void;
 }
 
 export interface ContactSectionProps {

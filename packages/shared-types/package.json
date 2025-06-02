@@ -45,6 +45,11 @@
 			"types": "./dist/subscribe/index.d.ts",
 			"import": "./dist/subscribe/index.mjs",
 			"require": "./dist/subscribe/index.js"
+		},
+		"./file": {
+			"types": "./dist/file/index.d.ts",
+			"import": "./dist/file/index.mjs",
+			"require": "./dist/file/index.js"
 		}
 	},
 	"files": [

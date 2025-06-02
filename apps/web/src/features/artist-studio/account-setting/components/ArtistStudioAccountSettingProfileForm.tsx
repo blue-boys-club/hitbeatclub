@@ -18,6 +18,7 @@ import {
 	Youtube,
 } from "@/assets/svgs";
 import { useUpdateArtistMutation } from "@/apis/artist/mutation";
+import { useUploadArtistProfileMutation } from "@/apis/artist/mutation/useUploadArtistProfileMutation";
 import { useQuery } from "@tanstack/react-query";
 import { getArtistMeQueryOption } from "@/apis/artist/query/artist.query-options";
 import {
@@ -31,6 +32,7 @@ import {
 import { CITY_OPTIONS, CONTACT_OPTIONS, COUNTRY_OPTIONS, SNS_OPTIONS } from "../../artist-studio.constants";
 import { cn } from "@/common/utils";
 import { ArtistUpdateRequest } from "@hitbeatclub/shared-types/artist";
+import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
 
 const renderSnsIcon = (label: string) => {
 	switch (label) {
@@ -113,7 +115,7 @@ const SnsSection = memo(
 						/>
 						<div
 							className="cursor-pointer"
-							onClick={() => onRemoveSns(sns.label)}
+							onClick={() => onRemoveSns(sns.label, sns.value)}
 						>
 							<MinusCircle />
 						</div>
@@ -206,6 +208,7 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 		stageName: "",
 		slug: "",
 		description: "",
+		profileImageFileId: undefined,
 		profileImageUrl: "",
 		snsList: [],
 		contactList: [],
@@ -232,6 +235,7 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 
 	const { data: artistMe } = useQuery(getArtistMeQueryOption());
 	const { mutate: updateArtist } = useUpdateArtistMutation();
+	const { mutate: uploadProfile } = useUploadArtistProfileMutation();
 
 	const onChangeField = (field: keyof ProfileFormData, value: any) => {
 		setFormData((prev: ProfileFormData) => ({
@@ -279,10 +283,18 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 		setSelectedSns({ label: "", value: "" });
 	};
 
-	const onRemoveSns = (label: string) => {
+	const onRemoveSns = (label: string, value?: string) => {
 		setFormData((prev: ProfileFormData) => ({
 			...prev,
-			snsList: (prev.snsList || []).filter((sns: BaseItem) => sns.label !== label),
+			snsList: (prev.snsList || []).filter((sns: BaseItem) => {
+				if (label === "etc") {
+					// etc 타입은 label과 value 모두 일치해야 삭제
+					return !(sns.label === label && sns.value === value);
+				} else {
+					// 다른 타입은 label만 일치하면 삭제
+					return sns.label !== label;
+				}
+			}),
 		}));
 	};
 
@@ -320,13 +332,13 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 	};
 
 	const onSubmitForm = handleSubmit((data) => {
-		const { stageName, slug, description, profileImageUrl, country, city } = data;
+		const { stageName, slug, description, profileImageFileId, country, city } = data;
 
 		const payload: ArtistUpdateRequest = {
 			stageName,
 			slug,
 			description,
-			profileImageUrl,
+			profileImageFileId,
 			instagramAccount: (formData.snsList || []).find((sns: BaseItem) => sns.label === "instagram")?.value,
 			youtubeAccount: (formData.snsList || []).find((sns: BaseItem) => sns.label === "youtube")?.value,
 			tiktokAccount: (formData.snsList || []).find((sns: BaseItem) => sns.label === "tiktok")?.value,
@@ -349,6 +361,28 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 
 	const onClosePopup = () => {
 		setIsPopupOpen(false);
+	};
+
+	const onUploadProfileImage = (file: File) => {
+		uploadProfile(
+			{
+				file,
+				type: ENUM_FILE_TYPE.ARTIST_PROFILE_IMAGE,
+			},
+			{
+				onSuccess: (response) => {
+					// URL을 UI에 표시하고, fileId를 form data에 저장
+					setFormData((prev) => ({
+						...prev,
+						profileImageUrl: response.data.url,
+						profileImageFileId: response.data.id,
+					}));
+				},
+				onError: (error) => {
+					console.error("파일 업로드 실패:", error);
+				},
+			},
+		);
 	};
 
 	useEffect(() => {
@@ -379,6 +413,7 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 				stageName: artistMe.stageName || "",
 				slug: artistMe.slug || "",
 				description: artistMe.description || "",
+				profileImageFileId: undefined,
 				profileImageUrl: artistMe.profileImageUrl || "",
 				snsList,
 				contactList,
@@ -407,15 +442,10 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 							accept="image/*"
 							className="hidden"
 							onChange={(e) => {
-								// const file = e.target.files?.[0];
-								// if (file) {
-								// 	const reader = new FileReader();
-								// 	reader.onloadend = () => {
-								// 		setValue("profileImage", reader.result as string);
-								// 		onChangeField("profileImage", reader.result as string);
-								// 	};
-								// 	reader.readAsDataURL(file);
-								// }
+								const file = e.target.files?.[0];
+								if (file) {
+									onUploadProfileImage(file);
+								}
 							}}
 						/>
 					</div>
