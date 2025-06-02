@@ -1,11 +1,9 @@
 import { useState, useCallback, useEffect, createContext, useContext, ReactNode, useMemo } from "react";
-import { SubscribeFormValues } from "../schema";
-import { useLayoutStore } from "@/stores/layout";
-import { useShallow } from "zustand/react/shallow";
 import PortOne, { Entity } from "@portone/browser-sdk/v2";
 import { PORTONE_STORE_ID, PORTONE_CHANNEL_KEY } from "../../../lib/payment.constant";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { useQuery } from "@tanstack/react-query";
+import { SubscribeFormValue } from "../schema";
 
 /**
  * 사용 가능한 모달 유형
@@ -32,7 +30,7 @@ export interface BaseBillingKeyIssueArgs {
 /**
  * 구독 폼 값에 결제 수단 유형 및 추가 고객 정보가 포함된 확장된 타입
  */
-export type AugmentedSubscribeFormValues = SubscribeFormValues & {
+export type AugmentedSubscribeFormValues = SubscribeFormValue & {
 	/** 선택된 결제 수단 유형 (내부 식별용) */
 	paymentMethodType: PaymentGatewayType | "PAYPAL"; // PAYPAL은 PortOne 외부 처리
 	/** 고객 이름 */

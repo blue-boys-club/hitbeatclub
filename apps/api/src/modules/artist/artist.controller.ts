@@ -1,9 +1,19 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Req, NotFoundException } from "@nestjs/common";
+import {
+	Controller,
+	Get,
+	Post,
+	Patch,
+	Delete,
+	Param,
+	Body,
+	Req,
+	NotFoundException,
+	UploadedFile,
+} from "@nestjs/common";
 import { ArtistService } from "./artist.service";
-import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
-import { DocAuth, DocResponse } from "src/common/doc/decorators/doc.decorator";
-import { AuthJwtAccessProtected } from "../auth/decorators/auth.jwt.decorator";
+import { DocRequestFile, DocResponse } from "src/common/doc/decorators/doc.decorator";
 import { IResponse } from "src/common/response/interfaces/response.interface";
 import { artistMessage } from "./artist.message";
 import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
@@ -11,13 +21,23 @@ import { ArtistCreateDto } from "./dto/request/artist.create.request.dto";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
 import { ArtistUpdateDto } from "./dto/request/artist.update.dto";
 import { ArtistDetailResponseDto } from "./dto/response/artist.detail.response.dto";
+import { ENUM_FILE_MIME_IMAGE } from "src/common/file/constants/file.enum.constant";
+import { FileRequiredPipe } from "src/common/file/pipes/file.required.pipe";
+import { FileTypePipe } from "src/common/file/pipes/file.type.pipe";
+import { FileUploadResponseDto } from "../file/dto/response/file.upload.response.dto";
+import { FileService } from "../file/file.service";
+import { AuthenticationDoc } from "src/common/doc/decorators/auth.decorator";
+import { FileUploadSingle } from "src/common/file/decorators/file.decorator";
 import { ARTIST_NOT_FOUND_ERROR } from "./artist.error";
-
-@Controller("artist")
+import { ArtistUploadProfileRequestDto } from "./dto/request/artist.upload-profile.request.dto";
+@Controller("artists")
 @ApiTags("artist")
 @ApiBearerAuth()
 export class ArtistController {
-	constructor(private readonly artistService: ArtistService) {}
+	constructor(
+		private readonly artistService: ArtistService,
+		private readonly fileService: FileService,
+	) {}
 
 	@Get()
 	@ApiOperation({ summary: "아티스트 목록 조회" })
@@ -27,26 +47,22 @@ export class ArtistController {
 
 	@Get("me")
 	@ApiOperation({ summary: "내 아티스트 정보 조회" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
-	@DocResponse<ArtistDetailResponseDto>(artistMessage.find.success, {
+	@AuthenticationDoc()
+	@DocResponse<ArtistDetailResponseDto>(artistMessage.findMe.success, {
 		dto: ArtistDetailResponseDto,
 	})
-	async findMe(@Req() req: AuthenticatedRequest) {
-		const artist = await this.artistService.findByUserId(req.user.id);
-
-		if (!artist) {
-			throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
-		}
+	async findMe(@Req() req: AuthenticatedRequest): Promise<IResponse<ArtistDetailResponseDto>> {
+		const artist = await this.artistService.findMe(req.user.id);
 
 		return {
 			statusCode: 200,
-			message: artistMessage.find.success,
+			message: artistMessage.findMe.success,
 			data: artist,
 		};
 	}
 
 	@Get(":id")
+	@AuthenticationDoc()
 	@ApiOperation({ summary: "아티스트 상세 조회" })
 	@DocResponse<ArtistDetailResponseDto>(artistMessage.find.success, {
 		dto: ArtistDetailResponseDto,
@@ -67,8 +83,7 @@ export class ArtistController {
 
 	@Post()
 	@ApiOperation({ summary: "아티스트 생성" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
+	@AuthenticationDoc()
 	@DocResponse<DatabaseIdResponseDto>(artistMessage.create.success, {
 		dto: DatabaseIdResponseDto,
 	})
@@ -76,7 +91,19 @@ export class ArtistController {
 		@Req() req: AuthenticatedRequest,
 		@Body() createArtistDto: ArtistCreateDto,
 	): Promise<DatabaseIdResponseDto> {
+		const profileImageFileId = createArtistDto?.profileImageFileId || null;
+
+		delete createArtistDto?.profileImageFileId;
+
 		const artist = await this.artistService.create(req.user.id, createArtistDto);
+
+		if (profileImageFileId) {
+			await this.artistService.uploadArtistProfile({
+				uploaderId: req.user.id,
+				artistId: artist.id,
+				profileImageFileId,
+			});
+		}
 
 		return {
 			statusCode: 201,
@@ -89,8 +116,7 @@ export class ArtistController {
 
 	@Patch(":id")
 	@ApiOperation({ summary: "아티스트 정보 수정" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
+	@AuthenticationDoc()
 	@DocResponse<DatabaseIdResponseDto>(artistMessage.update.success, {
 		dto: DatabaseIdResponseDto,
 	})
@@ -99,7 +125,16 @@ export class ArtistController {
 		@Param("id") id: number,
 		@Body() updateArtistDto: ArtistUpdateDto,
 	): Promise<DatabaseIdResponseDto> {
+		const profileImageFileId = updateArtistDto?.profileImageFileId || null;
+		delete updateArtistDto?.profileImageFileId;
+
 		const artist = await this.artistService.update(id, updateArtistDto);
+
+		await this.artistService.uploadArtistProfile({
+			uploaderId: req.user.id,
+			artistId: artist.id,
+			profileImageFileId,
+		});
 
 		return {
 			statusCode: 200,
@@ -112,8 +147,7 @@ export class ArtistController {
 
 	@Delete(":id")
 	@ApiOperation({ summary: "아티스트 삭제" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
+	@AuthenticationDoc()
 	@DocResponse<DatabaseIdResponseDto>(artistMessage.delete.success, {
 		dto: DatabaseIdResponseDto,
 	})
@@ -126,6 +160,47 @@ export class ArtistController {
 			data: {
 				id,
 			},
+		};
+	}
+
+	@Post("profile")
+	@ApiOperation({ summary: "아티스트 프로필 업로드" })
+	@ApiConsumes("multipart/form-data")
+	@AuthenticationDoc()
+	@FileUploadSingle()
+	@DocRequestFile({
+		dto: ArtistUploadProfileRequestDto,
+	})
+	@DocResponse<FileUploadResponseDto>("success artist photo upload", {
+		dto: FileUploadResponseDto,
+	})
+	async uploadProfileImage(
+		@Req() req: AuthenticatedRequest,
+		@Body() artistUploadProfileRequestDto: ArtistUploadProfileRequestDto,
+		@UploadedFile(
+			new FileRequiredPipe(),
+			new FileTypePipe([ENUM_FILE_MIME_IMAGE.JPG, ENUM_FILE_MIME_IMAGE.JPEG, ENUM_FILE_MIME_IMAGE.PNG]),
+		)
+		file: Express.Multer.File,
+	): Promise<IResponse<FileUploadResponseDto>> {
+		const s3Obj = await this.fileService.putItemInBucket(file, {
+			path: `artist`,
+		});
+
+		const fileRow = await this.fileService.create({
+			targetTable: "artist",
+			type: artistUploadProfileRequestDto.type,
+			uploaderId: req.user.id,
+			url: s3Obj.url,
+			originalName: Buffer.from(file.originalname.normalize("NFC"), "ascii").toString("utf8"),
+			mimeType: file.mimetype,
+			size: file.size,
+		});
+
+		return {
+			statusCode: 200,
+			message: "success user photo upload",
+			data: { id: fileRow.id, url: s3Obj.url },
 		};
 	}
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Delete, Param, Body, Req } from "@nestjs/common";
+import { Controller, Get, Patch, Delete, Param, Body, Req, Post, NotFoundException } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { ApiOperation, ApiTags, ApiBody } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
@@ -10,6 +10,7 @@ import userMessage from "./user.message";
 import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
 import { UserFindMeResponseDto } from "./dto/response/user.find-me.response.dto";
+import { AuthenticationDoc } from "src/common/doc/decorators/auth.decorator";
 
 @Controller("users")
 @ApiTags("user")
@@ -19,8 +20,7 @@ export class UserController {
 
 	@Get("me")
 	@ApiOperation({ summary: "내 정보 조회" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
+	@AuthenticationDoc()
 	@DocResponse<UserFindMeResponseDto>(userMessage.find.success, {
 		dto: UserFindMeResponseDto,
 	})
@@ -36,8 +36,7 @@ export class UserController {
 
 	@Patch(":id/social-join")
 	@ApiOperation({ summary: "소셜 사용자 회원가입" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
+	@AuthenticationDoc()
 	@ApiBody({
 		type: UserUpdateDto,
 	})
@@ -71,8 +70,7 @@ export class UserController {
 	}
 
 	@ApiOperation({ summary: "회원 탈퇴" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
+	@AuthenticationDoc()
 	@DocResponse<DatabaseIdResponseDto>(userMessage.delete.success, {
 		dto: DatabaseIdResponseDto,
 	})

@@ -15,7 +15,6 @@ import { ProductService } from "./product.service";
 import { ApiOperation, ApiTags, ApiConsumes, ApiQuery } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
 import { DocAuth, DocRequestFile, DocResponse, DocResponsePaging } from "src/common/doc/decorators/doc.decorator";
-import { AuthJwtAccessProtected } from "../auth/decorators/auth.jwt.decorator";
 import { IResponse, IResponsePaging } from "src/common/response/interfaces/response.interface";
 import { productMessage } from "./product.message";
 import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
@@ -28,19 +27,18 @@ import {
 } from "src/common/file/constants/file.enum.constant";
 import { AuthenticationDoc } from "src/common/doc/decorators/auth.decorator";
 import { FileUploadSingle } from "src/common/file/decorators/file.decorator";
-import { FileSingleDto } from "src/common/file/dtos/file.single.dto";
 import { ENUM_FILE_MIME_IMAGE } from "src/common/file/constants/file.enum.constant";
 import { FileRequiredPipe } from "src/common/file/pipes/file.required.pipe";
 import { FileTypePipe } from "src/common/file/pipes/file.type.pipe";
 import { FileUploadResponseDto } from "../file/dto/response/file.upload.response.dto";
 import { FileService } from "../file/file.service";
-import { FileSingleUploadDto } from "src/common/file/dtos/request/file.upload.dto";
 import { ProductUpdateDto } from "./dto/request/product.update.dto";
 import { ProductDetailResponseDto } from "./dto/response/product.detail.response.dto";
 import { PRODUCT_NOT_FOUND_ERROR } from "./product.error";
 import { ProductListResponseDto } from "./dto/response/product.list.response.dto";
 import { ProductListQueryRequestDto } from "./dto/request/project.list.request.dto";
 import { ENUM_PRODUCT_TYPE } from "./product.enum";
+import { ProductUploadFileRequestDto } from "./dto/request/product.upload-file.request.dto";
 
 @Controller("products")
 @ApiTags("product")
@@ -94,7 +92,6 @@ export class ProductController {
 
 	@Get(":id")
 	@ApiOperation({ summary: "상품 상세 조회" })
-	@DocAuth({ jwtAccessToken: true })
 	@DocResponse<ProductDetailResponseDto>(productMessage.find.success, {
 		dto: ProductDetailResponseDto,
 	})
@@ -120,8 +117,7 @@ export class ProductController {
 
 	@Post()
 	@ApiOperation({ summary: "상품 생성" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
+	@AuthenticationDoc()
 	@DocResponse<DatabaseIdResponseDto>(productMessage.create.success, {
 		dto: DatabaseIdResponseDto,
 	})
@@ -158,8 +154,7 @@ export class ProductController {
 
 	@Patch(":id")
 	@ApiOperation({ summary: "상품 정보 수정" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
+	@AuthenticationDoc()
 	@DocResponse<DatabaseIdResponseDto>(productMessage.update.success, {
 		dto: DatabaseIdResponseDto,
 	})
@@ -197,8 +192,7 @@ export class ProductController {
 
 	@Delete(":id")
 	@ApiOperation({ summary: "상품 삭제" })
-	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
+	@AuthenticationDoc()
 	@DocResponse<DatabaseIdResponseDto>(productMessage.delete.success, {
 		dto: DatabaseIdResponseDto,
 	})
@@ -220,14 +214,14 @@ export class ProductController {
 	@AuthenticationDoc()
 	@FileUploadSingle()
 	@DocRequestFile({
-		dto: FileSingleDto,
+		dto: ProductUploadFileRequestDto,
 	})
 	@DocResponse<FileUploadResponseDto>("success user photo upload", {
 		dto: FileUploadResponseDto,
 	})
 	async uploadProductFile(
 		@Req() req: AuthenticatedRequest,
-		@Body() fileSingleUploadDto: FileSingleUploadDto,
+		@Body() productUploadFileRequestDto: ProductUploadFileRequestDto,
 		@UploadedFile(
 			new FileRequiredPipe(),
 			new FileTypePipe([
@@ -251,7 +245,7 @@ export class ProductController {
 
 		const fileRow = await this.fileService.create({
 			targetTable: "product",
-			type: fileSingleUploadDto.type,
+			type: productUploadFileRequestDto.type,
 			uploaderId: req.user.id,
 			url: s3Obj.url,
 			originalName: Buffer.from(file.originalname.normalize("NFC"), "ascii").toString("utf8"),
