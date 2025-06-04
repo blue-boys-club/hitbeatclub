@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useState, useCallback } from "react";
+import { memo, useEffect, useState, useCallback, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlbumAvatar, Dropdown, Input } from "@/components/ui";
@@ -29,7 +29,8 @@ import {
 	ProfileFormSchema,
 } from "@/features/artist-studio/artist-studio.types";
 
-import { CITY_OPTIONS, CONTACT_OPTIONS, COUNTRY_OPTIONS, SNS_OPTIONS } from "../../artist-studio.constants";
+import { CONTACT_OPTIONS, SNS_OPTIONS } from "../../artist-studio.constants";
+import { COUNTRY_OPTIONS, CountryCode, getRegionOptionsByCountry } from "@/features/common/common.constants";
 import { cn } from "@/common/utils";
 import { ArtistUpdateRequest } from "@hitbeatclub/shared-types/artist";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
@@ -225,8 +226,8 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 		profileImageUrl: "",
 		snsList: [],
 		contactList: [],
-		country: { label: "", value: "" },
-		city: { label: "", value: "" },
+		country: "",
+		city: "",
 	});
 
 	const [selectedSns, setSelectedSns] = useState<BaseItem>({ label: SNS_OPTIONS[0]?.value || "", value: "" });
@@ -241,6 +242,7 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 		control,
 		handleSubmit,
 		formState: { errors },
+		watch,
 	} = useForm<ProfileFormData>({
 		resolver: zodResolver(ProfileFormSchema),
 		values: formData,
@@ -393,8 +395,8 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 				kakaoAccount: (formData.contactList || []).find((contact: BaseItem) => contact.label === "kakao")?.value,
 				lineAccount: (formData.contactList || []).find((contact: BaseItem) => contact.label === "line")?.value,
 				discordAccount: (formData.contactList || []).find((contact: BaseItem) => contact.label === "discord")?.value,
-				country: country?.value,
-				city: city?.value,
+				country: country,
+				city: city,
 			};
 
 			if (artistMe?.id) {
@@ -437,12 +439,17 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 				profileImageUrl: artistMe.profileImageUrl || "",
 				snsList,
 				contactList,
-				country: { label: "", value: "" },
-				city: { label: "", value: "" },
+				country: "",
+				city: "",
 			};
 			setFormData(newFormData);
 		}
 	}, [artistMe]);
+
+	const country = watch("country");
+	const regionOptions = useMemo(() => {
+		return country ? getRegionOptionsByCountry(country as CountryCode) : [];
+	}, [country]);
 
 	return (
 		<>
@@ -475,7 +482,7 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 						</div>
 
 						<div className="flex flex-col items-center gap-6">
-							<ScrollArea.Root className="h-[calc(100vh-200px)]">
+							<ScrollArea.Root className="h-[calc(100vh-292px)]">
 								<ScrollArea.Viewport className="h-full w-full">
 									<div className="flex flex-col gap-6 pr-4">
 										<div className="flex flex-col gap-2">
@@ -649,10 +656,10 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 															className={cn("w-full")}
 															buttonClassName={cn(errors.country && "border border-red-500")}
 															options={COUNTRY_OPTIONS}
-															defaultValue={formData.country?.value}
+															defaultValue={formData.country}
 															placeholder="국가를 선택해주세요"
 															onChange={(value) => {
-																onChangeField("country", { label: "", value });
+																onChangeField("country", value);
 															}}
 														/>
 														{errors.country && (
@@ -679,11 +686,11 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 														<Dropdown
 															className={cn("w-full")}
 															buttonClassName={cn(errors.city && "border border-red-500")}
-															options={CITY_OPTIONS}
-															defaultValue={formData.city?.value}
+															options={regionOptions}
+															defaultValue={formData.city}
 															placeholder="도시를 선택해주세요"
 															onChange={(value) => {
-																onChangeField("city", { label: "", value });
+																onChangeField("city", value);
 															}}
 														/>
 														{errors.city && (
