@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useState, useCallback } from "react";
+import { memo, useEffect, useState, useCallback, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlbumAvatar, Dropdown, Input } from "@/components/ui";
@@ -29,10 +29,12 @@ import {
 	ProfileFormSchema,
 } from "@/features/artist-studio/artist-studio.types";
 
-import { CITY_OPTIONS, CONTACT_OPTIONS, COUNTRY_OPTIONS, SNS_OPTIONS } from "../../artist-studio.constants";
+import { CONTACT_OPTIONS, SNS_OPTIONS } from "../../artist-studio.constants";
+import { COUNTRY_OPTIONS, CountryCode, getRegionOptionsByCountry } from "@/features/common/common.constants";
 import { cn } from "@/common/utils";
 import { ArtistUpdateRequest } from "@hitbeatclub/shared-types/artist";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
+import * as ScrollArea from "@radix-ui/react-scroll-area";
 
 const renderSnsIcon = (label: string) => {
 	switch (label) {
@@ -76,28 +78,33 @@ const SnsSection = memo(
 			>
 				SNS
 			</label>
-			<div className="flex items-center gap-2.5">
-				<Dropdown
-					className="w-[135px]"
-					options={SNS_OPTIONS}
-					defaultValue={SNS_OPTIONS[0]?.value}
-					onChange={(value) => {
-						onChangeLabel(value);
-					}}
-				/>
-				<Input
-					className={cn("flex-1 text-hbc-gray-300", errors.snsList && "border-red-500")}
-					value={selectedSns.value}
-					onChange={(e) => {
-						onChangeValue(e.target.value);
-					}}
-				/>
+			<div className="flex flex-col gap-2">
+				<div className="flex items-center gap-2.5">
+					<Dropdown
+						className="w-[135px]"
+						options={SNS_OPTIONS}
+						defaultValue={SNS_OPTIONS[0]?.value}
+						onChange={(value) => {
+							onChangeLabel(value);
+						}}
+					/>
+					<Input
+						className={cn("flex-1 text-hbc-gray-300", errors.snsList && "border-red-500")}
+						value={selectedSns.value}
+						onChange={(e) => {
+							onChangeValue(e.target.value);
+						}}
+					/>
+				</div>
+				{errors.snsList && <span className="text-red-500 text-sm flex justify-end">최소 1개 이상 입력해주세요</span>}
 			</div>
-			<div
-				className="flex justify-center mt-4 cursor-pointer"
-				onClick={onAddSns}
-			>
-				<AddCircle />
+			<div className="flex justify-center mt-4">
+				<div
+					className="w-6 h-6 cursor-pointer"
+					onClick={onAddSns}
+				>
+					<AddCircle />
+				</div>
 			</div>
 
 			<ul className="mt-4 space-y-2">
@@ -114,7 +121,7 @@ const SnsSection = memo(
 							readOnly
 						/>
 						<div
-							className="cursor-pointer"
+							className="w-6 h-6 flex items-center justify-center cursor-pointer mr-2"
 							onClick={() => onRemoveSns(sns.label, sns.value)}
 						>
 							<MinusCircle />
@@ -148,28 +155,35 @@ const ContactSection = memo(
 			>
 				연락처
 			</label>
-			<div className="flex items-center gap-2.5">
-				<Dropdown
-					className="w-[135px]"
-					options={CONTACT_OPTIONS}
-					defaultValue={CONTACT_OPTIONS[0]?.value}
-					onChange={(value) => {
-						onChangeLabel(value);
-					}}
-				/>
-				<Input
-					className={cn("flex-1 text-hbc-gray-300", errors.contactList && "border-red-500")}
-					value={selectedContact.value}
-					onChange={(e) => {
-						onChangeValue(e.target.value);
-					}}
-				/>
+			<div className="flex flex-col gap-2">
+				<div className="flex items-center gap-2.5">
+					<Dropdown
+						className="w-[135px]"
+						options={CONTACT_OPTIONS}
+						defaultValue={CONTACT_OPTIONS[0]?.value}
+						onChange={(value) => {
+							onChangeLabel(value);
+						}}
+					/>
+					<Input
+						className={cn("flex-1 text-hbc-gray-300", errors.contactList && "border-red-500")}
+						value={selectedContact.value}
+						onChange={(e) => {
+							onChangeValue(e.target.value);
+						}}
+					/>
+				</div>
+				{errors.contactList && (
+					<span className="text-red-500 text-sm flex justify-end">최소 1개 이상 입력해주세요</span>
+				)}
 			</div>
-			<div
-				className="flex justify-center mt-4 cursor-pointer"
-				onClick={onAddContact}
-			>
-				<AddCircle />
+			<div className="flex justify-center mt-4">
+				<div
+					className="w-6 h-6 cursor-pointer"
+					onClick={onAddContact}
+				>
+					<AddCircle />
+				</div>
 			</div>
 
 			<ul className="mt-4 space-y-2">
@@ -186,7 +200,7 @@ const ContactSection = memo(
 							readOnly
 						/>
 						<div
-							className="cursor-pointer"
+							className="w-6 h-6 flex items-center justify-center cursor-pointer mr-2"
 							onClick={() => onRemoveContact(contact.label)}
 						>
 							<MinusCircle />
@@ -212,8 +226,8 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 		profileImageUrl: "",
 		snsList: [],
 		contactList: [],
-		country: { label: "", value: COUNTRY_OPTIONS[0]?.value || "" },
-		city: { label: "", value: CITY_OPTIONS[0]?.value || "" },
+		country: "",
+		city: "",
 	});
 
 	const [selectedSns, setSelectedSns] = useState<BaseItem>({ label: SNS_OPTIONS[0]?.value || "", value: "" });
@@ -228,6 +242,7 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 		control,
 		handleSubmit,
 		formState: { errors },
+		watch,
 	} = useForm<ProfileFormData>({
 		resolver: zodResolver(ProfileFormSchema),
 		values: formData,
@@ -280,7 +295,7 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 				};
 			}
 		});
-		setSelectedSns({ label: "", value: "" });
+		setSelectedSns({ label, value: "" });
 	}, [selectedSns]);
 
 	const onRemoveSns = useCallback((label: string, value?: string) => {
@@ -321,7 +336,7 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 				};
 			}
 		});
-		setSelectedContact({ label: "", value: "" });
+		setSelectedContact({ label, value: "" });
 	}, [selectedContact]);
 
 	const onRemoveContact = useCallback((label: string) => {
@@ -376,11 +391,12 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 				etcAccounts: (formData.snsList || [])
 					.filter((sns: BaseItem) => sns.label === "etc")
 					.map((sns: BaseItem) => sns.value),
+				// etcAccounts: ["https://twitter.com/djcool"]
 				kakaoAccount: (formData.contactList || []).find((contact: BaseItem) => contact.label === "kakao")?.value,
 				lineAccount: (formData.contactList || []).find((contact: BaseItem) => contact.label === "line")?.value,
 				discordAccount: (formData.contactList || []).find((contact: BaseItem) => contact.label === "discord")?.value,
-				country: country?.value,
-				city: city?.value,
+				country: country,
+				city: city,
 			};
 
 			if (artistMe?.id) {
@@ -423,220 +439,287 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 				profileImageUrl: artistMe.profileImageUrl || "",
 				snsList,
 				contactList,
-				country: { label: "", value: artistMe.country || COUNTRY_OPTIONS[0]?.value || "" },
-				city: { label: "", value: artistMe.city || CITY_OPTIONS[0]?.value || "" },
+				country: "",
+				city: "",
 			};
 			setFormData(newFormData);
 		}
 	}, [artistMe]);
 
+	const country = watch("country");
+	const regionOptions = useMemo(() => {
+		return country ? getRegionOptionsByCountry(country as CountryCode) : [];
+	}, [country]);
+
 	return (
 		<>
-			<form onSubmit={handleSubmit(onSubmitForm)}>
-				<div className="flex gap-8">
-					<div className="flex flex-col items-center gap-4">
-						<AlbumAvatar src={formData.profileImageUrl || "https://placehold.co/252x252"} />
-						<label
-							htmlFor="profileImage"
-							className="inline-flex items-center justify-center rounded-full bg-hbc-black text-white px-4 py-2 text-md font-bold cursor-pointer"
-						>
-							프로필 이미지 업로드
-						</label>
-						<Input
-							type="file"
-							id="profileImage"
-							accept="image/*"
-							className="hidden"
-							onChange={(e) => {
-								const file = e.target.files?.[0];
-								if (file) {
-									onUploadProfileImage(file);
-								}
-							}}
-						/>
-					</div>
-
-					<div className="flex flex-col gap-8">
-						<div className="flex flex-col gap-2">
+			<form
+				onSubmit={handleSubmit(onSubmitForm)}
+				className="flex flex-col gap-6"
+			>
+				<div className="flex flex-col items-center gap-6">
+					<div className="flex gap-8">
+						<div className="flex flex-col items-center gap-4">
+							<AlbumAvatar src={formData.profileImageUrl || "https://placehold.co/252x252"} />
 							<label
-								htmlFor="name"
-								className="text-[16px] font-bold tracking-0.16px"
+								htmlFor="profileImage"
+								className="inline-flex items-center justify-center rounded-full bg-hbc-black text-white px-4 py-2 text-md font-bold cursor-pointer"
 							>
-								활동명
+								프로필 이미지 업로드
 							</label>
-							<Controller
-								name="stageName"
-								rules={{ required: true }}
-								control={control}
-								render={({ field }) => (
-									<Input
-										id="name"
-										{...field}
-										className={cn(errors.stageName && "border-red-500")}
-										onChange={(e) => {
-											field.onChange(e);
-											onChangeField("stageName", e.target.value);
-										}}
-									/>
-								)}
+							<Input
+								type="file"
+								id="profileImage"
+								accept="image/*"
+								className="hidden"
+								onChange={(e) => {
+									const file = e.target.files?.[0];
+									if (file) {
+										onUploadProfileImage(file);
+									}
+								}}
 							/>
 						</div>
 
-						<div className="flex flex-col gap-2">
-							<label
-								htmlFor="slug"
-								className="text-[16px] font-bold tracking-0.16px"
-							>
-								아티스트 URL
-							</label>
-							<div className="flex items-center gap-2">
-								<span className="text-black/40 font-bold">https://www.hitbeatclub.com/</span>
-								<Controller
-									name="slug"
-									rules={{ required: true }}
-									control={control}
-									render={({ field }) => (
-										<Input
-											id="slug"
-											{...field}
-											className={cn(errors.slug && "border-red-500")}
-											onChange={(e) => {
-												field.onChange(e);
-												onChangeField("slug", e.target.value);
-											}}
-										/>
-									)}
-								/>
-							</div>
-						</div>
-
-						<div className="relative flex flex-col gap-2">
-							<label
-								htmlFor="description"
-								className="text-[16px] font-bold tracking-0.16px"
-							>
-								설명
-							</label>
-							<Controller
-								name="description"
-								control={control}
-								render={({ field }) => (
-									<>
-										<textarea
-											id="description"
-											className={cn(
-												"w-full h-[100px] p-[5px] border-x-[1px] border-y-[2px] rounded-[5px] resize-none focus:outline-none",
-												errors.description && "border-red-500",
-											)}
-											maxLength={9000}
-											{...field}
-											onChange={(e) => {
-												field.onChange(e);
-												onChangeField("description", e.target.value);
-											}}
-										/>
-										<div className="absolute bottom-2 right-2 text-sm text-gray-400">
-											{(field.value || "").length}/9000
+						<div className="flex flex-col items-center gap-6">
+							<ScrollArea.Root className="h-[calc(100vh-292px)]">
+								<ScrollArea.Viewport className="h-full w-full">
+									<div className="flex flex-col gap-6 pr-4">
+										<div className="flex flex-col gap-2">
+											<label
+												htmlFor="stageName"
+												className="text-[16px] font-bold tracking-0.16px"
+											>
+												활동명
+											</label>
+											<Controller
+												name="stageName"
+												rules={{
+													required: true,
+												}}
+												control={control}
+												render={({ field }) => (
+													<div className="flex flex-col gap-1">
+														<Input
+															id="stageName"
+															{...field}
+															className={cn(errors.stageName && "border-red-500")}
+															onChange={(e) => {
+																field.onChange(e);
+																onChangeField("stageName", e.target.value);
+															}}
+														/>
+														{errors.stageName && (
+															<span className="text-red-500 text-sm flex justify-end">활동명을 입력해주세요</span>
+														)}
+													</div>
+												)}
+											/>
 										</div>
-									</>
-								)}
-							/>
-						</div>
 
-						<Controller
-							name="snsList"
-							control={control}
-							render={() => (
-								<SnsSection
-									selectedSns={selectedSns}
-									userSnsList={formData.snsList || []}
-									errors={errors}
-									onChangeLabel={(label) => {
-										setSelectedSns((prev) => ({ ...prev, label: label }));
-									}}
-									onChangeValue={(value: string) => {
-										setSelectedSns((prev) => ({ ...prev, value: value }));
-									}}
-									onAddSns={onAddSns}
-									onRemoveSns={onRemoveSns}
-								/>
-							)}
-						/>
+										<div className="flex flex-col gap-2">
+											<label
+												htmlFor="slug"
+												className="text-[16px] font-bold tracking-0.16px"
+											>
+												아티스트 URL
+											</label>
+											<div className="flex flex-col gap-1">
+												<div className="flex items-center gap-2">
+													<span className="text-black/40 font-bold">https://www.hitbeatclub.com/</span>
+													<Controller
+														name="slug"
+														rules={{
+															required: true,
+														}}
+														control={control}
+														render={({ field }) => (
+															<Input
+																id="slug"
+																{...field}
+																className={cn(errors.slug && "border-red-500")}
+																onChange={(e) => {
+																	field.onChange(e);
+																	onChangeField("slug", e.target.value);
+																}}
+															/>
+														)}
+													/>
+												</div>
+												{errors.slug && (
+													<span className="text-red-500 text-sm flex justify-end">URL을 입력해주세요</span>
+												)}
+											</div>
+										</div>
 
-						<Controller
-							name="contactList"
-							control={control}
-							render={() => (
-								<ContactSection
-									selectedContact={selectedContact}
-									userContactList={formData.contactList || []}
-									errors={errors}
-									onChangeLabel={(label) => {
-										setSelectedContact((prev) => ({ ...prev, label: label }));
-									}}
-									onChangeValue={(value: string) => {
-										setSelectedContact((prev) => ({ ...prev, value: value }));
-									}}
-									onAddContact={onAddContact}
-									onRemoveContact={onRemoveContact}
-								/>
-							)}
-						/>
+										<div className="relative flex flex-col gap-2">
+											<label
+												htmlFor="description"
+												className="text-[16px] font-bold tracking-0.16px"
+											>
+												설명
+											</label>
+											<Controller
+												name="description"
+												rules={{
+													required: "설명을 입력해주세요",
+													maxLength: {
+														value: 9000,
+														message: "설명은 9000자 이하여야 합니다",
+													},
+												}}
+												control={control}
+												render={({ field }) => (
+													<div className="flex flex-col gap-1">
+														<div className="relative">
+															<textarea
+																id="description"
+																className={cn(
+																	"w-full h-[100px] p-[5px] border-x-[1px] border-y-[2px] rounded-[5px] resize-none focus:outline-none",
+																	errors.description && "border-red-500",
+																)}
+																maxLength={9000}
+																{...field}
+																onChange={(e) => {
+																	field.onChange(e);
+																	onChangeField("description", e.target.value);
+																}}
+															/>
+															<div className="absolute bottom-3 right-2 text-sm text-gray-400">
+																{(field.value || "").length} / 9000
+															</div>
+														</div>
+														{errors.description && (
+															<span className="text-red-500 text-sm flex justify-end">
+																{errors.description.message}
+															</span>
+														)}
+													</div>
+												)}
+											/>
+										</div>
 
-						<div className="flex flex-col gap-2">
-							<label
-								htmlFor="country"
-								className="text-[16px] font-bold tracking-0.16px"
+										<Controller
+											name="snsList"
+											control={control}
+											render={() => (
+												<SnsSection
+													selectedSns={selectedSns}
+													userSnsList={formData.snsList || []}
+													errors={errors}
+													onChangeLabel={(label) => {
+														setSelectedSns((prev) => ({ ...prev, label: label }));
+													}}
+													onChangeValue={(value: string) => {
+														setSelectedSns((prev) => ({ ...prev, value: value }));
+													}}
+													onAddSns={onAddSns}
+													onRemoveSns={onRemoveSns}
+												/>
+											)}
+										/>
+
+										<Controller
+											name="contactList"
+											control={control}
+											render={() => (
+												<ContactSection
+													selectedContact={selectedContact}
+													userContactList={formData.contactList || []}
+													errors={errors}
+													onChangeLabel={(label) => {
+														setSelectedContact((prev) => ({ ...prev, label: label }));
+													}}
+													onChangeValue={(value: string) => {
+														setSelectedContact((prev) => ({ ...prev, value: value }));
+													}}
+													onAddContact={onAddContact}
+													onRemoveContact={onRemoveContact}
+												/>
+											)}
+										/>
+
+										<div className="flex flex-col gap-2">
+											<label
+												htmlFor="country"
+												className="text-[16px] font-bold tracking-0.16px"
+											>
+												국가
+											</label>
+											<Controller
+												name="country"
+												rules={{ required: true }}
+												control={control}
+												render={() => (
+													<div className="flex flex-col gap-1">
+														<Dropdown
+															className={cn("w-full")}
+															buttonClassName={cn(errors.country && "border border-red-500")}
+															options={COUNTRY_OPTIONS}
+															defaultValue={formData.country}
+															placeholder="국가를 선택해주세요"
+															onChange={(value) => {
+																onChangeField("country", value);
+															}}
+														/>
+														{errors.country && (
+															<span className="text-red-500 text-sm flex justify-end">국가를 선택해주세요</span>
+														)}
+													</div>
+												)}
+											/>
+										</div>
+
+										<div className="flex flex-col gap-2">
+											<label
+												htmlFor="city"
+												className="text-[16px] font-bold tracking-0.16px"
+											>
+												도시
+											</label>
+											<Controller
+												name="city"
+												rules={{ required: true }}
+												control={control}
+												render={() => (
+													<div className="flex flex-col gap-1">
+														<Dropdown
+															className={cn("w-full")}
+															buttonClassName={cn(errors.city && "border border-red-500")}
+															options={regionOptions}
+															defaultValue={formData.city}
+															placeholder="도시를 선택해주세요"
+															onChange={(value) => {
+																onChangeField("city", value);
+															}}
+														/>
+														{errors.city && (
+															<span className="text-red-500 text-sm flex justify-end">도시를 선택해주세요</span>
+														)}
+													</div>
+												)}
+											/>
+										</div>
+									</div>
+								</ScrollArea.Viewport>
+								<ScrollArea.Scrollbar
+									className="flex select-none touch-none p-0.5 bg-gray-100 transition-colors duration-150 ease-out hover:bg-gray-200 data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5"
+									orientation="vertical"
+								>
+									<ScrollArea.Thumb className="flex-1 bg-gray-300 rounded-full relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]" />
+								</ScrollArea.Scrollbar>
+								<ScrollArea.Corner className="bg-gray-200" />
+							</ScrollArea.Root>
+
+							<Button
+								wrapperClassName="flex justify-center"
+								className="w-fit"
+								type="submit"
+								rounded="full"
 							>
-								국가
-							</label>
-							<Controller
-								name="country"
-								control={control}
-								render={() => (
-									<Dropdown
-										className={cn("w-full", errors.country && "border-red-500")}
-										options={COUNTRY_OPTIONS}
-										defaultValue={formData.country?.value || COUNTRY_OPTIONS[0]?.value}
-										onChange={(value) => {
-											onChangeField("country", { label: "", value });
-										}}
-									/>
-								)}
-							/>
+								저장하기
+							</Button>
 						</div>
-
-						<div className="flex flex-col gap-2">
-							<label
-								htmlFor="city"
-								className="text-[16px] font-bold tracking-0.16px"
-							>
-								도시
-							</label>
-							<Controller
-								name="city"
-								control={control}
-								render={() => (
-									<Dropdown
-										className={cn("w-full", errors.city && "border-red-500")}
-										options={CITY_OPTIONS}
-										defaultValue={formData.city?.value || CITY_OPTIONS[0]?.value}
-										onChange={(value) => {
-											onChangeField("city", { label: "", value });
-										}}
-									/>
-								)}
-							/>
-						</div>
-
-						<Button
-							wrapperClassName="flex justify-center"
-							className="w-fit"
-							type="submit"
-							rounded="full"
-						>
-							저장하기
-						</Button>
 					</div>
 				</div>
 			</form>
