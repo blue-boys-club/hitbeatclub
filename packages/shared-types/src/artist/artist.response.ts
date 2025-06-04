@@ -1,4 +1,19 @@
 import { z } from "zod";
+import { ENUM_ARTIST_SETTLEMENT_BANK } from "./artist.request";
+
+export const ArtistSettlementResponseSchema = z.union([
+	z.object({
+		type: z.literal("BANK_ACCOUNT"),
+		accountHolder: z.string().min(1).max(100).describe("입금주 명").default("김민준"),
+		accountNumber: z.string().min(1).max(100).describe("계좌번호").default("1231234567890"),
+		accountBank: z.enum(ENUM_ARTIST_SETTLEMENT_BANK).describe("은행").default("BANK_OF_KOREA"),
+	}),
+	z.object({
+		type: z.literal("PAYPAL"),
+		accountHolder: z.string().min(1).max(100).describe("입금주 명").default("김민준"),
+		paypalAccount: z.string().email().min(1).max(100).describe("페이팔 계정").default("djcool@gmail.com"),
+	}),
+]);
 
 export const ArtistResponseSchema = z.object({
 	id: z.number().describe("아티스트 ID").default(1),
@@ -17,6 +32,7 @@ export const ArtistResponseSchema = z.object({
 	discordAccount: z.string().nullable().describe("디스코드 계정").default("djspider#1234"),
 	country: z.string().nullable().describe("국가").default("대한민국"),
 	city: z.string().nullable().describe("도시").default("서울"),
+	settlement: ArtistSettlementResponseSchema.nullable().describe("정산 정보"),
 	createdAt: z.date().nullable().describe("생성일").default(new Date("2024-01-01")),
 	updatedAt: z.date().nullable().describe("수정일").default(new Date("2024-01-01")),
 	deletedAt: z.date().nullable().describe("삭제일").default(null),
