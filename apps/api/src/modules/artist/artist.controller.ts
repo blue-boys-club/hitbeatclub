@@ -30,6 +30,10 @@ import { AuthenticationDoc } from "src/common/doc/decorators/auth.decorator";
 import { FileUploadSingle } from "src/common/file/decorators/file.decorator";
 import { ARTIST_NOT_FOUND_ERROR } from "./artist.error";
 import { ArtistUploadProfileRequestDto } from "./dto/request/artist.upload-profile.request.dto";
+import settlementMessage from "../settlement/settlement.message";
+import { SettlementCreateDto } from "../settlement/dto/request/settlement.create.dto";
+import { SettlementService } from "../settlement/settlement.service";
+import { SettlementUpdateDto } from "../settlement/dto/request/settlement.update.dto";
 @Controller("artists")
 @ApiTags("artist")
 @ApiBearerAuth()
@@ -37,6 +41,7 @@ export class ArtistController {
 	constructor(
 		private readonly artistService: ArtistService,
 		private readonly fileService: FileService,
+		private readonly settlementService: SettlementService,
 	) {}
 
 	@Get()
@@ -201,6 +206,38 @@ export class ArtistController {
 			statusCode: 200,
 			message: "success user photo upload",
 			data: { id: fileRow.id, url: s3Obj.url },
+		};
+	}
+
+	@Post(":id/settlement")
+	@ApiOperation({ summary: "아티스트 정산 정보 생성" })
+	@AuthenticationDoc()
+	@DocResponse<DatabaseIdResponseDto>(settlementMessage.create.success, {
+		dto: DatabaseIdResponseDto,
+	})
+	async createSettlement(@Param("id") id: number, @Body() createSettlementDto: SettlementCreateDto) {
+		const settlement = await this.settlementService.createByArtistId(id, createSettlementDto);
+
+		return {
+			statusCode: 200,
+			message: settlementMessage.create.success,
+			data: settlement,
+		};
+	}
+
+	@Patch(":id/settlement")
+	@ApiOperation({ summary: "아티스트 정산 정보 수정" })
+	@AuthenticationDoc()
+	@DocResponse<DatabaseIdResponseDto>(settlementMessage.update.success, {
+		dto: DatabaseIdResponseDto,
+	})
+	async updateSettlement(@Param("id") id: number, @Body() updateSettlementDto: SettlementUpdateDto) {
+		const settlement = await this.settlementService.updateByArtistId(id, updateSettlementDto);
+
+		return {
+			statusCode: 200,
+			message: settlementMessage.update.success,
+			data: settlement,
 		};
 	}
 }

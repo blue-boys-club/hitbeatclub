@@ -18,3 +18,5 @@ export const SettlementResponseSchema = z.discriminatedUnion("type", [
 	SettlementBankAccountResponseSchema,
 	SettlementPaypalResponseSchema,
 ]);
+
+export type SettlementResponse = z.infer<typeof SettlementResponseSchema>;

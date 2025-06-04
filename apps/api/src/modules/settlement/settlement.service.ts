@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from "@nestjs/comm
 import { PrismaService } from "src/common/prisma/prisma.service";
 import { UserService } from "../user/user.service";
 import { ArtistService } from "../artist/artist.service";
-import { SETTLEMENT_NOT_FOUND_ERROR } from "./settlement.error";
+import { SETTLEMENT_ALREADY_EXISTS_ERROR, SETTLEMENT_NOT_FOUND_ERROR } from "./settlement.error";
 import { ARTIST_NOT_FOUND_ERROR } from "../artist/artist.error";
 import { SettlementCreateDto } from "./dto/request/settlement.create.dto";
 import { SettlementUpdateDto } from "./dto/request/settlement.update.dto";
@@ -16,11 +16,10 @@ import type { SettlementCreateRequest, SettlementUpdateRequest } from "@hitbeatc
 export class SettlementService {
 	constructor(
 		private readonly prisma: PrismaService,
-		private readonly userService: UserService,
 		private readonly artistService: ArtistService,
 	) {}
 
-	async findOneByArtist(artistId: number) {
+	async findOneByArtistId(artistId: number) {
 		const settlement = await this.prisma.settlement.findFirst({
 			where: {
 				artistId,
@@ -40,6 +39,11 @@ export class SettlementService {
 			throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
 		}
 
+		const existingSettlement = await this.findOneByArtistId(artistId);
+		if (existingSettlement) {
+			throw new NotFoundException(SETTLEMENT_ALREADY_EXISTS_ERROR);
+		}
+
 		const settlement = await this.prisma.settlement.create({
 			data: {
 				...(settlementCreateDto as SettlementCreateRequest),
@@ -51,10 +55,25 @@ export class SettlementService {
 	}
 
 	async updateByArtistId(artistId: number, settlementUpdateDto: SettlementUpdateDto) {
-		const settlement = await this.prisma.settlement.update({
-			where: { artistId },
-			data: settlementUpdateDto,
-		});
+		const artist = await this.artistService.findOne(artistId);
+		if (!artist) {
+			throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
+		}
+
+		const existingSettlement = await this.findOneByArtistId(artistId);
+		if (!existingSettlement) {
+			throw new NotFoundException(SETTLEMENT_NOT_FOUND_ERROR);
+		}
+
+		const settlement = await this.prisma.settlement
+			.update({
+				where: { artistId },
+				data: settlementUpdateDto,
+				select: {
+					id: true,
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
 
 		return settlement;
 	}
