@@ -179,9 +179,12 @@ export const SettlementPaypalSchema = z.object({
 	paypalAccount: z.string().email().min(1).max(100).describe("페이팔 계정").default("djcool@gmail.com"),
 });
 
-export const SettlementCreateSchema = z.union([SettlementBankAccountSchema, SettlementPaypalSchema]);
+export const SettlementCreateSchema = z.discriminatedUnion("type", [
+	SettlementBankAccountSchema,
+	SettlementPaypalSchema,
+]);
 
-export const SettlementUpdateSchema = z.union([
+export const SettlementUpdateSchema = z.discriminatedUnion("type", [
 	SettlementBankAccountSchema.partial({
 		accountHolder: true,
 		accountNumber: true,
