@@ -6,11 +6,21 @@ import { UserModule } from "src/modules/user/user.module";
 import { ProductModule } from "src/modules/product/product.module";
 import { ArtistModule } from "src/modules/artist/artist.module";
 import { SubscribeModule } from "src/modules/subscribe/subscribe.module";
+import { SettlementModule } from "src/modules/settlement/settlement.module";
 
 @Module({
 	controllers: [],
 	providers: [],
 	exports: [],
-	imports: [AuthModule.forRoot(), UserModule, AwsModule, FileModule, ProductModule, ArtistModule, SubscribeModule],
+	imports: [
+		AuthModule.forRoot(),
+		UserModule,
+		AwsModule,
+		FileModule,
+		ProductModule,
+		ArtistModule,
+		SubscribeModule,
+		SettlementModule,
+	],
 })
 export class RoutesUserModule {}
