@@ -34,6 +34,7 @@ import { COUNTRY_OPTIONS, CountryCode, getRegionOptionsByCountry } from "@/featu
 import { cn } from "@/common/utils";
 import { ArtistUpdateRequest } from "@hitbeatclub/shared-types/artist";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
+import UserProfileImage from "@/assets/images/user-profile.png";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 
 const renderSnsIcon = (label: string) => {
@@ -243,12 +244,13 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 		handleSubmit,
 		formState: { errors },
 		watch,
+		reset,
 	} = useForm<ProfileFormData>({
 		resolver: zodResolver(ProfileFormSchema),
-		values: formData,
+		defaultValues: formData,
 	});
 
-	const { data: artistMe } = useQuery(getArtistMeQueryOption());
+	const { data: artistMe, isLoading, isError } = useQuery(getArtistMeQueryOption());
 	const { mutate: updateArtist } = useUpdateArtistMutation();
 	const { mutate: uploadProfile } = useUploadArtistProfileMutation();
 
@@ -439,17 +441,28 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 				profileImageUrl: artistMe.profileImageUrl || "",
 				snsList,
 				contactList,
-				country: "",
-				city: "",
+				country: artistMe.country || "",
+				city: artistMe.city || "",
 			};
+
 			setFormData(newFormData);
+			// 폼 데이터를 리셋하여 새로운 값으로 업데이트
+			reset(newFormData);
 		}
-	}, [artistMe]);
+	}, [artistMe, reset]);
 
 	const country = watch("country");
 	const regionOptions = useMemo(() => {
 		return country ? getRegionOptionsByCountry(country as CountryCode) : [];
 	}, [country]);
+
+	const profileUrlWatch = watch("profileImageUrl");
+	const profileUrl = useMemo(() => {
+		if (!profileUrlWatch || profileUrlWatch === "") {
+			return UserProfileImage;
+		}
+		return profileUrlWatch;
+	}, [profileUrlWatch]);
 
 	return (
 		<>
@@ -460,7 +473,7 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 				<div className="flex flex-col items-center gap-6">
 					<div className="flex gap-8">
 						<div className="flex flex-col items-center gap-4">
-							<AlbumAvatar src={formData.profileImageUrl || "https://placehold.co/252x252"} />
+							<AlbumAvatar src={profileUrl} />
 							<label
 								htmlFor="profileImage"
 								className="inline-flex items-center justify-center rounded-full bg-hbc-black text-white px-4 py-2 text-md font-bold cursor-pointer"
@@ -650,15 +663,17 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 												name="country"
 												rules={{ required: true }}
 												control={control}
-												render={() => (
+												render={({ field }) => (
 													<div className="flex flex-col gap-1">
 														<Dropdown
 															className={cn("w-full")}
 															buttonClassName={cn(errors.country && "border border-red-500")}
 															options={COUNTRY_OPTIONS}
-															defaultValue={formData.country}
+															value={field.value}
+															defaultValue={field.value}
 															placeholder="국가를 선택해주세요"
 															onChange={(value) => {
+																field.onChange(value);
 																onChangeField("country", value);
 															}}
 														/>
@@ -681,15 +696,17 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 												name="city"
 												rules={{ required: true }}
 												control={control}
-												render={() => (
+												render={({ field }) => (
 													<div className="flex flex-col gap-1">
 														<Dropdown
 															className={cn("w-full")}
 															buttonClassName={cn(errors.city && "border border-red-500")}
 															options={regionOptions}
-															defaultValue={formData.city}
+															value={field.value}
+															defaultValue={field.value}
 															placeholder="도시를 선택해주세요"
 															onChange={(value) => {
+																field.onChange(value);
 																onChangeField("city", value);
 															}}
 														/>

@@ -20,7 +20,7 @@ export class SettlementService {
 	) {}
 
 	async findOneByArtistId(artistId: number) {
-		const settlement = await this.prisma.settlement.findFirst({
+		const settlement = await this.prisma.settlement.findUnique({
 			where: {
 				artistId,
 			},
@@ -34,22 +34,34 @@ export class SettlementService {
 	}
 
 	async createByArtistId(artistId: number, settlementCreateDto: SettlementCreateDto) {
-		const artist = await this.artistService.findOne(artistId);
+		const artist = await this.artistService.findOne(artistId).then((data) => this.prisma.serializeBigInt(data));
 		if (!artist) {
 			throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
 		}
 
-		const existingSettlement = await this.findOneByArtistId(artistId);
+		const existingSettlement = await this.prisma.settlement
+			.findUnique({
+				where: {
+					artistId,
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+
 		if (existingSettlement) {
-			throw new NotFoundException(SETTLEMENT_ALREADY_EXISTS_ERROR);
+			throw new BadRequestException(SETTLEMENT_ALREADY_EXISTS_ERROR);
 		}
 
-		const settlement = await this.prisma.settlement.create({
-			data: {
-				...(settlementCreateDto as SettlementCreateRequest),
-				artistId: artist.id,
-			},
-		});
+		const settlement = await this.prisma.settlement
+			.create({
+				data: {
+					...(settlementCreateDto as SettlementCreateRequest),
+					artistId: artist.id,
+				},
+				select: {
+					id: true,
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
 
 		return settlement;
 	}
@@ -60,7 +72,14 @@ export class SettlementService {
 			throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
 		}
 
-		const existingSettlement = await this.findOneByArtistId(artistId);
+		const existingSettlement = await this.prisma.settlement
+			.findUnique({
+				where: {
+					artistId,
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+
 		if (!existingSettlement) {
 			throw new NotFoundException(SETTLEMENT_NOT_FOUND_ERROR);
 		}
