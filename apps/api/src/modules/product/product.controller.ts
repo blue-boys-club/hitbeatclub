@@ -134,14 +134,15 @@ export class ProductController {
 		delete createProductDto?.audioFileFileId;
 		delete createProductDto?.coverImageFileId;
 		delete createProductDto?.zipFileId;
-
 		const product = await this.productService.create(req.user.id, createProductDto);
 
-		await this.productService.uploadProductFile({
-			uploaderId: req.user.id,
-			productId: product.id,
-			fileIds,
-		});
+		if (product?.id && Object.values(fileIds).some((id) => id !== null)) {
+			await this.productService.uploadProductFile({
+				uploaderId: req.user.id,
+				productId: product.id,
+				fileIds,
+			});
+		}
 
 		return {
 			statusCode: 201,
@@ -175,17 +176,19 @@ export class ProductController {
 
 		const product = await this.productService.update(id, updateProductDto);
 
-		await this.productService.uploadProductFile({
-			uploaderId: req.user.id,
-			productId: product.id,
-			fileIds,
-		});
+		if (product?.id && Object.values(fileIds).some((id) => id !== null)) {
+			await this.productService.uploadProductFile({
+				uploaderId: req.user.id,
+				productId: product.id,
+				fileIds,
+			});
+		}
 
 		return {
 			statusCode: 200,
 			message: productMessage.update.success,
 			data: {
-				id: Number(product.id),
+				id: product.id,
 			},
 		};
 	}
