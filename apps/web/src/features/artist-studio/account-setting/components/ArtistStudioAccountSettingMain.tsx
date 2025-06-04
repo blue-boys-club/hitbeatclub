@@ -10,7 +10,7 @@ export const ArtistStudioAccountSettingMain = () => {
 	const activeTab = searchParams?.get("tab");
 
 	return (
-		<div className="w-full flex px-10">
+		<div className="w-full flex px-10 pb-10">
 			{activeTab === "profile" && <ArtistStudioAccountSettingProfileForm />}
 			{activeTab === "settlement" && <ArtistStudioAccountSettingSettlement />}
 			{activeTab === "membership" && <ArtistStudioAccountSettingMembership />}

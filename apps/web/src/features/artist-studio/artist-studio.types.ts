@@ -11,6 +11,9 @@ export interface BaseItem {
 
 // UI 폼용 확장된 Zod 스키마 (ArtistUpdateSchema 기반)
 export const ProfileFormSchema = ArtistUpdateSchema.extend({
+	stageName: z.string().min(1),
+	slug: z.string().min(1),
+	description: z.string().min(1),
 	profileImageUrl: z.string().optional(), // UI 표시용
 	snsList: z
 		.array(
@@ -19,7 +22,7 @@ export const ProfileFormSchema = ArtistUpdateSchema.extend({
 				value: z.string(),
 			}),
 		)
-		.optional(),
+		.min(1),
 	contactList: z
 		.array(
 			z.object({
@@ -27,19 +30,15 @@ export const ProfileFormSchema = ArtistUpdateSchema.extend({
 				value: z.string(),
 			}),
 		)
-		.optional(),
-	country: z
-		.object({
-			label: z.string(),
-			value: z.string(),
-		})
-		.optional(),
-	city: z
-		.object({
-			label: z.string(),
-			value: z.string(),
-		})
-		.optional(),
+		.min(1),
+	country: z.object({
+		label: z.string(),
+		value: z.string(),
+	}),
+	city: z.object({
+		label: z.string(),
+		value: z.string(),
+	}),
 });
 
 // Zod 스키마에서 타입 추론
