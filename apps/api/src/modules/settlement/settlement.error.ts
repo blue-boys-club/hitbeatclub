@@ -8,3 +8,10 @@ export const SETTLEMENT_NOT_FOUND_ERROR = {
 	code: 2000,
 	status: 404,
 };
+
+export const SETTLEMENT_ALREADY_EXISTS_ERROR = {
+	title: "Settlement already exists",
+	detail: "정산 정보가 이미 존재합니다.",
+	code: 2001,
+	status: 400,
+};

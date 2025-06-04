@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SettlementResponseSchema } from "../settlement";
 
 export const ArtistResponseSchema = z.object({
 	id: z.number().describe("아티스트 ID").default(1),
@@ -17,6 +18,7 @@ export const ArtistResponseSchema = z.object({
 	discordAccount: z.string().nullable().describe("디스코드 계정").default("djspider#1234"),
 	country: z.string().nullable().describe("국가").default("대한민국"),
 	city: z.string().nullable().describe("도시").default("서울"),
+	settlement: SettlementResponseSchema.nullable().describe("정산 정보"),
 	createdAt: z.date().nullable().describe("생성일").default(new Date("2024-01-01")),
 	updatedAt: z.date().nullable().describe("수정일").default(new Date("2024-01-01")),
 	deletedAt: z.date().nullable().describe("삭제일").default(null),

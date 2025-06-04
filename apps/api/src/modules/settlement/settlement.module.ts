@@ -1,13 +1,13 @@
-import { Module } from "@nestjs/common";
-import { UserModule } from "../user/user.module";
+import { forwardRef, Module } from "@nestjs/common";
 import { ArtistModule } from "../artist/artist.module";
-import { ProductModule } from "../product/product.module";
 import { SettlementService } from "./settlement.service";
-import { SettlementController } from "./settlement.controller";
+import { PrismaModule } from "src/common/prisma/prisma.module";
 
 @Module({
-	imports: [UserModule, ArtistModule, ProductModule],
-	controllers: [SettlementController],
+	imports: [forwardRef(() => ArtistModule), PrismaModule],
+	controllers: [
+		// SettlementController
+	],
 	providers: [SettlementService],
 	exports: [SettlementService],
 })

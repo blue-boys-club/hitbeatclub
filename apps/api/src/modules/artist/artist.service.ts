@@ -31,6 +31,17 @@ export class ArtistService {
 		const artist = await this.prisma.artist
 			.findFirst({
 				where: { userId, deletedAt: null },
+				include: {
+					settlement: {
+						select: {
+							type: true,
+							accountHolder: true,
+							accountNumber: true,
+							accountBank: true,
+							paypalAccount: true,
+						},
+					},
+				},
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
 
@@ -49,6 +60,7 @@ export class ArtistService {
 			id: Number(artist.id),
 			userId: Number(artist.userId),
 			profileImageUrl: profileImageFile[0]?.url || null,
+			settlement: artist.settlement[0] || null,
 		};
 	}
 
@@ -63,6 +75,15 @@ export class ArtistService {
 								id: true,
 								email: true,
 								name: true,
+							},
+						},
+						settlement: {
+							select: {
+								type: true,
+								accountHolder: true,
+								accountNumber: true,
+								accountBank: true,
+								paypalAccount: true,
 							},
 						},
 					},

@@ -50,6 +50,11 @@
 			"types": "./dist/file/index.d.ts",
 			"import": "./dist/file/index.mjs",
 			"require": "./dist/file/index.js"
+		},
+		"./settlement": {
+			"types": "./dist/settlement/index.d.ts",
+			"import": "./dist/settlement/index.mjs",
+			"require": "./dist/settlement/index.js"
 		}
 	},
 	"files": [
