@@ -15,6 +15,8 @@ import { Upload } from "@/assets/svgs";
 import { useRouter } from "next/navigation";
 import { getArtistMeQueryOption } from "@/apis/artist/query/artist.query-options";
 import { useQuery } from "@tanstack/react-query";
+import UserProfileImage from "@/assets/images/user-profile.png";
+import { cn } from "@/common/utils/tailwind";
 
 const artistStats = [
 	{ label: "Follower", value: "4,567" },
@@ -65,6 +67,13 @@ export const ArtistSidebar = () => {
 		setIsLockedNavWarningOpen(true);
 	};
 
+	const profileUrl = useMemo(() => {
+		if (!artistMe?.profileImageUrl || artistMe?.profileImageUrl === "") {
+			return UserProfileImage;
+		}
+		return artistMe.profileImageUrl;
+	}, [artistMe]);
+
 	return (
 		<>
 			<div className="flex flex-col flex-1 h-full gap-8px">
@@ -87,9 +96,9 @@ export const ArtistSidebar = () => {
 
 					<section className="flex flex-col items-center justify-center gap-20px">
 						<ArtistAvatar
-							src="/"
+							src={profileUrl}
 							alt="아티스트 프로필 이미지"
-							className="bg-black my-8px"
+							className={cn("bg-black my-8px", profileUrl === UserProfileImage && "bg-white")}
 							size="small"
 						/>
 

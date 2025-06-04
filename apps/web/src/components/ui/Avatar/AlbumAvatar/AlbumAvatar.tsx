@@ -2,9 +2,10 @@ import { cn } from "@/common/utils";
 import { HTMLAttributes, memo } from "react";
 import Image from "next/image";
 import { assetImageLoader } from "@/common/utils/image-loader";
+import { StaticImageData } from "next/image";
 
 export interface AlbumAvatarProps extends HTMLAttributes<HTMLImageElement> {
-	src: string;
+	src: string | StaticImageData;
 	alt?: string;
 	wrapperClassName?: string;
 }

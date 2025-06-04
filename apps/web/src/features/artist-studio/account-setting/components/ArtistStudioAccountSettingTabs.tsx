@@ -1,10 +1,12 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { Lock } from "@/assets/svgs";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/common/utils";
 import Link from "next/link";
+import { getArtistMeQueryOption } from "@/apis/artist/query/artist.query-options";
+import { useQuery } from "@tanstack/react-query";
 
 /**
  * 탭 타입 정의
@@ -29,30 +31,6 @@ interface Tab {
 }
 
 /**
- * 탭 설정 데이터
- */
-const tabs: Tab[] = [
-	{
-		id: "profile",
-		href: "/artist-studio/1/setting?tab=profile",
-		label: "프로필 설정",
-		isLocked: true,
-	},
-	{
-		id: "settlement",
-		href: "/artist-studio/1/setting?tab=settlement",
-		label: "정산 정보 설정",
-		isLocked: true,
-	},
-	{
-		id: "membership",
-		href: "/artist-studio/1/setting?tab=membership",
-		label: "히트비트 멤버십 정보",
-		isLocked: false,
-	},
-];
-
-/**
  * 아티스트 스튜디오 계정 설정 탭 컴포넌트
  *
  * @description
@@ -64,6 +42,30 @@ const tabs: Tab[] = [
 export const ArtistStudioAccountSettingTabs = memo(() => {
 	const searchParams = useSearchParams();
 	const activeTab = (searchParams?.get("tab") as TabType) || "profile";
+	const { data: artistMe } = useQuery({ ...getArtistMeQueryOption(), retry: 1 });
+
+	const tabs = useMemo(() => {
+		return [
+			{
+				id: "profile",
+				href: `/artist-studio/${artistMe?.id}/setting?tab=profile`,
+				label: "프로필 설정",
+				isLocked: !artistMe?.stageName || artistMe?.stageName === "",
+			},
+			{
+				id: "settlement",
+				href: `/artist-studio/${artistMe?.id}/setting?tab=settlement`,
+				label: "정산 정보 설정",
+				isLocked: !artistMe?.settlement,
+			},
+			{
+				id: "membership",
+				href: `/artist-studio/${artistMe?.id}/setting?tab=membership`,
+				label: "히트비트 멤버십 정보",
+				isLocked: false,
+			},
+		];
+	}, [artistMe]);
 
 	return (
 		<nav className="w-[300px] flex flex-col gap-4">
