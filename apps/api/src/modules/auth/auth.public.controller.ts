@@ -113,6 +113,66 @@ export class AuthPublicController {
 		};
 	}
 
+	@Post("kakao")
+	@ApiOperation({ summary: "kakao login" })
+	@DocAuth({ kakao: true })
+	@AuthSocialKakaoProtected()
+	@ApiResponse({
+		status: 200,
+		description: "Kakao login successful",
+		type: AuthLoginResponseDto,
+	})
+	async loginWithKakao(@Req() req: AuthenticatedRequest): Promise<IResponse<AuthLoginResponseDto>> {
+		const user = req.user;
+
+		const auth = await this.authService.loginOrSignUp(user);
+
+		await this.userService.updateToken(auth.userId, auth.accessToken, auth.refreshToken);
+		await this.userService.updateLastLoginAt(auth.userId);
+
+		return {
+			statusCode: 200,
+			message: "success google login",
+			data: {
+				userId: auth.userId,
+				accessToken: auth.accessToken,
+				refreshToken: auth.refreshToken,
+				email: auth.email,
+				phoneNumber: auth.phoneNumber,
+			},
+		};
+	}
+
+	@Post("naver")
+	@ApiOperation({ summary: "naver login" })
+	@DocAuth({ naver: true })
+	@AuthSocialNaverProtected()
+	@ApiResponse({
+		status: 200,
+		description: "Naver login successful",
+		type: AuthLoginResponseDto,
+	})
+	async loginWithNaver(@Req() req: AuthenticatedRequest): Promise<IResponse<AuthLoginResponseDto>> {
+		const user = req.user;
+
+		const auth = await this.authService.loginOrSignUp(user);
+
+		await this.userService.updateToken(auth.userId, auth.accessToken, auth.refreshToken);
+		await this.userService.updateLastLoginAt(auth.userId);
+
+		return {
+			statusCode: 200,
+			message: "success google login",
+			data: {
+				userId: auth.userId,
+				accessToken: auth.accessToken,
+				refreshToken: auth.refreshToken,
+				email: auth.email,
+				phoneNumber: auth.phoneNumber,
+			},
+		};
+	}
+
 	@Post("join")
 	@ApiOperation({ summary: "회원가입" })
 	@ApiBody({
@@ -260,66 +320,6 @@ export class AuthPublicController {
 			statusCode: 200,
 			message: "비밀번호가 성공적으로 재설정되었습니다.",
 			data: { success },
-		};
-	}
-
-	@Post("kakao")
-	@ApiOperation({ summary: "kakao login" })
-	@DocAuth({ kakao: true })
-	@AuthSocialKakaoProtected()
-	@ApiResponse({
-		status: 200,
-		description: "Kakao login successful",
-		type: AuthLoginResponseDto,
-	})
-	async loginWithKakao(@Req() req: AuthenticatedRequest): Promise<IResponse<AuthLoginResponseDto>> {
-		const user = req.user;
-
-		const auth = await this.authService.loginOrSignUp(user);
-
-		await this.userService.updateToken(auth.userId, auth.accessToken, auth.refreshToken);
-		await this.userService.updateLastLoginAt(auth.userId);
-
-		return {
-			statusCode: 200,
-			message: "success google login",
-			data: {
-				userId: auth.userId,
-				accessToken: auth.accessToken,
-				refreshToken: auth.refreshToken,
-				email: auth.email,
-				phoneNumber: auth.phoneNumber,
-			},
-		};
-	}
-
-	@Post("naver")
-	@ApiOperation({ summary: "naver login" })
-	@DocAuth({ naver: true })
-	@AuthSocialNaverProtected()
-	@ApiResponse({
-		status: 200,
-		description: "Naver login successful",
-		type: AuthLoginResponseDto,
-	})
-	async loginWithNaver(@Req() req: AuthenticatedRequest): Promise<IResponse<AuthLoginResponseDto>> {
-		const user = req.user;
-
-		const auth = await this.authService.loginOrSignUp(user);
-
-		await this.userService.updateToken(auth.userId, auth.accessToken, auth.refreshToken);
-		await this.userService.updateLastLoginAt(auth.userId);
-
-		return {
-			statusCode: 200,
-			message: "success google login",
-			data: {
-				userId: auth.userId,
-				accessToken: auth.accessToken,
-				refreshToken: auth.refreshToken,
-				email: auth.email,
-				phoneNumber: auth.phoneNumber,
-			},
 		};
 	}
 }
