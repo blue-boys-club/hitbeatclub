@@ -13,7 +13,7 @@ import {
 import { ArtistService } from "./artist.service";
 import { ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
-import { DocRequestFile, DocResponse } from "src/common/doc/decorators/doc.decorator";
+import { DocRequestFile, DocResponse, DocResponseList } from "src/common/doc/decorators/doc.decorator";
 import { IResponse } from "src/common/response/interfaces/response.interface";
 import { artistMessage } from "./artist.message";
 import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
@@ -34,6 +34,7 @@ import settlementMessage from "../settlement/settlement.message";
 import { SettlementCreateDto } from "../settlement/dto/request/settlement.create.dto";
 import { SettlementService } from "../settlement/settlement.service";
 import { SettlementUpdateDto } from "../settlement/dto/request/settlement.update.dto";
+import { ArtistListResponseDto } from "./dto/response/artist.list.response.dto";
 @Controller("artists")
 @ApiTags("artist")
 @ApiBearerAuth()
@@ -46,8 +47,17 @@ export class ArtistController {
 
 	@Get()
 	@ApiOperation({ summary: "아티스트 목록 조회" })
-	async findAll() {
-		return this.artistService.findAll();
+	@DocResponseList<ArtistListResponseDto>(artistMessage.find.success, {
+		dto: ArtistListResponseDto,
+	})
+	async findAll(): Promise<IResponse<ArtistListResponseDto[]>> {
+		const artists = await this.artistService.findAll();
+
+		return {
+			statusCode: 200,
+			message: artistMessage.find.success,
+			data: artists,
+		};
 	}
 
 	@Get("me")

@@ -4,7 +4,7 @@ import { Artist } from "@prisma/client";
 import { ArtistCreateDto } from "./dto/request/artist.create.request.dto";
 import { ArtistUpdateDto } from "./dto/request/artist.update.dto";
 import { FileService } from "src/modules/file/file.service";
-import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types";
+import { ArtistListResponse, ENUM_FILE_TYPE } from "@hitbeatclub/shared-types";
 import { ArtistDetailResponseDto } from "./dto/response/artist.detail.response.dto";
 
 @Injectable()
@@ -14,14 +14,34 @@ export class ArtistService {
 		private readonly fileService: FileService,
 	) {}
 
-	async findAll(): Promise<Artist[]> {
+	async findAll(): Promise<ArtistListResponse[]> {
 		try {
-			return await this.prisma.artist
+			const artists = await this.prisma.artist
 				.findMany({
 					where: { deletedAt: null },
 					orderBy: { createdAt: "desc" },
+					include: {
+						files: {
+							where: {
+								isEnabled: 1,
+								deletedAt: null,
+								targetTable: "artist",
+								type: ENUM_FILE_TYPE.ARTIST_PROFILE_IMAGE,
+							},
+							select: {
+								id: true,
+								url: true,
+							},
+						},
+					},
 				})
-				.then((data) => this.prisma.serializeBigInt(data) as Artist[]);
+				.then((data) => this.prisma.serializeBigInt(data));
+
+			return artists.map((artist) => ({
+				id: artist.id,
+				name: artist.stageName,
+				profileImageUrl: artist.files[0]?.url || null,
+			}));
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
