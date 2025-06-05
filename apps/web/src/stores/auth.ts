@@ -3,7 +3,7 @@ import { immer } from "zustand/middleware/immer";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import { AuthLoginResponse } from "@hitbeatclub/shared-types/auth";
 
-export type AllowedLastMethod = "google" | "email";
+export type AllowedLastMethod = "google" | "email" | "naver" | "kakao";
 
 export interface AuthState {
 	user?: AuthLoginResponse;

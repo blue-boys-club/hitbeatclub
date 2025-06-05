@@ -27,6 +27,8 @@ export default function (app: NestApplication) {
 			.addServer("/")
 			.addBearerAuth({ type: "http", scheme: "bearer", bearerFormat: "JWT" }, "accessToken")
 			.addBearerAuth({ type: "http", scheme: "bearer", bearerFormat: "JWT" }, "google")
+			.addBearerAuth({ type: "http", scheme: "bearer", bearerFormat: "JWT" }, "kakao")
+			.addBearerAuth({ type: "http", scheme: "bearer", bearerFormat: "JWT" }, "naver")
 			// .addApiKey(
 			//     { type: 'apiKey', in: 'header', name: 'x-api-key' },
 			//     'xApiKey'

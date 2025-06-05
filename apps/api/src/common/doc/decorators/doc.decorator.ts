@@ -34,6 +34,8 @@ import {
 	AUTH_JWT_ACCESS_TOKEN_ERROR,
 	AUTH_JWT_REFRESH_TOKEN_ERROR,
 	AUTH_SOCIAL_GOOGLE_ERROR,
+	AUTH_SOCIAL_KAKAO_ERROR,
+	AUTH_SOCIAL_NAVER_ERROR,
 } from "src/modules/auth/auth.error";
 import { ENUM_APP_STATUS_CODE_ERROR } from "src/constants/app.status-code.constant";
 
@@ -356,6 +358,22 @@ export function DocAuth(options?: IDocAuthOptions) {
 		oneOfUnauthorized.push({
 			messagePath: "auth.error.socialGoogle",
 			statusCode: AUTH_SOCIAL_GOOGLE_ERROR.code,
+		});
+	}
+
+	if (options?.kakao) {
+		docs.push(ApiBearerAuth("kakao"));
+		oneOfUnauthorized.push({
+			messagePath: "auth.error.socialKakao",
+			statusCode: AUTH_SOCIAL_KAKAO_ERROR.code,
+		});
+	}
+
+	if (options?.naver) {
+		docs.push(ApiBearerAuth("naver"));
+		oneOfUnauthorized.push({
+			messagePath: "auth.error.socialNaver",
+			statusCode: AUTH_SOCIAL_NAVER_ERROR.code,
 		});
 	}
 

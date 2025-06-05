@@ -22,6 +22,8 @@ import { GENDER_OPTIONS, generateYearOptions, MONTH_OPTIONS, DAY_OPTIONS } from 
 import { COUNTRY_OPTIONS, getRegionOptionsByCountry, CountryCode } from "@/features/common/common.constants";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/apis/query-keys";
 
 // 폼 데이터 타입 정의
 interface FormData {
@@ -109,10 +111,15 @@ const createFormSchema = (isSocialJoin: boolean) => {
 };
 
 export const AuthSignup = () => {
-	const { user: authUser, setPhoneNumber } = useAuthStore(
-		useShallow((state) => ({ user: state.user, setPhoneNumber: state.setPhoneNumber })),
+	const {
+		user: authUser,
+		setPhoneNumber,
+		makeLogout,
+	} = useAuthStore(
+		useShallow((state) => ({ user: state.user, setPhoneNumber: state.setPhoneNumber, makeLogout: state.makeLogout })),
 	);
 	const router = useRouter();
+	const queryClient = useQueryClient();
 
 	// AuthLoginResponse에는 phoneNumber가 null일 때 소셜 가입 완료 단계로 판단
 	const isSocialJoin = !!authUser?.userId && authUser?.phoneNumber === null;
@@ -320,6 +327,15 @@ export const AuthSignup = () => {
 	const yearOptions = useMemo(() => {
 		return generateYearOptions();
 	}, []);
+
+	const cancelSignup = useCallback(() => {
+		// if logged in, logout
+		if (authUser?.userId) {
+			makeLogout();
+			void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.user.me });
+		}
+		router.push("/");
+	}, [authUser?.userId, makeLogout, router, queryClient]);
 
 	return (
 		<>
@@ -687,10 +703,7 @@ export const AuthSignup = () => {
 							variant="outline"
 							className="w-full py-2.5 font-extrabold"
 							type="button"
-							onClick={() => {
-								// TODO: 취소 로직 구현
-								router.push("/");
-							}}
+							onClick={cancelSignup}
 						>
 							취소
 						</Button>
