@@ -37,7 +37,7 @@ import { ProductDetailResponseDto } from "./dto/response/product.detail.response
 import { PRODUCT_NOT_FOUND_ERROR } from "./product.error";
 import { ProductListResponseDto } from "./dto/response/product.list.response.dto";
 import { ProductListQueryRequestDto } from "./dto/request/project.list.request.dto";
-import { ENUM_PRODUCT_TYPE } from "./product.enum";
+import { ENUM_PRODUCT_CATEGORY } from "./product.enum";
 import { ProductUploadFileRequestDto } from "./dto/request/product.upload-file.request.dto";
 
 @Controller("products")
@@ -57,7 +57,7 @@ export class ProductController {
 		type: String,
 		required: false,
 		description: "상품 타입 (null 가능)",
-		example: ENUM_PRODUCT_TYPE.BEAT,
+		example: ENUM_PRODUCT_CATEGORY.BEAT,
 		nullable: true,
 	})
 	@ApiQuery({

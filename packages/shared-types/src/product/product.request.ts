@@ -2,17 +2,39 @@ import { z } from "zod";
 
 const licenseTypeEnum = z.enum(["MASTER", "EXCLUSIVE"]);
 const productSortEnum = z.enum(["RECENT", "RECOMMEND", "null"]);
-const productTypeEnum = z.enum(["BEAT", "ACAPELA", "null"]);
+const productCategoryEnum = z.enum(["BEAT", "ACAPELA", "null"]);
+const musicKeyEnum = z.enum([
+	"C",
+	"Db",
+	"D",
+	"Eb",
+	"E",
+	"F",
+	"Gb",
+	"G",
+	"Ab",
+	"A",
+	"Bb",
+	"B",
+	"Cs",
+	"Ds",
+	"Fs",
+	"Gs",
+	"As",
+	"null",
+]);
+const scaleTypeEnum = z.enum(["MAJOR", "MINOR", "null"]);
 
 export const ProductCreateSchema = z.object({
 	productName: z.string().min(1).max(255).default("Sample Product").describe("상품명"),
 	description: z.string().max(1000).describe("곡 설명 /가사").default("곡 설명 /가사"),
 	price: z.number().int().min(0).describe("가격").default(10000),
-	type: z.string().max(10).describe("타입(BAET, ACAPELA) 기본값: BAET").default("BAET"),
+	category: productCategoryEnum.describe("카테고리(BEAT, ACAPELA) 기본값: BEAT").default(productCategoryEnum.enum.BEAT),
 	genres: z.array(z.string()).max(100).describe("장르").default(["Hip-hop"]),
 	tags: z.array(z.string()).describe("태그").optional().default(["tag"]),
 	bpm: z.number().int().describe("BPM").optional().default(120),
-	tonality: z.string().max(10).describe("조성").optional().default("C"),
+	musicKey: musicKeyEnum.describe("음계").optional().default(musicKeyEnum.enum.C),
+	scaleType: scaleTypeEnum.describe("조성").optional().default(scaleTypeEnum.enum.MAJOR),
 	licenseInfo: z
 		.array(
 			z.object({
@@ -44,7 +66,7 @@ export const ProductUpdateSchema = ProductCreateSchema.partial();
 export const ProductListQuerySchema = z.object({
 	page: z.string().default("1").transform(Number).pipe(z.number().min(1)),
 	limit: z.string().default("10").transform(Number).pipe(z.number().min(1)),
-	type: productTypeEnum.default("BEAT").optional(),
+	category: productCategoryEnum.default("BEAT").optional(),
 	sort: productSortEnum.default("RECENT").optional(),
 });
 

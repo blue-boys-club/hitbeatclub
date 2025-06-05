@@ -15,11 +15,11 @@ export class ProductService {
 		private readonly fileService: FileService,
 	) {}
 
-	async findAll({ page, limit, type, sort }: ProductListQueryRequestDto) {
+	async findAll({ page, limit, category, sort }: ProductListQueryRequestDto) {
 		try {
 			const products = await this.prisma.product
 				.findMany({
-					where: { deletedAt: null, ...(type === "null" ? {} : { type }) },
+					where: { deletedAt: null, ...(category === "null" ? {} : { category }) },
 					include: {
 						artistSellerIdToArtist: {
 							select: {
@@ -118,6 +118,11 @@ export class ProductService {
 				delete createProductDto.tags;
 				delete createProductDto.licenseInfo;
 
+				console.log({
+					...createProductDto,
+					sellerId: userId,
+				});
+
 				const product = await tx.product
 					.create({
 						data: {
@@ -159,6 +164,7 @@ export class ProductService {
 
 				return product;
 			} catch (e: any) {
+				console.log(e);
 				throw new BadRequestException({
 					...PRODUCT_CREATE_ERROR,
 					detail: e?.message,
@@ -314,9 +320,9 @@ export class ProductService {
 		};
 	}
 
-	async getTotal({ page, limit, type }: ProductListQueryRequestDto) {
+	async getTotal({ page, limit, category }: ProductListQueryRequestDto) {
 		const total = await this.prisma.product.count({
-			where: { deletedAt: null, ...(type === "null" ? {} : { type }) },
+			where: { deletedAt: null, ...(category === "null" ? {} : { category }) },
 		});
 		return total;
 	}
