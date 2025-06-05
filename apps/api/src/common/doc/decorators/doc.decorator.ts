@@ -34,6 +34,8 @@ import {
 	AUTH_JWT_ACCESS_TOKEN_ERROR,
 	AUTH_JWT_REFRESH_TOKEN_ERROR,
 	AUTH_SOCIAL_GOOGLE_ERROR,
+	AUTH_SOCIAL_KAKAO_ERROR,
+	AUTH_SOCIAL_NAVER_ERROR,
 } from "src/modules/auth/auth.error";
 import { ENUM_APP_STATUS_CODE_ERROR } from "src/constants/app.status-code.constant";
 
@@ -359,6 +361,22 @@ export function DocAuth(options?: IDocAuthOptions) {
 		});
 	}
 
+	if (options?.kakao) {
+		docs.push(ApiBearerAuth("kakao"));
+		oneOfUnauthorized.push({
+			messagePath: "auth.error.socialKakao",
+			statusCode: AUTH_SOCIAL_KAKAO_ERROR.code,
+		});
+	}
+
+	if (options?.naver) {
+		docs.push(ApiBearerAuth("naver"));
+		oneOfUnauthorized.push({
+			messagePath: "auth.error.socialNaver",
+			statusCode: AUTH_SOCIAL_NAVER_ERROR.code,
+		});
+	}
+
 	//   if (options?.apple) {
 	//     docs.push(ApiBearerAuth('apple'));
 	//     oneOfUnauthorized.push({
@@ -434,6 +452,14 @@ export function DocResponsePaging<T>(messagePath: string, options: IDocResponseO
 					_pagination: {
 						type: "object",
 						properties: {
+							page: {
+								type: "number",
+								example: 1,
+							},
+							limit: {
+								type: "number",
+								example: 10,
+							},
 							totalPage: {
 								type: "number",
 								example: 1,

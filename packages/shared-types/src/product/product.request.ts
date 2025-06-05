@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const licenseTypeEnum = z.enum(["MASTER", "EXCLUSIVE"]);
 const productSortEnum = z.enum(["RECENT", "RECOMMEND", "null"]);
-const productCategoryEnum = z.enum(["BEAT", "ACAPELA", "null"]);
+export const productCategoryEnum = z.enum(["BEAT", "ACAPELA", "null"]);
 const musicKeyEnum = z.enum([
 	"C",
 	"Db",
@@ -32,7 +32,8 @@ export const ProductCreateSchema = z.object({
 	category: productCategoryEnum.describe("카테고리(BEAT, ACAPELA) 기본값: BEAT").default(productCategoryEnum.enum.BEAT),
 	genres: z.array(z.string()).max(100).describe("장르").default(["Hip-hop"]),
 	tags: z.array(z.string()).describe("태그").optional().default(["tag"]),
-	bpm: z.number().int().describe("BPM").optional().default(120),
+	minBpm: z.number().int().describe("최소 BPM").optional().default(100),
+	maxBpm: z.number().int().describe("최대 BPM").optional().default(120),
 	musicKey: musicKeyEnum.describe("음계").optional().default(musicKeyEnum.enum.C),
 	scaleType: scaleTypeEnum.describe("조성").optional().default(scaleTypeEnum.enum.MAJOR),
 	licenseInfo: z
@@ -64,10 +65,16 @@ export const ProductCreateSchema = z.object({
 export const ProductUpdateSchema = ProductCreateSchema.partial();
 
 export const ProductListQuerySchema = z.object({
-	page: z.string().default("1").transform(Number).pipe(z.number().min(1)),
-	limit: z.string().default("10").transform(Number).pipe(z.number().min(1)),
-	category: productCategoryEnum.default("BEAT").optional(),
-	sort: productSortEnum.default("RECENT").optional(),
+	page: z.string().transform(Number).pipe(z.number().min(1)).describe("1"),
+	limit: z.string().transform(Number).pipe(z.number().min(1)).describe("10"),
+	category: productCategoryEnum.optional().describe("BEAT"),
+	sort: productSortEnum.optional().describe("RECENT"),
+	genreIds: z.string().optional().describe("1,2"),
+	tagIds: z.string().optional().describe("1,3"),
+	musicKey: musicKeyEnum.optional().describe("C"),
+	scaleType: scaleTypeEnum.optional().describe("MAJOR"),
+	minBpm: z.string().transform(Number).pipe(z.number().int().optional()).describe("100").optional(),
+	maxBpm: z.string().transform(Number).pipe(z.number().int().optional()).describe("120").optional(),
 });
 
 export type ProductCreateRequest = z.infer<typeof ProductCreateSchema>;

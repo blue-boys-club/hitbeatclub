@@ -58,3 +58,33 @@ export const AUTH_LOGIN_OR_SIGNUP_ERROR = {
 	code: 1109,
 	status: 401,
 };
+
+export const AUTH_SOCIAL_KAKAO_ERROR = {
+	title: "Social Kakao error",
+	code: 1110,
+	status: 401,
+};
+
+export const AUTH_GET_KAKAO_USER_INFO_ERROR = {
+	title: "Get Kakao user info failed",
+	code: 1111,
+	status: 401,
+};
+
+export const AUTH_SOCIAL_NAVER_ERROR = {
+	title: "Social Naver error",
+	code: 1112,
+	status: 401,
+};
+
+export const AUTH_GET_NAVER_TOKEN_ERROR = {
+	title: "Get Naver token failed",
+	code: 1113,
+	status: 401,
+};
+
+export const AUTH_GET_NAVER_USER_INFO_ERROR = {
+	title: "Get Naver user info failed",
+	code: 1114,
+	status: 401,
+};

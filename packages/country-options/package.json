@@ -1,0 +1,36 @@
+{
+	"name": "@hitbeatclub/country-options",
+	"version": "1.0.0",
+	"description": "Global country and region options with Korean support",
+	"main": "dist/index.js",
+	"module": "dist/index.mjs",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "npm run generate && tsup",
+		"generate": "tsx scripts/build-data.ts",
+		"dev": "npm run generate && tsup --watch",
+		"clean": "rm -rf dist src",
+		"prepublishOnly": "npm run build"
+	},
+	"keywords": [
+		"country",
+		"region",
+		"iso",
+		"dropdown",
+		"options",
+		"korean"
+	],
+	"author": "",
+	"license": "ISC",
+	"packageManager": "pnpm@10.7.1",
+	"devDependencies": {
+		"@types/node": "^22.15.29",
+		"tsup": "^8.0.1",
+		"tsx": "^4.19.4",
+		"typescript": "^5.8.3",
+		"world_countries_lists": "^3.1.0"
+	}
+}

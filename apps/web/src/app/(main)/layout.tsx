@@ -1,23 +1,47 @@
 "use client";
 
+import { QUERY_KEYS } from "@/apis/query-keys";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { cn } from "@/common/utils";
 import { MusicRightSidebar } from "@/components/layout";
 import { FooterPlayer } from "@/components/layout/Footer/Player/FooterPlayer";
 import Header from "@/components/layout/Header/Header";
 import { Sidebar } from "@/components/layout/Sidebar/Sidebar";
 import { Toaster } from "@/components/ui/Toast/toaster";
+import { useAuthStore } from "@/stores/auth";
 import { useLayoutStore } from "@/stores/layout";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
 	// const [isCollapsed, setIsCollapsed] = useState(false);
 	// const [isMusicSidebarOpen, setIsMusicSidebarOpen] = useState(false);
+	const router = useRouter();
+
+	const { data: userMe, isSuccess } = useQuery({ ...getUserMeQueryOption(), retry: false });
+
+	const { setPhoneNumber, userPhoneNumber } = useAuthStore(
+		useShallow((state) => ({ setPhoneNumber: state.setPhoneNumber, userPhoneNumber: state.user?.phoneNumber })),
+	);
 	const { isLeftSidebarOpen, isRightSidebarOpen } = useLayoutStore(
 		useShallow((state) => ({
 			isLeftSidebarOpen: state.leftSidebar.isOpen,
 			isRightSidebarOpen: state.rightSidebar.isOpen,
 		})),
 	);
+
+	useEffect(() => {
+		if (isSuccess) {
+			const phoneNumber = userMe.phoneNumber;
+			setPhoneNumber(phoneNumber);
+
+			if (!userPhoneNumber) {
+				router.push("/auth/signup");
+			}
+		}
+	}, [isSuccess, setPhoneNumber, userMe, router, userPhoneNumber]);
 
 	return (
 		<div className="h-screen overflow-hidden">
