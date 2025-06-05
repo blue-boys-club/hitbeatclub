@@ -1,21 +1,51 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { AuthJwtAccessPayloadDto } from "./dto/request/auth.jwt.access-payload.dto";
-import { AUTH_FIND_GOOGLE_TOKEN_ERROR, AUTH_LOGIN_OR_SIGNUP_ERROR, AUTH_VERIFY_ID_TOKEN_ERROR } from "./auth.error";
-import { LoginTicket, OAuth2Client, TokenPayload } from "google-auth-library";
+import {
+	AUTH_FIND_GOOGLE_TOKEN_ERROR,
+	AUTH_GET_KAKAO_TOKEN_ERROR,
+	AUTH_GET_KAKAO_USER_INFO_ERROR,
+	AUTH_GET_NAVER_TOKEN_ERROR,
+	AUTH_GET_NAVER_USER_INFO_ERROR,
+	AUTH_LOGIN_OR_SIGNUP_ERROR,
+	AUTH_VERIFY_ID_TOKEN_ERROR,
+} from "./auth.error";
+import { LoginTicket, OAuth2Client as GoogleOAuth2Client, TokenPayload, OAuth2Client } from "google-auth-library";
 import { ConfigService } from "@nestjs/config";
 import { AuthLoginResponse } from "@hitbeatclub/shared-types/auth";
 import { HelperEncryptionService } from "src/common/helper/services/helper.encryption.service";
 import { ENUM_EMAIL } from "../email/constants/email.enum.constant";
-import { IAuthHash } from "./interfaces/auth.interface";
+import {
+	IAuthHash,
+	IAuthKakaoTokenResponse,
+	IAuthKakaoUserInfoResponse,
+	IAuthNaverTokenResponse,
+	IAuthNaverUserInfoResponse,
+} from "./interfaces/auth.interface";
 import { HelperHashService } from "src/common/helper/services/helper.hash.service";
 import { HelperDateService } from "src/common/helper/services/helper.date.service";
 import { UserService } from "../user/user.service";
 import { AuthenticatedRequest } from "./dto/request/auth.dto.request";
+import axios from "axios";
 
 @Injectable()
 export class AuthService {
 	// google
-	private readonly googleClient: OAuth2Client;
+	private readonly googleClient: GoogleOAuth2Client;
+	private readonly kakaoClient: {
+		authApiUrl: string;
+		apiUrl: string;
+		clientId: string;
+		clientSecret: string;
+		redirectUri: string;
+		responseType: string;
+	};
+
+	private readonly naverClient: {
+		authApiUrl: string;
+		apiUrl: string;
+		clientId: string;
+		clientSecret: string;
+	};
 
 	private readonly hashInfo: object;
 
@@ -32,6 +62,22 @@ export class AuthService {
 			this.configService.get<string>("auth.google.clientSecret"),
 			"postmessage",
 		);
+
+		this.kakaoClient = {
+			authApiUrl: "https://kauth.kakao.com",
+			apiUrl: "https://kapi.kakao.com",
+			clientId: this.configService.get<string>("auth.kakao.clientId"),
+			clientSecret: this.configService.get<string>("auth.kakao.clientSecret"),
+			redirectUri: this.configService.get<string>("auth.kakao.redirectUri"),
+			responseType: "code",
+		};
+
+		this.naverClient = {
+			authApiUrl: "https://nid.naver.com",
+			apiUrl: "https://openapi.naver.com/v1",
+			clientId: this.configService.get<string>("auth.naver.clientId"),
+			clientSecret: this.configService.get<string>("auth.naver.clientSecret"),
+		};
 
 		this.hashInfo = {
 			[ENUM_EMAIL.CHANGE_PASSWORD]: {
@@ -236,6 +282,11 @@ export class AuthService {
 		return true;
 	}
 
+	/**
+	 * 토큰 생성
+	 * @param payload 토큰 페이로드
+	 * @returns 액세스 토큰, 리프레시 토큰
+	 */
 	createToken(payload: { email: string; id: number }) {
 		const accessToken = this.helperEncryptionService.jwtEncrypt(payload, {
 			secretKey: this.configService.get("auth.jwt.accessToken.secretKey"),
@@ -254,5 +305,118 @@ export class AuthService {
 		});
 
 		return { accessToken, refreshToken };
+	}
+
+	/**
+	 * 카카오 토큰 생성
+	 * @param code 카카오 인증 코드
+	 * @returns 액세스 토큰, 리프레시 토큰
+	 */
+	async kakaoGetToken({ code, redirectUri }: { code: string; redirectUri: string }): Promise<IAuthKakaoTokenResponse> {
+		try {
+			const { data } = await axios.post<IAuthKakaoTokenResponse>(
+				`${this.kakaoClient.authApiUrl}/oauth/token`,
+				{
+					grant_type: "authorization_code",
+					client_id: this.kakaoClient.clientId,
+					client_secret: this.kakaoClient.clientSecret,
+					redirect_uri: `${redirectUri}/auth/kakao/callback`,
+					code,
+				},
+				{
+					headers: {
+						"Content-Type": "application/x-www-form-urlencoded",
+					},
+				},
+			);
+
+			// {
+			//   access_token: 'MIRNXjgb_FdjQSNpJvrn9OpwOeZSlREfAAAAAQo9dGgAAAGScYII6ejqOP6o1CZo',
+			//   token_type: 'bearer',
+			//   refresh_token: '1pj7QL8YIrjEN7rBqWeT0No1AiqkIwJ6AAAAAgo9dGgAAAGScYII5OjqOP6o1CZo',
+			//   id_token: 'eyJraWQiOiI5ZjI1MmRhZGQ1ZjIzM2Y5M2QyZmE1MjhkMTJmZWEiLCJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJmNDk1ZTkzZTkyZGM3NjE3ZTBjMDJhYWM4YTkyNmE0ZSIsInN1YiI6IjM3NDA1MTc3MjQiLCJhdXRoX3RpbWUiOjE3Mjg0ODEyMDAsImlzcyI6Imh0dHBzOi8va2F1dGgua2FrYW8uY29tIiwiZXhwIjoxNzI4NTAyODAwLCJpYXQiOjE3Mjg0ODEyMDAsImVtYWlsIjoicGRydi5vZmZpY2lhbEBnbWFpbC5jb20ifQ.I095GrYKbhK8EdVUCKIpDc8vXkNW2W1hyNqvTR7PYKASaHe0TemodDVwp5ePDPBC3VYZSA8h-7TqbZmdNZ-Mirz3GmMws570D8R9BZpdxUjKnpSU1khtGDP4p9-dRdKbfP_ig9sHyS8PJ2HYDgyNNot-TWLASHYRVqPWCttoXwWGe_8FO7TdeEsOdKWp8PXOmKM5NoM-mE65PsTwYuObEaLbfMdBlkPG8heZ83dSbeqfL3ZrP0-dOAl9iLGhEZVFN79Wc5bdmJs991SWOC0I953RP8mw-IZ2xksJWhUsQEE8btiMPzzl9xvcmeIor-AUswVOnaPxmgbsZtjxWTWxlA',
+			//   expires_in: 21599,
+			//   scope: 'account_email',
+			//   refresh_token_expires_in: 5183999
+			// }
+			return data;
+		} catch (e) {
+			throw new BadRequestException({
+				...AUTH_GET_KAKAO_TOKEN_ERROR,
+				message: e.message,
+			});
+		}
+	}
+
+	/**
+	 * 카카오 사용자 정보 조회
+	 * @param accessToken 액세스 토큰
+	 * @returns 카카오 사용자 정보
+	 */
+	async getKakaoUserInfo(accessToken: string): Promise<IAuthKakaoUserInfoResponse> {
+		try {
+			const { data } = await axios.get<IAuthKakaoUserInfoResponse>(`${this.kakaoClient.apiUrl}/v2/user/me`, {
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+					"Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+				},
+			});
+
+			return data;
+		} catch (e) {
+			throw new BadRequestException({
+				...AUTH_GET_KAKAO_USER_INFO_ERROR,
+				message: e.message,
+			});
+		}
+	}
+
+	/**
+	 * 네이버 토큰 조회
+	 * @param code 인증 코드
+	 * @returns 네이버 토큰
+	 */
+	async getNaverToken(code: string): Promise<IAuthNaverTokenResponse> {
+		try {
+			const { data } = await axios.post<IAuthNaverTokenResponse>(
+				`${this.naverClient.authApiUrl}/oauth2.0/token`,
+				{
+					grant_type: "authorization_code",
+					client_id: this.naverClient.clientId,
+					client_secret: this.naverClient.clientSecret,
+					code,
+					state: this.helperHashService.sha256(code),
+				},
+				{
+					headers: {
+						"Content-Type": "application/x-www-form-urlencoded",
+					},
+				},
+			);
+
+			return data;
+		} catch (e) {
+			throw new BadRequestException({
+				...AUTH_GET_NAVER_TOKEN_ERROR,
+				message: e.message,
+			});
+		}
+	}
+
+	async getNaverUserInfo(accessToken: string): Promise<IAuthNaverUserInfoResponse["response"]> {
+		try {
+			const { data } = await axios.get<IAuthNaverUserInfoResponse>(`${this.naverClient.apiUrl}/nid/me`, {
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+				},
+			});
+
+			return data.response;
+		} catch (e) {
+			throw new BadRequestException({
+				...AUTH_GET_NAVER_USER_INFO_ERROR,
+				message: e?.data?.errorMessage || e.message,
+			});
+		}
 	}
 }
