@@ -1,0 +1,264 @@
+"use client";
+
+import { cn } from "@/common/utils";
+import { useRef, useState, KeyboardEvent } from "react";
+
+export interface KeyButtonProps {
+	children: React.ReactNode;
+	onClick?: () => void;
+	variant?: "key" | "scale";
+	ariaLabel?: string;
+}
+
+export interface KeyDropdownProps {
+	currentValue: string | undefined;
+	isOpen: boolean;
+	toggleDropdown: () => void;
+	onChangeKey: (key: string) => void;
+	onChangeScale: (scale: string) => void;
+	onClear: () => void;
+}
+
+export function KeyButton({ children, onClick, variant = "key", ariaLabel }: KeyButtonProps) {
+	const getButtonClasses = () => {
+		const baseClasses =
+			"font-medium rounded-xl border-2 border-gray-200 border-solid transition-all cursor-pointer duration-[0.2s] ease-[ease] flex items-center justify-center";
+
+		if (variant === "key") {
+			return `${baseClasses} bg-white w-[40px] h-[40px] text-neutral-800 text-sm hover:bg-gray-100`;
+		}
+
+		if (variant === "scale") {
+			return `${baseClasses} bg-white rounded-3xl w-[100px] h-[35px] text-neutral-800 text-sm hover:bg-gray-100`;
+		}
+
+		return baseClasses;
+	};
+
+	return (
+		<button
+			className={getButtonClasses()}
+			onClick={onClick}
+			aria-label={ariaLabel}
+		>
+			{children}
+		</button>
+	);
+}
+
+export const KeyDropdown = ({
+	currentValue,
+	isOpen,
+	toggleDropdown,
+	onChangeKey,
+	onChangeScale,
+	onClear,
+}: KeyDropdownProps) => {
+	const sharpKeys = ["C#", "D#", "F#", "G#", "A#"];
+	const naturalKeys = ["C", "D", "E", "F", "G", "A", "B"];
+	const flatKeys = ["D♭", "E♭", "G♭", "A♭", "B♭"];
+
+	const [activeTab, setActiveTab] = useState("flat");
+
+	const selectButtonRef = useRef<HTMLButtonElement>(null);
+
+	const onTabChange = (tab: "flat" | "sharp") => {
+		setActiveTab(tab);
+	};
+
+	const onKeyClick = (key: string) => {
+		console.log("key", key);
+		onChangeKey(key);
+	};
+
+	const handleKeyDown = (e: KeyboardEvent) => {
+		if (e.key === "Escape") {
+			toggleDropdown();
+		}
+	};
+
+	return (
+		<div
+			className="relative w-full"
+			onKeyDown={handleKeyDown}
+		>
+			<button
+				ref={selectButtonRef}
+				type="button"
+				onClick={() => {
+					toggleDropdown();
+				}}
+				className={cn(
+					"w-full h-[35px] px-4 pr-10 border border-black rounded-[5px] bg-white text-[#4D4D4F] font-bold tracking-[0.01em] focus:outline-none cursor-pointer relative",
+				)}
+				aria-haspopup="listbox"
+				aria-expanded={isOpen}
+				aria-label="음악 키 선택"
+				aria-controls="key-select-dropdown"
+			>
+				<span className={cn("block truncate text-left", !currentValue && "text-gray-400")}>
+					{currentValue || "Key를 선택해주세요"}
+				</span>
+				<svg
+					className={cn(
+						"absolute right-3 top-1/2 -translate-y-1/2",
+						"w-[13px] h-[8.75px]",
+						"transition-transform",
+						isOpen && "rotate-180",
+					)}
+					viewBox="0 0 14 9"
+					fill="none"
+					xmlns="http://www.w3.org/2000/svg"
+					aria-hidden="true"
+				>
+					<path
+						d="M6.35 8.875L-0.3 2.225L1.825 0.125L6.35 4.65L10.875 0.125L13 2.225L6.35 8.875Z"
+						fill="currentColor"
+					/>
+				</svg>
+			</button>
+
+			{isOpen && (
+				<div
+					id="key-select-dropdown"
+					role="dialog"
+					aria-label="음악 키 선택 메뉴"
+					className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg"
+				>
+					<header className="bg-gray-50 border-b border-solid border-b-gray-200">
+						<nav
+							className="flex"
+							role="tablist"
+						>
+							<button
+								role="tab"
+								aria-selected={activeTab === "flat"}
+								aria-controls="flat-keys-panel"
+								className={`flex-1 p-2 text-sm font-medium text-center transition-all cursor-pointer border-b-[3px] border-solid duration-[0.2s] ease-[ease] ${
+									activeTab === "flat"
+										? "bg-white border-b-blue-600 text-neutral-800"
+										: "text-gray-500 bg-gray-50 border-b-transparent"
+								}`}
+								onClick={() => onTabChange("flat")}
+							>
+								Flat Keys
+							</button>
+							<button
+								role="tab"
+								aria-selected={activeTab === "sharp"}
+								aria-controls="sharp-keys-panel"
+								className={`flex-1 p-2 text-sm font-medium text-center transition-all cursor-pointer border-b-[3px] border-solid duration-[0.2s] ease-[ease] ${
+									activeTab === "sharp"
+										? "bg-white border-b-blue-600 text-neutral-800"
+										: "text-gray-500 bg-gray-50 border-b-transparent"
+								}`}
+								onClick={() => onTabChange("sharp")}
+							>
+								Sharp Keys
+							</button>
+						</nav>
+					</header>
+
+					<div className="flex flex-col mb-4">
+						<section className="p-4 flex flex-col gap-4">
+							{activeTab === "sharp" && (
+								<div
+									id="sharp-keys-panel"
+									role="tabpanel"
+									className="flex gap-1 justify-center"
+								>
+									{sharpKeys.map((key) => (
+										<KeyButton
+											key={key}
+											variant="key"
+											onClick={() => onKeyClick(key)}
+											ariaLabel={`${key} 키 선택`}
+										>
+											{key}
+										</KeyButton>
+									))}
+								</div>
+							)}
+
+							{activeTab === "flat" && (
+								<div
+									id="flat-keys-panel"
+									role="tabpanel"
+									className="flex gap-1 justify-center"
+								>
+									{flatKeys.map((key) => (
+										<KeyButton
+											key={key}
+											variant="key"
+											onClick={() => onKeyClick(key)}
+											ariaLabel={`${key} 키 선택`}
+										>
+											{key}
+										</KeyButton>
+									))}
+								</div>
+							)}
+
+							<div
+								role="group"
+								aria-label="자연음 키"
+								className="flex gap-1 justify-center flex-wrap"
+							>
+								{naturalKeys.map((key) => (
+									<KeyButton
+										key={key}
+										variant="key"
+										onClick={() => onKeyClick(key)}
+										ariaLabel={`${key} 키 선택`}
+									>
+										{key}
+									</KeyButton>
+								))}
+							</div>
+						</section>
+
+						{/* 키 스케일 버튼 */}
+						<section
+							role="group"
+							aria-label="음계 선택"
+							className="flex gap-6 justify-center"
+						>
+							<KeyButton
+								variant="scale"
+								onClick={() => onChangeScale("Major")}
+								ariaLabel="장음계 선택"
+							>
+								Major
+							</KeyButton>
+							<KeyButton
+								variant="scale"
+								onClick={() => onChangeScale("Minor")}
+								ariaLabel="단음계 선택"
+							>
+								Minor
+							</KeyButton>
+						</section>
+					</div>
+
+					{/* 하단 버튼 */}
+					<footer className="flex justify-between items-center px-4 py-3 border-t border-solid border-t-gray-200">
+						<button
+							className="text-sm font-medium text-gray-500 underline cursor-pointer duration-[0.2s] ease-[ease] transition-[color]"
+							onClick={onClear}
+							aria-label="선택 초기화"
+						>
+							Clear
+						</button>
+						<button
+							className="p-2 text-sm font-medium text-white bg-blue-600 rounded-lg cursor-pointer border-[none] duration-[0.2s] ease-[ease] transition-[background-color]"
+							onClick={toggleDropdown}
+							aria-label="선택 완료"
+						>
+							Close
+						</button>
+					</footer>
+				</div>
+			)}
+		</div>
+	);
+};

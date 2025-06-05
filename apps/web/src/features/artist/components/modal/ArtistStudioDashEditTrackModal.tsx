@@ -2,11 +2,12 @@
 import { Acapella, Beat, LargeEqualizer, MinusCircle, Plus, PlusCircle } from "@/assets/svgs";
 import Circle from "@/assets/svgs/Circle";
 import { cn } from "@/common/utils";
-import { AlbumAvatar, Badge, Dropdown, Input } from "@/components/ui";
+import { AlbumAvatar, Badge, Dropdown, Input, KeyDropdown } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
 import { GenreButton } from "@/components/ui/GenreButton";
 import { Popup, PopupButton, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
 import { TagButton } from "@/components/ui/TagButton";
+import { useEffect, useState } from "react";
 
 interface ArtistStudioDashEditTrackModalProps {
 	isModalOpen: boolean;
@@ -18,16 +19,45 @@ const ArtistStudioDashEditTrackModal = ({
 	onClose,
 	openCompleteModal,
 }: ArtistStudioDashEditTrackModalProps) => {
+	const [isKeyDropdownOpen, setIsKeyDropdownOpen] = useState(false);
+	const [currentKey, setCurrentKey] = useState<string>();
+	const [currentScale, setCurrentScale] = useState<string>();
+	const currentValue = currentKey ? currentKey + " " + currentScale : undefined;
+
+	const onChangeKey = (key: string) => {
+		if (currentKey !== key) {
+			setCurrentScale("");
+		}
+
+		setCurrentKey(key);
+	};
+
+	const onChangeScale = (scale: string) => {
+		setCurrentScale(scale);
+	};
+
 	const handleSave = () => {
 		onClose();
 		openCompleteModal();
 	};
+
+	const onClearKey = () => {
+		setCurrentKey(undefined);
+		setCurrentScale(undefined);
+	};
+
+	useEffect(() => {
+		if (currentKey && currentScale) {
+			setIsKeyDropdownOpen(false);
+		}
+	}, [currentKey, currentScale]);
+
 	return (
 		<Popup
 			open={isModalOpen}
 			onOpenChange={onClose}
 		>
-			<PopupContent className="max-w-[649px]">
+			<PopupContent className="max-w-[649px] pb-6">
 				<PopupHeader>
 					<PopupTitle>트랙 수정</PopupTitle>
 				</PopupHeader>
@@ -175,22 +205,24 @@ const ArtistStudioDashEditTrackModal = ({
 							<div className="font-[SUIT] text-xs flex justify-between">
 								<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">BPM</div>
 							</div>
-							<Dropdown
+							{/* <Dropdown
 								className="w-full"
 								buttonClassName="border-x-1px border-y-2px"
 								defaultValue="86"
 								options={[{ label: "86", value: "86" }]}
-							/>
+							/> */}
 						</div>
 						<div className="flex flex-col gap-[5px]">
 							<div className="font-[SUIT] text-xs flex justify-between">
 								<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">Key</div>
 							</div>
-							<Dropdown
-								className="w-full"
-								buttonClassName="border-x-1px border-y-2px"
-								defaultValue="C"
-								options={[{ label: "C", value: "C" }]}
+							<KeyDropdown
+								isOpen={isKeyDropdownOpen}
+								toggleDropdown={() => setIsKeyDropdownOpen(!isKeyDropdownOpen)}
+								currentValue={currentValue}
+								onChangeKey={onChangeKey}
+								onChangeScale={onChangeScale}
+								onClear={onClearKey}
 							/>
 						</div>
 						<div className="flex flex-col gap-[5px]">

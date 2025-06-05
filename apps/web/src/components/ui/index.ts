@@ -12,6 +12,7 @@ import { LoginButton } from "./LoginButton";
 import { Dropdown } from "./Dropdown";
 import { TagDropdown } from "./TagDropdown";
 import { SquareDropdown } from "./SquareDropdown";
+import { KeyDropdown } from "./KeyDropdown";
 
 // Toggle components
 import { Toggle } from "./Toggle";
@@ -46,7 +47,7 @@ const UI = {
 	Dropdown,
 	TagDropdown,
 	SquareDropdown,
-
+	KeyDropdown,
 	Toggle,
 
 	UserAvatar,
@@ -81,6 +82,7 @@ export {
 	Dropdown,
 	TagDropdown,
 	SquareDropdown,
+	KeyDropdown,
 	Toggle,
 	UserAvatar,
 	ArtistAvatar,
