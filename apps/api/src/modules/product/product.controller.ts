@@ -39,6 +39,7 @@ import { ProductListResponseDto } from "./dto/response/product.list.response.dto
 import { ProductListQueryRequestDto } from "./dto/request/project.list.request.dto";
 import { ProductUploadFileRequestDto } from "./dto/request/product.upload-file.request.dto";
 import { ProductFindQuery } from "./decorators/product.decorator";
+import { ProductSearchInfoResponseDto } from "./dto/response/product.search-info.response.dto";
 
 @Controller("products")
 @ApiTags("product")
@@ -60,11 +61,12 @@ export class ProductController {
 		@Req() req: AuthenticatedRequest,
 		@Query() productListQueryRequestDto: ProductListQueryRequestDto,
 	): Promise<IResponsePaging<ProductListResponseDto>> {
-		const { category, musicKey, minBpm, maxBpm, genreIds, tagIds } = productListQueryRequestDto;
+		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds } = productListQueryRequestDto;
 
 		const where = {
 			...(productListQueryRequestDto.category === "null" ? {} : { category }),
 			...(musicKey === "null" ? {} : { musicKey }),
+			...(scaleType === "null" ? {} : { scaleType }),
 			...(minBpm ? { minBpm: { lte: minBpm }, maxBpm: { gte: minBpm } } : {}),
 			...(maxBpm ? { minBpm: { lte: maxBpm }, maxBpm: { gte: maxBpm } } : {}),
 			...(genreIds
@@ -101,6 +103,28 @@ export class ProductController {
 				total,
 			},
 			data: products,
+		};
+	}
+
+	@Get("/search-info")
+	@ApiOperation({ summary: "상품 검색 정보 조회" })
+	@DocAuth({ jwtAccessToken: true })
+	@DocResponse<ProductSearchInfoResponseDto>(productMessage.findProductSearchInfo.success, {
+		dto: ProductSearchInfoResponseDto,
+	})
+	async findProductSearchInfo() {
+		// 장르 조회
+		const genres = await this.productService.findGenreAll();
+
+		// Tag 조회
+		const tags = await this.productService.findTagAll();
+		return {
+			statusCode: 200,
+			message: productMessage.findProductSearchInfo.success,
+			data: {
+				genres,
+				tags,
+			},
 		};
 	}
 
