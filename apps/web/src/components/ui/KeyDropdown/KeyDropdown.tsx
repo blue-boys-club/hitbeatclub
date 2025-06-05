@@ -1,11 +1,99 @@
 "use client";
 
 import { cn } from "@/common/utils";
+import { KeyValue } from "@/features/artist/components/modal/ArtistStudioDashEditTrackModal";
 import { useRef, useState, useEffect, useMemo } from "react";
 
-const sharpKeys = ["C#", "D#", "F#", "G#", "A#"] as const;
-const naturalKeys = ["C", "D", "E", "F", "G", "A", "B"] as const;
-const flatKeys = ["D♭", "E♭", "G♭", "A♭", "B♭"] as const;
+// const musicKeyEnum = z.enum([
+// 	"C",
+// 	"Db",
+// 	"D",
+// 	"Eb",
+// 	"E",
+// 	"F",
+// 	"Gb",
+// 	"G",
+// 	"Ab",
+// 	"A",
+// 	"Bb",
+// 	"B",
+// 	"Cs",
+// 	"Ds",
+// 	"Fs",
+// 	"Gs",
+// 	"As",
+// 	"null",
+// ]);
+
+//분리 필요
+const sharpKeys = [
+	{
+		label: "C#",
+		value: "Cs",
+	},
+	{
+		label: "D#",
+		value: "Ds",
+	},
+	{
+		label: "F#",
+		value: "Fs",
+	},
+	{
+		label: "G#",
+		value: "Gs",
+	},
+	{
+		label: "A#",
+		value: "As",
+	},
+] as const;
+
+const naturalKeys = [
+	{
+		label: "C",
+		value: "C",
+	},
+	{
+		label: "D",
+		value: "D",
+	},
+	{
+		label: "E",
+		value: "E",
+	},
+	{
+		label: "F",
+		value: "F",
+	},
+	{
+		label: "G",
+		value: "G",
+	},
+] as const;
+
+const flatKeys = [
+	{
+		label: "D♭",
+		value: "Db",
+	},
+	{
+		label: "E♭",
+		value: "Eb",
+	},
+	{
+		label: "G♭",
+		value: "Gb",
+	},
+	{
+		label: "A♭",
+		value: "Ab",
+	},
+	{
+		label: "B♭",
+		value: "Bb",
+	},
+] as const;
 
 export interface KeyButtonProps {
 	children: React.ReactNode;
@@ -15,9 +103,9 @@ export interface KeyButtonProps {
 }
 
 export interface KeyDropdownProps {
-	keyValue: string | undefined;
-	scaleValue: string | undefined;
-	onChangeKey: (key: string) => void;
+	keyValue: KeyValue | undefined;
+	scaleValue: string | null;
+	onChangeKey: (key: KeyValue) => void;
 	onChangeScale: (scale: string) => void;
 	onClear: () => void;
 }
@@ -55,11 +143,11 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 
 	const currentValue = useMemo(() => {
 		if (keyValue && scaleValue) {
-			return `${keyValue} ${scaleValue}`;
+			return `${keyValue.label} ${scaleValue}`;
 		}
 
 		if (keyValue) {
-			return keyValue;
+			return keyValue.label;
 		}
 
 		return undefined;
@@ -72,7 +160,7 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 		setActiveTab(tab);
 	};
 
-	const onKeyClick = (key: string) => {
+	const onKeyClick = (key: { label: string; value: string }) => {
 		onChangeKey(key);
 	};
 
@@ -187,12 +275,12 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 								>
 									{sharpKeys.map((key) => (
 										<KeyButton
-											key={key}
+											key={key.value}
 											variant="key"
 											onClick={() => onKeyClick(key)}
-											ariaLabel={`${key} 키 선택`}
+											ariaLabel={`${key.label} 키 선택`}
 										>
-											{key}
+											{key.label}
 										</KeyButton>
 									))}
 								</div>
@@ -206,12 +294,12 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 								>
 									{flatKeys.map((key) => (
 										<KeyButton
-											key={key}
+											key={key.value}
 											variant="key"
 											onClick={() => onKeyClick(key)}
-											ariaLabel={`${key} 키 선택`}
+											ariaLabel={`${key.label} 키 선택`}
 										>
-											{key}
+											{key.label}
 										</KeyButton>
 									))}
 								</div>
@@ -224,12 +312,12 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 							>
 								{naturalKeys.map((key) => (
 									<KeyButton
-										key={key}
+										key={key.value}
 										variant="key"
 										onClick={() => onKeyClick(key)}
-										ariaLabel={`${key} 키 선택`}
+										ariaLabel={`${key.label} 키 선택`}
 									>
-										{key}
+										{key.label}
 									</KeyButton>
 								))}
 							</div>

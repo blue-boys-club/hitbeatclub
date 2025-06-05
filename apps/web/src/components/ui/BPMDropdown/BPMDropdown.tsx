@@ -1,25 +1,29 @@
 "use client";
 
 import { cn } from "@/common/utils";
+import { BPM, BPMRange } from "@/features/artist/components/modal/ArtistStudioDashEditTrackModal";
 import { useRef, useState, useMemo, useEffect } from "react";
 
 export interface BPMDropdownProps {
-	bpmValue: number | undefined;
-	bpmRangeValue: { min?: number | undefined; max?: number | undefined } | undefined;
+	bpmType: "exact" | "range";
+	bpmValue: BPM | undefined;
+	bpmRangeValue: BPMRange | undefined;
+	onChangeBPMType: (type: "exact" | "range") => void;
 	onChangeExactBPM: (bpm: number) => void;
 	onChangeBPMRange: (type: "min" | "max", bpm: number) => void;
 	onClear: () => void;
 }
 
 export const BPMDropdown = ({
+	bpmType,
 	bpmValue,
 	bpmRangeValue,
+	onChangeBPMType,
 	onChangeExactBPM,
 	onChangeBPMRange,
 	onClear,
 }: BPMDropdownProps) => {
 	const [isOpen, setIsOpen] = useState(false);
-	const [bpmType, setBpmType] = useState<"exact" | "range">("exact");
 
 	const selectButtonRef = useRef<HTMLButtonElement>(null);
 	const dropdownRef = useRef<HTMLDivElement>(null);
@@ -101,7 +105,7 @@ export const BPMDropdown = ({
 									id="exact"
 									name="bpmType"
 									checked={bpmType === "exact"}
-									onChange={() => setBpmType("exact")}
+									onChange={() => onChangeBPMType("exact")}
 									className="w-4 h-4"
 								/>
 								<label
@@ -128,7 +132,7 @@ export const BPMDropdown = ({
 									id="range"
 									name="bpmType"
 									checked={bpmType === "range"}
-									onChange={() => setBpmType("range")}
+									onChange={() => onChangeBPMType("range")}
 									className="w-4 h-4"
 								/>
 								<label
