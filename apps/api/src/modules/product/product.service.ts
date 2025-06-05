@@ -4,8 +4,7 @@ import { Prisma, Product } from "@prisma/client";
 import { ENUM_PRODUCT_FILE_TYPE, ENUM_PRODUCT_SORT } from "./product.enum";
 import { ProductUpdateDto } from "./dto/request/product.update.dto";
 import { FileService } from "../file/file.service";
-import { ProductListQueryRequestDto } from "./dto/request/project.list.request.dto";
-import { ProductCreateRequest } from "@hitbeatclub/shared-types/product";
+import { ProductCreateRequest, ProductListQueryRequest } from "@hitbeatclub/shared-types/product";
 import { PRODUCT_CREATE_ERROR, PRODUCT_LICENSE_NOT_FOUND_ERROR, PRODUCT_UPDATE_ERROR } from "./product.error";
 
 @Injectable()
@@ -15,11 +14,14 @@ export class ProductService {
 		private readonly fileService: FileService,
 	) {}
 
-	async findAll({ page, limit, category, sort }: ProductListQueryRequestDto) {
+	async findAll(where: any, { page, limit, sort, genreIds, tagIds }: ProductListQueryRequest) {
 		try {
 			const products = await this.prisma.product
 				.findMany({
-					where: { deletedAt: null, ...(category === "null" ? {} : { category }) },
+					where: {
+						deletedAt: null,
+						...where,
+					},
 					include: {
 						artistSellerIdToArtist: {
 							select: {
@@ -43,6 +45,26 @@ export class ProductService {
 								url: true,
 							},
 						},
+						...(genreIds
+							? {
+									productGenre: {
+										where: {
+											deletedAt: null,
+											genreId: { in: genreIds.split(",").map((id) => parseInt(id)) },
+										},
+									},
+								}
+							: {}),
+						...(tagIds
+							? {
+									productTag: {
+										where: {
+											deletedAt: null,
+											tagId: { in: tagIds.split(",").map((id) => parseInt(id)) },
+										},
+									},
+								}
+							: {}),
 					} as any,
 					orderBy: { createdAt: sort === ENUM_PRODUCT_SORT.RECENT ? "desc" : "asc" },
 					skip: (page - 1) * limit,
@@ -50,11 +72,15 @@ export class ProductService {
 				})
 				.then((data) => this.prisma.serializeBigInt(data));
 
-			return products.map((product) => {
+			const result = [];
+			for (const product of products) {
 				const seller = product.artistSellerIdToArtist;
 				delete product.artistSellerIdToArtist;
 
-				return {
+				const audioFile = product.files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
+				const coverImage = product.files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
+
+				result.push({
 					id: product.id,
 					type: product.type,
 					productName: product.productName,
@@ -63,11 +89,29 @@ export class ProductService {
 					category: product.category,
 					isActive: product.isActive,
 					createdAt: product.createdAt,
+					minBpm: product.minBpm,
+					maxBpm: product.maxBpm,
+					musicKey: product.musicKey,
+					scaleType: product.scaleType,
+					genres: product?.productGenre?.length
+						? await this.findProductGenresByIds(
+								product.id,
+								product.productGenre.map((pg) => pg.genreId),
+							)
+						: [],
+					tags: product?.productTag?.length
+						? await this.findProductTagsByIds(
+								product.id,
+								product.productTag.map((pt) => pt.tagId),
+							)
+						: [],
 					seller,
-					audioFile: product.files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE),
-					coverImage: product.files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE),
-				};
-			});
+					audioFile: audioFile || null,
+					coverImage: coverImage || null,
+				});
+			}
+
+			return !result.length ? [] : result;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -320,9 +364,9 @@ export class ProductService {
 		};
 	}
 
-	async getTotal({ page, limit, category }: ProductListQueryRequestDto) {
+	async getTotal(where) {
 		const total = await this.prisma.product.count({
-			where: { deletedAt: null, ...(category === "null" ? {} : { category }) },
+			where: { deletedAt: null, ...where },
 		});
 		return total;
 	}
@@ -364,6 +408,44 @@ export class ProductService {
 				},
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
+	}
+
+	async findProductGenresByIds(productId: number, genreIds: number[]) {
+		const genres = await this.prisma.productGenre
+			.findMany({
+				where: { AND: [{ genreId: { in: genreIds } }, { deletedAt: null }, { productId }] },
+				select: {
+					genre: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data))
+			.then((data) => data.map((item) => item.genre));
+
+		return genres;
+	}
+
+	async findProductTagsByIds(productId: number, tagIds: number[]) {
+		const tags = await this.prisma.productTag
+			.findMany({
+				where: { AND: [{ tagId: { in: tagIds } }, { deletedAt: null }, { productId }] },
+				select: {
+					tag: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data))
+			.then((data) => data.map((item) => item.tag));
+
+		return tags;
 	}
 
 	async createProductTag(

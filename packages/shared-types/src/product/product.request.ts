@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const licenseTypeEnum = z.enum(["MASTER", "EXCLUSIVE"]);
 const productSortEnum = z.enum(["RECENT", "RECOMMEND", "null"]);
-const productCategoryEnum = z.enum(["BEAT", "ACAPELA", "null"]);
+export const productCategoryEnum = z.enum(["BEAT", "ACAPELA", "null"]);
 const musicKeyEnum = z.enum([
 	"C",
 	"Db",

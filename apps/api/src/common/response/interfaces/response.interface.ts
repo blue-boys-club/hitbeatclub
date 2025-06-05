@@ -35,6 +35,8 @@ export interface IResponsePagination<T> {
 
 // response pagination
 export interface IResponsePagingPagination {
+	page: number;
+	limit: number;
 	totalPage: number;
 	total: number;
 }

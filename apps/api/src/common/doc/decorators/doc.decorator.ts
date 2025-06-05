@@ -434,6 +434,14 @@ export function DocResponsePaging<T>(messagePath: string, options: IDocResponseO
 					_pagination: {
 						type: "object",
 						properties: {
+							page: {
+								type: "number",
+								example: 1,
+							},
+							limit: {
+								type: "number",
+								example: 10,
+							},
 							totalPage: {
 								type: "number",
 								example: 1,
