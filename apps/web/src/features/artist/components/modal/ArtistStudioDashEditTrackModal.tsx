@@ -1,5 +1,8 @@
 "use client";
-import { Acapella, Beat, LargeEqualizer, MinusCircle, Plus, PlusCircle } from "@/assets/svgs";
+import { useState } from "react";
+
+import { useUpdateProductMutation } from "@/apis/product/mutations";
+import { Acapella, AddCircle, Beat, LargeEqualizer, MinusCircle, Plus } from "@/assets/svgs";
 import Circle from "@/assets/svgs/Circle";
 import { cn } from "@/common/utils";
 import { AlbumAvatar, Badge, BPMDropdown, Dropdown, Input, KeyDropdown } from "@/components/ui";
@@ -7,10 +10,11 @@ import { Button } from "@/components/ui/Button";
 import { GenreButton } from "@/components/ui/GenreButton";
 import { Popup, PopupButton, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
 import { TagButton } from "@/components/ui/TagButton";
-import { useState } from "react";
+import { ProductUpdateRequest } from "@hitbeatclub/shared-types/product";
 
-type BPM = number | undefined;
-type BPMRange = { min?: number | undefined; max?: number | undefined } | undefined;
+export type BPM = number | undefined;
+export type BPMRange = { min?: number | undefined; max?: number | undefined } | undefined;
+export type KeyValue = { label: string; value: string };
 
 interface ArtistStudioDashEditTrackModalProps {
 	isModalOpen: boolean;
@@ -22,13 +26,67 @@ const ArtistStudioDashEditTrackModal = ({
 	onClose,
 	openCompleteModal,
 }: ArtistStudioDashEditTrackModalProps) => {
+	const [category, setCategory] = useState<"BEAT" | "ACAPELLA">("BEAT");
+	const [bpmType, setBpmType] = useState<"exact" | "range">("exact");
 	const [exactBPM, setExactBPM] = useState<BPM>(undefined);
 	const [bpmRange, setBpmRange] = useState<BPMRange>({
 		min: undefined,
 		max: undefined,
 	});
-	const [keyValue, setKeyValue] = useState<string>();
-	const [scaleValue, setScaleValue] = useState<string>();
+	const [keyValue, setKeyValue] = useState<KeyValue>();
+	const [scaleValue, setScaleValue] = useState<string | null>(null);
+
+	const { mutate: updateProduct } = useUpdateProductMutation(1);
+
+	const onSave = () => {
+		let payload = {
+			productName: "test",
+			description: "test",
+			price: 10000,
+			category,
+			genres: ["Hip-hop", "G-funk"],
+			tags: ["tag", "tag2"],
+			minBpm: 0,
+			maxBpm: 0,
+			musicKey: keyValue?.value,
+			scaleType: scaleValue ? scaleValue.toUpperCase() : null,
+			licenseInfo: [
+				{
+					type: "MASTER",
+					price: 10000,
+				},
+				{
+					type: "EXCLUSIVE",
+					price: 20000,
+				},
+			],
+			currency: "KRW",
+			coverImageFileId: 1,
+			audioFileFileId: 2,
+			zipFileId: 3,
+			isFreeDownload: 0,
+			isPublic: 0,
+		};
+
+		if (bpmType === "exact") {
+			payload.minBpm = exactBPM ?? 0;
+			payload.maxBpm = exactBPM ?? 0;
+		} else {
+			payload.minBpm = bpmRange?.min ?? 0;
+			payload.maxBpm = bpmRange?.max ?? 0;
+		}
+
+		// updateProduct(payload, {
+		// 	onSuccess: () => {
+		// 		onClose();
+		// 		openCompleteModal();
+		// 	},
+		// });
+	};
+
+	const onChangeCategory = (category: "BEAT" | "ACAPELLA") => {
+		setCategory(category);
+	};
 
 	const onChangeExactBPM = (bpm: number) => {
 		if (isNaN(bpm)) return;
@@ -52,9 +110,13 @@ const ArtistStudioDashEditTrackModal = ({
 		}
 	};
 
-	const onChangeKey = (newKey: string) => {
-		if (keyValue !== newKey) {
-			setScaleValue(undefined);
+	const onChangeBPMType = (type: "exact" | "range") => {
+		setBpmType(type);
+	};
+
+	const onChangeKey = (newKey: KeyValue) => {
+		if (keyValue?.value !== newKey.value) {
+			setScaleValue(null);
 		}
 
 		setKeyValue(newKey);
@@ -66,17 +128,12 @@ const ArtistStudioDashEditTrackModal = ({
 
 	const onClearKey = () => {
 		setKeyValue(undefined);
-		setScaleValue(undefined);
+		setScaleValue(null);
 	};
 
 	const onClearBPM = () => {
 		setExactBPM(undefined);
 		setBpmRange({ min: undefined, max: undefined });
-	};
-
-	const onSave = () => {
-		onClose();
-		openCompleteModal();
 	};
 
 	return (
@@ -173,13 +230,15 @@ const ArtistStudioDashEditTrackModal = ({
 							</div>
 							<textarea className="border-x-[1px] border-y-[2px] border-black rounded-lg p-2 h-[162px] resize-none text-hbc-black font-suit text-xs font-semibold leading-[160%] tracking-[0.18px] focus:outline-none" />
 						</div>
-						<div className="grid grid-cols-2 gap-7">
+						<div className="flex gap-2 w-full">
 							<Button
 								size={"md"}
 								rounded={"full"}
+								className="flex-1 flex items-center justify-center"
+								onClick={() => onChangeCategory("BEAT")}
 							>
 								<Beat
-									width="42"
+									width="90"
 									height="12"
 									fill="white"
 								/>
@@ -188,6 +247,8 @@ const ArtistStudioDashEditTrackModal = ({
 								size={"md"}
 								variant={"outline"}
 								rounded={"full"}
+								className="flex-1 flex items-center justify-center"
+								onClick={() => onChangeCategory("ACAPELLA")}
 							>
 								<Acapella
 									width="90"
@@ -233,25 +294,29 @@ const ArtistStudioDashEditTrackModal = ({
 								<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">BPM</div>
 							</div>
 							<BPMDropdown
+								bpmType={bpmType}
 								bpmValue={exactBPM}
 								bpmRangeValue={bpmRange}
+								onChangeBPMType={onChangeBPMType}
 								onChangeExactBPM={onChangeExactBPM}
 								onChangeBPMRange={onChangeBPMRange}
 								onClear={onClearBPM}
 							/>
 						</div>
-						<div className="flex flex-col gap-[5px]">
-							<div className="font-[SUIT] text-xs flex justify-between">
-								<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">Key</div>
+						{category === "BEAT" && (
+							<div className="flex flex-col gap-[5px]">
+								<div className="font-[SUIT] text-xs flex justify-between">
+									<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">Key</div>
+								</div>
+								<KeyDropdown
+									keyValue={keyValue}
+									scaleValue={scaleValue}
+									onChangeKey={onChangeKey}
+									onChangeScale={onChangeScale}
+									onClear={onClearKey}
+								/>
 							</div>
-							<KeyDropdown
-								keyValue={keyValue}
-								scaleValue={scaleValue}
-								onChangeKey={onChangeKey}
-								onChangeScale={onChangeScale}
-								onClear={onClearKey}
-							/>
-						</div>
+						)}
 						<div className="flex flex-col gap-[5px]">
 							<div className="font-[SUIT] text-xs flex justify-between">
 								<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">License</div>
@@ -259,8 +324,13 @@ const ArtistStudioDashEditTrackModal = ({
 							</div>
 							<div className="flex gap-5 items-center">
 								<div className="flex-grow grid grid-cols-2 gap-[5px]">
-									<Input variant={"rounded"} />
-									<Input variant={"rounded"} />
+									<Input variant="rounded" />
+									<div className="relative">
+										<Input variant="rounded" />
+										<span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm font-semibold tracking-[-0.24px] text-gray-400">
+											KRW
+										</span>
+									</div>
 								</div>
 								<button className="flex-shrink-0 cursor-pointer">
 									<MinusCircle />
@@ -268,7 +338,7 @@ const ArtistStudioDashEditTrackModal = ({
 							</div>
 
 							<button className="flex justify-center cursor-pointer">
-								<PlusCircle />
+								<AddCircle />
 							</button>
 						</div>
 						<div className="flex flex-col gap-[5px]">
