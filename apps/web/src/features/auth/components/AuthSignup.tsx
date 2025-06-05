@@ -146,7 +146,7 @@ export const AuthSignup = () => {
 			year: "",
 			month: "",
 			day: "",
-			country: "KR", // 기본값
+			country: "KOR", // 기본값
 			region: undefined,
 			isAgreedTerms: false,
 			isAgreedPrivacyPolicy: false,
