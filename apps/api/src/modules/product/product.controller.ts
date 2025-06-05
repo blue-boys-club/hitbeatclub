@@ -125,6 +125,7 @@ export class ProductController {
 				...product,
 				audioFile: productFiles.audioFile,
 				coverImage: productFiles.coverImage,
+				zipFile: productFiles.zipFile,
 			},
 		};
 	}
