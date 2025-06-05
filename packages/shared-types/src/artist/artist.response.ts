@@ -24,4 +24,11 @@ export const ArtistResponseSchema = z.object({
 	deletedAt: z.date().nullable().describe("삭제일").default(null),
 });
 
+export const ArtistListResponseSchema = z.object({
+	id: z.number().describe("아티스트 ID").default(1),
+	name: z.string().nullable().describe("아티스트 이름").default("DJ 스파이더"),
+	profileImageUrl: z.string().nullable().describe("프로필 이미지 URL").default("https://example.com/profile.jpg"),
+});
+
 export type ArtistResponse = z.infer<typeof ArtistResponseSchema>;
+export type ArtistListResponse = z.infer<typeof ArtistListResponseSchema>;
