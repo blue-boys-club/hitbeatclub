@@ -69,7 +69,11 @@ export const ProductListQuerySchema = z.object({
 	limit: z.string().transform(Number).pipe(z.number().min(1)).describe("10"),
 	category: productCategoryEnum.optional().describe("BEAT"),
 	sort: productSortEnum.optional().describe("RECENT"),
-	genreIds: z.string().optional().describe("1,2"),
+	genreIds: z
+		.string()
+		.refine((val) => !val || val.split(",").length <= 3, { message: "최대 3개의 장르만 선택할 수 있습니다." })
+		.optional()
+		.describe("1,2"),
 	tagIds: z.string().optional().describe("1,3"),
 	musicKey: musicKeyEnum.optional().describe("C"),
 	scaleType: scaleTypeEnum.optional().describe("MAJOR"),

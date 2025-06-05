@@ -667,4 +667,32 @@ export class ProductService {
 			});
 		}
 	}
+
+	async findGenreAll() {
+		return await this.prisma.genre
+			.findMany({
+				where: {
+					deletedAt: null,
+				},
+				select: {
+					id: true,
+					name: true,
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+	}
+
+	async findTagAll() {
+		return await this.prisma.tag
+			.findMany({
+				where: {
+					deletedAt: null,
+				},
+				select: {
+					id: true,
+					name: true,
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+	}
 }

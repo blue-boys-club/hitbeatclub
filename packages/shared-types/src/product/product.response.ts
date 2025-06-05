@@ -82,6 +82,22 @@ export const ProductDetailResponseSchema = z.object({
 	}),
 });
 
+export const ProductSearchInfoResponseSchema = z.object({
+	genres: z.array(
+		z.object({
+			id: z.number().describe("장르 ID"),
+			name: z.string().describe("장르명"),
+		}),
+	),
+	tags: z.array(
+		z.object({
+			id: z.number().describe("태그 ID"),
+			name: z.string().describe("태그명"),
+		}),
+	),
+});
+
 export type ProductListPagingResponse = z.infer<typeof ProductListPagingResponseSchema>;
 export type ProductResponse = z.infer<typeof ProductResponseSchema>;
 export type ProductDetailResponse = z.infer<typeof ProductDetailResponseSchema>;
+export type ProductSearchInfoResponse = z.infer<typeof ProductSearchInfoResponseSchema>;

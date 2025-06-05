@@ -2,6 +2,9 @@ export const productMessage = {
 	find: {
 		success: "상품 조회 성공",
 	},
+	findProductSearchInfo: {
+		success: "상품 검색 정보 조회 성공",
+	},
 	create: {
 		success: "상품 생성 성공",
 	},
