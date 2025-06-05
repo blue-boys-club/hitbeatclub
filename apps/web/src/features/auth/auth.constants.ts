@@ -34,10 +34,9 @@ export const KAKAO_OAUTH_BASE_URL = "https://kauth.kakao.com/oauth/authorize";
 
 /**
  * 카카오 로그인 URL 생성기
- *
- * @param redirectUri Oauth callback 이후 redirect 될 uri
+ * 클라이언트 사이드에서만 호출되어야 합니다.
  */
-export const KAKAO_OAUTH_LOGIN_URL = ((): string => {
+export const generateKakaoOAuthURL = (): string => {
 	const clientId = process.env.NEXT_PUBLIC_AUTH_SOCIAL_KAKAO_CLIENT_ID!;
 	const origin = window.location.origin;
 	const callbackUri = `${origin}/auth/${KAKAO_OAUTH_TYPE}/callback`;
@@ -50,7 +49,7 @@ export const KAKAO_OAUTH_LOGIN_URL = ((): string => {
 	});
 
 	return `${KAKAO_OAUTH_BASE_URL}?${parameters.toString()}`;
-})();
+};
 
 export const NAVER_OAUTH_TYPE = "naver";
 
@@ -58,10 +57,9 @@ export const NAVER_OAUTH_BASE_URL = "https://nid.naver.com/oauth2.0/authorize";
 
 /**
  * 네이버 로그인 URL 생성기
- *
- * @param redirectUri Oauth callback 이후 redirect 될 uri
+ * 클라이언트 사이드에서만 호출되어야 합니다.
  */
-export const NAVER_OAUTH_LOGIN_URL = ((): string => {
+export const generateNaverOAuthURL = (): string => {
 	const clientId = process.env.NEXT_PUBLIC_AUTH_SOCIAL_NAVER_CLIENT_ID!;
 	const origin = window.location.origin;
 	const callbackUri = `${origin}/auth/${NAVER_OAUTH_TYPE}/callback`;
@@ -73,4 +71,4 @@ export const NAVER_OAUTH_LOGIN_URL = ((): string => {
 	});
 
 	return `${NAVER_OAUTH_BASE_URL}?${parameters.toString()}`;
-})();
+};
