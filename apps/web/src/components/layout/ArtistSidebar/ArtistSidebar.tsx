@@ -10,9 +10,13 @@ import { UserProfile } from "@/assets/svgs/UserProfile";
 import { ArtistStudioTitle } from "./ArtistStudioTitle";
 import { Popup, PopupContent, PopupHeader, PopupTitle, PopupFooter, PopupDescription } from "@/components/ui/Popup";
 import { Button } from "@/components/ui/Button";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Upload } from "@/assets/svgs";
 import { useRouter } from "next/navigation";
+import { getArtistMeQueryOption } from "@/apis/artist/query/artist.query-options";
+import { useQuery } from "@tanstack/react-query";
+import UserProfileImage from "@/assets/images/user-profile.png";
+import { cn } from "@/common/utils/tailwind";
 
 const artistStats = [
 	{ label: "Follower", value: "4,567" },
@@ -20,16 +24,28 @@ const artistStats = [
 	{ label: "Visitors", value: "976" },
 ];
 
-const navItems = [
-	{ href: "/studio", label: "My Studio", icon: UserProfile, isLocked: true },
-	{ href: "/artist-info", label: "Artist Info", icon: ArtistInfo, isLocked: false },
-	{ href: "/payouts", label: "Payouts", icon: Dollars, isLocked: true },
-];
-
 export const ArtistSidebar = () => {
 	const [isProfileWarningOpen, setIsProfileWarningOpen] = useState(false);
 	const [isLockedNavWarningOpen, setIsLockedNavWarningOpen] = useState(false);
 	const [profileData, setProfileData] = useState(null); // TODO: 실제 프로필 데이터 연동 필요
+
+	const { data: artistMe, isSuccess: isArtistMeSuccess } = useQuery(getArtistMeQueryOption());
+	const navItems = useMemo(() => {
+		if (!isArtistMeSuccess) return [];
+
+		const isStudioLocked = [artistMe.stageName, artistMe.slug, artistMe.description].some((value) => value === null);
+
+		return [
+			{ href: "/studio", label: "My Studio", icon: UserProfile, isLocked: isStudioLocked },
+			{
+				href: `/artist-studio/${artistMe.id}/setting?tab=profile`,
+				label: "Artist Info",
+				icon: ArtistInfo,
+				isLocked: false,
+			},
+			{ href: "/payouts", label: "Payouts", icon: Dollars, isLocked: true },
+		];
+	}, [isArtistMeSuccess, artistMe]);
 
 	const router = useRouter();
 
@@ -50,6 +66,13 @@ export const ArtistSidebar = () => {
 	const onLockedNavClick = () => {
 		setIsLockedNavWarningOpen(true);
 	};
+
+	const profileUrl = useMemo(() => {
+		if (!artistMe?.profileImageUrl || artistMe?.profileImageUrl === "") {
+			return UserProfileImage;
+		}
+		return artistMe.profileImageUrl;
+	}, [artistMe]);
 
 	return (
 		<>
@@ -73,9 +96,9 @@ export const ArtistSidebar = () => {
 
 					<section className="flex flex-col items-center justify-center gap-20px">
 						<ArtistAvatar
-							src="/"
+							src={profileUrl}
 							alt="아티스트 프로필 이미지"
-							className="bg-black my-8px"
+							className={cn("bg-black my-8px", profileUrl === UserProfileImage && "bg-white")}
 							size="small"
 						/>
 

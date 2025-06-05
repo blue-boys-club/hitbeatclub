@@ -1,3 +1,5 @@
+import { ENUM_SETTLEMENT_BANK, SettlementBank } from "@hitbeatclub/shared-types/settlement";
+
 const ENUM_USER_ROLE = {
 	USER: "user",
 	ADMIN: "admin",
@@ -6,3 +8,108 @@ const ENUM_USER_ROLE = {
 	ARTIST_USER: "artist_user",
 	ARTIST_ADMIN_USER: "artist_admin_user",
 };
+
+export const SNS_OPTIONS = [
+	{ label: "Instagram", value: "instagram" },
+	{ label: "YouTube", value: "youtube" },
+	{ label: "TikTok", value: "tiktok" },
+	{ label: "SoundCloud", value: "soundcloud" },
+	{ label: "기타", value: "etc" },
+];
+
+export const CONTACT_OPTIONS = [
+	{ label: "Kakao", value: "kakao" },
+	{ label: "Line", value: "line" },
+	{ label: "Discord", value: "discord" },
+];
+
+// cspell:disable
+export const BANK_OPTIONS: Array<{ label: string; value: SettlementBank }> = [
+	{ label: "한국은행", value: "BANK_OF_KOREA" },
+	{ label: "산업은행", value: "KDB" },
+	{ label: "기업은행", value: "IBK" },
+	{ label: "국민은행", value: "KOOKMIN" },
+	{ label: "수협은행", value: "SUHYUP" },
+	{ label: "수출입은행", value: "KEXIM" },
+	{ label: "NH농협은행", value: "NONGHYUP" },
+	{ label: "지역농축협", value: "LOCAL_NONGHYUP" },
+	{ label: "우리은행", value: "WOORI" },
+	{ label: "SC제일은행", value: "STANDARD_CHARTERED" },
+	{ label: "한국씨티은행", value: "CITI" },
+	{ label: "아이엠뱅크", value: "DAEGU" },
+	{ label: "부산은행", value: "BUSAN" },
+	{ label: "광주은행", value: "KWANGJU" },
+	{ label: "제주은행", value: "JEJU" },
+	{ label: "전북은행", value: "JEONBUK" },
+	{ label: "경남은행", value: "KYONGNAM" },
+	{ label: "새마을금고", value: "KFCC" },
+	{ label: "신협", value: "SHINHYUP" },
+	{ label: "저축은행", value: "SAVINGS_BANK" },
+	{ label: "모간스탠리은행", value: "MORGAN_STANLEY" },
+	{ label: "HSBC은행", value: "HSBC" },
+	{ label: "도이치은행", value: "DEUTSCHE" },
+	{ label: "제이피모간체이스은행", value: "JPMC" },
+	{ label: "미즈호은행", value: "MIZUHO" },
+	{ label: "엠유에프지은행", value: "MUFG" },
+	{ label: "BOA은행", value: "BANK_OF_AMERICA" },
+	{ label: "비엔피파리바은행", value: "BNP_PARIBAS" },
+	{ label: "중국공상은행", value: "ICBC" },
+	{ label: "중국은행", value: "BANK_OF_CHINA" },
+	{ label: "산림조합중앙회", value: "NFCF" },
+	{ label: "대화은행", value: "UOB" },
+	{ label: "교통은행", value: "BOCOM" },
+	{ label: "중국건설은행", value: "CCB" },
+	{ label: "우체국", value: "POST" },
+	{ label: "신용보증기금", value: "KODIT" },
+	{ label: "기술보증기금", value: "KIBO" },
+	{ label: "하나은행", value: "HANA" },
+	{ label: "신한은행", value: "SHINHAN" },
+	{ label: "케이뱅크", value: "K_BANK" },
+	{ label: "카카오뱅크", value: "KAKAO" },
+	{ label: "토스뱅크", value: "TOSS" },
+	{ label: "기타 외국계은행", value: "MISC_FOREIGN" },
+	{ label: "서울보증보험", value: "SGI" },
+	{ label: "한국신용정보원", value: "KCIS" },
+	{ label: "유안타증권", value: "YUANTA_SECURITIES" },
+	{ label: "KB증권", value: "KB_SECURITIES" },
+	{ label: "상상인증권", value: "SANGSANGIN_SECURITIES" },
+	{ label: "한양증권", value: "HANYANG_SECURITIES" },
+	{ label: "리딩투자증권", value: "LEADING_SECURITIES" },
+	{ label: "BNK투자증권", value: "BNK_SECURITIES" },
+	{ label: "IBK투자증권", value: "IBK_SECURITIES" },
+	{ label: "다올투자증권", value: "DAOL_SECURITIES" },
+	{ label: "미래에셋증권", value: "MIRAE_ASSET_SECURITIES" },
+	{ label: "삼성증권", value: "SAMSUNG_SECURITIES" },
+	{ label: "한국투자증권", value: "KOREA_SECURITIES" },
+	{ label: "NH투자증권", value: "NH_SECURITIES" },
+	{ label: "교보증권", value: "KYOBO_SECURITIES" },
+	{ label: "하이투자증권", value: "HI_SECURITIES" },
+	{ label: "현대차증권", value: "HYUNDAI_MOTOR_SECURITIES" },
+	{ label: "키움증권", value: "KIWOOM_SECURITIES" },
+	{ label: "LS증권", value: "EBEST_SECURITIES" },
+	{ label: "SK증권", value: "SK_SECURITIES" },
+	{ label: "대신증권", value: "DAISHIN_SECURITIES" },
+	{ label: "한화투자증권", value: "HANHWA_SECURITIES" },
+	{ label: "하나증권", value: "HANA_SECURITIES" },
+	{ label: "토스증권", value: "TOSS_SECURITIES" },
+	{ label: "신한투자증권", value: "SHINHAN_SECURITIES" },
+	{ label: "DB금융투자", value: "DB_SECURITIES" },
+	{ label: "유진투자증권", value: "EUGENE_SECURITIES" },
+	{ label: "메리츠증권", value: "MERITZ_SECURITIES" },
+	{ label: "카카오페이증권", value: "KAKAO_PAY_SECURITIES" },
+	{ label: "부국증권", value: "BOOKOOK_SECURITIES" },
+	{ label: "신영증권", value: "SHINYOUNG_SECURITIES" },
+	{ label: "케이프투자증권", value: "CAPE_SECURITIES" },
+	{ label: "한국증권금융", value: "KOREA_SECURITIES_FINANCE" },
+	{ label: "한국포스증권", value: "KOREA_FOSS_SECURITIES" },
+	{ label: "우리종합금융", value: "WOORI_INVESTMENT_BANK" },
+];
+// cspell:enable
+
+export const BANK_LABEL_MAP: Record<SettlementBank, string> = BANK_OPTIONS.reduce(
+	(accumulator, currentValue) => {
+		accumulator[currentValue.value] = currentValue.label;
+		return accumulator;
+	},
+	{} as Record<SettlementBank, string>,
+);

@@ -2,6 +2,9 @@ export const artistMessage = {
 	find: {
 		success: "아티스트 조회 성공",
 	},
+	findMe: {
+		success: "내 아티스트 조회 성공",
+	},
 	create: {
 		success: "아티스트 생성 성공",
 	},

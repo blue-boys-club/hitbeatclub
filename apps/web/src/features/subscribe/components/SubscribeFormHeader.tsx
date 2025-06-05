@@ -1,5 +1,5 @@
 import { Toggle } from "@/components/ui/Toggle";
-import { RecurringPeriod } from "../schema";
+import { RecurringPeriod } from "@hitbeatclub/shared-types/subscribe";
 
 /**
  * 구독 폼 헤더 컴포넌트
@@ -13,7 +13,7 @@ interface SubscribeFormHeaderProps {
 export const SubscribeFormHeader = ({ isSubscribed, recurringPeriod, onPeriodChange }: SubscribeFormHeaderProps) => {
 	const handlePeriodToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const isMonthly = event.target.checked;
-		onPeriodChange(isMonthly ? RecurringPeriod.MONTHLY : RecurringPeriod.YEARLY);
+		onPeriodChange(isMonthly ? "monthly" : "yearly");
 	};
 
 	if (isSubscribed) {

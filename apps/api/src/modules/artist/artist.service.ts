@@ -1,12 +1,18 @@
 import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/common/prisma/prisma.service";
 import { Artist } from "@prisma/client";
-import { ArtistUpdateDto } from "./dto/request/artist.update.dto";
 import { ArtistCreateDto } from "./dto/request/artist.create.request.dto";
+import { ArtistUpdateDto } from "./dto/request/artist.update.dto";
+import { FileService } from "src/modules/file/file.service";
+import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types";
+import { ArtistDetailResponseDto } from "./dto/response/artist.detail.response.dto";
 
 @Injectable()
 export class ArtistService {
-	constructor(private readonly prisma: PrismaService) {}
+	constructor(
+		private readonly prisma: PrismaService,
+		private readonly fileService: FileService,
+	) {}
 
 	async findAll(): Promise<Artist[]> {
 		try {
@@ -19,6 +25,43 @@ export class ArtistService {
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
+	}
+
+	async findMe(userId: number): Promise<ArtistDetailResponseDto> {
+		const artist = await this.prisma.artist
+			.findFirst({
+				where: { userId, deletedAt: null },
+				include: {
+					settlement: {
+						select: {
+							type: true,
+							accountHolder: true,
+							accountNumber: true,
+							accountBank: true,
+							paypalAccount: true,
+						},
+					},
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+
+		if (!artist) {
+			throw new NotFoundException("Artist not found");
+		}
+		const profileImageFile = await this.fileService
+			.findFilesByTargetId({
+				targetId: Number(artist.id),
+				targetTable: "artist",
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+
+		return {
+			...artist,
+			id: Number(artist.id),
+			userId: Number(artist.userId),
+			profileImageUrl: profileImageFile[0]?.url || null,
+			settlement: artist.settlement[0] || null,
+		};
 	}
 
 	async findOne(id: number) {
@@ -34,6 +77,15 @@ export class ArtistService {
 								name: true,
 							},
 						},
+						settlement: {
+							select: {
+								type: true,
+								accountHolder: true,
+								accountNumber: true,
+								accountBank: true,
+								paypalAccount: true,
+							},
+						},
 					},
 				})
 				.then((data) => this.prisma.serializeBigInt(data) as Artist);
@@ -41,12 +93,16 @@ export class ArtistService {
 			if (!artist) {
 				throw new NotFoundException("Artist not found");
 			}
+			const profileImageFile = await this.fileService.findFilesByTargetId({
+				targetId: Number(artist.id),
+				targetTable: "artist",
+			});
 
-			const user = (artist as any).user;
-			delete (artist as any).user;
 			return {
 				...artist,
-				user,
+				id: Number(artist.id),
+				userId: Number(artist.userId),
+				profileImageUrl: profileImageFile[0]?.url || null,
 			};
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -103,6 +159,26 @@ export class ArtistService {
 				.then((data) => this.prisma.serializeBigInt(data));
 		} catch (error) {
 			throw new BadRequestException(error);
+		}
+	}
+
+	async uploadArtistProfile({
+		uploaderId,
+		artistId,
+		profileImageFileId,
+	}: {
+		uploaderId: number;
+		artistId: number;
+		profileImageFileId: number;
+	}) {
+		if (profileImageFileId) {
+			await this.fileService.updateFileEnabledAndDelete({
+				uploaderId,
+				newFileId: profileImageFileId,
+				targetTable: "artist",
+				targetId: artistId,
+				type: ENUM_FILE_TYPE.ARTIST_PROFILE_IMAGE,
+			});
 		}
 	}
 }

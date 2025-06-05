@@ -61,6 +61,7 @@ model Artist {
   deletedAt                  DateTime? @map("deleted_at") @db.Timestamp(0)
   user                       User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_TO_artist_1")
   productSellerIdToArtist    Product[] @relation("product_seller_idToartist")
+  settlement Settlement[]
 
   @@index([userId], map: "FK_user_TO_artist_1")
   @@map("artist")
@@ -141,12 +142,8 @@ model Product {
   price                     Int?
   imageUrl                  String?   @map("image_url") @db.VarChar(255)
   type                      String?   @db.VarChar(10)
-  genre                     String?   @db.VarChar(100)
-  tags                      Json?
   bpm                       Int?
   tonality                  String?   @db.VarChar(10)
-  licenseType               String?   @map("license_type") @db.VarChar(10)
-  licensePrice              Int?      @map("license_price")
   currency                  String?   @db.VarChar(10)
   isFreeDownload            Int?      @map("is_free_download") @db.TinyInt
   isPublic                  Int?      @map("is_public") @db.TinyInt
@@ -154,8 +151,11 @@ model Product {
   updatedAt                 DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
   deletedAt                 DateTime? @map("deleted_at") @db.Timestamp(0)
   cart                      Cart[]
-  artistSellerIdToArtist    Artist?    @relation("product_seller_idToartist", fields: [sellerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_artist_TO_product_1")
-  files                     File[]    @relation("ProductToFile")
+  artistSellerIdToArtist    Artist?          @relation("product_seller_idToartist", fields: [sellerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_artist_TO_product_1")
+  files                     File[]           @relation("ProductToFile")
+  productLicense            ProductLicense[]
+  productGenre              ProductGenre[]
+  productTag                ProductTag[]
 
   @@index([sellerId], map: "FK_artist_TO_product_1")
   @@map("product")
@@ -201,6 +201,115 @@ model File {
   @@index([uploaderId], map: "idx_file_uploader")
   @@index([targetId], map: "idx_file_target")
   @@map("file")
+}
+
+model License {
+  id             BigInt           @id @default(autoincrement())
+  type           String?           @db.VarChar(100)
+  label          String?           @db.VarChar(100)
+  createdAt      DateTime?        @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt      DateTime?        @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt      DateTime?        @map("deleted_at") @db.Timestamp(0)
+  productLicense ProductLicense[]
+
+  @@map("license")
+}
+
+model ProductLicense {
+  productId BigInt    @map("product_id")
+  licenseId BigInt    @map("license_id")
+  price     Int?
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamp(0)
+  product   Product   @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_product_TO_product_license_1")
+  license   License   @relation(fields: [licenseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_license_TO_product_license_1")
+
+  @@id([productId, licenseId])
+  @@index([productId], map: "FK_product_TO_product_license_1")
+  @@index([licenseId], map: "FK_license_TO_product_license_1")
+  @@map("product_license")
+}
+
+model Genre {
+  id           BigInt         @id @default(autoincrement())
+  name         String         @db.VarChar(100)
+  createdAt    DateTime?      @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt    DateTime?      @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt    DateTime?      @map("deleted_at") @db.Timestamp(0)
+  productGenre ProductGenre[]
+
+  @@map("genre")
+}
+
+model ProductGenre {
+  productId BigInt    @map("product_id")
+  genreId   BigInt    @map("genre_id")
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamp(0)
+  product   Product   @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_product_TO_product_genre_1")
+  genre     Genre     @relation(fields: [genreId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_genre_TO_product_genre_1")
+
+  @@unique([productId, genreId])
+  @@index([productId], map: "FK_product_TO_product_genre_1")
+  @@index([genreId], map: "FK_genre_TO_product_genre_1")
+  @@map("product_genre")
+}
+
+model Tag {
+  id         BigInt       @id @default(autoincrement())
+  name       String       @db.VarChar(100)
+  createdAt  DateTime?    @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt  DateTime?    @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt  DateTime?    @map("deleted_at") @db.Timestamp(0)
+  productTag ProductTag[]
+
+  @@map("tag")
+}
+
+model ProductTag {
+  productId BigInt    @map("product_id")
+  tagId     BigInt    @map("tag_id")
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamp(0)
+  product   Product   @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_product_TO_product_tag_1")
+  tag       Tag       @relation(fields: [tagId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_tag_TO_product_tag_1")
+
+  @@unique([productId, tagId])
+  @@index([productId], map: "FK_product_TO_product_tag_1")
+  @@index([tagId], map: "FK_tag_TO_product_tag_1")
+  @@map("product_tag")
+}
+
+enum SettlementType {
+  BANK_ACCOUNT
+  PAYPAL
+}
+
+model Settlement {
+  id BigInt @id @default(autoincrement())
+  artistId BigInt @unique @map("artist_id")
+
+  type SettlementType
+  // 입금주 명 - bankAccount, paypal 이랑 같이 사용
+  accountHolder String @map("account_name") @db.VarChar(100)
+
+  accountNumber String? @map("account_number") @db.VarChar(100)
+  accountBank String? @map("account_bank") @db.VarChar(100)
+  accountVerifiedAt DateTime? @map("account_verified_at") @db.Timestamp(0)
+
+  paypalAccount String? @map("paypal_account") @db.VarChar(100)
+
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamp(0)
+
+  artist Artist @relation(fields: [artistId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_artist_TO_settlement_1")
+
+  @@index([artistId], map: "FK_artist_TO_settlement_1")
+  @@map("settlement")
 }
 
 

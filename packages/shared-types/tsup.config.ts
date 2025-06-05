@@ -10,6 +10,8 @@ export default defineConfig({
 		"auth/index": "src/auth/index.ts",
 		"common/index": "src/common/index.ts",
 		"subscribe/index": "src/subscribe/index.ts",
+		"file/index": "src/file/index.ts",
+		"settlement/index": "src/settlement/index.ts",
 	},
 	format: ["cjs", "esm"],
 	dts: true,

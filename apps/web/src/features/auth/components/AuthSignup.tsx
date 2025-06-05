@@ -18,14 +18,8 @@ import { useSocialJoinUserMutation as useEmailSignupMutation } from "@/apis/auth
 import { useCheckEmailMutation } from "@/apis/auth/mutations/useCheckEmailMutation";
 import { signInOnSuccess } from "@/apis/auth/auth.utils"; // For email signup success handling
 import { cn } from "@/common/utils";
-import {
-	COUNTRY_OPTIONS,
-	GENDER_OPTIONS,
-	generateYearOptions,
-	MONTH_OPTIONS,
-	DAY_OPTIONS,
-	getRegionOptionsByCountry,
-} from "../auth.constants";
+import { GENDER_OPTIONS, generateYearOptions, MONTH_OPTIONS, DAY_OPTIONS } from "../auth.constants";
+import { COUNTRY_OPTIONS, getRegionOptionsByCountry, CountryCode } from "@/features/common/common.constants";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -319,7 +313,7 @@ export const AuthSignup = () => {
 	// 현재 선택된 국가에 따른 지역 옵션
 	// const regionOptions = country ? getRegionOptionsByCountry(country) : [];
 	const regionOptions = useMemo(() => {
-		return country ? getRegionOptionsByCountry(country) : [];
+		return country ? getRegionOptionsByCountry(country as CountryCode) : [];
 	}, [country]);
 
 	// 옵션들
