@@ -1,7 +1,11 @@
 "use client";
 
 import { cn } from "@/common/utils";
-import { useRef, useState, KeyboardEvent } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
+
+const sharpKeys = ["C#", "D#", "F#", "G#", "A#"] as const;
+const naturalKeys = ["C", "D", "E", "F", "G", "A", "B"] as const;
+const flatKeys = ["D♭", "E♭", "G♭", "A♭", "B♭"] as const;
 
 export interface KeyButtonProps {
 	children: React.ReactNode;
@@ -11,9 +15,8 @@ export interface KeyButtonProps {
 }
 
 export interface KeyDropdownProps {
-	currentValue: string | undefined;
-	isOpen: boolean;
-	toggleDropdown: () => void;
+	keyValue: string | undefined;
+	scaleValue: string | undefined;
 	onChangeKey: (key: string) => void;
 	onChangeScale: (scale: string) => void;
 	onClear: () => void;
@@ -46,47 +49,62 @@ export function KeyButton({ children, onClick, variant = "key", ariaLabel }: Key
 	);
 }
 
-export const KeyDropdown = ({
-	currentValue,
-	isOpen,
-	toggleDropdown,
-	onChangeKey,
-	onChangeScale,
-	onClear,
-}: KeyDropdownProps) => {
-	const sharpKeys = ["C#", "D#", "F#", "G#", "A#"];
-	const naturalKeys = ["C", "D", "E", "F", "G", "A", "B"];
-	const flatKeys = ["D♭", "E♭", "G♭", "A♭", "B♭"];
-
+export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, onClear }: KeyDropdownProps) => {
+	const [isOpen, setIsOpen] = useState(false);
 	const [activeTab, setActiveTab] = useState("flat");
 
+	const currentValue = useMemo(() => {
+		if (keyValue && scaleValue) {
+			return `${keyValue} ${scaleValue}`;
+		}
+
+		if (keyValue) {
+			return keyValue;
+		}
+
+		return undefined;
+	}, [keyValue, scaleValue]);
+
 	const selectButtonRef = useRef<HTMLButtonElement>(null);
+	const dropdownRef = useRef<HTMLDivElement>(null!);
 
 	const onTabChange = (tab: "flat" | "sharp") => {
 		setActiveTab(tab);
 	};
 
 	const onKeyClick = (key: string) => {
-		console.log("key", key);
 		onChangeKey(key);
 	};
 
-	const handleKeyDown = (e: KeyboardEvent) => {
-		if (e.key === "Escape") {
-			toggleDropdown();
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+				setIsOpen(false);
+			}
+		};
+
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+		};
+	}, []);
+
+	useEffect(() => {
+		if (keyValue && scaleValue) {
+			setIsOpen(false);
 		}
-	};
+	}, [keyValue, scaleValue]);
 
 	return (
 		<div
 			className="relative w-full"
-			onKeyDown={handleKeyDown}
+			ref={dropdownRef}
 		>
 			<button
 				ref={selectButtonRef}
 				type="button"
 				onClick={() => {
-					toggleDropdown();
+					setIsOpen(!isOpen);
 				}}
 				className={cn(
 					"w-full h-[35px] px-4 pr-10 border border-black rounded-[5px] bg-white text-[#4D4D4F] font-bold tracking-[0.01em] focus:outline-none cursor-pointer relative",
@@ -96,7 +114,7 @@ export const KeyDropdown = ({
 				aria-label="음악 키 선택"
 				aria-controls="key-select-dropdown"
 			>
-				<span className={cn("block truncate text-left", !currentValue && "text-gray-400")}>
+				<span className={cn("block truncate text-left text-sm", !currentValue && "text-gray-400")}>
 					{currentValue || "Key를 선택해주세요"}
 				</span>
 				<svg
@@ -251,7 +269,7 @@ export const KeyDropdown = ({
 						</button>
 						<button
 							className="p-2 text-sm font-medium text-white bg-blue-600 rounded-lg cursor-pointer border-[none] duration-[0.2s] ease-[ease] transition-[background-color]"
-							onClick={toggleDropdown}
+							onClick={() => setIsOpen(false)}
 							aria-label="선택 완료"
 						>
 							Close

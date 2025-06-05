@@ -2,12 +2,15 @@
 import { Acapella, Beat, LargeEqualizer, MinusCircle, Plus, PlusCircle } from "@/assets/svgs";
 import Circle from "@/assets/svgs/Circle";
 import { cn } from "@/common/utils";
-import { AlbumAvatar, Badge, Dropdown, Input, KeyDropdown } from "@/components/ui";
+import { AlbumAvatar, Badge, BPMDropdown, Dropdown, Input, KeyDropdown } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
 import { GenreButton } from "@/components/ui/GenreButton";
 import { Popup, PopupButton, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
 import { TagButton } from "@/components/ui/TagButton";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+
+type BPM = number | undefined;
+type BPMRange = { min?: number | undefined; max?: number | undefined } | undefined;
 
 interface ArtistStudioDashEditTrackModalProps {
 	isModalOpen: boolean;
@@ -19,38 +22,62 @@ const ArtistStudioDashEditTrackModal = ({
 	onClose,
 	openCompleteModal,
 }: ArtistStudioDashEditTrackModalProps) => {
-	const [isKeyDropdownOpen, setIsKeyDropdownOpen] = useState(false);
-	const [currentKey, setCurrentKey] = useState<string>();
-	const [currentScale, setCurrentScale] = useState<string>();
-	const currentValue = currentKey ? currentKey + " " + currentScale : undefined;
+	const [exactBPM, setExactBPM] = useState<BPM>(undefined);
+	const [bpmRange, setBpmRange] = useState<BPMRange>({
+		min: undefined,
+		max: undefined,
+	});
+	const [keyValue, setKeyValue] = useState<string>();
+	const [scaleValue, setScaleValue] = useState<string>();
 
-	const onChangeKey = (key: string) => {
-		if (currentKey !== key) {
-			setCurrentScale("");
+	const onChangeExactBPM = (bpm: number) => {
+		if (isNaN(bpm)) return;
+
+		setExactBPM(bpm === 0 ? undefined : bpm);
+	};
+
+	const onChangeBPMRange = (type: "min" | "max", bpm: number) => {
+		if (isNaN(bpm)) return;
+
+		if (type === "min") {
+			setBpmRange((prev) => ({
+				...prev,
+				min: bpm === 0 ? undefined : bpm,
+			}));
+		} else {
+			setBpmRange((prev) => ({
+				...prev,
+				max: bpm === 0 ? undefined : bpm,
+			}));
+		}
+	};
+
+	const onChangeKey = (newKey: string) => {
+		if (keyValue !== newKey) {
+			setScaleValue(undefined);
 		}
 
-		setCurrentKey(key);
+		setKeyValue(newKey);
 	};
 
 	const onChangeScale = (scale: string) => {
-		setCurrentScale(scale);
-	};
-
-	const handleSave = () => {
-		onClose();
-		openCompleteModal();
+		setScaleValue(scale);
 	};
 
 	const onClearKey = () => {
-		setCurrentKey(undefined);
-		setCurrentScale(undefined);
+		setKeyValue(undefined);
+		setScaleValue(undefined);
 	};
 
-	useEffect(() => {
-		if (currentKey && currentScale) {
-			setIsKeyDropdownOpen(false);
-		}
-	}, [currentKey, currentScale]);
+	const onClearBPM = () => {
+		setExactBPM(undefined);
+		setBpmRange({ min: undefined, max: undefined });
+	};
+
+	const onSave = () => {
+		onClose();
+		openCompleteModal();
+	};
 
 	return (
 		<Popup
@@ -205,21 +232,21 @@ const ArtistStudioDashEditTrackModal = ({
 							<div className="font-[SUIT] text-xs flex justify-between">
 								<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">BPM</div>
 							</div>
-							{/* <Dropdown
-								className="w-full"
-								buttonClassName="border-x-1px border-y-2px"
-								defaultValue="86"
-								options={[{ label: "86", value: "86" }]}
-							/> */}
+							<BPMDropdown
+								bpmValue={exactBPM}
+								bpmRangeValue={bpmRange}
+								onChangeExactBPM={onChangeExactBPM}
+								onChangeBPMRange={onChangeBPMRange}
+								onClear={onClearBPM}
+							/>
 						</div>
 						<div className="flex flex-col gap-[5px]">
 							<div className="font-[SUIT] text-xs flex justify-between">
 								<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">Key</div>
 							</div>
 							<KeyDropdown
-								isOpen={isKeyDropdownOpen}
-								toggleDropdown={() => setIsKeyDropdownOpen(!isKeyDropdownOpen)}
-								currentValue={currentValue}
+								keyValue={keyValue}
+								scaleValue={scaleValue}
 								onChangeKey={onChangeKey}
 								onChangeScale={onChangeScale}
 								onClear={onClearKey}
@@ -273,11 +300,14 @@ const ArtistStudioDashEditTrackModal = ({
 				</section>
 
 				<PopupFooter>
-					<PopupButton className="bg-white px-2 py-1 text-hbc-gray-200 border-b-2 border-hbc-gray-200 rounded-none font-[Suisse Int'l] text-[24px] font-bold leading-normal tracking-[0.24px]">
+					<PopupButton
+						onClick={onClose}
+						className="bg-white px-2 py-1 text-hbc-gray-200 border-b-2 border-hbc-gray-200 rounded-none font-[Suisse Int'l] text-[24px] font-bold leading-normal tracking-[0.24px]"
+					>
 						CANCEL
 					</PopupButton>
 					<PopupButton
-						onClick={handleSave}
+						onClick={onSave}
 						className="bg-white px-2 py-1 text-hbc-red border-b-2 border-hbc-red rounded-none font-[SUIT] text-[24px] font-extrabold leading-normal tracking-[0.24px]"
 					>
 						SAVE
