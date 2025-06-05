@@ -1,6 +1,7 @@
 # 빌드 결과물 및 생성된 파일들
 dist/
 src/
+!src/.gitkeep
 
 # Node.js 관련
 node_modules/
