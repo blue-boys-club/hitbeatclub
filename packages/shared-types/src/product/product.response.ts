@@ -68,10 +68,17 @@ export const ProductDetailResponseSchema = z.object({
 	audioFile: z.object({
 		id: z.number().describe("오디오 파일 ID").default(1),
 		url: z.string().url().describe("오디오 파일 URL").default("https://example.com/audio.mp3"),
+		originName: z.string().describe("오디오 파일 원본 이름").default("audio.mp3"),
 	}),
 	coverImage: z.object({
 		id: z.number().describe("커버 이미지 ID").default(1),
 		url: z.string().url().describe("커버 이미지 URL").default("https://example.com/cover.jpg"),
+		originName: z.string().describe("커버 이미지 원본 이름").default("cover.jpg"),
+	}),
+	zipFile: z.object({
+		id: z.number().describe("ZIP 파일 ID").default(1),
+		url: z.string().url().describe("ZIP 파일 URL").default("https://example.com/zip.zip"),
+		originName: z.string().describe("ZIP 파일 원본 이름").default("zip.zip"),
 	}),
 });
 

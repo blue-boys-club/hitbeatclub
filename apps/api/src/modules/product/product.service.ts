@@ -338,6 +338,7 @@ export class ProductService {
 			targetId: id,
 			targetTable: "product",
 		});
+
 		const audioFile = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
 		const coverImageFile = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
 		const zipFile = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_ZIP_FILE);
@@ -347,18 +348,21 @@ export class ProductService {
 				? {
 						id: audioFile?.id,
 						url: audioFile?.url,
+						originName: audioFile?.originName,
 					}
 				: null,
 			coverImage: coverImageFile
 				? {
 						id: coverImageFile?.id,
 						url: coverImageFile?.url,
+						originName: coverImageFile?.originName,
 					}
 				: null,
 			zipFile: zipFile
 				? {
 						id: zipFile?.id,
 						url: zipFile?.url,
+						originName: zipFile?.originName,
 					}
 				: null,
 		};
