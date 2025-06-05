@@ -227,7 +227,7 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 		profileImageUrl: "",
 		snsList: [],
 		contactList: [],
-		country: "",
+		country: "KOR",
 		city: "",
 	});
 
