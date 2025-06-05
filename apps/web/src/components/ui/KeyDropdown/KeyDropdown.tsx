@@ -2,7 +2,7 @@
 
 import { cn } from "@/common/utils";
 import { KeyValue } from "@/features/artist/components/modal/ArtistStudioDashEditTrackModal";
-import { useRef, useState, useEffect, useMemo } from "react";
+import { useRef, useState, useEffect, useMemo, useCallback } from "react";
 
 // const musicKeyEnum = z.enum([
 // 	"C",
@@ -70,6 +70,14 @@ const naturalKeys = [
 		label: "G",
 		value: "G",
 	},
+	{
+		label: "A",
+		value: "A",
+	},
+	{
+		label: "B",
+		value: "B",
+	},
 ] as const;
 
 const flatKeys = [
@@ -113,23 +121,30 @@ export interface KeyDropdownProps {
 export function KeyButton({ children, onClick, variant = "key", ariaLabel }: KeyButtonProps) {
 	const getButtonClasses = () => {
 		const baseClasses =
-			"font-medium rounded-xl border-2 border-gray-200 border-solid transition-all cursor-pointer duration-[0.2s] ease-[ease] flex items-center justify-center";
+			"font-medium rounded-md border-2 border-gray-200 border-solid transition-all cursor-pointer duration-[0.2s] ease-[ease] flex items-center justify-center flex-none";
 
 		if (variant === "key") {
-			return `${baseClasses} bg-white w-[40px] h-[40px] text-neutral-800 text-sm hover:bg-gray-100`;
+			return cn(baseClasses, "bg-white text-neutral-800 text-xs hover:bg-gray-100 w-6 h-6 basis-6");
 		}
 
 		if (variant === "scale") {
-			return `${baseClasses} bg-white rounded-3xl w-[100px] h-[35px] text-neutral-800 text-sm hover:bg-gray-100`;
+			return cn(baseClasses, "bg-white w-[100px] h-[35px] basis-[100px] text-neutral-800 text-sm hover:bg-gray-100");
 		}
 
 		return baseClasses;
 	};
 
+	const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+		e.preventDefault(); // 기본 동작 방지
+		e.stopPropagation(); // 이벤트 전파 방지
+		onClick?.();
+	};
+
 	return (
 		<button
+			type="button" // form submit 방지
 			className={getButtonClasses()}
-			onClick={onClick}
+			onClick={handleClick}
 			aria-label={ariaLabel}
 		>
 			{children}
@@ -156,13 +171,53 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 	const selectButtonRef = useRef<HTMLButtonElement>(null);
 	const dropdownRef = useRef<HTMLDivElement>(null!);
 
-	const onTabChange = (tab: "flat" | "sharp") => {
-		setActiveTab(tab);
-	};
+	// useCallback으로 최적화된 핸들러들
+	const handleToggleDropdown = useCallback(() => {
+		setIsOpen(!isOpen);
+	}, [isOpen]);
 
-	const onKeyClick = (key: { label: string; value: string }) => {
-		onChangeKey(key);
-	};
+	const onTabChange = useCallback((tab: "flat" | "sharp") => {
+		setActiveTab(tab);
+	}, []);
+
+	const onKeyClick = useCallback(
+		(key: { label: string; value: string }) => {
+			onChangeKey(key);
+		},
+		[onChangeKey],
+	);
+
+	const handleMajorScaleClick = useCallback(() => {
+		onChangeScale("Major");
+	}, [onChangeScale]);
+
+	const handleMinorScaleClick = useCallback(() => {
+		onChangeScale("Minor");
+	}, [onChangeScale]);
+
+	const handleClearClick = useCallback(
+		(e: React.MouseEvent) => {
+			e.preventDefault();
+			e.stopPropagation();
+			onClear();
+		},
+		[onClear],
+	);
+
+	const handleCloseClick = useCallback((e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsOpen(false);
+	}, []);
+
+	const handleTabClick = useCallback(
+		(tab: "flat" | "sharp") => (e: React.MouseEvent) => {
+			e.preventDefault();
+			e.stopPropagation();
+			onTabChange(tab);
+		},
+		[onTabChange],
+	);
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -191,9 +246,7 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 			<button
 				ref={selectButtonRef}
 				type="button"
-				onClick={() => {
-					setIsOpen(!isOpen);
-				}}
+				onClick={handleToggleDropdown}
 				className={cn(
 					"w-full h-[35px] px-4 pr-10 border border-black rounded-[5px] bg-white text-[#4D4D4F] font-bold tracking-[0.01em] focus:outline-none cursor-pointer relative",
 				)}
@@ -237,6 +290,7 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 							role="tablist"
 						>
 							<button
+								type="button"
 								role="tab"
 								aria-selected={activeTab === "flat"}
 								aria-controls="flat-keys-panel"
@@ -245,11 +299,12 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 										? "bg-white border-b-blue-600 text-neutral-800"
 										: "text-gray-500 bg-gray-50 border-b-transparent"
 								}`}
-								onClick={() => onTabChange("flat")}
+								onClick={handleTabClick("flat")}
 							>
 								Flat Keys
 							</button>
 							<button
+								type="button"
 								role="tab"
 								aria-selected={activeTab === "sharp"}
 								aria-controls="sharp-keys-panel"
@@ -258,22 +313,23 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 										? "bg-white border-b-blue-600 text-neutral-800"
 										: "text-gray-500 bg-gray-50 border-b-transparent"
 								}`}
-								onClick={() => onTabChange("sharp")}
+								onClick={handleTabClick("sharp")}
 							>
 								Sharp Keys
 							</button>
 						</nav>
 					</header>
 
-					<div className="flex flex-col mb-4">
-						<section className="p-4 flex flex-col gap-4">
+					<div className="flex flex-col mb-4 w-full">
+						<section className="py-4 flex flex-col gap-4">
+							{/* 상단 샤프/플랫 키들 - 키보드처럼 붙어있게 */}
 							{activeTab === "sharp" && (
 								<div
 									id="sharp-keys-panel"
 									role="tabpanel"
-									className="flex gap-1 justify-center"
+									className="flex justify-center gap-8"
 								>
-									{sharpKeys.map((key) => (
+									{/* {sharpKeys.map((key) => (
 										<KeyButton
 											key={key.value}
 											variant="key"
@@ -282,7 +338,32 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 										>
 											{key.label}
 										</KeyButton>
-									))}
+									))} */}
+									<div className="flex gap-1">
+										{sharpKeys.slice(0, 2).map((key) => (
+											<KeyButton
+												key={key.value}
+												variant="key"
+												onClick={() => onKeyClick(key)}
+												ariaLabel={`${key.label} 키 선택`}
+											>
+												{key.label}
+											</KeyButton>
+										))}
+									</div>
+
+									<div className="flex gap-1">
+										{sharpKeys.slice(2).map((key) => (
+											<KeyButton
+												key={key.value}
+												variant="key"
+												onClick={() => onKeyClick(key)}
+												ariaLabel={`${key.label} 키 선택`}
+											>
+												{key.label}
+											</KeyButton>
+										))}
+									</div>
 								</div>
 							)}
 
@@ -290,9 +371,9 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 								<div
 									id="flat-keys-panel"
 									role="tabpanel"
-									className="flex gap-1 justify-center"
+									className="flex justify-center gap-8"
 								>
-									{flatKeys.map((key) => (
+									{/* {flatKeys.map((key) => (
 										<KeyButton
 											key={key.value}
 											variant="key"
@@ -301,10 +382,36 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 										>
 											{key.label}
 										</KeyButton>
-									))}
+									))} */}
+									<div className="flex gap-1">
+										{flatKeys.slice(0, 2).map((key) => (
+											<KeyButton
+												key={key.value}
+												variant="key"
+												onClick={() => onKeyClick(key)}
+												ariaLabel={`${key.label} 키 선택`}
+											>
+												{key.label}
+											</KeyButton>
+										))}
+									</div>
+
+									<div className="flex gap-1">
+										{flatKeys.slice(2).map((key) => (
+											<KeyButton
+												key={key.value}
+												variant="key"
+												onClick={() => onKeyClick(key)}
+												ariaLabel={`${key.label} 키 선택`}
+											>
+												{key.label}
+											</KeyButton>
+										))}
+									</div>
 								</div>
 							)}
 
+							{/* 하단 자연음 키들 - 1자로 간격 있게 */}
 							<div
 								role="group"
 								aria-label="자연음 키"
@@ -331,14 +438,14 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 						>
 							<KeyButton
 								variant="scale"
-								onClick={() => onChangeScale("Major")}
+								onClick={handleMajorScaleClick}
 								ariaLabel="장음계 선택"
 							>
 								Major
 							</KeyButton>
 							<KeyButton
 								variant="scale"
-								onClick={() => onChangeScale("Minor")}
+								onClick={handleMinorScaleClick}
 								ariaLabel="단음계 선택"
 							>
 								Minor
@@ -349,15 +456,17 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 					{/* 하단 버튼 */}
 					<footer className="flex justify-between items-center px-4 py-3 border-t border-solid border-t-gray-200">
 						<button
+							type="button"
 							className="text-sm font-medium text-gray-500 underline cursor-pointer duration-[0.2s] ease-[ease] transition-[color]"
-							onClick={onClear}
+							onClick={handleClearClick}
 							aria-label="선택 초기화"
 						>
 							Clear
 						</button>
 						<button
+							type="button"
 							className="p-2 text-sm font-medium text-white bg-blue-600 rounded-lg cursor-pointer border-[none] duration-[0.2s] ease-[ease] transition-[background-color]"
-							onClick={() => setIsOpen(false)}
+							onClick={handleCloseClick}
 							aria-label="선택 완료"
 						>
 							Close

@@ -17,6 +17,9 @@ import { getArtistMeQueryOption } from "@/apis/artist/query/artist.query-options
 import { useQuery } from "@tanstack/react-query";
 import UserProfileImage from "@/assets/images/user-profile.png";
 import { cn } from "@/common/utils/tailwind";
+import ArtistStudioDashUploadTrackModal from "@/features/artist/components/modal/ArtistStudioDashUploadTrackModal";
+import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
+import { PRODUCT_FILE_TYPE } from "@/apis/product/product.type";
 
 const artistStats = [
 	{ label: "Follower", value: "4,567" },
@@ -27,6 +30,10 @@ const artistStats = [
 export const ArtistSidebar = () => {
 	const [isProfileWarningOpen, setIsProfileWarningOpen] = useState(false);
 	const [isLockedNavWarningOpen, setIsLockedNavWarningOpen] = useState(false);
+	const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+	const [isUploadCompleteModalOpen, setIsUploadCompleteModalOpen] = useState(false);
+	const [isDragOver, setIsDragOver] = useState(false);
+	const [droppedFiles, setDroppedFiles] = useState<FileList | null>(null);
 
 	const { data: artistMe, isSuccess: isArtistMeSuccess } = useQuery(getArtistMeQueryOption());
 	const pathname = usePathname();
@@ -126,13 +133,76 @@ export const ArtistSidebar = () => {
 
 	const router = useRouter();
 
+	// 파일 타입 확인 함수 - 올바른 ENUM_FILE_TYPE 반환
+	const getFileTypeFromExtension = (file: File): PRODUCT_FILE_TYPE | null => {
+		const extension = file.name.toLowerCase().split(".").pop();
+
+		if (["jpg", "jpeg", "png", "gif", "webp"].includes(extension || "")) {
+			return ENUM_FILE_TYPE.PRODUCT_COVER_IMAGE;
+		}
+		if (["mp3", "wav", "flac", "m4a"].includes(extension || "")) {
+			return ENUM_FILE_TYPE.PRODUCT_AUDIO_FILE;
+		}
+		if (["zip", "rar", "7z"].includes(extension || "")) {
+			return ENUM_FILE_TYPE.PRODUCT_ZIP_FILE;
+		}
+		return null;
+	};
+
+	// 드래그 앤 드롭 이벤트 핸들러
+	const handleDragOver = (e: React.DragEvent) => {
+		e.preventDefault();
+		if (!artistMe?.stageName || artistMe?.stageName === "") return;
+		setIsDragOver(true);
+	};
+
+	const handleDragLeave = (e: React.DragEvent) => {
+		e.preventDefault();
+		setIsDragOver(false);
+	};
+
+	const handleDrop = (e: React.DragEvent) => {
+		e.preventDefault();
+		setIsDragOver(false);
+
+		if (!artistMe?.stageName || artistMe?.stageName === "") {
+			setIsProfileWarningOpen(true);
+			return;
+		}
+
+		const files = e.dataTransfer.files;
+		if (files && files.length > 0) {
+			// 지원되는 파일이 있는지 확인
+			let hasValidFile = false;
+			for (let i = 0; i < files.length; i++) {
+				const file = files[i];
+				if (file && getFileTypeFromExtension(file)) {
+					hasValidFile = true;
+					break;
+				}
+			}
+
+			if (hasValidFile) {
+				// 드롭된 파일들을 저장하고 모달 열기
+				setDroppedFiles(files);
+				setIsUploadModalOpen(true);
+			} else {
+				alert(
+					"지원하지 않는 파일 형식입니다. (이미지: jpg, jpeg, png, gif, webp / 오디오: mp3, wav, flac, m4a / 압축: zip, rar, 7z)",
+				);
+			}
+		}
+	};
+
 	const onUpload = () => {
 		if (!artistMe?.stageName || artistMe?.stageName === "") {
 			setIsProfileWarningOpen(true);
 			return;
 		}
 
-		// TODO: 실제 파일 업로드 로직 구현
+		// 클릭으로 모달을 열 때는 파일 없이 열기
+		setDroppedFiles(null);
+		setIsUploadModalOpen(true);
 	};
 
 	const onMoveToProfileSetting = () => {
@@ -142,6 +212,16 @@ export const ArtistSidebar = () => {
 
 	const onLockedNavClick = () => {
 		setIsLockedNavWarningOpen(true);
+	};
+
+	const onCloseUploadModal = () => {
+		setIsUploadModalOpen(false);
+		// 모달이 닫힐 때 드롭된 파일들도 초기화
+		setDroppedFiles(null);
+	};
+
+	const onOpenUploadCompleteModal = () => {
+		setIsUploadCompleteModalOpen(true);
 	};
 
 	const profileUrl = useMemo(() => {
@@ -188,13 +268,21 @@ export const ArtistSidebar = () => {
 
 					<section className="flex flex-col mt-48px pl-20px pr-11px gap-15px ">
 						<div
-							className="flex flex-col items-center justify-center gap-5 px-8px py-40px border border-dotted border-[#FF1900] cursor-pointer"
+							className={cn(
+								"flex flex-col items-center justify-center gap-5 px-8px py-40px border border-dotted border-[#FF1900] cursor-pointer transition-all duration-200",
+								isDragOver && "bg-[#FF1900] bg-opacity-10 border-2 border-[#FF1900]",
+							)}
 							role="button"
 							tabIndex={0}
 							onClick={onUpload}
+							onDragOver={handleDragOver}
+							onDragLeave={handleDragLeave}
+							onDrop={handleDrop}
 						>
 							<Upload className="transition-opacity hover:opacity-80" />
-							<span className="text-[#FF1900] text-[13px] font-extrabold">Drop Your Fire🔥</span>
+							<span className="text-[#FF1900] text-[13px] font-extrabold">
+								{isDragOver ? "파일을 여기에 드롭하세요!" : "Drop Your Fire🔥"}
+							</span>
 						</div>
 
 						<nav className="flex flex-col w-full gap-10px pt-11px pb-6px border-y-6px border-hbc-red">
@@ -213,6 +301,37 @@ export const ArtistSidebar = () => {
 					</section>
 				</aside>
 			</div>
+
+			{/* 업로드 모달 */}
+			<ArtistStudioDashUploadTrackModal
+				isModalOpen={isUploadModalOpen}
+				onClose={onCloseUploadModal}
+				openCompleteModal={onOpenUploadCompleteModal}
+				initialFiles={droppedFiles}
+			/>
+
+			{/* 업로드 완료 모달 */}
+			<Popup
+				open={isUploadCompleteModalOpen}
+				onOpenChange={setIsUploadCompleteModalOpen}
+			>
+				<PopupContent>
+					<PopupHeader>
+						<PopupTitle className="font-bold">업로드가 완료되었습니다!</PopupTitle>
+					</PopupHeader>
+
+					<PopupDescription className="text-center font-bold">트랙이 성공적으로 업로드되었습니다.</PopupDescription>
+
+					<PopupFooter>
+						<Button
+							rounded="full"
+							onClick={() => setIsUploadCompleteModalOpen(false)}
+						>
+							확인
+						</Button>
+					</PopupFooter>
+				</PopupContent>
+			</Popup>
 
 			<Popup
 				open={isProfileWarningOpen}

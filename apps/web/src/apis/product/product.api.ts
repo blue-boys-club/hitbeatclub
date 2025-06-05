@@ -7,6 +7,8 @@ import {
 import client from "@/apis/api.client";
 import { z } from "zod";
 import type { CommonResponse, CommonResponseId } from "@/apis/api.type";
+import { ENUM_FILE_TYPE, FileSingleProductUploadSchema, FileUploadResponse } from "@hitbeatclub/shared-types/file";
+import { PRODUCT_FILE_TYPE } from "./product.type";
 
 // TODO: Type package로 공유 타입 정의
 /**
@@ -62,5 +64,24 @@ export const updateProduct = async (productId: number, product: z.infer<typeof P
  */
 export const deleteProduct = async (productId: number) => {
 	const response = await client.delete<CommonResponseId>(`/products/${productId}`);
+	return response.data;
+};
+
+/**
+ * 상품 파일 업로드
+ * @param file 업로드할 파일
+ * @param type 파일 타입
+ * @returns 업로드된 파일 정보
+ */
+export const uploadProductFile = async (file: File, type: PRODUCT_FILE_TYPE) => {
+	const formData = new FormData();
+	formData.append("file", file);
+	formData.append("type", type);
+
+	const response = await client.post<CommonResponse<FileUploadResponse>>("/products/file", formData, {
+		headers: {
+			"Content-Type": "multipart/form-data",
+		},
+	});
 	return response.data;
 };

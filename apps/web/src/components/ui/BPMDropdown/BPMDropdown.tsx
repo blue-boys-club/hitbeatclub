@@ -2,7 +2,7 @@
 
 import { cn } from "@/common/utils";
 import { BPM, BPMRange } from "@/features/artist/components/modal/ArtistStudioDashEditTrackModal";
-import { useRef, useState, useMemo, useEffect } from "react";
+import { useRef, useState, useMemo, useEffect, useCallback } from "react";
 
 export interface BPMDropdownProps {
 	bpmType: "exact" | "range";
@@ -38,6 +38,55 @@ export const BPMDropdown = ({
 		return undefined;
 	}, [bpmValue, bpmRangeValue, bpmType]);
 
+	// useCallback으로 최적화된 핸들러들
+	const handleToggleDropdown = useCallback(() => {
+		setIsOpen(!isOpen);
+	}, [isOpen]);
+
+	const handleExactBPMTypeChange = useCallback(() => {
+		onChangeBPMType("exact");
+	}, [onChangeBPMType]);
+
+	const handleRangeBPMTypeChange = useCallback(() => {
+		onChangeBPMType("range");
+	}, [onChangeBPMType]);
+
+	const handleExactBPMChange = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			onChangeExactBPM(Number(e.target.value));
+		},
+		[onChangeExactBPM],
+	);
+
+	const handleMinBPMChange = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			onChangeBPMRange("min", Number(e.target.value));
+		},
+		[onChangeBPMRange],
+	);
+
+	const handleMaxBPMChange = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			onChangeBPMRange("max", Number(e.target.value));
+		},
+		[onChangeBPMRange],
+	);
+
+	const handleClearClick = useCallback(
+		(e: React.MouseEvent) => {
+			e.preventDefault();
+			e.stopPropagation();
+			onClear();
+		},
+		[onClear],
+	);
+
+	const handleCloseClick = useCallback((e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsOpen(false);
+	}, []);
+
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -59,7 +108,7 @@ export const BPMDropdown = ({
 			<button
 				ref={selectButtonRef}
 				type="button"
-				onClick={() => setIsOpen(!isOpen)}
+				onClick={handleToggleDropdown}
 				className={cn(
 					"w-full h-[35px] px-4 pr-10 border border-black rounded-[5px] bg-white text-[#4D4D4F] font-bold tracking-[0.01em] focus:outline-none cursor-pointer relative",
 				)}
@@ -105,7 +154,7 @@ export const BPMDropdown = ({
 									id="exact"
 									name="bpmType"
 									checked={bpmType === "exact"}
-									onChange={() => onChangeBPMType("exact")}
+									onChange={handleExactBPMTypeChange}
 									className="w-4 h-4"
 								/>
 								<label
@@ -119,7 +168,7 @@ export const BPMDropdown = ({
 										type="text"
 										inputMode="numeric"
 										value={bpmValue ?? ""}
-										onChange={(e) => onChangeExactBPM(Number(e.target.value))}
+										onChange={handleExactBPMChange}
 										placeholder="BPM"
 										className="text-sm w-20 h-8 px-2 border border-gray-200 rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 									/>
@@ -132,7 +181,7 @@ export const BPMDropdown = ({
 									id="range"
 									name="bpmType"
 									checked={bpmType === "range"}
-									onChange={() => onChangeBPMType("range")}
+									onChange={handleRangeBPMTypeChange}
 									className="w-4 h-4"
 								/>
 								<label
@@ -147,7 +196,7 @@ export const BPMDropdown = ({
 											type="text"
 											inputMode="numeric"
 											value={bpmRangeValue?.min ? bpmRangeValue.min : ""}
-											onChange={(e) => onChangeBPMRange("min", Number(e.target.value))}
+											onChange={handleMinBPMChange}
 											placeholder="Min"
 											className="text-sm w-12 h-8 px-2 border border-gray-200 rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 										/>
@@ -156,7 +205,7 @@ export const BPMDropdown = ({
 											type="text"
 											inputMode="numeric"
 											value={bpmRangeValue?.max ? bpmRangeValue.max : ""}
-											onChange={(e) => onChangeBPMRange("max", Number(e.target.value))}
+											onChange={handleMaxBPMChange}
 											placeholder="Max"
 											className="text-sm w-12 h-8 px-2 border border-gray-200 rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 										/>
@@ -168,15 +217,17 @@ export const BPMDropdown = ({
 
 					<footer className="flex justify-between items-center px-4 py-3 border-t border-solid border-t-gray-200">
 						<button
+							type="button"
 							className="text-sm font-medium text-gray-500 underline cursor-pointer duration-[0.2s] ease-[ease] transition-[color]"
-							onClick={onClear}
+							onClick={handleClearClick}
 							aria-label="선택 초기화"
 						>
 							Clear
 						</button>
 						<button
+							type="button"
 							className="p-2 text-sm font-medium text-white bg-blue-600 rounded-lg cursor-pointer border-[none] duration-[0.2s] ease-[ease] transition-[background-color]"
-							onClick={() => setIsOpen(false)}
+							onClick={handleCloseClick}
 							aria-label="선택 완료"
 						>
 							Close

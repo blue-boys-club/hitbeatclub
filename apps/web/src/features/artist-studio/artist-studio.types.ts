@@ -1,5 +1,6 @@
 import { FieldErrors } from "react-hook-form";
 import { ArtistUpdateSchema } from "@hitbeatclub/shared-types/artist";
+import { ProductCreateSchema } from "@hitbeatclub/shared-types/product";
 import { z } from "zod";
 import { deepRemoveDefaults } from "@/lib/schema.utils";
 
@@ -29,8 +30,29 @@ export const ProfileFormSchema = ArtistUpdateSchema.extend({
 	),
 });
 
+// 트랙 업로드 모달용 UI 확장 스키마 (ProductCreateSchema 기반)
+export const TrackUploadFormSchema = deepRemoveDefaults(ProductCreateSchema).extend({
+	// UI에서만 사용되는 필드들
+	bpmType: z.enum(["exact", "range"]),
+	exactBPM: z.number().optional(),
+	bpmRange: z
+		.object({
+			min: z.number().optional(),
+			max: z.number().optional(),
+		})
+		.optional(),
+	keyValue: z
+		.object({
+			label: z.string(),
+			value: z.string(),
+		})
+		.optional(),
+	scaleValue: z.string().nullable().optional(),
+});
+
 // Zod 스키마에서 타입 추론
 export type ProfileFormData = z.infer<typeof ProfileFormSchema>;
+export type TrackUploadFormData = z.infer<typeof TrackUploadFormSchema>;
 
 export const ArtistUpdateSchemaWithoutDefaults = deepRemoveDefaults(ArtistUpdateSchema);
 

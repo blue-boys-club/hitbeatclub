@@ -22,6 +22,7 @@ export const MUTATION_KEYS = {
 		create: ["product", "create"],
 		update: (productId: number) => ["product", "update", productId],
 		delete: (productId: number) => ["product", "delete", productId],
+		uploadFile: ["product", "uploadFile"],
 	},
 	artist: {
 		create: ["artist", "create"],

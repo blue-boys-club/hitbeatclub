@@ -1,23 +1,20 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { KeyDropdown } from "./KeyDropdown";
 import { useState } from "react";
+import { KeyValue } from "@/features/artist/components/modal/ArtistStudioDashEditTrackModal";
 
 const meta: Meta<typeof KeyDropdown> = {
 	title: "UI/KeyDropdown",
 	component: KeyDropdown,
 	tags: ["autodocs"],
 	argTypes: {
-		currentValue: {
-			control: "text",
+		keyValue: {
+			control: "object",
 			description: "현재 선택된 키 값",
 		},
-		isOpen: {
-			control: "boolean",
-			description: "드롭다운 열림 상태",
-		},
-		toggleDropdown: {
-			action: "toggleDropdown",
-			description: "드롭다운 토글 함수",
+		scaleValue: {
+			control: "text",
+			description: "현재 선택된 스케일 값",
 		},
 		onChangeKey: {
 			action: "onChangeKey",
@@ -40,47 +37,54 @@ type Story = StoryObj<typeof KeyDropdown>;
 // 기본 상태
 export const Default: Story = {
 	args: {
-		currentValue: undefined,
-		isOpen: false,
+		keyValue: undefined,
+		scaleValue: null,
+		onChangeKey: () => {},
+		onChangeScale: () => {},
+		onClear: () => {},
 	},
 };
 
 // 키가 선택된 상태
 export const WithSelectedKey: Story = {
 	args: {
-		currentValue: "C",
-		isOpen: false,
+		keyValue: { label: "C", value: "C" },
+		scaleValue: null,
+		onChangeKey: () => {},
+		onChangeScale: () => {},
+		onClear: () => {},
 	},
 };
 
-// 드롭다운이 열린 상태
-export const Opened: Story = {
+// 키와 스케일이 모두 선택된 상태
+export const WithKeyAndScale: Story = {
 	args: {
-		currentValue: "C",
-		isOpen: true,
+		keyValue: { label: "C", value: "C" },
+		scaleValue: "Major",
+		onChangeKey: () => {},
+		onChangeScale: () => {},
+		onClear: () => {},
 	},
 };
 
 // 인터랙티브 예제
 const InteractiveExample = () => {
-	const [isOpen, setIsOpen] = useState(false);
-	const [currentValue, setCurrentValue] = useState<string | undefined>(undefined);
+	const [keyValue, setKeyValue] = useState<KeyValue | undefined>(undefined);
+	const [scaleValue, setScaleValue] = useState<string | null>(null);
 
 	return (
 		<KeyDropdown
-			currentValue={currentValue}
-			isOpen={isOpen}
-			toggleDropdown={() => setIsOpen(!isOpen)}
+			keyValue={keyValue}
+			scaleValue={scaleValue}
 			onChangeKey={(key) => {
-				setCurrentValue(key);
-				setIsOpen(false);
+				setKeyValue(key);
 			}}
 			onChangeScale={(scale) => {
-				console.log("Scale changed:", scale);
+				setScaleValue(scale);
 			}}
 			onClear={() => {
-				setCurrentValue(undefined);
-				setIsOpen(false);
+				setKeyValue(undefined);
+				setScaleValue(null);
 			}}
 		/>
 	);

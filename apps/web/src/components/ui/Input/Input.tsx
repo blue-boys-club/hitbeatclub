@@ -11,6 +11,8 @@ const InputVariants = cva(
 		"placeholder:text-gray-400",
 		"transition-colors duration-200",
 		"disabled:opacity-50 disabled:cursor-not-allowed",
+		"[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
+		"[&[type=number]]:[-moz-appearance:textfield]",
 	),
 	{
 		variants: {
