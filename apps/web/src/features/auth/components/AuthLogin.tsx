@@ -10,11 +10,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthLoginPayloadSchema } from "@hitbeatclub/shared-types/auth";
 import { z } from "zod";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { useRouter } from "next/navigation";
+import { KAKAO_OAUTH_LOGIN_URL, NAVER_OAUTH_LOGIN_URL } from "../auth.constants";
 
 type FormData = z.infer<typeof AuthLoginPayloadSchema>;
 
 export const AuthLogin = () => {
+	const router = useRouter();
+	const { data: userMe, isSuccess: isUserMeSuccess } = useQuery(getUserMeQueryOption());
 	const { handleGoogleLogin, isReady: isGoogleReady } = useGoogleAuth();
 	const [loginError, setLoginError] = useState<string>("");
 
@@ -25,6 +31,7 @@ export const AuthLogin = () => {
 		},
 		onSuccess: () => {
 			setLoginError("");
+			// router.push("/");
 		},
 	});
 
@@ -44,6 +51,13 @@ export const AuthLogin = () => {
 		setLoginError("");
 		signInMutation.mutate(data);
 	};
+
+	useEffect(() => {
+		// logged in user
+		if (isUserMeSuccess && userMe.email) {
+			router.push("/");
+		}
+	}, [isUserMeSuccess, userMe, router]);
 
 	return (
 		<div className="w-[400px] h-full m-auto py-20 flex flex-col items-center justify-center">
@@ -131,21 +145,21 @@ export const AuthLogin = () => {
 				<div className="font-semibold text-center text-gray-500">또는</div>
 
 				<div className="space-y-3 w-[400px]">
-					<button
-						type="button"
+					<a
+						href={KAKAO_OAUTH_LOGIN_URL}
 						className="flex justify-center items-center gap-2 w-full h-10 py-2 px-4 rounded-md bg-[#FEE500] font-semibold cursor-pointer"
 					>
 						<KaKaoTalkLogin className="w-[18px] h-[18px]" />
 						카카오 로그인
-					</button>
+					</a>
 
-					<button
-						type="button"
+					<a
+						href={NAVER_OAUTH_LOGIN_URL}
 						className="flex justify-center items-center gap-2 w-full h-10 py-2 px-4 rounded-md bg-[#03C75A] text-white font-semibold cursor-pointer"
 					>
 						<NaverLogin className="w-[18px] h-[18px]" />
 						네이버 로그인
-					</button>
+					</a>
 
 					<button
 						type="button"

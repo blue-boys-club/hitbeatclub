@@ -84,3 +84,33 @@ export const resetPassword = async (payload: z.input<typeof AuthResetPasswordPay
 	const response = await axiosInstance.post<CommonResponseId>(`/auth/reset-password`, parsed);
 	return response.data;
 };
+
+/**
+ * Naver 로그인
+ * @param code 네이버 로그인 코드
+ * @returns 로그인 응답
+ */
+export const signInWithNaver = async ({ code }: { code: string }) => {
+	const response = await axiosInstance.post<CommonResponse<AuthLoginResponse>>("/auth/naver", null, {
+		headers: {
+			Authorization: `Bearer ${code}`,
+		},
+	});
+
+	return response.data;
+};
+
+/**
+ * 카카오 로그인
+ * @param code 카카오 로그인 코드
+ * @returns 로그인 응답
+ */
+export const signInWithKakao = async ({ code }: { code: string }) => {
+	const response = await axiosInstance.post<CommonResponse<AuthLoginResponse>>("/auth/kakao", null, {
+		headers: {
+			Authorization: `Bearer ${code}`,
+		},
+	});
+
+	return response.data;
+};

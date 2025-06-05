@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { AuthJwtAccessPayloadDto } from "./dto/request/auth.jwt.access-payload.dto";
 import {
 	AUTH_FIND_GOOGLE_TOKEN_ERROR,
@@ -30,6 +30,7 @@ import axios from "axios";
 @Injectable()
 export class AuthService {
 	// google
+	private readonly logger = new Logger(AuthService.name);
 	private readonly googleClient: GoogleOAuth2Client;
 	private readonly kakaoClient: {
 		authApiUrl: string;
@@ -353,7 +354,7 @@ export class AuthService {
 	 * @param accessToken 액세스 토큰
 	 * @returns 카카오 사용자 정보
 	 */
-	async getKakaoUserInfo(accessToken: string): Promise<IAuthKakaoUserInfoResponse> {
+	async getKakaoUserInfo(accessToken: string): Promise<IAuthKakaoUserInfoResponse["kakao_account"]> {
 		try {
 			const { data } = await axios.get<IAuthKakaoUserInfoResponse>(`${this.kakaoClient.apiUrl}/v2/user/me`, {
 				headers: {
@@ -362,7 +363,7 @@ export class AuthService {
 				},
 			});
 
-			return data;
+			return data.kakao_account;
 		} catch (e) {
 			throw new BadRequestException({
 				...AUTH_GET_KAKAO_USER_INFO_ERROR,

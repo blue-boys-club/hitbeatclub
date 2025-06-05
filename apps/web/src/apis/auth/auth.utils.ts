@@ -1,7 +1,5 @@
 import { AllowedLastMethod, useAuthStore } from "@/stores/auth";
 import type { AuthLoginResponse } from "@hitbeatclub/shared-types/auth";
-import router, { useRouter } from "next/router";
-// import { useRouter } from "next/navigation";
 
 export const signInOnSuccess = (data: AuthLoginResponse, method: AllowedLastMethod, redirect: boolean = true) => {
 	console.log("signInOnSuccess", data);

@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
+import { CanActivate, ExecutionContext, Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { IRequestApp } from "src/common/request/interfaces/request.interface";
 import { TokenPayload } from "google-auth-library";
 import { AUTH_SOCIAL_GOOGLE_ERROR, AUTH_SOCIAL_KAKAO_ERROR } from "src/modules/auth/auth.error";
@@ -7,17 +7,12 @@ import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class AuthSocialKakaoGuard implements CanActivate {
-	private readonly redirectUri: string;
-	constructor(
-		private readonly authService: AuthService,
-		private readonly configService: ConfigService,
-	) {
-		this.redirectUri = this.configService.get("auth.kakao.redirectUri");
-	}
+	private readonly logger = new Logger(AuthSocialKakaoGuard.name);
+	constructor(private readonly authService: AuthService) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const request = context.switchToHttp().getRequest<IRequestApp<TokenPayload>>();
-		const { authorization } = request.headers;
+		const { authorization, origin } = request.headers;
 		const acArr = authorization?.split("Bearer ") ?? [];
 
 		if (acArr.length !== 2) {
@@ -32,7 +27,7 @@ export class AuthSocialKakaoGuard implements CanActivate {
 		try {
 			const tokens = await this.authService.kakaoGetToken({
 				code,
-				redirectUri: this.redirectUri,
+				redirectUri: origin,
 			});
 			if (!tokens.id_token) {
 				throw new UnauthorizedException({

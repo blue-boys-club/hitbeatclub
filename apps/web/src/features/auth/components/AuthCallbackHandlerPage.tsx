@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useShallow } from "zustand/react/shallow";
 import { useTemporaryStore } from "@/stores/temp";
 import { useSignInWithGoogle } from "@/apis/auth/mutations/useSignInWithGoogle";
+import { useSignInWithKakao } from "@/apis/auth/mutations/useSignInWithKakao";
+import { useSignInWithNaver } from "@/apis/auth/mutations/useSignInWithNaver";
 
 const DEBUG = process.env.NODE_ENV === "development";
 
@@ -28,6 +30,8 @@ export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPagePro
 	);
 
 	const { mutateAsync: signInWithGoogle } = useSignInWithGoogle();
+	const { mutateAsync: signInWithKakao } = useSignInWithKakao();
+	const { mutateAsync: signInWithNaver } = useSignInWithNaver();
 
 	const googleAuthHandler = useCallback(async () => {
 		if (!googleAuth) {
@@ -52,16 +56,71 @@ export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPagePro
 			});
 	}, [googleAuth, resetGoogleAuth, signInWithGoogle]);
 
+	const kakaoAuthHandler = useCallback(async () => {
+		const code = searchParams.get("code");
+		const error = searchParams.get("error");
+		const error_description = searchParams.get("error_description");
+
+		if (!code || error || error_description) {
+			setAuthError(error_description || "잘못된 요청입니다.");
+			return;
+		}
+		signInWithKakao({ code })
+			.then((data) => {
+				setAuthNeedSignup(!data.data.phoneNumber);
+				setAuthCompleted(true);
+			})
+			.catch((error) => {
+				setAuthError(error instanceof Error ? error.message : "Unknown error");
+				// reset router state when it is failed & prod env
+				if (process.env.NODE_ENV !== "production") {
+					console.log("reset router state", code);
+				}
+			});
+	}, [searchParams, signInWithKakao]);
+
+	const naverAuthHandler = useCallback(async () => {
+		const code = searchParams.get("code");
+		const error = searchParams.get("error");
+		const error_description = searchParams.get("error_description");
+
+		if (!code || error || error_description) {
+			setAuthError(error_description || "잘못된 요청입니다.");
+			return;
+		}
+		signInWithNaver({ code })
+			.then((data) => {
+				setAuthNeedSignup(!data.data.phoneNumber);
+				setAuthCompleted(true);
+			})
+			.catch((error) => {
+				setAuthError(error instanceof Error ? error.message : "Unknown error");
+				// reset router state when it is failed & prod env
+				if (process.env.NODE_ENV !== "production") {
+					console.log("reset router state", code);
+				}
+			});
+	}, [searchParams, signInWithNaver]);
+
 	const loginHandler = (): void => {
 		if (loginAttempted.current) return;
 		loginAttempted.current = true;
 
-		switch (authType) {
+		const lAuthType = authType?.toLowerCase();
+
+		switch (lAuthType) {
 			case "google":
 				googleAuthHandler();
 				break;
+			case "kakao":
+				kakaoAuthHandler();
+				break;
+			case "naver":
+				naverAuthHandler();
+				break;
 			default:
-				throw new Error("Invalid auth type");
+				setAuthError("Invalid auth type");
+				break;
 		}
 	};
 	useEffect(() => {
