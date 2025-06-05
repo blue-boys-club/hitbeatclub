@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { ArtistAvatar } from "@/components/ui";
-import NavLink from "./NavLink";
+import NavLink, { NavLinkProps } from "./NavLink";
 import ArtistStatRow from "./ArtistStatRow";
 import { Dollars } from "@/assets/svgs/Dollars";
 import { ArtistInfo } from "@/assets/svgs/ArtistInfo";
@@ -12,7 +12,7 @@ import { Popup, PopupContent, PopupHeader, PopupTitle, PopupFooter, PopupDescrip
 import { Button } from "@/components/ui/Button";
 import { useMemo, useState } from "react";
 import { Upload } from "@/assets/svgs";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { getArtistMeQueryOption } from "@/apis/artist/query/artist.query-options";
 import { useQuery } from "@tanstack/react-query";
 import UserProfileImage from "@/assets/images/user-profile.png";
@@ -27,30 +27,107 @@ const artistStats = [
 export const ArtistSidebar = () => {
 	const [isProfileWarningOpen, setIsProfileWarningOpen] = useState(false);
 	const [isLockedNavWarningOpen, setIsLockedNavWarningOpen] = useState(false);
-	const [profileData, setProfileData] = useState(null); // TODO: 실제 프로필 데이터 연동 필요
 
 	const { data: artistMe, isSuccess: isArtistMeSuccess } = useQuery(getArtistMeQueryOption());
+	const pathname = usePathname();
 	const navItems = useMemo(() => {
 		if (!isArtistMeSuccess) return [];
 
 		const isStudioLocked = [artistMe.stageName, artistMe.slug, artistMe.description].some((value) => value === null);
+		const isPayoutLocked = artistMe.settlement === null;
 
-		return [
-			{ href: "/studio", label: "My Studio", icon: UserProfile, isLocked: isStudioLocked },
+		const navItems: Array<NavLinkProps & { alternativeActives?: string[] }> = [
+			{ href: `/artist-studio/${artistMe.id}`, label: "My Studio", Icon: UserProfile, isLocked: isStudioLocked },
 			{
 				href: `/artist-studio/${artistMe.id}/setting?tab=profile`,
 				label: "Artist Info",
-				icon: ArtistInfo,
+				Icon: ArtistInfo,
 				isLocked: false,
 			},
-			{ href: "/payouts", label: "Payouts", icon: Dollars, isLocked: true },
+			{
+				href: `/artist-studio/${artistMe.id}/settlements`,
+				alternativeActives: [`/artist-studio/${artistMe.id}/transactions`, `/artist-studio/${artistMe.id}/referrals`],
+				label: "Payouts",
+				Icon: Dollars,
+				isLocked: isPayoutLocked,
+			},
 		];
-	}, [isArtistMeSuccess, artistMe]);
+
+		// 디버깅용 - pathname 확인
+		console.log("현재 pathname:", pathname);
+		console.log(
+			"navItems href들:",
+			navItems.map((item) => item.href),
+		);
+
+		// 가장 잘 매칭되는 하나의 nav item만 active로 설정
+		const matchedItems = navItems.filter((item) => {
+			// query string 제거하고 비교
+			const cleanPathname = pathname?.split("?")[0] || "";
+			const cleanHref = item.href?.split("?")[0] || "";
+
+			// 기본 href 매칭
+			const isBasicMatch = cleanPathname.includes(cleanHref);
+
+			// alternativeActives 매칭
+			const isAlternativeMatch =
+				item.alternativeActives?.some((altPath) => {
+					const cleanAltPath = altPath?.split("?")[0] || "";
+					return cleanPathname.includes(cleanAltPath);
+				}) || false;
+
+			const matched = isBasicMatch || isAlternativeMatch;
+			console.log(
+				`매칭 확인 [${item.label}]: pathname=${cleanPathname}, href=${cleanHref}, basic=${isBasicMatch}, alternative=${isAlternativeMatch}, final=${matched}`,
+			);
+
+			return matched;
+		});
+
+		console.log(
+			"매칭된 items:",
+			matchedItems.map((item) => item.label),
+		);
+
+		if (matchedItems.length > 0) {
+			// 우선순위: alternativeActives 매칭 > 긴 href 매칭
+			const bestMatch = matchedItems.reduce((prev, current) => {
+				const cleanPathname = pathname?.split("?")[0] || "";
+
+				// current가 alternativeActives로 매칭되는지 확인
+				const currentHasAltMatch =
+					current.alternativeActives?.some((altPath) => {
+						const cleanAltPath = altPath?.split("?")[0] || "";
+						return cleanPathname.includes(cleanAltPath);
+					}) || false;
+
+				// prev가 alternativeActives로 매칭되는지 확인
+				const prevHasAltMatch =
+					prev.alternativeActives?.some((altPath) => {
+						const cleanAltPath = altPath?.split("?")[0] || "";
+						return cleanPathname.includes(cleanAltPath);
+					}) || false;
+
+				// alternativeActives 매칭이 우선
+				if (currentHasAltMatch && !prevHasAltMatch) return current;
+				if (prevHasAltMatch && !currentHasAltMatch) return prev;
+
+				// 둘 다 alternativeActives 매칭이거나 둘 다 기본 매칭인 경우, 더 긴 href 선택
+				const prevHrefLength = prev.href?.split("?")[0]?.length || 0;
+				const currentHrefLength = current.href?.split("?")[0]?.length || 0;
+				return prevHrefLength > currentHrefLength ? prev : current;
+			});
+			console.log("선택된 bestMatch:", bestMatch.label);
+			bestMatch.isActive = true;
+		}
+
+		return navItems;
+	}, [isArtistMeSuccess, artistMe, pathname]);
 
 	const router = useRouter();
 
 	const onUpload = () => {
-		if (!profileData) {
+		if (!artistMe?.stageName || artistMe?.stageName === "") {
 			setIsProfileWarningOpen(true);
 			return;
 		}
@@ -121,13 +198,14 @@ export const ArtistSidebar = () => {
 						</div>
 
 						<nav className="flex flex-col w-full gap-10px pt-11px pb-6px border-y-6px border-hbc-red">
-							{navItems.map(({ href, label, icon, isLocked }) => (
+							{navItems.map(({ href, label, Icon, isLocked, isActive }) => (
 								<NavLink
 									key={label}
 									href={href}
 									label={label}
-									Icon={icon}
+									Icon={Icon}
 									isLocked={isLocked}
+									isActive={isActive}
 									onClick={isLocked ? onLockedNavClick : undefined}
 								/>
 							))}

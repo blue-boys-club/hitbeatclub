@@ -1,21 +1,17 @@
 import { Lock } from "@/assets/svgs";
 import { cn } from "@/common/utils";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
-interface NavLinkProps {
+export interface NavLinkProps {
 	href: string;
 	label: string;
-	Icon: any;
+	Icon: React.ElementType;
+	isActive?: boolean;
 	isLocked?: boolean;
 	onClick?: (e: React.MouseEvent) => void;
 }
 
-const NavLink = ({ href, label, Icon, isLocked, onClick }: NavLinkProps) => {
-	const pathname = usePathname();
-
-	const isActive = pathname ? pathname.includes(href) : false;
-
+const NavLink = ({ href, label, Icon, isActive, isLocked, onClick }: NavLinkProps) => {
 	const handleClick = (e: React.MouseEvent) => {
 		if (isLocked && onClick) {
 			e.preventDefault();
