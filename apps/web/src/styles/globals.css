@@ -38,6 +38,12 @@
 	--font-suit: var(--font-hbc-suit);
 	--font-suisse: var(--font-hbc-suisse);
 
+	/**
+	* PC 브레이크포인트
+	* 주의: 이 값은 ui.constant.ts의 RESPONSIVE_BREAKPOINTS.PC_MIN_WIDTH와 동기화되어야 합니다.
+	*/
+	--breakpoint-pc: 1024px;
+
 	/* Collapsible Animations */
 	--animate-collapsible-down: collapsible-down 0.2s ease-out;
 	--animate-collapsible-up: collapsible-up 0.2s ease-out;
