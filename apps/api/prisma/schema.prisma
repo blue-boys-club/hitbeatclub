@@ -35,6 +35,7 @@ model User {
   order                  Order[]
   payments               Payments[]
   userSocialAccount      UserSocialAccount[]
+  tag                    Tag[]
 
   @@map("user")
 }
@@ -264,11 +265,14 @@ model ProductGenre {
 model Tag {
   id         BigInt       @id @default(autoincrement())
   name       String       @db.VarChar(100)
+  userId     BigInt?       @map("user_id")
   createdAt  DateTime?    @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt  DateTime?    @default(now()) @map("updated_at") @db.Timestamp(0)
   deletedAt  DateTime?    @map("deleted_at") @db.Timestamp(0)
   productTag ProductTag[]
+  user       User?       @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_TO_tag_1")
 
+  @@index([userId], map: "FK_user_TO_tag_1")
   @@map("tag")
 }
 
