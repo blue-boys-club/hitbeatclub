@@ -7,6 +7,7 @@ import { ProductModule } from "src/modules/product/product.module";
 import { ArtistModule } from "src/modules/artist/artist.module";
 import { SubscribeModule } from "src/modules/subscribe/subscribe.module";
 import { SettlementModule } from "src/modules/settlement/settlement.module";
+import { TagModule } from "src/modules/tag/tag.module";
 
 @Module({
 	controllers: [],
@@ -21,6 +22,7 @@ import { SettlementModule } from "src/modules/settlement/settlement.module";
 		ArtistModule,
 		SubscribeModule,
 		SettlementModule,
+		TagModule,
 	],
 })
 export class RoutesUserModule {}
