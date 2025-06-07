@@ -3,6 +3,7 @@
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { cn } from "@/common/utils";
 import { MusicRightSidebar } from "@/components/layout";
+import { Footer } from "@/components/layout/Footer";
 import { FooterNav } from "@/components/layout/Footer/FooterNav";
 import { FooterPlayer } from "@/components/layout/Footer/Player/FooterPlayer";
 import Header from "@/components/layout/Header/Header";
@@ -110,7 +111,8 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => {
 				<Header />
 			</div>
 			<div className="flex-1 pt-[62px] pb-[72px]">
-				<div className="h-[3000px] flex flex-col justify-between">{children}</div>
+				{children}
+				<Footer />
 			</div>
 			<div className="z-50 fixed bottom-0 left-0 right-0">
 				<FooterNav />
