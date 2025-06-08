@@ -2,12 +2,14 @@
 
 import { Carousel, CarouselContent, CarouselItem, type CarouselPlugin } from "@/components/ui/Carousel/Carousel";
 import { memo, useEffect, useState } from "react";
-import { ProductTrackItem } from "./ProductTrackItem";
+import { ProductTrackCarouselItem } from "./ProductTrackCarouselItem";
 import { ProductListItem } from "../product.types";
 import { ChevronRightSharp } from "@/assets/svgs/ChevronRightSharp";
 import { useRouter } from "next/navigation";
+import { ProductTrackGalleryItem } from "./ProductTrackGalleryItem";
 
 interface ProductSectionMobileProps {
+	type: "carousel" | "gallery";
 	title: string;
 	href: string;
 	description?: string;
@@ -142,73 +144,88 @@ const dummyProducts: ProductListItem[] = Array.from({ length: 20 }, (_, index) =
 	};
 });
 
-export const ProductSectionMobile = memo(({ title, href, description /* , products */ }: ProductSectionMobileProps) => {
-	// 실제 데이터 대신 더미데이터 사용
-	const products = dummyProducts;
-	// Dynamic import for client-side only
-	const [wheelPlugin, setWheelPlugin] = useState<CarouselPlugin | null>(null);
+export const ProductSectionMobile = memo(
+	({ type, title, href, description /* , products */ }: ProductSectionMobileProps) => {
+		// 실제 데이터 대신 더미데이터 사용
+		const products = dummyProducts;
+		// Dynamic import for client-side only
+		const [wheelPlugin, setWheelPlugin] = useState<CarouselPlugin | null>(null);
 
-	const router = useRouter();
+		const router = useRouter();
 
-	// Load the wheel plugin only on client side
-	useEffect(() => {
-		const loadPlugin = async () => {
-			try {
-				const wheelModule = await import("embla-carousel-wheel-gestures");
-				setWheelPlugin(wheelModule.WheelGesturesPlugin());
-			} catch (error) {
-				console.error("Failed to load wheel gestures plugin:", error);
-			}
-		};
+		// Load the wheel plugin only on client side
+		useEffect(() => {
+			const loadPlugin = async () => {
+				try {
+					const wheelModule = await import("embla-carousel-wheel-gestures");
+					setWheelPlugin(wheelModule.WheelGesturesPlugin());
+				} catch (error) {
+					console.error("Failed to load wheel gestures plugin:", error);
+				}
+			};
 
-		loadPlugin();
-	}, []);
+			loadPlugin();
+		}, []);
 
-	return (
-		<div className="flex flex-col">
-			<div className="w-full border-6px border-t-black" />
-			<div className="flex flex-col gap-4px mt-1">
-				<div className="flex justify-between items-center">
-					<span className="text-22px leading-24px font-bold">{title}</span>
-					<button
-						className="w-18px h-20px flex justify-center items-center"
-						onClick={() => {
-							if (!href) return;
-							router.push(href);
-						}}
-					>
-						<ChevronRightSharp
-							width="8px"
-							height="12px"
-						/>
-					</button>
+		return (
+			<div className="flex flex-col">
+				<div className="w-full border-6px border-t-black" />
+				<div className="flex flex-col gap-4px mt-1">
+					<div className="flex justify-between items-center">
+						<span className="text-22px leading-24px font-bold">{title}</span>
+						<button
+							className="w-18px h-20px flex justify-center items-center"
+							onClick={() => {
+								if (!href) return;
+								router.push(href);
+							}}
+						>
+							<ChevronRightSharp
+								width="8px"
+								height="12px"
+							/>
+						</button>
+					</div>
+					{description && <span className="text-xs text-hbc-gray-300">{description}</span>}
 				</div>
-				{description && <span className="text-xs text-hbc-gray-300">{description}</span>}
+				<div className="mt-3">
+					{type === "carousel" ? (
+						<Carousel
+							className="w-full"
+							opts={{
+								align: "start",
+								dragFree: true,
+								containScroll: "trimSnaps",
+							}}
+							plugins={wheelPlugin ? [wheelPlugin] : undefined}
+						>
+							<CarouselContent className="space-x-6px">
+								{products.map((product) => (
+									<CarouselItem
+										key={product.id}
+										className="p-0 basis-110px"
+									>
+										<ProductTrackCarouselItem track={product} />
+									</CarouselItem>
+								))}
+							</CarouselContent>
+						</Carousel>
+					) : (
+						<div className="grid grid-cols-3 gap-x-6px gap-y-4 w-full">
+							{products.map((product) => (
+								<div
+									key={product.id}
+									className="p-0"
+								>
+									<ProductTrackGalleryItem track={product} />
+								</div>
+							))}
+						</div>
+					)}
+				</div>
 			</div>
-			<div className="mt-3">
-				<Carousel
-					className="w-full"
-					opts={{
-						align: "start",
-						dragFree: true,
-						containScroll: "trimSnaps",
-					}}
-					plugins={wheelPlugin ? [wheelPlugin] : undefined}
-				>
-					<CarouselContent className="space-x-6px">
-						{products.map((product) => (
-							<CarouselItem
-								key={product.id}
-								className="p-0 basis-110px"
-							>
-								<ProductTrackItem track={product} />
-							</CarouselItem>
-						))}
-					</CarouselContent>
-				</Carousel>
-			</div>
-		</div>
-	);
-});
+		);
+	},
+);
 
 ProductSectionMobile.displayName = "ProductSectionMobile";

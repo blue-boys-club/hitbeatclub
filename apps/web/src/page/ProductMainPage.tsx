@@ -9,6 +9,9 @@ import { getProductListQueryOption } from "@/apis/product/query/product.query-op
 import { useDevice } from "@/hooks/use-device";
 import { Button } from "@/components/ui/Button";
 import { ProductSectionMobile } from "@/features/product/components/ProductSectionMobile";
+import { ProductListPagingResponse } from "@hitbeatclub/shared-types/product";
+import { useState } from "react";
+import { cn } from "@/common/utils";
 
 export default function ProductMainPage() {
 	const { data: products = [] } = useQuery({
@@ -17,7 +20,11 @@ export default function ProductMainPage() {
 	});
 	const { isPC } = useDevice();
 
-	return isPC ? (
+	return isPC ? <PC products={products} /> : <Mobile products={products} />;
+}
+
+const PC = ({ products }: { products: ProductListPagingResponse["data"] }) => {
+	return (
 		<div className="flex flex-col gap-15px">
 			<div className="flex items-center justify-center w-full h-150px">
 				<div className="w-full h-150px relative">
@@ -81,7 +88,50 @@ export default function ProductMainPage() {
 
 			<Footer />
 		</div>
-	) : (
+	);
+};
+
+const Mobile = ({ products }: { products: ProductListPagingResponse["data"] }) => {
+	const [currentTab, setCurrentTab] = useState<"ALL" | "BEAT" | "ACAPELLA">("ALL");
+
+	const tabContent = {
+		ALL: (
+			<>
+				<ProductSectionMobile
+					type="carousel"
+					title="ALL"
+					description="당신을 위한 오늘의 추천곡"
+					href="#"
+				/>
+				<ProductSectionMobile
+					type="carousel"
+					title="Beat"
+					href="#"
+				/>
+				<ProductSectionMobile
+					type="carousel"
+					title="Acappella"
+					href="#"
+				/>
+			</>
+		),
+		BEAT: (
+			<ProductSectionMobile
+				type="gallery"
+				title="Beat"
+				href="#"
+			/>
+		),
+		ACAPELLA: (
+			<ProductSectionMobile
+				type="gallery"
+				title="Acappella"
+				href="#"
+			/>
+		),
+	};
+
+	return (
 		<div className="flex flex-col">
 			<div className="w-full h-90px relative">
 				<Image
@@ -97,7 +147,8 @@ export default function ProductMainPage() {
 					<Button
 						size={"sm"}
 						variant={"outline"}
-						className="rounded-none border-4 bg-black text-white px-2"
+						className={cn("rounded-none border-4 px-2", currentTab === "ALL" && "bg-black text-white")}
+						onClick={() => setCurrentTab("ALL")}
 					>
 						ALL
 					</Button>
@@ -105,7 +156,8 @@ export default function ProductMainPage() {
 						size={"sm"}
 						variant={"outline"}
 						rounded={"full"}
-						className="border-4 px-2"
+						className={cn("border-4 px-2", currentTab === "BEAT" && "bg-black text-white")}
+						onClick={() => setCurrentTab("BEAT")}
 					>
 						BEAT
 					</Button>
@@ -113,30 +165,14 @@ export default function ProductMainPage() {
 						size={"sm"}
 						variant={"outline"}
 						rounded={"full"}
-						className="border-4 px-2"
+						className={cn("border-4 px-2", currentTab === "ACAPELLA" && "bg-black text-white")}
+						onClick={() => setCurrentTab("ACAPELLA")}
 					>
 						ACAPELLA
 					</Button>
 				</div>
-				<ProductSectionMobile
-					title="Recommended"
-					description="당신을 위한 오늘의 추천곡"
-					href="#"
-				/>
-				<ProductSectionMobile
-					title="Recent"
-					description="최근 재생한 항목"
-					href="#"
-				/>
-				<ProductSectionMobile
-					title="Beat"
-					href="#"
-				/>
-				<ProductSectionMobile
-					title="Acappella"
-					href="#"
-				/>
+				{tabContent[currentTab]}
 			</div>
 		</div>
 	);
-}
+};

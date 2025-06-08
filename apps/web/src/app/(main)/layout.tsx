@@ -111,8 +111,10 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => {
 				<Header />
 			</div>
 			<div className="flex-1 pt-[62px] pb-[72px]">
-				{children}
-				<Footer />
+				<div className="min-h-[calc(100vh-134px)] flex flex-col justify-between">
+					{children}
+					<Footer />
+				</div>
 			</div>
 			<div className="z-50 fixed bottom-0 left-0 right-0">
 				<FooterNav />

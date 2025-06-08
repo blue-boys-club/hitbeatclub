@@ -2,11 +2,9 @@
 
 import { SectionHeader } from "@/components/ui";
 import { SectionHeaderProps } from "@/components/ui/SectionHeader/SectionHeader";
-import { ProductItem } from "./ProductItem";
 import { Carousel, CarouselContent, CarouselItem, type CarouselPlugin } from "@/components/ui/Carousel/Carousel";
 import { memo, useEffect, useState } from "react";
-import { ProductTrackItem } from "./ProductTrackItem";
-import { ProductDetailResponse } from "@hitbeatclub/shared-types/product";
+import { ProductTrackCarouselItem } from "./ProductTrackCarouselItem";
 import { ProductListItem } from "../product.types";
 
 interface ShopSectionProps {
@@ -53,7 +51,7 @@ export const ProductSection = memo(({ sectionHeader, products }: ShopSectionProp
 							key={product.id}
 							className="p-1 pr-8px basis-auto"
 						>
-							<ProductTrackItem track={product} />
+							<ProductTrackCarouselItem track={product} />
 						</CarouselItem>
 					))}
 				</CarouselContent>

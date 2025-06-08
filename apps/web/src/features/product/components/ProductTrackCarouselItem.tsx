@@ -7,10 +7,10 @@ import { ProductListItem } from "../product.types";
 import { useDevice } from "@/hooks/use-device";
 import Image from "next/image";
 
-interface ProductTrackItemProps {
+interface ProductTrackCarouselItemProps {
 	track: ProductListItem;
 }
-export const ProductTrackItem = ({ track }: ProductTrackItemProps) => {
+export const ProductTrackCarouselItem = ({ track }: ProductTrackCarouselItemProps) => {
 	// const { title, artist, albumImgSrc, isHit } = track;
 	const { productName, seller, coverImage } = track;
 	const isTitlePureEnglish = checkIsPureEnglish(productName);
