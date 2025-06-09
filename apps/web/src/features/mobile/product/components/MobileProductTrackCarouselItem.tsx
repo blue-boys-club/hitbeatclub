@@ -1,13 +1,13 @@
 import { checkIsPureEnglish } from "@/common/utils";
 import { cn } from "@/common/utils/tailwind";
 import Link from "next/link";
-import { ProductListItem } from "../product.types";
 import Image from "next/image";
+import { ProductListItem } from "@/features/product/product.types";
 
-interface ProductTrackGalleryItemProps {
+interface MobileProductTrackCarouselItemProps {
 	track: ProductListItem;
 }
-export const ProductTrackGalleryItem = ({ track }: ProductTrackGalleryItemProps) => {
+export const MobileProductTrackCarouselItem = ({ track }: MobileProductTrackCarouselItemProps) => {
 	const { productName, seller, coverImage } = track;
 	const isTitlePureEnglish = checkIsPureEnglish(productName);
 	const isArtistPureEnglish = checkIsPureEnglish(seller?.stageName || "");
@@ -16,9 +16,9 @@ export const ProductTrackGalleryItem = ({ track }: ProductTrackGalleryItemProps)
 		<Link
 			// TODO: 상품 상세 페이지 링크 추가
 			href={`/products/${track.id}`}
-			className="inline-flex flex-col items-start justify-start gap-6px w-full"
+			className="inline-flex flex-col items-start justify-start gap-6px"
 		>
-			<div className="border-y-3px border-x-1px border-black relative w-full aspect-square">
+			<div className="border-y-3px border-x-1px border-black relative w-110px h-110px">
 				<Image
 					alt="커버이미지"
 					src={coverImage?.url || ""}
@@ -26,11 +26,11 @@ export const ProductTrackGalleryItem = ({ track }: ProductTrackGalleryItemProps)
 					className="object-cover"
 				/>
 			</div>
-			<div className="flex flex-col items-start justify-start gap-3px w-full">
-				<div className="flex items-center w-full">
+			<div className="flex flex-col items-start justify-start gap-3px">
+				<div className="inline-flex items-center justify-center gap-10px">
 					<div
 						className={cn(
-							"text-hbc-black text-12px font-semibold leading-16px truncate max-w-full",
+							"w-110px justify-start text-hbc-black text-12px font-semibold leading-16px truncate",
 							isTitlePureEnglish ? "font-suisse" : "font-suit",
 						)}
 					>
@@ -39,9 +39,12 @@ export const ProductTrackGalleryItem = ({ track }: ProductTrackGalleryItemProps)
 					{/* {isHit && <Hit />} */}
 				</div>
 				<div
-					className={cn("text-10px font-normal leading-10px w-full", isArtistPureEnglish ? "font-suisse" : "font-suit")}
+					className={cn(
+						"w-110px justify-start text-10px font-normal leading-10px truncate",
+						isArtistPureEnglish ? "font-suisse" : "font-suit",
+					)}
 				>
-					<span className="text-hbc-gray-300 truncate block">{seller?.stageName}</span>
+					<span className="text-hbc-gray-300">{seller?.stageName}</span>
 				</div>
 			</div>
 		</Link>

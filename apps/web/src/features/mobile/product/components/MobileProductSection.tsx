@@ -2,13 +2,13 @@
 
 import { Carousel, CarouselContent, CarouselItem, type CarouselPlugin } from "@/components/ui/Carousel/Carousel";
 import { memo, useEffect, useState } from "react";
-import { ProductTrackCarouselItem } from "./ProductTrackCarouselItem";
-import { ProductListItem } from "../product.types";
+import { ProductListItem } from "../../../product/product.types";
 import { ChevronRightSharp } from "@/assets/svgs/ChevronRightSharp";
 import { useRouter } from "next/navigation";
-import { ProductTrackGalleryItem } from "./ProductTrackGalleryItem";
+import { MobileProductTrackGalleryItem } from "./MobileProductTrackGalleryItem";
+import { MobileProductTrackCarouselItem } from "./MobileProductTrackCarouselItem";
 
-interface ProductSectionMobileProps {
+interface MobileProductSectionProps {
 	type: "carousel" | "gallery";
 	title: string;
 	href: string;
@@ -144,8 +144,8 @@ const dummyProducts: ProductListItem[] = Array.from({ length: 20 }, (_, index) =
 	};
 });
 
-export const ProductSectionMobile = memo(
-	({ type, title, href, description /* , products */ }: ProductSectionMobileProps) => {
+export const MobileProductSection = memo(
+	({ type, title, href, description /* , products */ }: MobileProductSectionProps) => {
 		// 실제 데이터 대신 더미데이터 사용
 		const products = dummyProducts;
 		// Dynamic import for client-side only
@@ -205,7 +205,7 @@ export const ProductSectionMobile = memo(
 										key={product.id}
 										className="p-0 basis-110px"
 									>
-										<ProductTrackCarouselItem track={product} />
+										<MobileProductTrackCarouselItem track={product} />
 									</CarouselItem>
 								))}
 							</CarouselContent>
@@ -217,7 +217,7 @@ export const ProductSectionMobile = memo(
 									key={product.id}
 									className="p-0"
 								>
-									<ProductTrackGalleryItem track={product} />
+									<MobileProductTrackGalleryItem track={product} />
 								</div>
 							))}
 						</div>
@@ -228,4 +228,4 @@ export const ProductSectionMobile = memo(
 	},
 );
 
-ProductSectionMobile.displayName = "ProductSectionMobile";
+MobileProductSection.displayName = "MobileProductSection";
