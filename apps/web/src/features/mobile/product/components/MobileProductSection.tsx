@@ -213,12 +213,10 @@ export const MobileProductSection = memo(
 					) : (
 						<div className="grid grid-cols-3 gap-x-6px gap-y-4 w-full">
 							{products.map((product) => (
-								<div
+								<MobileProductTrackGalleryItem
 									key={product.id}
-									className="p-0"
-								>
-									<MobileProductTrackGalleryItem track={product} />
-								</div>
+									track={product}
+								/>
 							))}
 						</div>
 					)}

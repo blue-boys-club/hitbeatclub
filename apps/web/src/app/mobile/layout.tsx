@@ -36,10 +36,7 @@ export default function MobileMainLayout({ children }: { children: React.ReactNo
 				<Header />
 			</div>
 			<div className="flex-1 pt-[62px] pb-[72px]">
-				<div className="min-h-[calc(100vh-134px)] flex flex-col justify-between">
-					{children}
-					<Footer />
-				</div>
+				<div className="h-[calc(100vh-134px)] overflow-y-auto">{children}</div>
 			</div>
 			<div className="z-50 fixed bottom-0 left-0 right-0">
 				<FooterNav />

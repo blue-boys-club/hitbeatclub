@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { MobileProductSection } from "@/features/mobile/product/components/MobileProductSection";
 import { useState } from "react";
 import { cn } from "@/common/utils";
+import { Footer } from "@/components/layout/Footer";
 
 export default function MobileMainPage() {
 	const { data: products = [] } = useQuery({
@@ -96,6 +97,7 @@ export default function MobileMainPage() {
 				</div>
 				{tabContent[currentTab]}
 			</div>
+			<Footer />
 		</div>
 	);
 }
