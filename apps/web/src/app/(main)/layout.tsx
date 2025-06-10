@@ -3,12 +3,10 @@
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { cn } from "@/common/utils";
 import { MusicRightSidebar } from "@/components/layout";
-import { FooterNav } from "@/components/layout/Footer/FooterNav";
 import { FooterPlayer } from "@/components/layout/Footer/Player/FooterPlayer";
 import Header from "@/components/layout/Header/Header";
 import { Sidebar } from "@/components/layout/Sidebar/Sidebar";
 import { Toaster } from "@/components/ui/Toast/toaster";
-import { useDevice } from "@/hooks/use-device";
 import { useAuthStore } from "@/stores/auth";
 import { useLayoutStore } from "@/stores/layout";
 import { useQuery } from "@tanstack/react-query";
@@ -17,10 +15,7 @@ import { useEffect } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-	// const [isCollapsed, setIsCollapsed] = useState(false);
-	// const [isMusicSidebarOpen, setIsMusicSidebarOpen] = useState(false);
 	const router = useRouter();
-	const { isPC } = useDevice();
 
 	const { data: userMe, isSuccess } = useQuery({ ...getUserMeQueryOption(), retry: false });
 
@@ -45,27 +40,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 		}
 	}, [isSuccess, setPhoneNumber, userMe, router, userPhoneNumber]);
 
-	return isPC ? (
-		<PCLayout
-			isLeftSidebarOpen={isLeftSidebarOpen}
-			isRightSidebarOpen={isRightSidebarOpen}
-		>
-			{children}
-		</PCLayout>
-	) : (
-		<MobileLayout>{children}</MobileLayout>
-	);
-}
-
-const PCLayout = ({
-	isLeftSidebarOpen,
-	isRightSidebarOpen,
-	children,
-}: {
-	isLeftSidebarOpen: boolean;
-	isRightSidebarOpen: boolean;
-	children: React.ReactNode;
-}) => {
 	return (
 		<div className="h-screen overflow-hidden">
 			{/* Fixed Sidebar - 100vh - footer size */}
@@ -101,20 +75,4 @@ const PCLayout = ({
 			<Toaster viewportClassName="bottom-92px" />
 		</div>
 	);
-};
-
-const MobileLayout = ({ children }: { children: React.ReactNode }) => {
-	return (
-		<div className="w-full min-h-screen overflow-y-scroll flex flex-col">
-			<div className="z-50 fixed top-0 left-0 right-0">
-				<Header />
-			</div>
-			<div className="flex-1 pt-[62px] pb-[72px]">
-				<div className="h-[3000px] flex flex-col justify-between">{children}</div>
-			</div>
-			<div className="z-50 fixed bottom-0 left-0 right-0">
-				<FooterNav />
-			</div>
-		</div>
-	);
-};
+}
