@@ -9,12 +9,14 @@ import {
 	Req,
 	NotFoundException,
 	UploadedFile,
+	ForbiddenException,
+	Query,
 } from "@nestjs/common";
 import { ArtistService } from "./artist.service";
 import { ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
 import { DocRequestFile, DocResponse, DocResponseList } from "src/common/doc/decorators/doc.decorator";
-import { IResponse } from "src/common/response/interfaces/response.interface";
+import { IResponse, IResponsePaging } from "src/common/response/interfaces/response.interface";
 import { artistMessage } from "./artist.message";
 import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
 import { ArtistCreateDto } from "./dto/request/artist.create.request.dto";
@@ -35,6 +37,12 @@ import { SettlementCreateDto } from "../settlement/dto/request/settlement.create
 import { SettlementService } from "../settlement/settlement.service";
 import { SettlementUpdateDto } from "../settlement/dto/request/settlement.update.dto";
 import { ArtistListResponseDto } from "./dto/response/artist.list.response.dto";
+import { ProductListResponseDto } from "../product/dto/response/product.list.response.dto";
+import { productMessage } from "../product/product.message";
+import { ProductService } from "../product/product.service";
+import { ProductListQueryRequestDto } from "../product/dto/request/project.list.request.dto";
+import { ArtistProductListQueryRequest } from "@hitbeatclub/shared-types/artist";
+import { ArtistProductListQueryRequestDto } from "./dto/request/artist.product-list.request.dto";
 @Controller("artists")
 @ApiTags("artist")
 @ApiBearerAuth()
@@ -43,6 +51,7 @@ export class ArtistController {
 		private readonly artistService: ArtistService,
 		private readonly fileService: FileService,
 		private readonly settlementService: SettlementService,
+		private readonly productService: ProductService,
 	) {}
 
 	@Get()
@@ -248,6 +257,71 @@ export class ArtistController {
 			statusCode: 200,
 			message: settlementMessage.update.success,
 			data: settlement,
+		};
+	}
+
+	@Get(":id/products")
+	@ApiOperation({ summary: "(자기 자신의) 아티스트 제품 목록 조회" })
+	@AuthenticationDoc()
+	@DocResponseList<ProductListResponseDto>(productMessage.find.success, {
+		dto: ProductListResponseDto,
+	})
+	async findProducts(
+		@Req() req: AuthenticatedRequest,
+		@Param("id") id: number,
+		@Query() artistProductListQueryRequestDto: ArtistProductListQueryRequestDto,
+	): Promise<IResponsePaging<ProductListResponseDto>> {
+		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds, isPublic } =
+			artistProductListQueryRequestDto;
+		const artistMe = await this.artistService.findMe(req.user.id);
+
+		if (artistMe.id !== id) {
+			throw new ForbiddenException(ARTIST_NOT_FOUND_ERROR);
+		}
+
+		const where = {
+			sellerId: id,
+			...(isPublic ? { isPublic: 1 } : {}),
+			...(category === "null" ? {} : { category }),
+			...(musicKey === "null" ? {} : { musicKey }),
+			...(scaleType === "null" ? {} : { scaleType }),
+			...(minBpm ? { minBpm: { lte: minBpm }, maxBpm: { gte: minBpm } } : {}),
+			...(maxBpm ? { minBpm: { lte: maxBpm }, maxBpm: { gte: maxBpm } } : {}),
+			...(genreIds
+				? {
+						productGenre: {
+							some: {
+								deletedAt: null,
+								genreId: { in: genreIds.split(",").map((id) => parseInt(id)) },
+							},
+						},
+					}
+				: {}),
+			...(tagIds
+				? {
+						productTag: {
+							some: {
+								deletedAt: null,
+								tagId: { in: tagIds.split(",").map((id) => parseInt(id)) },
+							},
+						},
+					}
+				: {}),
+		};
+
+		const products = await this.productService.findAll(where, artistProductListQueryRequestDto);
+		const total = await this.productService.getTotal(where);
+
+		return {
+			statusCode: 200,
+			message: productMessage.find.success,
+			_pagination: {
+				page: artistProductListQueryRequestDto.page,
+				limit: artistProductListQueryRequestDto.limit,
+				totalPage: Math.ceil(total / artistProductListQueryRequestDto.limit),
+				total,
+			},
+			data: products,
 		};
 	}
 }

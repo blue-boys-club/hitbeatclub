@@ -45,6 +45,11 @@ export const updateArtist = async (id: number, payload: ArtistUpdateRequest) => 
 	return response.data;
 };
 
+/**
+ * 아티스트 프로필 이미지 업로드
+ * @param payload 아티스트 프로필 이미지 업로드 페이로드
+ * @returns 아티스트 프로필 이미지 업로드 결과
+ */
 export const uploadArtistProfile = async (payload: ArtistUploadProfileRequest) => {
 	const formData = new FormData();
 	formData.append("file", payload.file);
@@ -54,11 +59,23 @@ export const uploadArtistProfile = async (payload: ArtistUploadProfileRequest) =
 	return response.data;
 };
 
+/**
+ * 아티스트 정산 데이터 생성
+ * @param id 아티스트 아이디
+ * @param payload 아티스트 정산 데이터 생성 페이로드
+ * @returns 아티스트 정산 데이터 생성 결과
+ */
 export const createArtistSettlement = async (id: number, payload: SettlementCreateRequest) => {
 	const response = await axiosInstance.post<CommonResponseId>(`/artists/${id}/settlement`, payload);
 	return response.data;
 };
 
+/**
+ * 아티스트 정산 데이터 업데이트
+ * @param id 아티스트 아이디
+ * @param payload 아티스트 정산 데이터 업데이트 페이로드
+ * @returns 아티스트 정산 데이터 업데이트 결과
+ */
 export const updateArtistSettlement = async (id: number, payload: SettlementUpdateRequest) => {
 	const response = await axiosInstance.patch<CommonResponseId>(`/artists/${id}/settlement`, payload);
 	return response.data;

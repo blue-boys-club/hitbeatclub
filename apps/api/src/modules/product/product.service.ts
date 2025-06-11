@@ -682,6 +682,10 @@ export class ProductService {
 			.then((data) => this.prisma.serializeBigInt(data));
 	}
 
+	/**
+	 * 모든 태그 조회
+	 * @returns
+	 */
 	async findTagAll() {
 		return await this.prisma.tag
 			.findMany({

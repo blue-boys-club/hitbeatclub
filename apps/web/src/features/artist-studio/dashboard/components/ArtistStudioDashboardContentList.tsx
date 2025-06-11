@@ -100,7 +100,7 @@ const ArtistStudioDashboardContentList = () => {
 				<div className="grid grid-cols-1">
 					<div className="flex gap-4 border-b-hbc-black bg-hbc-white py-3 px-2 border-b-4 border-black">
 						<AlbumCoverCard
-							albumImgSrc={blankCdImage.src}
+							albumImgSrc={blankCdImage}
 							size={"xl"}
 							AlbumCoverCardWrapperClassName={"rounded-full"}
 							AlbumCoverCardInnerClassName={"rounded-full"}

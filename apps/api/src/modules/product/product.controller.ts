@@ -89,6 +89,7 @@ export class ProductController {
 						},
 					}
 				: {}),
+			isPublic: true,
 		};
 		const products = await this.productService.findAll(where, productListQueryRequestDto);
 

@@ -20,7 +20,7 @@ import { Popup, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/com
 import { getTagListQueryOption } from "@/apis/tag/query/tag.query-options";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 import { useQuery } from "@tanstack/react-query";
-import MultiTagInput from "@/components/ui/MultiTagInput/MultiTagInput";
+import MultiTagInput from "@/components/ui/MultiTagGenreInput/MultiTagGenreInput";
 import blankCdImage from "@/assets/images/blank-cd.png";
 
 export type BPM = number | undefined;
