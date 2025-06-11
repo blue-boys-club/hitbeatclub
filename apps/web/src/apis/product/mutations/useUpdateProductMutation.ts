@@ -11,7 +11,7 @@ export const useUpdateProductMutation = (productId: number) => {
 		mutationFn: (product: ProductUpdateRequest) => updateProduct(productId, product),
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.one(productId) });
-			void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.list });
+			void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products._list });
 		},
 	});
 };

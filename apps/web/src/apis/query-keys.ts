@@ -1,7 +1,9 @@
 import { ArtistProductListQueryRequest } from "@hitbeatclub/shared-types/artist";
 import { ProductListQueryRequest } from "@hitbeatclub/shared-types/product";
 
-type QueryKey = Array<string | number | Record<string, string | number | Array<number | string>>>;
+type QueryKey = Array<
+	string | number | boolean | Record<string, string | number | boolean | Array<number | string | boolean>>
+>;
 
 const QUERY_KEYS = {
 	_root: [],
