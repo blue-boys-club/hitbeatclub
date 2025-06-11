@@ -3,21 +3,20 @@ import { useEffect, useMemo, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import React from "react";
 
 import { useCreateProductMutation } from "@/apis/product/mutations/useCreateProductMutation";
+import { useUpdateProductMutation } from "@/apis/product/mutations";
 import { useUploadProductFileMutation } from "@/apis/product/mutations/useUploadProductFileMutation";
 import { PRODUCT_FILE_TYPE } from "@/apis/product/product.type";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
-import { TrackUploadFormSchema, TrackUploadFormData } from "@/features/artist-studio/artist-studio.types";
+import { ProductCreateSchema } from "@hitbeatclub/shared-types/product";
+import { TrackUploadFormSchema } from "@/features/artist-studio/artist-studio.types";
 import { Acapella, AddCircle, Beat, LargeEqualizer, MinusCircle, Plus } from "@/assets/svgs";
 import Circle from "@/assets/svgs/Circle";
 import { cn } from "@/common/utils";
 import { AlbumAvatar, Badge, BPMDropdown, Dropdown, Input, KeyDropdown } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
-import { GenreButton } from "@/components/ui/GenreButton";
-import { Popup, PopupButton, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
-import { TagButton } from "@/components/ui/TagButton";
+import { Popup, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
 import { getTagListQueryOption } from "@/apis/tag/query/tag.query-options";
 import { useQuery } from "@tanstack/react-query";
 import MultiTagInput from "@/components/ui/MultiTagInput/MultiTagInput";
@@ -28,7 +27,7 @@ export type BPMRange = { min?: number | undefined; max?: number | undefined } | 
 export type KeyValue = { label: string; value: string };
 
 // 확장된 폼 스키마 - 파일 관련 필드 추가
-const ExtendedTrackUploadFormSchema = TrackUploadFormSchema.extend({
+const ExtendedTrackFormSchema = TrackUploadFormSchema.extend({
 	// 파일 업로드 상태
 	uploadedFiles: z.object({
 		coverImage: z.instanceof(File).nullable(),
@@ -36,35 +35,125 @@ const ExtendedTrackUploadFormSchema = TrackUploadFormSchema.extend({
 		zipFile: z.instanceof(File).nullable(),
 	}),
 	uploadedFileIds: z.object({
-		coverImageFileId: z.number().nullable(),
-		audioFileFileId: z.number().nullable(),
-		zipFileId: z.number().nullable(),
+		coverImageFileId: z.number().optional(),
+		audioFileFileId: z.number().optional(),
+		zipFileId: z.number().optional(),
 	}),
 	// UI 상태
 	isDragOver: z.boolean(),
 });
 
-type ExtendedTrackUploadFormData = z.infer<typeof ExtendedTrackUploadFormSchema>;
+type ExtendedTrackFormData = z.infer<typeof ExtendedTrackFormSchema>;
+type ProductData = z.infer<typeof ProductCreateSchema> & { id: number };
 
-interface ArtistStudioDashUploadTrackModalProps {
+interface ArtistStudioTrackModalProps {
+	mode: "upload" | "edit";
 	isModalOpen: boolean;
 	onClose: () => void;
 	openCompleteModal: () => void;
-	initialFiles?: FileList | null; // 사이드바에서 드롭된 파일들
+	initialFiles?: FileList | null; // 업로드 모드에서 사이드바에서 드롭된 파일들
+	initialData?: ProductData; // 편집 모드에서 기존 데이터
+	productId?: number; // 편집 모드에서 상품 ID
 }
 
-const ArtistStudioDashUploadTrackModal = ({
+const ArtistStudioTrackModal = ({
+	mode,
 	isModalOpen,
 	onClose,
 	openCompleteModal,
 	initialFiles,
-}: ArtistStudioDashUploadTrackModalProps) => {
+	initialData,
+	productId,
+}: ArtistStudioTrackModalProps) => {
 	const { data: tagList } = useQuery(getTagListQueryOption());
 
 	const { mutate: createProduct, isPending: isCreating } = useCreateProductMutation();
+	const { mutate: updateProduct, isPending: isUpdating } = useUpdateProductMutation(productId || 0);
 	const { mutate: uploadProductFile, isPending: isUploading } = useUploadProductFileMutation();
 
-	// react-hook-form 설정 - 모든 상태를 폼으로 관리
+	const isProcessing = isCreating || isUpdating || isUploading;
+
+	// 모드에 따른 기본값 설정
+	const getDefaultValues = useCallback((): ExtendedTrackFormData => {
+		const baseDefaults = {
+			productName: "",
+			description: "",
+			price: 0,
+			category: "BEAT" as const,
+			genres: [] as string[],
+			tags: [] as string[],
+			minBpm: 100,
+			maxBpm: 120,
+			musicKey: "null" as const,
+			scaleType: "null" as const,
+			licenseInfo: [
+				{ type: "MASTER" as const, price: 10000 },
+				{ type: "EXCLUSIVE" as const, price: 20000 },
+			],
+			currency: "KRW",
+			isFreeDownload: 0,
+			isPublic: 1,
+			coverImageFileId: 1,
+			audioFileFileId: 2,
+			// UI 전용 필드들
+			bpmType: "exact" as const,
+			exactBPM: undefined,
+			bpmRange: { min: undefined, max: undefined },
+			keyValue: undefined,
+			scaleValue: null,
+			// 파일 관련 필드들
+			uploadedFiles: {
+				coverImage: null,
+				audioFile: null,
+				zipFile: null,
+			},
+			uploadedFileIds: {
+				coverImageFileId: undefined,
+				audioFileFileId: undefined,
+				zipFileId: undefined,
+			},
+			isDragOver: false,
+		};
+
+		// 편집 모드일 때 초기 데이터로 기본값 덮어쓰기
+		if (mode === "edit" && initialData) {
+			return {
+				...baseDefaults,
+				productName: initialData.productName,
+				description: initialData.description,
+				price: initialData.price,
+				category: initialData.category,
+				genres: initialData.genres,
+				tags: initialData.tags,
+				minBpm: initialData.minBpm,
+				maxBpm: initialData.maxBpm,
+				musicKey: initialData.musicKey,
+				scaleType: initialData.scaleType,
+				licenseInfo: initialData.licenseInfo,
+				currency: initialData.currency,
+				coverImageFileId: initialData.coverImageFileId,
+				audioFileFileId: initialData.audioFileFileId,
+				isFreeDownload: initialData.isFreeDownload,
+				isPublic: initialData.isPublic,
+				uploadedFileIds: {
+					coverImageFileId: initialData.coverImageFileId,
+					audioFileFileId: initialData.audioFileFileId,
+					zipFileId: initialData.zipFileId,
+				},
+				// BPM 관련 필드 설정
+				bpmType: initialData.minBpm === initialData.maxBpm ? "exact" : "range",
+				exactBPM: initialData.minBpm === initialData.maxBpm ? initialData.minBpm : undefined,
+				bpmRange:
+					initialData.minBpm !== initialData.maxBpm
+						? { min: initialData.minBpm, max: initialData.maxBpm }
+						: { min: undefined, max: undefined },
+			};
+		}
+
+		return baseDefaults;
+	}, [mode, initialData]);
+
+	// react-hook-form 설정
 	const {
 		control,
 		handleSubmit,
@@ -76,56 +165,23 @@ const ArtistStudioDashUploadTrackModal = ({
 		setError,
 		formState: { errors },
 		reset,
-	} = useForm<ExtendedTrackUploadFormData>({
-		resolver: zodResolver(ExtendedTrackUploadFormSchema),
-		defaultValues: {
-			productName: "",
-			description: "",
-			price: 0,
-			category: "BEAT",
-			genres: [], // 기본값
-			tags: [], // 기본값
-			minBpm: 100,
-			maxBpm: 120,
-			musicKey: "null",
-			scaleType: "null",
-			licenseInfo: [
-				{ type: "MASTER", price: 10000 },
-				{ type: "EXCLUSIVE", price: 20000 },
-			],
-			currency: "KRW",
-			isFreeDownload: 0,
-			isPublic: 1,
-			coverImageFileId: 1,
-			audioFileFileId: 2,
-			// UI 전용 필드들
-			bpmType: "exact",
-			exactBPM: undefined,
-			bpmRange: { min: undefined, max: undefined },
-			keyValue: undefined,
-			scaleValue: null,
-			// 새로 추가된 필드들
-			uploadedFiles: {
-				coverImage: null,
-				audioFile: null,
-				zipFile: null,
-			},
-			uploadedFileIds: {
-				coverImageFileId: null,
-				audioFileFileId: null,
-				zipFileId: null,
-			},
-			isDragOver: false,
-		},
+	} = useForm<ExtendedTrackFormData>({
+		resolver: zodResolver(ExtendedTrackFormSchema),
+		defaultValues: getDefaultValues(),
 	});
 
-	// 개별 필드 watch로 성능 최적화 - 실시간 UI 업데이트가 필요한 부분만
-	const watchedCategory = watch("category"); // 버튼 스타일링 + Key 섹션 조건부 렌더링
-	const watchedUploadedFiles = watch("uploadedFiles"); // 파일 상태 UI 표시
-	const watchedIsDragOver = watch("isDragOver"); // 드래그 오버레이 표시
-	const watchedLicenseInfo = watch("licenseInfo"); // 라이센스 목록 렌더링
+	// 개별 필드 watch로 성능 최적화
+	const watchedCategory = watch("category");
+	const watchedUploadedFiles = watch("uploadedFiles");
+	const watchedIsDragOver = watch("isDragOver");
+	const watchedLicenseInfo = watch("licenseInfo");
 
-	// 파일 타입 확인 함수 - 올바른 ENUM_FILE_TYPE 반환
+	// 모달 제목과 버튼 텍스트
+	const modalTitle = mode === "upload" ? "트랙 업로드" : "트랙 수정";
+	const submitButtonText = mode === "upload" ? "UPLOAD" : "SAVE";
+	const loadingText = mode === "upload" ? "업로드 중..." : "저장 중...";
+
+	// 파일 타입 확인 함수
 	const getFileTypeFromExtension = useCallback((file: File): PRODUCT_FILE_TYPE | null => {
 		const extension = file.name.toLowerCase().split(".").pop();
 
@@ -141,7 +197,7 @@ const ArtistStudioDashUploadTrackModal = ({
 		return null;
 	}, []);
 
-	// 파일 업로드 처리 (react-hook-form 방식)
+	// 파일 업로드 처리
 	const handleFileUpload = useCallback(
 		async (files: FileList | null, specificType?: PRODUCT_FILE_TYPE) => {
 			if (!files || files.length === 0) return;
@@ -158,18 +214,15 @@ const ArtistStudioDashUploadTrackModal = ({
 				return;
 			}
 
-			// 업로드 시작 시 에러 초기화
 			clearErrors("uploadedFiles");
 			clearErrors("uploadedFiles.audioFile");
 			clearErrors("uploadedFiles.zipFile");
 			clearErrors("uploadedFiles.coverImage");
 
-			// 실제 파일 업로드 API 호출
 			uploadProductFile(
 				{ file, type: fileType },
 				{
 					onSuccess: (response) => {
-						// 업로드 성공 시 폼 상태 업데이트
 						const currentFiles = getValues("uploadedFiles");
 						const currentFileIds = getValues("uploadedFileIds");
 
@@ -190,11 +243,12 @@ const ArtistStudioDashUploadTrackModal = ({
 								break;
 						}
 
-						// 폼 validation 트리거
 						trigger(["uploadedFiles", "uploadedFileIds"]);
 					},
 					onError: (error) => {
-						console.error("파일 업로드 실패:", error);
+						if (process.env.NODE_ENV === "development") {
+							console.error("파일 업로드 실패:", error);
+						}
 						switch (fileType) {
 							case ENUM_FILE_TYPE.PRODUCT_COVER_IMAGE:
 								setError("uploadedFiles.coverImage", {
@@ -222,21 +276,18 @@ const ArtistStudioDashUploadTrackModal = ({
 		[getFileTypeFromExtension, uploadProductFile, setError, clearErrors, getValues, setValue, trigger],
 	);
 
-	// 초기 파일들 처리 (사이드바에서 드롭된 파일들)
+	// 초기 파일들 처리 (업로드 모드에서만)
 	useEffect(() => {
-		if (isModalOpen && initialFiles && initialFiles.length > 0) {
-			// 사이드바에서 드롭된 파일들을 자동으로 업로드 처리
+		if (mode === "upload" && isModalOpen && initialFiles && initialFiles.length > 0) {
 			for (let i = 0; i < initialFiles.length; i++) {
 				const file = initialFiles[i];
 				if (file) {
 					const fileType = getFileTypeFromExtension(file);
 					if (fileType) {
-						// 각 파일을 적절한 타입으로 업로드
 						const fileList = new DataTransfer();
 						fileList.items.add(file);
 						handleFileUpload(fileList.files, fileType);
 					} else if (i === 0) {
-						// 첫 번째 파일이 지원되지 않는 형식일 때만 알림
 						setError("uploadedFiles", {
 							type: "manual",
 							message: "지원하지 않는 파일 형식입니다.",
@@ -245,16 +296,16 @@ const ArtistStudioDashUploadTrackModal = ({
 				}
 			}
 		}
-	}, [isModalOpen, initialFiles, getFileTypeFromExtension, handleFileUpload, setError]);
+	}, [mode, isModalOpen, initialFiles, getFileTypeFromExtension, handleFileUpload, setError]);
 
 	// 모달이 닫힐 때 폼 초기화
 	useEffect(() => {
 		if (!isModalOpen) {
-			reset();
+			reset(getDefaultValues());
 		}
-	}, [isModalOpen, reset]);
+	}, [isModalOpen, reset, getDefaultValues]);
 
-	// 드래그 앤 드롭 이벤트 핸들러 (react-hook-form 방식)
+	// 드래그 앤 드롭 이벤트 핸들러
 	const handleDragOver = useCallback(
 		(e: React.DragEvent) => {
 			e.preventDefault();
@@ -280,7 +331,7 @@ const ArtistStudioDashUploadTrackModal = ({
 		[setValue, handleFileUpload],
 	);
 
-	// 파일 입력 핸들러 (react-hook-form 방식)
+	// 파일 입력 핸들러
 	const handleFileInputChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>, type: PRODUCT_FILE_TYPE) => {
 			handleFileUpload(e.target.files, type);
@@ -290,40 +341,35 @@ const ArtistStudioDashUploadTrackModal = ({
 
 	// 폼 제출 처리
 	const onSubmit = useCallback(
-		(data: ExtendedTrackUploadFormData) => {
-			// 모든 필수 파일이 업로드되었는지 확인
-			// if (!data.uploadedFileIds.coverImageFileId || !data.uploadedFileIds.audioFileFileId) {
-			// 	setError("uploadedFiles", {
-			// 		type: "manual",
-			// 		message: "커버 이미지와 오디오 파일은 필수입니다.",
-			// 	});
-			// 	return;
-			// }
-			if (!data.uploadedFileIds.audioFileFileId) {
-				setError("uploadedFiles.audioFile", {
-					type: "manual",
-					message: "오디오 파일은 필수입니다.",
-				});
-				return;
+		(data: ExtendedTrackFormData) => {
+			// 업로드 모드에서는 파일 업로드 검증
+			if (mode === "upload") {
+				if (!data.uploadedFileIds.audioFileFileId) {
+					setError("uploadedFiles.audioFile", {
+						type: "manual",
+						message: "오디오 파일은 필수입니다.",
+					});
+					return;
+				}
+
+				if (!data.uploadedFileIds.coverImageFileId) {
+					setError("uploadedFiles.coverImage", {
+						type: "manual",
+						message: "커버 이미지는 필수입니다.",
+					});
+					return;
+				}
+
+				if (!data.uploadedFileIds.zipFileId) {
+					setError("uploadedFiles.zipFile", {
+						type: "manual",
+						message: "압축 파일은 필수입니다.",
+					});
+					return;
+				}
 			}
 
-			if (!data.uploadedFileIds.coverImageFileId) {
-				setError("uploadedFiles.coverImage", {
-					type: "manual",
-					message: "커버 이미지는 필수입니다.",
-				});
-				return;
-			}
-
-			if (!data.uploadedFileIds.zipFileId) {
-				setError("uploadedFiles.zipFile", {
-					type: "manual",
-					message: "압축 파일은 필수입니다.",
-				});
-				return;
-			}
-
-			// musicKey 타입 안전성 보장
+			// musicKey와 scaleType 타입 안전성 보장
 			const validMusicKeys = [
 				"null",
 				"C",
@@ -344,71 +390,86 @@ const ArtistStudioDashUploadTrackModal = ({
 				"Gs",
 				"As",
 			] as const;
-			type ValidMusicKey = (typeof validMusicKeys)[number];
+			const validScaleTypes = ["MAJOR", "MINOR", "null"] as const;
 
 			const musicKeyValue = data.keyValue?.value || data.musicKey || "null";
-			const validatedMusicKey: ValidMusicKey = validMusicKeys.includes(musicKeyValue as ValidMusicKey)
-				? (musicKeyValue as ValidMusicKey)
+			const validatedMusicKey = validMusicKeys.includes(musicKeyValue as (typeof validMusicKeys)[number])
+				? (musicKeyValue as (typeof validMusicKeys)[number])
 				: "null";
-
-			// scaleType 타입 안전성 보장
-			const validScaleTypes = ["MAJOR", "MINOR", "null"] as const;
-			type ValidScaleType = (typeof validScaleTypes)[number];
 
 			const scaleTypeValue = data.scaleValue ? data.scaleValue.toUpperCase() : data.scaleType || "null";
-			const validatedScaleType: ValidScaleType = validScaleTypes.includes(scaleTypeValue as ValidScaleType)
-				? (scaleTypeValue as ValidScaleType)
+			const validatedScaleType = validScaleTypes.includes(scaleTypeValue as (typeof validScaleTypes)[number])
+				? (scaleTypeValue as (typeof validScaleTypes)[number])
 				: "null";
 
-			// ProductCreateSchema에 맞는 payload 생성
+			// Payload 생성
 			const payload = {
 				productName: data.productName,
 				description: data.description,
 				price: data.licenseInfo[0]?.price || 0,
 				category: data.category,
 				genres: data.genres,
-				tags: data.tags || [], // undefined일 경우 빈 배열로 처리
+				tags: data.tags || [],
 				minBpm:
-					data.bpmType === "exact"
-						? (data.exactBPM ?? (data.minBpm || 100))
-						: (data.bpmRange?.min ?? (data.minBpm || 100)),
+					data.bpmType === "exact" ? data.exactBPM || data.minBpm || 100 : data.bpmRange?.min || data.minBpm || 100,
 				maxBpm:
-					data.bpmType === "exact"
-						? (data.exactBPM ?? (data.maxBpm || 120))
-						: (data.bpmRange?.max ?? (data.maxBpm || 120)),
+					data.bpmType === "exact" ? data.exactBPM || data.maxBpm || 120 : data.bpmRange?.max || data.maxBpm || 120,
 				musicKey: validatedMusicKey,
 				scaleType: validatedScaleType,
 				licenseInfo: data.licenseInfo,
 				currency: data.currency || "KRW",
-				coverImageFileId: data.uploadedFileIds.coverImageFileId,
-				audioFileFileId: data.uploadedFileIds.audioFileFileId,
-				zipFileId: data.uploadedFileIds.zipFileId || undefined,
+				coverImageFileId: data.uploadedFileIds.coverImageFileId || data.coverImageFileId,
+				audioFileFileId: data.uploadedFileIds.audioFileFileId || data.audioFileFileId,
+				zipFileId: data.uploadedFileIds.zipFileId,
 				isFreeDownload: data.isFreeDownload || 0,
 				isPublic: data.isPublic || 1,
 			};
 
-			console.log("Form Data:", data);
-			console.log("Payload:", payload);
+			// 개발 환경에서만 로그 출력
+			if (process.env.NODE_ENV === "development") {
+				console.log("Form Data:", data);
+				console.log("Payload:", payload);
+			}
 
-			// 실제 제품 생성 호출
-			createProduct(payload, {
-				onSuccess: () => {
-					onClose();
-					openCompleteModal();
-				},
-				onError: (error) => {
-					console.error("제품 생성 실패:", error);
-					setError("root", {
-						type: "manual",
-						message: "제품 생성에 실패했습니다.",
-					});
-				},
-			});
+			// 모드에 따라 다른 API 호출
+			if (mode === "upload") {
+				createProduct(payload, {
+					onSuccess: () => {
+						onClose();
+						openCompleteModal();
+					},
+					onError: (error) => {
+						if (process.env.NODE_ENV === "development") {
+							console.error("제품 생성 실패:", error);
+						}
+						setError("root", {
+							type: "manual",
+							message: "제품 생성에 실패했습니다.",
+						});
+					},
+				});
+			} else {
+				updateProduct(payload, {
+					onSuccess: () => {
+						onClose();
+						openCompleteModal();
+					},
+					onError: (error) => {
+						if (process.env.NODE_ENV === "development") {
+							console.error("제품 수정 실패:", error);
+						}
+						setError("root", {
+							type: "manual",
+							message: "제품 수정에 실패했습니다.",
+						});
+					},
+				});
+			}
 		},
-		[createProduct, onClose, openCompleteModal, setError],
+		[mode, createProduct, updateProduct, onClose, openCompleteModal, setError],
 	);
 
-	// 카테고리 변경 (react-hook-form 방식)
+	// 카테고리 변경
 	const onChangeCategory = useCallback(
 		(category: "BEAT" | "ACAPELA") => {
 			setValue("category", category);
@@ -417,7 +478,7 @@ const ArtistStudioDashUploadTrackModal = ({
 		[setValue, trigger],
 	);
 
-	// BPM 관련 핸들러들 (react-hook-form 방식)
+	// BPM 관련 핸들러들
 	const onChangeExactBPM = useCallback(
 		(bpm: number) => {
 			if (isNaN(bpm)) return;
@@ -456,7 +517,7 @@ const ArtistStudioDashUploadTrackModal = ({
 		[setValue, trigger],
 	);
 
-	// Key 관련 핸들러들 (react-hook-form 방식)
+	// Key 관련 핸들러들
 	const onChangeKey = useCallback(
 		(newKey: KeyValue) => {
 			const currentKeyValue = getValues("keyValue");
@@ -489,7 +550,7 @@ const ArtistStudioDashUploadTrackModal = ({
 		trigger(["exactBPM", "bpmRange"]);
 	}, [setValue, trigger]);
 
-	// 라이센스 관련 핸들러들 (react-hook-form 방식)
+	// 라이센스 관련 핸들러들
 	const addLicense = useCallback(() => {
 		const currentLicenses = getValues("licenseInfo");
 		setValue("licenseInfo", [...currentLicenses, { type: "MASTER", price: 0 }]);
@@ -524,7 +585,6 @@ const ArtistStudioDashUploadTrackModal = ({
 					price: Number(value) || 0,
 				};
 			} else {
-				// type 필드는 "MASTER" | "EXCLUSIVE"만 허용
 				const validType = value === "MASTER" || value === "EXCLUSIVE" ? value : "MASTER";
 				updatedLicenses[index] = {
 					type: validType,
@@ -537,11 +597,7 @@ const ArtistStudioDashUploadTrackModal = ({
 		[getValues, setValue, trigger],
 	);
 
-	useEffect(() => {
-		console.log(errors);
-	}, [errors]);
-
-	// 메모이제이션된 값들
+	// 커버 이미지 소스
 	const coverImageSrc = useMemo(() => {
 		return watchedUploadedFiles?.coverImage ? URL.createObjectURL(watchedUploadedFiles.coverImage) : blankCdImage;
 	}, [watchedUploadedFiles?.coverImage]);
@@ -561,7 +617,7 @@ const ArtistStudioDashUploadTrackModal = ({
 				onDrop={handleDrop}
 			>
 				<PopupHeader>
-					<PopupTitle>트랙 업로드</PopupTitle>
+					<PopupTitle>{modalTitle}</PopupTitle>
 				</PopupHeader>
 
 				{/* 드래그 오버레이 */}
@@ -586,7 +642,6 @@ const ArtistStudioDashUploadTrackModal = ({
 											type="file"
 											accept="image/*"
 											onClick={(e) => {
-												// Reset input value to allow selecting same file again
 												(e.target as HTMLInputElement).value = "";
 											}}
 											onChange={(e) => {
@@ -628,7 +683,7 @@ const ArtistStudioDashUploadTrackModal = ({
 												<Plus stroke="red" />
 											</div>
 											<span className="text-hbc-red font-[SUIT] text-md font-extrabold leading-[150%] tracking-[0.12px]">
-												{errors.uploadedFiles.message}
+												{errors.uploadedFiles.coverImage.message}
 											</span>
 										</div>
 									)}
@@ -856,34 +911,7 @@ const ArtistStudioDashUploadTrackModal = ({
 										errors.genres && "border-red-500",
 									)}
 								>
-									{/* <GenreButton
-										name="Hip-hop"
-										showDeleteButton
-										onDelete={() => {
-											alert("Hip-hop 장르 선택 해제");
-										}}
-									/>
-									<GenreButton
-										name="G-funk"
-										showDeleteButton
-										onDelete={() => {
-											alert("G-funk 장르 선택 해제");
-										}}
-									/> */}
-									{/* <Controller
-										name="genres"
-										control={control}
-										render={({ field }) => (
-											<div>
-												{field.value.map((genre) => (
-													<GenreButton
-														key={genre.id}
-														name={genre.name}
-													/>
-												))}
-											</div>
-										)}
-									/> */}
+									{/* 장르 선택 구현 필요 */}
 								</div>
 							</div>
 
@@ -897,20 +925,6 @@ const ArtistStudioDashUploadTrackModal = ({
 										</div>
 									)}
 								</div>
-								{/* <div
-									className={cn(
-										"flex gap-[5px] p-2 border-x-[1px] border-y-[2px] border-black rounded-[5px] h-[92px]",
-										errors.tags && "border-red-500",
-									)}
-								> */}
-								{/* <TagButton name="Hip-hop" /> */}
-								{/* <TagButton name="G-funk" /> */}
-								{/* {tagList?.data.map((tag) => (
-										<TagButton
-											key={tag.id}
-											name={tag.name}
-										/>
-									))} */}
 								<Controller
 									name="tags"
 									control={control}
@@ -926,8 +940,6 @@ const ArtistStudioDashUploadTrackModal = ({
 										/>
 									)}
 								/>
-								{/* </div> */}
-								{errors.tags && <span className="text-red-500 text-xs">{errors.tags.message}</span>}
 							</div>
 
 							{/* BPM 설정 */}
@@ -1114,9 +1126,9 @@ const ArtistStudioDashUploadTrackModal = ({
 						<Button
 							type="submit"
 							className="bg-white px-2 py-1 text-hbc-red border-b-2 border-hbc-red rounded-none font-[SUIT] text-[24px] font-extrabold leading-normal tracking-[0.24px]"
-							disabled={isCreating || isUploading}
+							disabled={isProcessing}
 						>
-							{isCreating || isUploading ? "업로드 중..." : "UPLOAD"}
+							{isProcessing ? loadingText : submitButtonText}
 						</Button>
 					</PopupFooter>
 				</form>
@@ -1125,4 +1137,4 @@ const ArtistStudioDashUploadTrackModal = ({
 	);
 };
 
-export default ArtistStudioDashUploadTrackModal;
+export default ArtistStudioTrackModal;
