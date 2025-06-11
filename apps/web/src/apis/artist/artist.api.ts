@@ -93,7 +93,7 @@ export const updateArtistSettlement = async (id: number, payload: SettlementUpda
  * @returns 아티스트 컨텐츠 목록
  */
 export const getArtistContentList = async (id: number, payload: ArtistProductListQueryRequest) => {
-	const response = await axiosInstance.get<ProductListPagingResponse>(`/artists/${id}/contents`, {
+	const response = await axiosInstance.get<ProductListPagingResponse>(`/artists/${id}/products`, {
 		params: payload,
 	});
 	return response.data;

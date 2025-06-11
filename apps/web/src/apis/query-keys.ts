@@ -19,6 +19,7 @@ const QUERY_KEYS = {
 			payload,
 		],
 		one: (productId: number): QueryKey => ["products", productId],
+		searchInfo: ["products", "searchInfo"],
 	},
 	artist: {
 		_key: ["artist"],

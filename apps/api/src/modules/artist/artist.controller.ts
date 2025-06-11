@@ -11,6 +11,7 @@ import {
 	UploadedFile,
 	ForbiddenException,
 	Query,
+	ParseIntPipe,
 } from "@nestjs/common";
 import { ArtistService } from "./artist.service";
 import { ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagger";
@@ -268,7 +269,7 @@ export class ArtistController {
 	})
 	async findProducts(
 		@Req() req: AuthenticatedRequest,
-		@Param("id") id: number,
+		@Param("id", ParseIntPipe) id: number,
 		@Query() artistProductListQueryRequestDto: ArtistProductListQueryRequestDto,
 	): Promise<IResponsePaging<ProductListResponseDto>> {
 		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds, isPublic } =
@@ -279,12 +280,14 @@ export class ArtistController {
 			throw new ForbiddenException(ARTIST_NOT_FOUND_ERROR);
 		}
 
+		console.log(isPublic, typeof isPublic, artistProductListQueryRequestDto);
+
 		const where = {
 			sellerId: id,
-			...(isPublic ? { isPublic: 1 } : {}),
-			...(category === "null" ? {} : { category }),
-			...(musicKey === "null" ? {} : { musicKey }),
-			...(scaleType === "null" ? {} : { scaleType }),
+			...(isPublic !== undefined ? { isPublic: isPublic ? 1 : 0 } : {}),
+			...(category === "null" || category === undefined ? {} : { category }),
+			...(musicKey === "null" || musicKey === undefined ? {} : { musicKey }),
+			...(scaleType === "null" || scaleType === undefined ? {} : { scaleType }),
 			...(minBpm ? { minBpm: { lte: minBpm }, maxBpm: { gte: minBpm } } : {}),
 			...(maxBpm ? { minBpm: { lte: maxBpm }, maxBpm: { gte: maxBpm } } : {}),
 			...(genreIds
@@ -308,6 +311,8 @@ export class ArtistController {
 					}
 				: {}),
 		};
+
+		console.log(where);
 
 		const products = await this.productService.findAll(where, artistProductListQueryRequestDto);
 		const total = await this.productService.getTotal(where);

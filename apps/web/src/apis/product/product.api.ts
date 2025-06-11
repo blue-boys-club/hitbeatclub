@@ -3,6 +3,7 @@ import {
 	ProductDetailResponse,
 	ProductListPagingResponse,
 	ProductListQueryRequest,
+	ProductSearchInfoResponse,
 	ProductUpdateSchema,
 } from "@hitbeatclub/shared-types/product";
 import client from "@/apis/api.client";
@@ -81,5 +82,10 @@ export const uploadProductFile = async (file: File, type: PRODUCT_FILE_TYPE) => 
 			"Content-Type": "multipart/form-data",
 		},
 	});
+	return response.data;
+};
+
+export const getProductSearchInfo = async () => {
+	const response = await client.get<CommonResponse<ProductSearchInfoResponse>>("/products/search-info");
 	return response.data;
 };

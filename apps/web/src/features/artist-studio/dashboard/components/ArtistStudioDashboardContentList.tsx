@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Delete, Edit, SmallEqualizer } from "@/assets/svgs";
-import { AlbumCoverCard, Badge, SquareDropdown, TagDropdown } from "@/components/ui";
+import { AlbumCoverCard, Badge } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
-import { SearchTag } from "@/components/ui/SearchTag";
+import { ArtistProductListFilter } from "@/components/filters/ArtistProductListFilter";
+import { getArtistMeQueryOption } from "@/apis/artist/query/artist.query-options";
 import ArtistStudioTrackModal from "@/features/artist/components/modal/ArtistStudioTrackModal";
 import ArtistStudioDashDeleteTrackModal from "@/features/artist/components/modal/ArtistStudioDashDeleteTrackModal";
 import ArtistStudioDashCompleteModal from "@/features/artist/components/modal/ArtistStudioDashCompleteModal";
@@ -13,6 +15,10 @@ const ArtistStudioDashboardContentList = () => {
 	const [editingProductId, setEditingProductId] = useState<number | null>(null);
 	const [isDeleteTrackOpen, setIsDeleteTrackOpen] = useState<boolean>(false);
 	const [isCompleteOpen, setIsCompleteOpen] = useState<boolean>(false);
+	const [productListData, setProductListData] = useState<any>(null);
+
+	// 현재 아티스트 정보 조회
+	const { data: artistMe } = useQuery(getArtistMeQueryOption());
 
 	const openEditTrackModal = (id: number) => setEditingProductId(id);
 	const closeEditTrackModal = () => setEditingProductId(null);
@@ -21,162 +27,132 @@ const ArtistStudioDashboardContentList = () => {
 	const openCompleteModal = () => setIsCompleteOpen(true);
 	const closeCompleteModal = () => setIsCompleteOpen(false);
 
+	// 필터에서 받은 데이터 처리
+	const handleDataChange = (data: any) => {
+		setProductListData(data);
+	};
+
+	// 상품 목록 렌더링
+	const renderProductList = () => {
+		if (!productListData?.data) {
+			return <div className="text-center py-8 text-gray-500">상품이 없습니다.</div>;
+		}
+
+		return productListData.data.map((product: any) => (
+			<div
+				key={product.id}
+				className="flex gap-4 border-b-hbc-black bg-hbc-white py-3 px-2 border-b-4 border-black"
+			>
+				<AlbumCoverCard
+					albumImgSrc={product.coverImage?.url || blankCdImage}
+					size={"xl"}
+					AlbumCoverCardWrapperClassName={"rounded-full"}
+					AlbumCoverCardInnerClassName={"rounded-full"}
+				/>
+				<div className="flex-grow flex justify-between gap-2">
+					<div>
+						<div className="flex flex-col gap-3">
+							<div className="flex gap-3 items-center">
+								<span className="text-hbc-black text-[26px] font-bold leading-[100%] tracking-[0.26px]">
+									{product.productName}
+								</span>
+								<Badge
+									variant={product.isPublic ? "default" : "secondary"}
+									size={"sm"}
+									rounded={true}
+								>
+									{product.isPublic ? "공개" : "비공개"}
+								</Badge>
+							</div>
+							<div className="flex gap-1">
+								{product.genres?.map((genre: any) => (
+									<Badge
+										key={genre.id}
+										size={"sm"}
+										rounded={true}
+										bold={"semibold"}
+									>
+										{genre.name}
+									</Badge>
+								))}
+							</div>
+							<div className="text-hbc-black text-base font-[450] leading-[150%] tracking-[0.16px]">
+								<div>
+									BPM :{" "}
+									{product.minBpm === product.maxBpm
+										? `${product.minBpm}BPM`
+										: `${product.minBpm}-${product.maxBpm}BPM`}
+								</div>
+								<div>
+									Key : {product.musicKey} {product.scaleType?.toLowerCase()}
+								</div>
+								<div>Basic : {product.price?.toLocaleString()} KRW</div>
+							</div>
+						</div>
+					</div>
+					<div className="flex flex-col justify-between items-end">
+						<div className="flex gap-2 ">
+							<Button
+								variant="outline"
+								size="sm"
+								rounded="full"
+								className="flex gap-1.5 border-1"
+								onClick={() => openEditTrackModal(product.id)}
+							>
+								<div className="text-hbc-black text-[12px] font-suit font-bold leading-[100%] tracking-[0.12px]">
+									수정하기
+								</div>
+								<Edit />
+							</Button>
+							<Button
+								variant="outline"
+								size="sm"
+								rounded="full"
+								className="flex gap-1.5 border-1"
+								onClick={openDeleteTrackModal}
+							>
+								<div className="text-hbc-black text-[12px] font-suit font-bold leading-[100%] tracking-[0.12px]">
+									삭제하기
+								</div>
+								<Delete />
+							</Button>
+						</div>
+						<div>
+							<SmallEqualizer />
+						</div>
+					</div>
+				</div>
+			</div>
+		));
+	};
+
+	// artistMe가 없으면 로딩 상태 표시
+	if (!artistMe?.id) {
+		return (
+			<section>
+				<div className="border-b-6 pl-[2px] pb-2 text-hbc-black text-[24px] font-extrabold leading-[100%] tracking-[0.24px]">
+					컨텐츠 목록
+				</div>
+				<div className="text-center py-8 text-gray-500">아티스트 정보를 불러오는 중...</div>
+			</section>
+		);
+	}
+
 	return (
 		<>
 			<section>
 				<div className="border-b-6 pl-[2px] pb-2 text-hbc-black text-[24px] font-extrabold leading-[100%] tracking-[0.24px]">
 					컨텐츠 목록
 				</div>
-				<div className="flex flex-col gap-2">
-					<div className="pt-4 flex justify-between">
-						<div className="flex gap-1">
-							<Button
-								size={"sm"}
-								variant={"outline"}
-								className="rounded-none border-4"
-							>
-								ALL
-							</Button>
-							<Button
-								size={"sm"}
-								variant={"outline"}
-								rounded={"full"}
-								className="border-4"
-							>
-								공개
-							</Button>
-							<Button
-								size={"sm"}
-								variant={"outline"}
-								rounded={"full"}
-								className="border-4"
-							>
-								비공개
-							</Button>
-							<Button
-								size={"sm"}
-								variant={"outline"}
-								rounded={"full"}
-								className="border-4"
-							>
-								판매완료
-							</Button>
-						</div>
-						<SquareDropdown
-							buttonClassName={"border-x-[3px] border-y-[4px] w-[109px] h-7 justify-initial"}
-							optionsClassName={"w-[109px] border-x-[3px] border-y-[4px]"}
-							optionClassName={
-								"h-7 p-0 pl-3 flex items-center text-black font-suisse text-base font-bold leading-[150%] tracking-[0.16px]"
-							}
-							options={[
-								{ label: "Recent", value: "1" },
-								{ label: "A - Z", value: "2" },
-								{ label: "Popular", value: "3" },
-							]}
-						/>
-					</div>
-					<div className="flex gap-1">
-						<TagDropdown
-							trigger={<span className="font-medium leading-[16px]">Category</span>}
-							options={[]}
-						/>
-						<TagDropdown
-							trigger={<span className="font-medium leading-[16px]">Genre</span>}
-							options={[]}
-						/>
-						<TagDropdown
-							trigger={<span className="font-medium leading-[16px]">Key</span>}
-							options={[]}
-						/>
-						<TagDropdown
-							trigger={<span className="font-medium leading-[16px]">BPM</span>}
-							options={[]}
-						/>
-					</div>
-					<div>
-						<SearchTag placeholder={"Search tag"} />
-					</div>
-				</div>
-				<div className="grid grid-cols-1">
-					<div className="flex gap-4 border-b-hbc-black bg-hbc-white py-3 px-2 border-b-4 border-black">
-						<AlbumCoverCard
-							albumImgSrc={blankCdImage}
-							size={"xl"}
-							AlbumCoverCardWrapperClassName={"rounded-full"}
-							AlbumCoverCardInnerClassName={"rounded-full"}
-						/>
-						<div className="flex-grow flex justify-between gap-2">
-							<div>
-								<div className="flex flex-col gap-3">
-									<div className="flex gap-3 items-center">
-										<span className="text-hbc-black text-[26px] font-bold leading-[100%] tracking-[0.26px]">
-											Cheek To Cheek
-										</span>
-										<Badge
-											variant={"secondary"}
-											size={"sm"}
-											rounded={true}
-										>
-											비공개
-										</Badge>
-									</div>
-									<div className="flex gap-1">
-										<Badge
-											size={"sm"}
-											rounded={true}
-											bold={"semibold"}
-										>
-											Boombap
-										</Badge>
-										<Badge
-											size={"sm"}
-											rounded={true}
-											bold={"semibold"}
-										>
-											Old School
-										</Badge>
-									</div>
-									<div className="text-hbc-black text-base font-[450] leading-[150%] tracking-[0.16px]">
-										<div>BPM : 120BPM</div>
-										<div>Key : G min</div>
-										<div>Basic : {(100000).toLocaleString()} KRW</div>
-									</div>
-								</div>
-							</div>
-							<div className="flex flex-col justify-between items-end">
-								<div className="flex gap-2 ">
-									<Button
-										variant="outline"
-										size="sm"
-										rounded="full"
-										className="flex gap-1.5 border-1"
-										onClick={() => openEditTrackModal(1)}
-									>
-										<div className="text-hbc-black text-[12px] font-suit font-bold leading-[100%] tracking-[0.12px]">
-											수정하기
-										</div>
-										<Edit />
-									</Button>
-									<Button
-										variant="outline"
-										size="sm"
-										rounded="full"
-										className="flex gap-1.5 border-1"
-										onClick={openDeleteTrackModal}
-									>
-										<div className="text-hbc-black text-[12px] font-suit font-bold leading-[100%] tracking-[0.12px]">
-											삭제하기
-										</div>
-										<Delete />
-									</Button>
-								</div>
-								<div>
-									<SmallEqualizer />
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
+
+				{/* 필터 컴포넌트 */}
+				<ArtistProductListFilter
+					artistId={artistMe.id}
+					onDataChange={handleDataChange}
+				/>
+
+				{/* 상품 목록 */}
+				<div className="grid grid-cols-1">{renderProductList()}</div>
 			</section>
 
 			{editingProductId && (

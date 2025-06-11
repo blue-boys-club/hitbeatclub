@@ -1,0 +1,1 @@
+export { ArtistProductListFilter } from "./ArtistProductListFilter";

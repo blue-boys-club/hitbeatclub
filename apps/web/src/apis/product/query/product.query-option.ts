@@ -1,4 +1,4 @@
-import { getProduct, getProductList } from "@/apis/product/product.api";
+import { getProduct, getProductList, getProductSearchInfo } from "@/apis/product/product.api";
 import { QUERY_KEYS } from "@/apis/query-keys";
 import { ProductListQueryRequest } from "@hitbeatclub/shared-types/product";
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
@@ -44,6 +44,14 @@ export const getProductQueryOption = (productId: number) => {
 	return queryOptions({
 		queryKey: QUERY_KEYS.products.one(productId),
 		queryFn: () => getProduct(productId),
+		select: (response) => response.data,
+	});
+};
+
+export const getProductSearchInfoQueryOption = () => {
+	return queryOptions({
+		queryKey: QUERY_KEYS.products.searchInfo,
+		queryFn: () => getProductSearchInfo(),
 		select: (response) => response.data,
 	});
 };

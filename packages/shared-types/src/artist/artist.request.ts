@@ -29,10 +29,7 @@ export type ArtistCreateRequest = z.infer<typeof ArtistCreateSchema>;
 export type ArtistUpdateRequest = z.infer<typeof ArtistUpdateSchema>;
 
 export const ArtistProductListQuerySchema = ProductListQuerySchema.extend({
-	isPublic: z
-		.boolean()
-		.transform((val) => (val ? 1 : 0))
-		.optional(),
+	isPublic: z.coerce.boolean().optional(),
 });
 
 export type ArtistProductListQueryRequest = z.infer<typeof ArtistProductListQuerySchema>;

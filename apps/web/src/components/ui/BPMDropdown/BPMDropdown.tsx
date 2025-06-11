@@ -2,6 +2,7 @@
 
 import { cn } from "@/common/utils";
 import { useRef, useState, useMemo, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Slot } from "@radix-ui/react-slot";
 
 // 타입 정의를 직접 여기에 추가 (다른 파일에서 가져오던 타입)
@@ -27,6 +28,7 @@ export interface BPMDropdownProps {
 	onClear: () => void;
 	children?: React.ReactNode | ((props: BPMDropdownRenderProps) => React.ReactNode);
 	asChild?: boolean;
+	className?: string;
 }
 
 // 기본 트리거 컴포넌트
@@ -78,6 +80,12 @@ const BPMTrigger = ({
 	);
 };
 
+interface DropdownPosition {
+	top: number;
+	left: number;
+	width: number;
+}
+
 export const BPMDropdown = ({
 	bpmType,
 	bpmValue,
@@ -88,10 +96,49 @@ export const BPMDropdown = ({
 	onClear,
 	children,
 	asChild = false,
+	className,
 }: BPMDropdownProps) => {
 	const [isOpen, setIsOpen] = useState(false);
+	const [dropdownPosition, setDropdownPosition] = useState<DropdownPosition>({ top: 0, left: 0, width: 0 });
+	const [isClient, setIsClient] = useState(false);
 
 	const dropdownRef = useRef<HTMLDivElement>(null);
+	const containerRef = useRef<HTMLDivElement>(null);
+
+	// 클라이언트 사이드 렌더링 확인
+	useEffect(() => {
+		setIsClient(true);
+	}, []);
+
+	// 드롭다운 위치 계산
+	const updateDropdownPosition = useCallback(() => {
+		if (containerRef.current) {
+			const rect = containerRef.current.getBoundingClientRect();
+			setDropdownPosition({
+				top: rect.bottom + window.scrollY,
+				left: rect.left + window.scrollX,
+				width: rect.width,
+			});
+		}
+	}, []);
+
+	// 스크롤 및 리사이즈 이벤트 처리
+	useEffect(() => {
+		if (isOpen) {
+			updateDropdownPosition();
+
+			const handleScroll = () => updateDropdownPosition();
+			const handleResize = () => updateDropdownPosition();
+
+			window.addEventListener("scroll", handleScroll, true);
+			window.addEventListener("resize", handleResize);
+
+			return () => {
+				window.removeEventListener("scroll", handleScroll, true);
+				window.removeEventListener("resize", handleResize);
+			};
+		}
+	}, [isOpen, updateDropdownPosition]);
 
 	const currentValue = useMemo(() => {
 		if (bpmType === "exact") {
@@ -195,7 +242,12 @@ export const BPMDropdown = ({
 	// 외부 클릭 감지
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
-			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+			if (
+				containerRef.current &&
+				!containerRef.current.contains(event.target as Node) &&
+				dropdownRef.current &&
+				!dropdownRef.current.contains(event.target as Node)
+			) {
 				setIsOpen(false);
 			}
 		};
@@ -254,115 +306,129 @@ export const BPMDropdown = ({
 		}
 	};
 
-	return (
+	// 드롭다운 컨텐츠
+	const dropdownContent = (
 		<div
-			className="relative w-full"
 			ref={dropdownRef}
+			id="bpm-select-dropdown"
+			role="dialog"
+			aria-label="BPM 선택 메뉴"
+			className="bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]"
+			style={{
+				position: "absolute",
+				top: dropdownPosition.top,
+				left: dropdownPosition.left,
+				width: dropdownPosition.width,
+				minWidth: "200px",
+			}}
 		>
-			{renderTrigger()}
-
-			{isOpen && (
-				<div
-					id="bpm-select-dropdown"
-					role="dialog"
-					aria-label="BPM 선택 메뉴"
-					className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg"
-				>
-					<div className="p-4">
-						<div className="flex flex-col gap-4">
-							<div className="flex items-center gap-2 h-10">
-								<input
-									type="radio"
-									id="exact"
-									name="bpmType"
-									checked={bpmType === "exact"}
-									onChange={handleExactBPMTypeChange}
-									className="w-4 h-4"
-								/>
-								<label
-									htmlFor="exact"
-									className="text-sm font-medium"
-								>
-									Exact
-								</label>
-								{bpmType === "exact" && (
-									<input
-										type="text"
-										inputMode="numeric"
-										pattern="[0-9]*"
-										value={bpmValue ?? ""}
-										onChange={handleExactBPMChange}
-										onInput={handleNumericInput}
-										placeholder="BPM"
-										className="text-sm w-20 h-8 px-2 border border-gray-200 rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-									/>
-								)}
-							</div>
-
-							<div className="flex items-center gap-2 h-10">
-								<input
-									type="radio"
-									id="range"
-									name="bpmType"
-									checked={bpmType === "range"}
-									onChange={handleRangeBPMTypeChange}
-									className="w-4 h-4"
-								/>
-								<label
-									htmlFor="range"
-									className="text-sm font-medium"
-								>
-									Range
-								</label>
-								{bpmType === "range" && (
-									<div className="flex items-center gap-2">
-										<input
-											type="text"
-											inputMode="numeric"
-											pattern="[0-9]*"
-											value={bpmRangeValue?.min ? bpmRangeValue.min : ""}
-											onChange={handleMinBPMChange}
-											onInput={handleNumericInput}
-											placeholder="Min"
-											className="text-sm w-12 h-8 px-2 border border-gray-200 rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-										/>
-										<span>-</span>
-										<input
-											type="text"
-											inputMode="numeric"
-											pattern="[0-9]*"
-											value={bpmRangeValue?.max ? bpmRangeValue.max : ""}
-											onChange={handleMaxBPMChange}
-											onInput={handleNumericInput}
-											placeholder="Max"
-											className="text-sm w-12 h-8 px-2 border border-gray-200 rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-										/>
-									</div>
-								)}
-							</div>
-						</div>
+			<div className="p-4">
+				<div className="flex flex-col gap-4">
+					<div className="flex items-center gap-2 h-10">
+						<input
+							type="radio"
+							id="exact"
+							name="bpmType"
+							checked={bpmType === "exact"}
+							onChange={handleExactBPMTypeChange}
+							className="w-4 h-4"
+						/>
+						<label
+							htmlFor="exact"
+							className="text-sm font-medium"
+						>
+							Exact
+						</label>
+						{bpmType === "exact" && (
+							<input
+								type="text"
+								inputMode="numeric"
+								pattern="[0-9]*"
+								value={bpmValue ?? ""}
+								onChange={handleExactBPMChange}
+								onInput={handleNumericInput}
+								placeholder="BPM"
+								className="text-sm w-20 h-8 px-2 border border-gray-200 rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+							/>
+						)}
 					</div>
 
-					<footer className="flex justify-between items-center px-4 py-3 border-t border-solid border-t-gray-200">
-						<button
-							type="button"
-							className="text-sm font-medium text-gray-500 underline cursor-pointer duration-[0.2s] ease-[ease] transition-[color]"
-							onClick={handleClearClick}
-							aria-label="선택 초기화"
+					<div className="flex items-center gap-2 h-10">
+						<input
+							type="radio"
+							id="range"
+							name="bpmType"
+							checked={bpmType === "range"}
+							onChange={handleRangeBPMTypeChange}
+							className="w-4 h-4"
+						/>
+						<label
+							htmlFor="range"
+							className="text-sm font-medium"
 						>
-							Clear
-						</button>
-						<button
-							type="button"
-							className="p-2 text-sm font-medium text-white bg-blue-600 rounded-lg cursor-pointer border-[none] duration-[0.2s] ease-[ease] transition-[background-color]"
-							onClick={handleCloseClick}
-							aria-label="선택 완료"
-						>
-							Close
-						</button>
-					</footer>
+							Range
+						</label>
+						{bpmType === "range" && (
+							<div className="flex items-center gap-2">
+								<input
+									type="text"
+									inputMode="numeric"
+									pattern="[0-9]*"
+									value={bpmRangeValue?.min ? bpmRangeValue.min : ""}
+									onChange={handleMinBPMChange}
+									onInput={handleNumericInput}
+									placeholder="Min"
+									className="text-sm w-12 h-8 px-2 border border-gray-200 rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+								/>
+								<span>-</span>
+								<input
+									type="text"
+									inputMode="numeric"
+									pattern="[0-9]*"
+									value={bpmRangeValue?.max ? bpmRangeValue.max : ""}
+									onChange={handleMaxBPMChange}
+									onInput={handleNumericInput}
+									placeholder="Max"
+									className="text-sm w-12 h-8 px-2 border border-gray-200 rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+								/>
+							</div>
+						)}
+					</div>
 				</div>
-			)}
+			</div>
+
+			<footer className="flex justify-between items-center px-4 py-3 border-t border-solid border-t-gray-200">
+				<button
+					type="button"
+					className="text-sm font-medium text-gray-500 underline cursor-pointer duration-[0.2s] ease-[ease] transition-[color]"
+					onClick={handleClearClick}
+					aria-label="선택 초기화"
+				>
+					Clear
+				</button>
+				<button
+					type="button"
+					className="p-2 text-sm font-medium text-white bg-blue-600 rounded-lg cursor-pointer border-[none] duration-[0.2s] ease-[ease] transition-[background-color]"
+					onClick={handleCloseClick}
+					aria-label="선택 완료"
+				>
+					Close
+				</button>
+			</footer>
 		</div>
+	);
+
+	return (
+		<>
+			<div
+				className={cn("relative", className)}
+				ref={containerRef}
+			>
+				{renderTrigger()}
+			</div>
+
+			{/* Portal로 드롭다운 렌더링 */}
+			{isClient && isOpen && typeof window !== "undefined" && createPortal(dropdownContent, document.body)}
+		</>
 	);
 };
