@@ -3,6 +3,7 @@
 import { PauseCircle, PlayCircle } from "@/assets/svgs";
 import { cn } from "@/common/utils";
 import { cva, VariantProps } from "class-variance-authority";
+import { StaticImageData } from "next/image";
 import Image from "next/image";
 import React, { useCallback, useState } from "react";
 
@@ -10,7 +11,7 @@ export interface AlbumCoverCardProps
 	extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onClick">,
 		VariantProps<typeof AlbumCoverCardWrapper>,
 		VariantProps<typeof AlbumCoverCardInner> {
-	albumImgSrc: string;
+	albumImgSrc: string | StaticImageData;
 	onClick?: () => void;
 	AlbumCoverCardWrapperClassName?: string;
 	AlbumCoverCardInnerClassName?: string;

@@ -17,7 +17,7 @@ import { getArtistMeQueryOption } from "@/apis/artist/query/artist.query-options
 import { useQuery } from "@tanstack/react-query";
 import UserProfileImage from "@/assets/images/user-profile.png";
 import { cn } from "@/common/utils/tailwind";
-import ArtistStudioDashUploadTrackModal from "@/features/artist/components/modal/ArtistStudioDashUploadTrackModal";
+import ArtistStudioTrackModal from "@/features/artist/components/modal/ArtistStudioTrackModal";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
 import { PRODUCT_FILE_TYPE } from "@/apis/product/product.type";
 
@@ -303,7 +303,8 @@ export const ArtistSidebar = () => {
 			</div>
 
 			{/* 업로드 모달 */}
-			<ArtistStudioDashUploadTrackModal
+			<ArtistStudioTrackModal
+				mode="upload"
 				isModalOpen={isUploadModalOpen}
 				onClose={onCloseUploadModal}
 				openCompleteModal={onOpenUploadCompleteModal}

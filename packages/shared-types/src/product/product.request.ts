@@ -26,11 +26,11 @@ const musicKeyEnum = z.enum([
 const scaleTypeEnum = z.enum(["MAJOR", "MINOR", "null"]);
 
 export const ProductCreateSchema = z.object({
-	productName: z.string().min(1).max(255).default("Sample Product").describe("상품명"),
-	description: z.string().max(1000).describe("곡 설명 /가사").default("곡 설명 /가사"),
-	price: z.number().int().min(0).describe("가격").default(10000),
+	productName: z.string().min(1, "필수 입력사항 입니다.").max(255).default("Sample Product").describe("상품명"),
+	description: z.string().max(1000, "필수 입력사항 입니다.").describe("곡 설명 /가사").default("곡 설명 /가사"),
+	price: z.number().int().min(0, "필수 입력사항 입니다.").describe("가격").default(10000),
 	category: productCategoryEnum.describe("카테고리(BEAT, ACAPELA) 기본값: BEAT").default(productCategoryEnum.enum.BEAT),
-	genres: z.array(z.string()).max(100).describe("장르").default(["Hip-hop"]),
+	genres: z.array(z.string()).max(100, "최대 100개의 장르를 선택할 수 있습니다.").describe("장르").default(["Hip-hop"]),
 	tags: z.array(z.string()).describe("태그").optional().default(["tag"]),
 	minBpm: z.number().int().describe("최소 BPM").optional().default(100),
 	maxBpm: z.number().int().describe("최대 BPM").optional().default(120),

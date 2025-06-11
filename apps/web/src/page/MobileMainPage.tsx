@@ -12,7 +12,10 @@ import { Footer } from "@/components/layout/Footer";
 
 export default function MobileMainPage() {
 	const { data: products = [] } = useQuery({
-		...getProductListQueryOption(),
+		...getProductListQueryOption({
+			page: 1,
+			limit: 10,
+		}),
 		placeholderData: keepPreviousData,
 	});
 

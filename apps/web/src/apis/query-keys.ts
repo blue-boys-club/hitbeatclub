@@ -1,4 +1,9 @@
-type QueryKey = Array<string | number | Record<string, string | number | Array<number | string>>>;
+import { ArtistProductListQueryRequest } from "@hitbeatclub/shared-types/artist";
+import { ProductListQueryRequest } from "@hitbeatclub/shared-types/product";
+
+type QueryKey = Array<
+	string | number | boolean | Record<string, string | number | boolean | Array<number | string | boolean>>
+>;
 
 const QUERY_KEYS = {
 	_root: [],
@@ -8,13 +13,31 @@ const QUERY_KEYS = {
 	},
 	products: {
 		_key: ["products"],
-		list: ["products", "list"],
+		_list: ["products", "list"],
+		list: (payload: Omit<ProductListQueryRequest, "page" | "limit">): QueryKey => ["products", "list", payload],
+		infiniteList: (payload: Omit<ProductListQueryRequest, "page" | "limit">): QueryKey => [
+			"products",
+			"infiniteList",
+			payload,
+		],
 		one: (productId: number): QueryKey => ["products", productId],
+		searchInfo: ["products", "searchInfo"],
 	},
 	artist: {
 		_key: ["artist"],
 		detail: (id: number): QueryKey => ["artist", id],
 		me: ["artist", "me"],
+		productList: (id: number, payload: ArtistProductListQueryRequest): QueryKey => [
+			"artist",
+			id,
+			"productList",
+			payload,
+		],
+	},
+	tag: {
+		_key: ["tag"],
+		list: ["tag", "list"],
+		one: (id: number): QueryKey => ["tag", id],
 	},
 };
 

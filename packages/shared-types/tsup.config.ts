@@ -12,6 +12,7 @@ export default defineConfig({
 		"subscribe/index": "src/subscribe/index.ts",
 		"file/index": "src/file/index.ts",
 		"settlement/index": "src/settlement/index.ts",
+		"tag/index": "src/tag/index.ts",
 	},
 	format: ["cjs", "esm"],
 	dts: true,

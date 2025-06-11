@@ -12,7 +12,7 @@ export const useDeleteProductMutation = (productId: number) => {
 
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.one(productId) });
-			void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.list });
+			void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products._list });
 		},
 	});
 };

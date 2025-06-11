@@ -2,25 +2,27 @@ import {
 	ProductCreateSchema,
 	ProductDetailResponse,
 	ProductListPagingResponse,
+	ProductListQueryRequest,
+	ProductSearchInfoResponse,
 	ProductUpdateSchema,
 } from "@hitbeatclub/shared-types/product";
 import client from "@/apis/api.client";
 import { z } from "zod";
 import type { CommonResponse, CommonResponseId } from "@/apis/api.type";
-import { ENUM_FILE_TYPE, FileSingleProductUploadSchema, FileUploadResponse } from "@hitbeatclub/shared-types/file";
+import { FileUploadResponse } from "@hitbeatclub/shared-types/file";
 import { PRODUCT_FILE_TYPE } from "./product.type";
 
-// TODO: Type package로 공유 타입 정의
 /**
  * 상품 목록 조회
  * @returns 상품 목록
  */
-export const getProductList = async () => {
-	const response = await client.get<ProductListPagingResponse>("/products");
+export const getProductList = async (payload: ProductListQueryRequest) => {
+	const response = await client.get<ProductListPagingResponse>("/products", {
+		params: payload,
+	});
 	return response.data;
 };
 
-// TODO: Type package로 공유 타입 정의
 /**
  * 상품 상세 조회
  * @param productId 상품 ID
@@ -31,7 +33,6 @@ export const getProduct = async (productId: number) => {
 	return response.data;
 };
 
-// TODO: Type package로 공유 타입 정의
 /**
  * 상품 생성
  * @param product 상품 정보
@@ -43,7 +44,6 @@ export const createProduct = async (product: z.infer<typeof ProductCreateSchema>
 	return response.data;
 };
 
-// TODO: Type package로 공유 타입 정의
 /**
  * 상품 수정
  * @param productId 상품 ID
@@ -52,11 +52,10 @@ export const createProduct = async (product: z.infer<typeof ProductCreateSchema>
  */
 export const updateProduct = async (productId: number, product: z.infer<typeof ProductUpdateSchema>) => {
 	const parsed = ProductUpdateSchema.parse(product);
-	const response = await client.put<CommonResponseId>(`/products/${productId}`, parsed);
+	const response = await client.patch<CommonResponseId>(`/products/${productId}`, parsed);
 	return response.data;
 };
 
-// TODO: Type package로 공유 타입 정의
 /**
  * 상품 삭제
  * @param productId 상품 ID
@@ -83,5 +82,10 @@ export const uploadProductFile = async (file: File, type: PRODUCT_FILE_TYPE) => 
 			"Content-Type": "multipart/form-data",
 		},
 	});
+	return response.data;
+};
+
+export const getProductSearchInfo = async () => {
+	const response = await client.get<CommonResponse<ProductSearchInfoResponse>>("/products/search-info");
 	return response.data;
 };
