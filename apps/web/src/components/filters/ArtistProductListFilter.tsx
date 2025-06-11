@@ -15,36 +15,8 @@ import type { Genre } from "@/components/ui/MultiTagGenreInput/Genre";
 import { Button } from "@/components/ui/Button";
 import { SquareDropdown } from "@/components/ui/SquareDropdown/SquareDropdown";
 import { ChevronDown } from "@/assets/svgs/ChevronDown";
-import { useQueryState, useQueryStates, parseAsString, parseAsStringEnum, parseAsArrayOf, parseAsInteger } from "nuqs";
-
-// 필터 상태 관리를 위한 nuqs 파서 정의
-enum FilterStatusEnum {
-	ALL = "all",
-	PUBLIC = "public",
-	PRIVATE = "private",
-	// SOLD = "sold", // TODO: 판매완료 필터 구현 예정
-}
-
-enum SortEnum {
-	RECENT = "RECENT",
-	RECOMMEND = "RECOMMEND",
-	// TODO: Add more sort options as needed
-}
-
-const artistProductQueryParsers = {
-	status: parseAsStringEnum<FilterStatusEnum>(Object.values(FilterStatusEnum)).withDefault(FilterStatusEnum.ALL),
-	sort: parseAsStringEnum<SortEnum>(Object.values(SortEnum)).withDefault(SortEnum.RECENT),
-	search: parseAsString.withDefault(""),
-	tags: parseAsArrayOf(parseAsString).withDefault([]),
-	category: parseAsString.withDefault(""),
-	genreIds: parseAsString.withDefault(""),
-	musicKey: parseAsString.withDefault(""),
-	scaleType: parseAsString.withDefault(""),
-	minBpm: parseAsInteger.withDefault(0),
-	maxBpm: parseAsInteger.withDefault(0),
-	page: parseAsInteger.withDefault(1),
-	limit: parseAsInteger.withDefault(10),
-};
+import { useArtistProductParametersStates } from "@/features/artist/hooks/useArtistProductParameters";
+import { FilterStatusEnum, SortEnum } from "@/features/artist/types/artistProductParsers";
 
 interface ArtistProductListFilterProps {
 	artistId: number;
@@ -62,7 +34,7 @@ export const ArtistProductListFilter = ({ artistId, onDataChange, className }: A
 	const { data: searchInfo } = useQuery(getProductSearchInfoQueryOption());
 
 	// nuqs를 사용한 쿼리 상태 관리
-	const [filterParams, setFilterParams] = useQueryStates(artistProductQueryParsers);
+	const [filterParams, setFilterParams] = useArtistProductParametersStates();
 
 	// 로컬 상태 관리
 	const [searchTags, setSearchTags] = useState<Tag[]>([]);
@@ -424,13 +396,6 @@ export const ArtistProductListFilter = ({ artistId, onDataChange, className }: A
 			<div className="text-sm text-gray-600">
 				{isLoading && "Loading..."}
 				{error && "Error loading products"}
-				{productListData && (
-					<span>
-						{productListData.data?.length || 0} products found
-						{productListData._pagination &&
-							` (Page ${productListData._pagination.page} of ${Math.ceil(productListData._pagination.total / productListData._pagination.limit)})`}
-					</span>
-				)}
 			</div>
 		</div>
 	);

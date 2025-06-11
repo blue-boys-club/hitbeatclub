@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Delete, Edit, SmallEqualizer } from "@/assets/svgs";
 import { AlbumCoverCard, Badge } from "@/components/ui";
@@ -9,6 +9,7 @@ import { getArtistMeQueryOption } from "@/apis/artist/query/artist.query-options
 import ArtistStudioTrackModal from "@/features/artist/components/modal/ArtistStudioTrackModal";
 import ArtistStudioDashDeleteTrackModal from "@/features/artist/components/modal/ArtistStudioDashDeleteTrackModal";
 import ArtistStudioDashCompleteModal from "@/features/artist/components/modal/ArtistStudioDashCompleteModal";
+import { useArtistProductParametersStateByKey } from "@/features/artist/hooks/useArtistProductParameters";
 import blankCdImage from "@/assets/images/blank-cd.png";
 
 const ArtistStudioDashboardContentList = () => {
@@ -16,6 +17,9 @@ const ArtistStudioDashboardContentList = () => {
 	const [isDeleteTrackOpen, setIsDeleteTrackOpen] = useState<boolean>(false);
 	const [isCompleteOpen, setIsCompleteOpen] = useState<boolean>(false);
 	const [productListData, setProductListData] = useState<any>(null);
+
+	// nuqs를 사용한 pagination 상태 관리
+	const [currentPage, setCurrentPage] = useArtistProductParametersStateByKey("page");
 
 	// 현재 아티스트 정보 조회
 	const { data: artistMe } = useQuery(getArtistMeQueryOption());
@@ -31,6 +35,71 @@ const ArtistStudioDashboardContentList = () => {
 	const handleDataChange = (data: any) => {
 		setProductListData(data);
 	};
+
+	// Pagination 관련 계산
+	const currentPageNum = typeof currentPage === "number" ? currentPage : currentPage ? parseInt(currentPage, 10) : 1;
+	const totalPages = productListData?._pagination
+		? Math.ceil(productListData._pagination.total / productListData._pagination.limit)
+		: 0;
+	const canGoPrevious = currentPageNum > 1;
+	const canGoNext = currentPageNum < totalPages;
+
+	// Pagination 핸들러 (useCallback으로 최적화)
+	const handlePreviousPage = useCallback(() => {
+		if (canGoPrevious) {
+			setCurrentPage((currentPageNum - 1).toString());
+		}
+	}, [canGoPrevious, currentPageNum, setCurrentPage]);
+
+	const handleNextPage = useCallback(() => {
+		if (canGoNext) {
+			setCurrentPage((currentPageNum + 1).toString());
+		}
+	}, [canGoNext, currentPageNum, setCurrentPage]);
+
+	const handlePageChange = useCallback(
+		(page: number) => {
+			setCurrentPage(page.toString());
+		},
+		[setCurrentPage],
+	);
+
+	// 페이지 번호 배열 생성 (useMemo로 최적화)
+	const pageNumbers = useMemo(() => {
+		if (totalPages <= 1) return [1]; // 페이지가 1개 이하여도 [1] 반환
+
+		const pages = [];
+		const maxVisiblePages = 5;
+		const startPage = Math.max(1, currentPageNum - Math.floor(maxVisiblePages / 2));
+		const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+		for (let i = startPage; i <= endPage; i++) {
+			pages.push(i);
+		}
+		return pages;
+	}, [totalPages, currentPageNum]);
+
+	// 페이지 정보 텍스트 (useMemo로 최적화)
+	const paginationInfo = useMemo(() => {
+		if (!productListData?._pagination) return null;
+
+		const { total, limit } = productListData._pagination;
+		const startItem = (currentPageNum - 1) * limit + 1;
+		const endItem = Math.min(currentPageNum * limit, total);
+
+		// 더 자연스러운 표현 방식
+		if (total === 0) {
+			return "결과가 없습니다";
+		} else if (total === 1) {
+			return "총 1개";
+		} else if (startItem === endItem) {
+			return `총 ${total}개 중 ${startItem}번째`;
+		} else if (total <= limit) {
+			return `총 ${total}개`;
+		} else {
+			return `총 ${total}개 중 ${startItem}~${endItem}번째`;
+		}
+	}, [productListData?._pagination, currentPageNum]);
 
 	// 상품 목록 렌더링
 	const renderProductList = () => {
@@ -153,6 +222,49 @@ const ArtistStudioDashboardContentList = () => {
 
 				{/* 상품 목록 */}
 				<div className="grid grid-cols-1">{renderProductList()}</div>
+
+				{/* Pagination - 항상 표시 */}
+				<div className="flex justify-center items-center gap-2 mt-6 mb-4">
+					{totalPages > 1 && (
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={handlePreviousPage}
+							disabled={!canGoPrevious}
+							className="px-3 py-1"
+						>
+							&lt;
+						</Button>
+					)}
+
+					{pageNumbers.map((pageNum: number) => (
+						<Button
+							key={pageNum}
+							variant={currentPageNum === pageNum ? "fill" : "outline"}
+							size="sm"
+							onClick={() => handlePageChange(pageNum)}
+							className="px-3 py-1"
+							disabled={totalPages <= 1}
+						>
+							{pageNum}
+						</Button>
+					))}
+
+					{totalPages > 1 && (
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={handleNextPage}
+							disabled={!canGoNext}
+							className="px-3 py-1"
+						>
+							&gt;
+						</Button>
+					)}
+				</div>
+
+				{/* 페이지 정보 표시 */}
+				{paginationInfo && <div className="text-center text-sm text-gray-600 mb-4">{paginationInfo}</div>}
 			</section>
 
 			{editingProductId && (
