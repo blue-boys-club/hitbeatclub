@@ -20,7 +20,7 @@ import { Popup, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/com
 import { getTagListQueryOption } from "@/apis/tag/query/tag.query-options";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 import { useQuery } from "@tanstack/react-query";
-import MultiTagInput from "@/components/ui/MultiTagGenreInput/MultiTagGenreInput";
+import MultiTagGenreInput from "@/components/ui/MultiTagGenreInput/MultiTagGenreInput";
 import blankCdImage from "@/assets/images/blank-cd.png";
 
 export type BPM = number | undefined;
@@ -912,14 +912,28 @@ const ArtistStudioTrackModal = ({
 										</div>
 									)}
 								</div>
-								<div
+								{/* <div
 									className={cn(
 										"flex gap-[5px] p-2 border-x-[1px] border-y-[2px] border-black rounded-[5px]",
 										errors.genres && "border-red-500",
 									)}
-								>
-									{/* 장르 선택 구현 필요 */}
-								</div>
+								> */}
+								<Controller
+									name="genres"
+									control={control}
+									render={({ field }) => (
+										<MultiTagGenreInput
+											type="genre"
+											maxItems={10}
+											placeholder="장르를 선택하세요"
+											allowDirectInput={false}
+											// suggestedItems={genreList?.data.map((genre) => ({ value: genre.name, count: 0 })) || []}
+											suggestedItems={[]}
+											onChange={field.onChange}
+										/>
+									)}
+								/>
+								{/* </div> */}
 							</div>
 
 							{/* 태그 선택 */}
@@ -936,13 +950,12 @@ const ArtistStudioTrackModal = ({
 									name="tags"
 									control={control}
 									render={({ field }) => (
-										<MultiTagInput
-											maxTags={10}
+										<MultiTagGenreInput
+											type="tag"
+											maxItems={10}
 											placeholder="태그를 입력하세요"
 											allowDirectInput={true}
-											suggestedTags={tagList?.data.map((tag) => ({ tag: tag.name, count: 0 })) || []}
-											tagColor="bg-hbc-gray-100"
-											tagTextColor="text-hbc-black"
+											suggestedItems={tagList?.data.map((tag) => ({ value: tag.name, count: 0 })) || []}
 											onChange={field.onChange}
 										/>
 									)}

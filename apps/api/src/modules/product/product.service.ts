@@ -70,7 +70,11 @@ export class ProductService {
 					skip: (page - 1) * limit,
 					take: limit,
 				})
-				.then((data) => this.prisma.serializeBigInt(data));
+				.then((data) => this.prisma.serializeBigInt(data))
+				.catch((error) => {
+					console.error(error);
+					throw new BadRequestException(error);
+				});
 
 			const result = [];
 			for (const product of products) {
@@ -677,6 +681,11 @@ export class ProductService {
 				select: {
 					id: true,
 					name: true,
+					_count: {
+						select: {
+							productGenre: true,
+						},
+					},
 				},
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
@@ -695,6 +704,11 @@ export class ProductService {
 				select: {
 					id: true,
 					name: true,
+					_count: {
+						select: {
+							productTag: true,
+						},
+					},
 				},
 			})
 			.then((data) => this.prisma.serializeBigInt(data));

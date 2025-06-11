@@ -1,29 +1,23 @@
 "use client";
 
 import { cn } from "@/common/utils";
-import { KeyValue } from "@/features/artist/components/modal/ArtistStudioDashEditTrackModal";
 import { useRef, useState, useEffect, useMemo, useCallback } from "react";
+import { Slot } from "@radix-ui/react-slot";
 
-// const musicKeyEnum = z.enum([
-// 	"C",
-// 	"Db",
-// 	"D",
-// 	"Eb",
-// 	"E",
-// 	"F",
-// 	"Gb",
-// 	"G",
-// 	"Ab",
-// 	"A",
-// 	"Bb",
-// 	"B",
-// 	"Cs",
-// 	"Ds",
-// 	"Fs",
-// 	"Gs",
-// 	"As",
-// 	"null",
-// ]);
+// 타입 정의를 직접 여기에 추가
+export type KeyValue = {
+	label: string;
+	value: string;
+};
+
+// render prop을 위한 타입 정의
+export interface KeyDropdownRenderProps {
+	currentValue: string | undefined;
+	isOpen: boolean;
+	keyValue: KeyValue | undefined;
+	scaleValue: string | null;
+	activeTab: "flat" | "sharp";
+}
 
 //분리 필요
 const sharpKeys = [
@@ -116,6 +110,8 @@ export interface KeyDropdownProps {
 	onChangeKey: (key: KeyValue) => void;
 	onChangeScale: (scale: string) => void;
 	onClear: () => void;
+	children?: React.ReactNode | ((props: KeyDropdownRenderProps) => React.ReactNode);
+	asChild?: boolean;
 }
 
 export function KeyButton({ children, onClick, variant = "key", ariaLabel }: KeyButtonProps) {
@@ -152,9 +148,66 @@ export function KeyButton({ children, onClick, variant = "key", ariaLabel }: Key
 	);
 }
 
-export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, onClear }: KeyDropdownProps) => {
+// 기본 트리거 컴포넌트
+const KeyTrigger = ({
+	isOpen,
+	currentValue,
+	onClick,
+	...props
+}: {
+	isOpen: boolean;
+	currentValue: string | undefined;
+	onClick: () => void;
+	[key: string]: any;
+}) => {
+	return (
+		<button
+			type="button"
+			onClick={onClick}
+			className={cn(
+				"w-full h-[35px] px-4 pr-10 border border-black rounded-[5px] bg-white text-[#4D4D4F] font-bold tracking-[0.01em] focus:outline-none cursor-pointer relative",
+			)}
+			aria-haspopup="listbox"
+			aria-expanded={isOpen}
+			aria-label="음악 키 선택"
+			aria-controls="key-select-dropdown"
+			{...props}
+		>
+			<span className={cn("block truncate text-left text-sm", !currentValue && "text-gray-400")}>
+				{currentValue || "Key를 선택해주세요"}
+			</span>
+			<svg
+				className={cn(
+					"absolute right-3 top-1/2 -translate-y-1/2",
+					"w-[13px] h-[8.75px]",
+					"transition-transform",
+					isOpen && "rotate-180",
+				)}
+				viewBox="0 0 14 9"
+				fill="none"
+				xmlns="http://www.w3.org/2000/svg"
+				aria-hidden="true"
+			>
+				<path
+					d="M6.35 8.875L-0.3 2.225L1.825 0.125L6.35 4.65L10.875 0.125L13 2.225L6.35 8.875Z"
+					fill="currentColor"
+				/>
+			</svg>
+		</button>
+	);
+};
+
+export const KeyDropdown = ({
+	keyValue,
+	scaleValue,
+	onChangeKey,
+	onChangeScale,
+	onClear,
+	children,
+	asChild = false,
+}: KeyDropdownProps) => {
 	const [isOpen, setIsOpen] = useState(false);
-	const [activeTab, setActiveTab] = useState("flat");
+	const [activeTab, setActiveTab] = useState<"flat" | "sharp">("flat");
 
 	const currentValue = useMemo(() => {
 		if (keyValue && scaleValue) {
@@ -168,7 +221,6 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 		return undefined;
 	}, [keyValue, scaleValue]);
 
-	const selectButtonRef = useRef<HTMLButtonElement>(null);
 	const dropdownRef = useRef<HTMLDivElement>(null!);
 
 	// useCallback으로 최적화된 핸들러들
@@ -219,6 +271,7 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 		[onTabChange],
 	);
 
+	// 외부 클릭 감지
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -238,44 +291,60 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 		}
 	}, [keyValue, scaleValue]);
 
+	// render props를 위한 데이터
+	const renderProps: KeyDropdownRenderProps = {
+		currentValue,
+		isOpen,
+		keyValue,
+		scaleValue,
+		activeTab,
+	};
+
+	// children이 함수인지 확인
+	const isChildrenFunction = typeof children === "function";
+
+	// Trigger 컴포넌트 렌더링
+	const renderTrigger = () => {
+		if (isChildrenFunction) {
+			// children이 함수인 경우 render props 패턴
+			const childrenAsFunction = children as (props: KeyDropdownRenderProps) => React.ReactNode;
+			const triggerElement = childrenAsFunction(renderProps);
+
+			if (asChild) {
+				// asChild인 경우 Slot으로 래핑하고 onClick 추가
+				return <Slot onClick={handleToggleDropdown}>{triggerElement}</Slot>;
+			} else {
+				// asChild가 아닌 경우 div로 래핑하고 onClick 추가
+				return (
+					<div
+						onClick={handleToggleDropdown}
+						className="cursor-pointer"
+					>
+						{triggerElement}
+					</div>
+				);
+			}
+		} else if (asChild && children) {
+			// asChild이고 children이 일반 ReactNode인 경우
+			return <Slot onClick={handleToggleDropdown}>{children}</Slot>;
+		} else {
+			// 기본 트리거 사용
+			return (
+				<KeyTrigger
+					isOpen={isOpen}
+					currentValue={currentValue}
+					onClick={handleToggleDropdown}
+				/>
+			);
+		}
+	};
+
 	return (
 		<div
 			className="relative w-full"
 			ref={dropdownRef}
 		>
-			<button
-				ref={selectButtonRef}
-				type="button"
-				onClick={handleToggleDropdown}
-				className={cn(
-					"w-full h-[35px] px-4 pr-10 border border-black rounded-[5px] bg-white text-[#4D4D4F] font-bold tracking-[0.01em] focus:outline-none cursor-pointer relative",
-				)}
-				aria-haspopup="listbox"
-				aria-expanded={isOpen}
-				aria-label="음악 키 선택"
-				aria-controls="key-select-dropdown"
-			>
-				<span className={cn("block truncate text-left text-sm", !currentValue && "text-gray-400")}>
-					{currentValue || "Key를 선택해주세요"}
-				</span>
-				<svg
-					className={cn(
-						"absolute right-3 top-1/2 -translate-y-1/2",
-						"w-[13px] h-[8.75px]",
-						"transition-transform",
-						isOpen && "rotate-180",
-					)}
-					viewBox="0 0 14 9"
-					fill="none"
-					xmlns="http://www.w3.org/2000/svg"
-					aria-hidden="true"
-				>
-					<path
-						d="M6.35 8.875L-0.3 2.225L1.825 0.125L6.35 4.65L10.875 0.125L13 2.225L6.35 8.875Z"
-						fill="currentColor"
-					/>
-				</svg>
-			</button>
+			{renderTrigger()}
 
 			{isOpen && (
 				<div
@@ -329,16 +398,6 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 									role="tabpanel"
 									className="flex justify-center gap-8"
 								>
-									{/* {sharpKeys.map((key) => (
-										<KeyButton
-											key={key.value}
-											variant="key"
-											onClick={() => onKeyClick(key)}
-											ariaLabel={`${key.label} 키 선택`}
-										>
-											{key.label}
-										</KeyButton>
-									))} */}
 									<div className="flex gap-1">
 										{sharpKeys.slice(0, 2).map((key) => (
 											<KeyButton
@@ -373,16 +432,6 @@ export const KeyDropdown = ({ keyValue, scaleValue, onChangeKey, onChangeScale, 
 									role="tabpanel"
 									className="flex justify-center gap-8"
 								>
-									{/* {flatKeys.map((key) => (
-										<KeyButton
-											key={key.value}
-											variant="key"
-											onClick={() => onKeyClick(key)}
-											ariaLabel={`${key.label} 키 선택`}
-										>
-											{key.label}
-										</KeyButton>
-									))} */}
 									<div className="flex gap-1">
 										{flatKeys.slice(0, 2).map((key) => (
 											<KeyButton

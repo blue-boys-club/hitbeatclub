@@ -66,7 +66,7 @@ const ArtistStudioDashboardContentList = () => {
 							buttonClassName={"border-x-[3px] border-y-[4px] w-[109px] h-7 justify-initial"}
 							optionsClassName={"w-[109px] border-x-[3px] border-y-[4px]"}
 							optionClassName={
-								"h-7 p-0 pl-3 flex items-center text-black font-['Suisse_Int\'l'] text-base font-bold leading-[150%] tracking-[0.16px]"
+								"h-7 p-0 pl-3 flex items-center text-black font-suisse text-base font-bold leading-[150%] tracking-[0.16px]"
 							}
 							options={[
 								{ label: "Recent", value: "1" },
@@ -94,7 +94,7 @@ const ArtistStudioDashboardContentList = () => {
 						/>
 					</div>
 					<div>
-						<SearchTag placeholder={"search"} />
+						<SearchTag placeholder={"Search tag"} />
 					</div>
 				</div>
 				<div className="grid grid-cols-1">

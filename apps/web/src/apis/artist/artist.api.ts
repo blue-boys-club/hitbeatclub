@@ -1,9 +1,15 @@
 import axiosInstance from "@/apis/api.client";
-import { ArtistCreateRequest, ArtistResponse, ArtistUpdateRequest } from "@hitbeatclub/shared-types/artist";
+import {
+	ArtistCreateRequest,
+	ArtistProductListQueryRequest,
+	ArtistResponse,
+	ArtistUpdateRequest,
+} from "@hitbeatclub/shared-types/artist";
 import type { CommonResponse, CommonResponseId } from "@/apis/api.type";
 import { ArtistUploadProfileRequest } from "./artist.type";
 import { FileUploadResponse } from "@hitbeatclub/shared-types/file";
 import { SettlementCreateRequest, SettlementUpdateRequest } from "@hitbeatclub/shared-types/settlement";
+import { ProductListPagingResponse } from "@hitbeatclub/shared-types/product";
 
 /**
  * 아티스트 내 정보 조회
@@ -78,5 +84,17 @@ export const createArtistSettlement = async (id: number, payload: SettlementCrea
  */
 export const updateArtistSettlement = async (id: number, payload: SettlementUpdateRequest) => {
 	const response = await axiosInstance.patch<CommonResponseId>(`/artists/${id}/settlement`, payload);
+	return response.data;
+};
+
+/**
+ * 아티스트 컨텐츠 목록 조회
+ * @param id 아티스트 아이디
+ * @returns 아티스트 컨텐츠 목록
+ */
+export const getArtistContentList = async (id: number, payload: ArtistProductListQueryRequest) => {
+	const response = await axiosInstance.get<ProductListPagingResponse>(`/artists/${id}/contents`, {
+		params: payload,
+	});
 	return response.data;
 };
