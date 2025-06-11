@@ -2,7 +2,10 @@
 import { cn } from "@/common/utils";
 import React, { useState, useRef, useEffect } from "react";
 import { CloseWhite } from "@/assets/svgs";
+<<<<<<< HEAD
 import { Checkbox, EmptyCheckbox } from "@/assets/svgs";
+=======
+>>>>>>> origin/main
 
 interface Tag {
 	id: string;
@@ -17,7 +20,10 @@ interface MultiTagInputProps {
 	suggestedTags: { tag: string; count: number }[];
 	tagColor?: string;
 	tagTextColor?: string;
+<<<<<<< HEAD
 	onChange?: (tags: string[]) => void;
+=======
+>>>>>>> origin/main
 }
 
 const TagItem = ({
@@ -61,7 +67,10 @@ const MultiTagInput = ({
 	suggestedTags,
 	tagColor = "bg-hbc-black",
 	tagTextColor = "text-hbc-white",
+<<<<<<< HEAD
 	onChange,
+=======
+>>>>>>> origin/main
 }: MultiTagInputProps) => {
 	const [tag, setTag] = useState<string>("");
 	const [tags, setTags] = useState<Tag[]>([]);
