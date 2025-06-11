@@ -1,4 +1,4 @@
-import { Controller, Post, Delete, Param, Body, Req } from "@nestjs/common";
+import { Controller, Post, Delete, Param, Body, Req, Get } from "@nestjs/common";
 import { TagService } from "./tag.service";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
@@ -8,12 +8,33 @@ import { TagCreateDto } from "./dto/request/tag.create.request.dto";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
 import { AuthenticationDoc } from "src/common/doc/decorators/auth.decorator";
 import { tagMessage } from "./tag.message";
+import { TagListResponseDto } from "./dto/response/tag.list.response.dto";
+import { IResponse } from "src/common/response/interfaces/response.interface";
 
 @Controller("tags")
 @ApiTags("tag")
 @ApiBearerAuth()
 export class TagController {
 	constructor(private readonly tagService: TagService) {}
+
+	@Get()
+	@ApiOperation({ summary: "태그 목록 조회" })
+	@AuthenticationDoc()
+	@DocResponse<TagListResponseDto>(tagMessage.find.success, {
+		dto: TagListResponseDto,
+	})
+	async findAll(): Promise<IResponse<TagListResponseDto>> {
+		const tags = await this.tagService.findAll();
+
+		return {
+			statusCode: 200,
+			message: tagMessage.find.success,
+			data: tags.map((tag) => ({
+				id: Number(tag.id),
+				name: tag.name,
+			})),
+		};
+	}
 
 	@Post()
 	@ApiOperation({ summary: "태그 생성" })

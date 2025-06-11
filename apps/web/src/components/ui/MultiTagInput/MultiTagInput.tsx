@@ -2,6 +2,7 @@
 import { cn } from "@/common/utils";
 import React, { useState, useRef, useEffect } from "react";
 import { CloseWhite } from "@/assets/svgs";
+import { Checkbox, EmptyCheckbox } from "@/assets/svgs";
 
 interface Tag {
 	id: string;
@@ -16,6 +17,7 @@ interface MultiTagInputProps {
 	suggestedTags: { tag: string; count: number }[];
 	tagColor?: string;
 	tagTextColor?: string;
+	onChange?: (tags: string[]) => void;
 }
 
 const TagItem = ({
@@ -59,6 +61,7 @@ const MultiTagInput = ({
 	suggestedTags,
 	tagColor = "bg-hbc-black",
 	tagTextColor = "text-hbc-white",
+	onChange,
 }: MultiTagInputProps) => {
 	const [tag, setTag] = useState<string>("");
 	const [tags, setTags] = useState<Tag[]>([]);
@@ -105,10 +108,12 @@ const MultiTagInput = ({
 		}
 		setTags([...tags, { id: crypto.randomUUID(), text: text.trim() }]);
 		setTag("");
+		onChange?.(tags.map((t) => t.text));
 	};
 
 	const handleRemoveTag = (id: string) => {
 		setTags(tags.filter((t) => t.id !== id));
+		onChange?.(tags.map((t) => t.text));
 	};
 
 	const handleBlur = (e: React.FocusEvent) => {
@@ -146,7 +151,7 @@ const MultiTagInput = ({
 					/>
 				)}
 			</div>
-			<div className="absolute pr-1 w-full z-50">
+			<div className="absolute pr-1 w-full z-50 bg-white">
 				<div
 					ref={dropdownRef}
 					className={cn(" border rounded-b-lg", isFocused ? "block" : "hidden")}
@@ -158,9 +163,13 @@ const MultiTagInput = ({
 								key={tag.tag}
 							>
 								<button
+									type="button"
 									onClick={() => addTag(tag.tag)}
-									className="cursor-pointer size-3 border border-hbc-gray-300 rounded-3px bg-hbc-gray-100"
-								></button>
+									className="cursor-pointer rounded-3px"
+								>
+									{/* if tag is in tags, show check icon */}
+									{tags.some((t) => t.text === tag.tag) ? <Checkbox /> : <EmptyCheckbox />}
+								</button>
 								<span className="text-hbc-black font-bold text-sm">{tag.tag}</span>
 								<span className="text-hbc-gray-400">{tag.count}</span>
 							</div>
@@ -168,12 +177,14 @@ const MultiTagInput = ({
 					</div>
 					<div className="flex justify-between p-4 border-t border-hbc-gray-300">
 						<button
+							type="button"
 							className="text-hbc-gray-300 text-sm font-semibold cursor-pointer"
 							onClick={() => setTags([])}
 						>
 							Clear
 						</button>
 						<button
+							type="button"
 							className="text-hbc-white bg-hbc-blue px-3 py-1 rounded-lg text-sm font-semibold cursor-pointer"
 							onClick={() => setIsFocused(false)}
 						>

@@ -18,6 +18,10 @@ import { Button } from "@/components/ui/Button";
 import { GenreButton } from "@/components/ui/GenreButton";
 import { Popup, PopupButton, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
 import { TagButton } from "@/components/ui/TagButton";
+import { getTagListQueryOption } from "@/apis/tag/query/tag.query-options";
+import { useQuery } from "@tanstack/react-query";
+import MultiTagInput from "@/components/ui/MultiTagInput/MultiTagInput";
+import blankCdImage from "@/assets/images/blank-cd.png";
 
 export type BPM = number | undefined;
 export type BPMRange = { min?: number | undefined; max?: number | undefined } | undefined;
@@ -55,6 +59,8 @@ const ArtistStudioDashUploadTrackModal = ({
 	openCompleteModal,
 	initialFiles,
 }: ArtistStudioDashUploadTrackModalProps) => {
+	const { data: tagList } = useQuery(getTagListQueryOption());
+
 	const { mutate: createProduct, isPending: isCreating } = useCreateProductMutation();
 	const { mutate: uploadProductFile, isPending: isUploading } = useUploadProductFileMutation();
 
@@ -77,8 +83,8 @@ const ArtistStudioDashUploadTrackModal = ({
 			description: "",
 			price: 0,
 			category: "BEAT",
-			genres: ["Hip-hop", "G-funk"], // 기본값
-			tags: ["Hip-hop", "G-funk"], // 기본값
+			genres: [], // 기본값
+			tags: [], // 기본값
 			minBpm: 100,
 			maxBpm: 120,
 			musicKey: "null",
@@ -154,6 +160,9 @@ const ArtistStudioDashUploadTrackModal = ({
 
 			// 업로드 시작 시 에러 초기화
 			clearErrors("uploadedFiles");
+			clearErrors("uploadedFiles.audioFile");
+			clearErrors("uploadedFiles.zipFile");
+			clearErrors("uploadedFiles.coverImage");
 
 			// 실제 파일 업로드 API 호출
 			uploadProductFile(
@@ -186,10 +195,26 @@ const ArtistStudioDashUploadTrackModal = ({
 					},
 					onError: (error) => {
 						console.error("파일 업로드 실패:", error);
-						setError("uploadedFiles", {
-							type: "manual",
-							message: "파일 업로드에 실패했습니다.",
-						});
+						switch (fileType) {
+							case ENUM_FILE_TYPE.PRODUCT_COVER_IMAGE:
+								setError("uploadedFiles.coverImage", {
+									type: "manual",
+									message: "파일 업로드에 실패했습니다.",
+								});
+								break;
+							case ENUM_FILE_TYPE.PRODUCT_AUDIO_FILE:
+								setError("uploadedFiles.audioFile", {
+									type: "manual",
+									message: "파일 업로드에 실패했습니다.",
+								});
+								break;
+							case ENUM_FILE_TYPE.PRODUCT_ZIP_FILE:
+								setError("uploadedFiles.zipFile", {
+									type: "manual",
+									message: "파일 업로드에 실패했습니다.",
+								});
+								break;
+						}
 					},
 				},
 			);
@@ -267,10 +292,33 @@ const ArtistStudioDashUploadTrackModal = ({
 	const onSubmit = useCallback(
 		(data: ExtendedTrackUploadFormData) => {
 			// 모든 필수 파일이 업로드되었는지 확인
-			if (!data.uploadedFileIds.coverImageFileId || !data.uploadedFileIds.audioFileFileId) {
-				setError("uploadedFiles", {
+			// if (!data.uploadedFileIds.coverImageFileId || !data.uploadedFileIds.audioFileFileId) {
+			// 	setError("uploadedFiles", {
+			// 		type: "manual",
+			// 		message: "커버 이미지와 오디오 파일은 필수입니다.",
+			// 	});
+			// 	return;
+			// }
+			if (!data.uploadedFileIds.audioFileFileId) {
+				setError("uploadedFiles.audioFile", {
 					type: "manual",
-					message: "커버 이미지와 오디오 파일은 필수입니다.",
+					message: "오디오 파일은 필수입니다.",
+				});
+				return;
+			}
+
+			if (!data.uploadedFileIds.coverImageFileId) {
+				setError("uploadedFiles.coverImage", {
+					type: "manual",
+					message: "커버 이미지는 필수입니다.",
+				});
+				return;
+			}
+
+			if (!data.uploadedFileIds.zipFileId) {
+				setError("uploadedFiles.zipFile", {
+					type: "manual",
+					message: "압축 파일은 필수입니다.",
 				});
 				return;
 			}
@@ -489,9 +537,13 @@ const ArtistStudioDashUploadTrackModal = ({
 		[getValues, setValue, trigger],
 	);
 
+	useEffect(() => {
+		console.log(errors);
+	}, [errors]);
+
 	// 메모이제이션된 값들
 	const coverImageSrc = useMemo(() => {
-		return watchedUploadedFiles?.coverImage ? URL.createObjectURL(watchedUploadedFiles.coverImage) : "/";
+		return watchedUploadedFiles?.coverImage ? URL.createObjectURL(watchedUploadedFiles.coverImage) : blankCdImage;
 	}, [watchedUploadedFiles?.coverImage]);
 
 	return (
@@ -533,13 +585,25 @@ const ArtistStudioDashUploadTrackModal = ({
 										<input
 											type="file"
 											accept="image/*"
-											onChange={(e) => handleFileInputChange(e, ENUM_FILE_TYPE.PRODUCT_COVER_IMAGE)}
+											onClick={(e) => {
+												// Reset input value to allow selecting same file again
+												(e.target as HTMLInputElement).value = "";
+											}}
+											onChange={(e) => {
+												if (e.target.files && e.target.files.length > 0) {
+													handleFileInputChange(e, ENUM_FILE_TYPE.PRODUCT_COVER_IMAGE);
+												}
+											}}
 											className="hidden"
 											id="image-upload"
 										/>
 										<label
 											htmlFor="image-upload"
 											className="cursor-pointer"
+											onClick={(e) => {
+												e.preventDefault();
+												document.getElementById("image-upload")?.click();
+											}}
 										>
 											<Button
 												rounded={"full"}
@@ -558,7 +622,7 @@ const ArtistStudioDashUploadTrackModal = ({
 											</span>
 										</div>
 									)}
-									{errors.uploadedFiles && (
+									{errors.uploadedFiles?.coverImage && (
 										<div className="flex items-center gap-1">
 											<div className="rotate-45">
 												<Plus stroke="red" />
@@ -587,7 +651,11 @@ const ArtistStudioDashUploadTrackModal = ({
 										className="flex gap-[7px] px-5 py-[14px] rounded-5px border-dashed"
 									>
 										<LargeEqualizer />
-										<div>오디오 파일을 업로드하세요</div>
+										<div>
+											오디오 파일을
+											<br />
+											업로드하세요
+										</div>
 									</Badge>
 								)}
 								<div>
@@ -601,6 +669,10 @@ const ArtistStudioDashUploadTrackModal = ({
 									<label
 										htmlFor="audio-upload"
 										className="cursor-pointer"
+										onClick={(e) => {
+											e.preventDefault();
+											document.getElementById("audio-upload")?.click();
+										}}
 									>
 										<Button
 											rounded={"full"}
@@ -611,6 +683,11 @@ const ArtistStudioDashUploadTrackModal = ({
 										</Button>
 									</label>
 								</div>
+								{errors.uploadedFiles?.audioFile && (
+									<div className="text-hbc-red font-semibold leading-[150%] tracking-[0.12px]">
+										{errors.uploadedFiles.audioFile.message}
+									</div>
+								)}
 								{watchedUploadedFiles?.audioFile && (
 									<div className="flex items-center justify-center gap-1">
 										<Circle />
@@ -635,7 +712,11 @@ const ArtistStudioDashUploadTrackModal = ({
 										className="flex gap-[7px] px-5 py-[14px] rounded-5px border-dashed"
 									>
 										<LargeEqualizer />
-										<div>압축 파일을 업로드하세요</div>
+										<div>
+											압축 파일을
+											<br />
+											업로드하세요
+										</div>
 									</Badge>
 								)}
 								<div>
@@ -649,6 +730,10 @@ const ArtistStudioDashUploadTrackModal = ({
 									<label
 										htmlFor="zip-upload"
 										className="cursor-pointer"
+										onClick={(e) => {
+											e.preventDefault();
+											document.getElementById("zip-upload")?.click();
+										}}
 									>
 										<Button
 											rounded={"full"}
@@ -659,6 +744,11 @@ const ArtistStudioDashUploadTrackModal = ({
 										</Button>
 									</label>
 								</div>
+								{errors.uploadedFiles?.zipFile && (
+									<div className="text-hbc-red font-semibold leading-[150%] tracking-[0.12px]">
+										{errors.uploadedFiles.zipFile.message}
+									</div>
+								)}
 								{watchedUploadedFiles?.zipFile && (
 									<div className="flex items-center justify-center gap-1">
 										<Circle />
@@ -674,9 +764,11 @@ const ArtistStudioDashUploadTrackModal = ({
 							<div className="flex flex-col gap-[5px]">
 								<div className="font-[SUIT] text-xs flex justify-between">
 									<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">제목</div>
-									<div className="text-hbc-red font-semibold leading-[150%] tracking-[0.12px]">
-										필수 입력사항 입니다.
-									</div>
+									{errors.productName && (
+										<div className="text-hbc-red font-semibold leading-[150%] tracking-[0.12px]">
+											{errors.productName.message}
+										</div>
+									)}
 								</div>
 								<Controller
 									name="productName"
@@ -689,16 +781,17 @@ const ArtistStudioDashUploadTrackModal = ({
 										/>
 									)}
 								/>
-								{errors.productName && <span className="text-red-500 text-xs">{errors.productName.message}</span>}
 							</div>
 
 							{/* 곡 설명/가사 입력 */}
 							<div className="flex flex-col gap-[5px]">
 								<div className="font-[SUIT] text-xs flex justify-between">
 									<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">곡 설명 / 가사</div>
-									<div className="text-hbc-red font-semibold leading-[150%] tracking-[0.12px]">
-										필수 입력사항 입니다.
-									</div>
+									{errors.description && (
+										<div className="text-hbc-red font-semibold leading-[150%] tracking-[0.12px]">
+											{errors.description.message}
+										</div>
+									)}
 								</div>
 								<Controller
 									name="description"
@@ -713,7 +806,6 @@ const ArtistStudioDashUploadTrackModal = ({
 										/>
 									)}
 								/>
-								{errors.description && <span className="text-red-500 text-xs">{errors.description.message}</span>}
 							</div>
 
 							{/* 카테고리 선택 */}
@@ -752,9 +844,11 @@ const ArtistStudioDashUploadTrackModal = ({
 							<div className="flex flex-col gap-[5px]">
 								<div className="font-[SUIT] text-xs flex justify-between">
 									<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">장르</div>
-									<div className="text-hbc-red font-semibold leading-[150%] tracking-[0.12px]">
-										필수 입력사항 입니다.
-									</div>
+									{errors.genres && (
+										<div className="text-hbc-red font-semibold leading-[150%] tracking-[0.12px]">
+											{errors.genres.message}
+										</div>
+									)}
 								</div>
 								<div
 									className={cn(
@@ -762,7 +856,7 @@ const ArtistStudioDashUploadTrackModal = ({
 										errors.genres && "border-red-500",
 									)}
 								>
-									<GenreButton
+									{/* <GenreButton
 										name="Hip-hop"
 										showDeleteButton
 										onDelete={() => {
@@ -775,28 +869,64 @@ const ArtistStudioDashUploadTrackModal = ({
 										onDelete={() => {
 											alert("G-funk 장르 선택 해제");
 										}}
-									/>
+									/> */}
+									{/* <Controller
+										name="genres"
+										control={control}
+										render={({ field }) => (
+											<div>
+												{field.value.map((genre) => (
+													<GenreButton
+														key={genre.id}
+														name={genre.name}
+													/>
+												))}
+											</div>
+										)}
+									/> */}
 								</div>
-								{errors.genres && <span className="text-red-500 text-xs">{errors.genres.message}</span>}
 							</div>
 
 							{/* 태그 선택 */}
 							<div className="flex flex-col gap-[5px]">
 								<div className="font-[SUIT] text-xs flex justify-between">
 									<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">태그</div>
-									<div className="text-hbc-red font-semibold leading-[150%] tracking-[0.12px]">
-										필수 입력사항 입니다.
-									</div>
+									{errors.tags && (
+										<div className="text-hbc-red font-semibold leading-[150%] tracking-[0.12px]">
+											{errors.tags.message}
+										</div>
+									)}
 								</div>
-								<div
+								{/* <div
 									className={cn(
 										"flex gap-[5px] p-2 border-x-[1px] border-y-[2px] border-black rounded-[5px] h-[92px]",
 										errors.tags && "border-red-500",
 									)}
-								>
-									<TagButton name="Hip-hop" />
-									<TagButton name="G-funk" />
-								</div>
+								> */}
+								{/* <TagButton name="Hip-hop" /> */}
+								{/* <TagButton name="G-funk" /> */}
+								{/* {tagList?.data.map((tag) => (
+										<TagButton
+											key={tag.id}
+											name={tag.name}
+										/>
+									))} */}
+								<Controller
+									name="tags"
+									control={control}
+									render={({ field }) => (
+										<MultiTagInput
+											maxTags={10}
+											placeholder="태그를 입력하세요"
+											allowDirectInput={true}
+											suggestedTags={tagList?.data.map((tag) => ({ tag: tag.name, count: 0 })) || []}
+											tagColor="bg-hbc-gray-100"
+											tagTextColor="text-hbc-black"
+											onChange={field.onChange}
+										/>
+									)}
+								/>
+								{/* </div> */}
 								{errors.tags && <span className="text-red-500 text-xs">{errors.tags.message}</span>}
 							</div>
 
@@ -974,20 +1104,20 @@ const ArtistStudioDashUploadTrackModal = ({
 					</section>
 
 					<PopupFooter>
-						<PopupButton
+						<Button
 							onClick={onClose}
 							type="button"
 							className="bg-white px-2 py-1 text-hbc-gray-200 border-b-2 border-hbc-gray-200 rounded-none font-[Suisse Int'l] text-[24px] font-bold leading-normal tracking-[0.24px]"
 						>
 							CANCEL
-						</PopupButton>
-						<PopupButton
+						</Button>
+						<Button
 							type="submit"
 							className="bg-white px-2 py-1 text-hbc-red border-b-2 border-hbc-red rounded-none font-[SUIT] text-[24px] font-extrabold leading-normal tracking-[0.24px]"
 							disabled={isCreating || isUploading}
 						>
 							{isCreating || isUploading ? "업로드 중..." : "UPLOAD"}
-						</PopupButton>
+						</Button>
 					</PopupFooter>
 				</form>
 			</PopupContent>

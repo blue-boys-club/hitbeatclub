@@ -55,6 +55,11 @@
 			"types": "./dist/settlement/index.d.ts",
 			"import": "./dist/settlement/index.mjs",
 			"require": "./dist/settlement/index.js"
+		},
+		"./tag": {
+			"types": "./dist/tag/index.d.ts",
+			"import": "./dist/tag/index.mjs",
+			"require": "./dist/tag/index.js"
 		}
 	},
 	"files": [
