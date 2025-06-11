@@ -18,6 +18,7 @@ import { AlbumAvatar, Badge, BPMDropdown, Dropdown, Input, KeyDropdown } from "@
 import { Button } from "@/components/ui/Button";
 import { Popup, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
 import { getTagListQueryOption } from "@/apis/tag/query/tag.query-options";
+import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 import { useQuery } from "@tanstack/react-query";
 import MultiTagInput from "@/components/ui/MultiTagInput/MultiTagInput";
 import blankCdImage from "@/assets/images/blank-cd.png";
@@ -52,8 +53,7 @@ interface ArtistStudioTrackModalProps {
 	onClose: () => void;
 	openCompleteModal: () => void;
 	initialFiles?: FileList | null; // 업로드 모드에서 사이드바에서 드롭된 파일들
-	initialData?: ProductData; // 편집 모드에서 기존 데이터
-	productId?: number; // 편집 모드에서 상품 ID
+	productId?: number; // 편집 모드에서 상품 ID (필수)
 }
 
 const ArtistStudioTrackModal = ({
@@ -62,10 +62,15 @@ const ArtistStudioTrackModal = ({
 	onClose,
 	openCompleteModal,
 	initialFiles,
-	initialData,
 	productId,
 }: ArtistStudioTrackModalProps) => {
 	const { data: tagList } = useQuery(getTagListQueryOption());
+
+	// 편집 모드에서만 제품 데이터 쿼리
+	const { data: productData } = useQuery({
+		...getProductQueryOption(productId || 0),
+		enabled: mode === "edit" && !!productId,
+	});
 
 	const { mutate: createProduct, isPending: isCreating } = useCreateProductMutation();
 	const { mutate: updateProduct, isPending: isUpdating } = useUpdateProductMutation(productId || 0);
@@ -115,43 +120,45 @@ const ArtistStudioTrackModal = ({
 			isDragOver: false,
 		};
 
-		// 편집 모드일 때 초기 데이터로 기본값 덮어쓰기
-		if (mode === "edit" && initialData) {
+		// 편집 모드일 때 쿼리된 데이터로 기본값 덮어쓰기
+		if (mode === "edit" && productData) {
 			return {
 				...baseDefaults,
-				productName: initialData.productName,
-				description: initialData.description,
-				price: initialData.price,
-				category: initialData.category,
-				genres: initialData.genres,
-				tags: initialData.tags,
-				minBpm: initialData.minBpm,
-				maxBpm: initialData.maxBpm,
-				musicKey: initialData.musicKey,
-				scaleType: initialData.scaleType,
-				licenseInfo: initialData.licenseInfo,
-				currency: initialData.currency,
-				coverImageFileId: initialData.coverImageFileId,
-				audioFileFileId: initialData.audioFileFileId,
-				isFreeDownload: initialData.isFreeDownload,
-				isPublic: initialData.isPublic,
+				productName: productData.productName,
+				description: productData.description,
+				price: productData.price,
+				category: productData.category,
+				// API 응답에서 객체 배열을 문자열 배열로 변환
+				genres: productData.genres?.map((genre: any) => genre.name) || [],
+				tags: productData.tags?.map((tag: any) => tag.name) || [],
+				minBpm: productData.minBpm || 100,
+				maxBpm: productData.maxBpm || 120,
+				musicKey: (productData.musicKey as any) || "null",
+				scaleType: (productData.scaleType as any) || "null",
+				// 기본값 사용 (API 응답에 없는 필드들)
+				licenseInfo: baseDefaults.licenseInfo,
+				currency: "KRW",
+				coverImageFileId: (productData as any).coverImage?.id || 1,
+				audioFileFileId: (productData as any).audioFile?.id || 2,
+				isFreeDownload: (productData as any).isFreeDownload || 0,
+				isPublic: (productData as any).isPublic || 1,
 				uploadedFileIds: {
-					coverImageFileId: initialData.coverImageFileId,
-					audioFileFileId: initialData.audioFileFileId,
-					zipFileId: initialData.zipFileId,
+					coverImageFileId: (productData as any).coverImage?.id,
+					audioFileFileId: (productData as any).audioFile?.id,
+					zipFileId: (productData as any).zipFile?.id,
 				},
 				// BPM 관련 필드 설정
-				bpmType: initialData.minBpm === initialData.maxBpm ? "exact" : "range",
-				exactBPM: initialData.minBpm === initialData.maxBpm ? initialData.minBpm : undefined,
+				bpmType: productData.minBpm === productData.maxBpm ? "exact" : "range",
+				exactBPM: productData.minBpm === productData.maxBpm ? productData.minBpm : undefined,
 				bpmRange:
-					initialData.minBpm !== initialData.maxBpm
-						? { min: initialData.minBpm, max: initialData.maxBpm }
+					productData.minBpm !== productData.maxBpm
+						? { min: productData.minBpm, max: productData.maxBpm }
 						: { min: undefined, max: undefined },
 			};
 		}
 
 		return baseDefaults;
-	}, [mode, initialData]);
+	}, [mode, productData]);
 
 	// react-hook-form 설정
 	const {
@@ -298,12 +305,12 @@ const ArtistStudioTrackModal = ({
 		}
 	}, [mode, isModalOpen, initialFiles, getFileTypeFromExtension, handleFileUpload, setError]);
 
-	// 모달이 닫힐 때 폼 초기화
+	// 모달이 닫힐 때 또는 제품 데이터가 변경될 때 폼 초기화
 	useEffect(() => {
-		if (!isModalOpen) {
+		if (!isModalOpen || (mode === "edit" && productData)) {
 			reset(getDefaultValues());
 		}
-	}, [isModalOpen, reset, getDefaultValues]);
+	}, [isModalOpen, productData, reset, getDefaultValues, mode]);
 
 	// 드래그 앤 드롭 이벤트 핸들러
 	const handleDragOver = useCallback(

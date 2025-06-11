@@ -4,16 +4,18 @@ import { Delete, Edit, SmallEqualizer } from "@/assets/svgs";
 import { AlbumCoverCard, Badge, SquareDropdown, TagDropdown } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
 import { SearchTag } from "@/components/ui/SearchTag";
-import ArtistStudioDashEditTrackModal from "@/features/artist/components/modal/ArtistStudioDashEditTrackModal";
+import ArtistStudioTrackModal from "@/features/artist/components/modal/ArtistStudioTrackModal";
 import ArtistStudioDashDeleteTrackModal from "@/features/artist/components/modal/ArtistStudioDashDeleteTrackModal";
 import ArtistStudioDashCompleteModal from "@/features/artist/components/modal/ArtistStudioDashCompleteModal";
+import blankCdImage from "@/assets/images/blank-cd.png";
 
 const ArtistStudioDashboardContentList = () => {
-	const [isEditTrackOpen, setIsEditTrackOpen] = useState<boolean>(false);
+	const [editingProductId, setEditingProductId] = useState<number | null>(null);
 	const [isDeleteTrackOpen, setIsDeleteTrackOpen] = useState<boolean>(false);
 	const [isCompleteOpen, setIsCompleteOpen] = useState<boolean>(false);
-	const openEditTrackModal = () => setIsEditTrackOpen(true);
-	const closeEditTrackModal = () => setIsEditTrackOpen(false);
+
+	const openEditTrackModal = (id: number) => setEditingProductId(id);
+	const closeEditTrackModal = () => setEditingProductId(null);
 	const openDeleteTrackModal = () => setIsDeleteTrackOpen(true);
 	const closeDeleteTrackModal = () => setIsDeleteTrackOpen(false);
 	const openCompleteModal = () => setIsCompleteOpen(true);
@@ -98,7 +100,7 @@ const ArtistStudioDashboardContentList = () => {
 				<div className="grid grid-cols-1">
 					<div className="flex gap-4 border-b-hbc-black bg-hbc-white py-3 px-2 border-b-4 border-black">
 						<AlbumCoverCard
-							albumImgSrc=""
+							albumImgSrc={blankCdImage.src}
 							size={"xl"}
 							AlbumCoverCardWrapperClassName={"rounded-full"}
 							AlbumCoverCardInnerClassName={"rounded-full"}
@@ -115,7 +117,6 @@ const ArtistStudioDashboardContentList = () => {
 											size={"sm"}
 											rounded={true}
 										>
-											{/* Sold인 경우, variant - destructive */}
 											비공개
 										</Badge>
 									</div>
@@ -149,7 +150,7 @@ const ArtistStudioDashboardContentList = () => {
 										size="sm"
 										rounded="full"
 										className="flex gap-1.5 border-1"
-										onClick={openEditTrackModal}
+										onClick={() => openEditTrackModal(1)}
 									>
 										<div className="text-hbc-black text-[12px] font-suit font-bold leading-[100%] tracking-[0.12px]">
 											수정하기
@@ -171,18 +172,23 @@ const ArtistStudioDashboardContentList = () => {
 								</div>
 								<div>
 									<SmallEqualizer />
-									{/* 재생 중이지 않은 경우, display - none 또는 <></> */}
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
 			</section>
-			<ArtistStudioDashEditTrackModal
-				isModalOpen={isEditTrackOpen}
-				onClose={closeEditTrackModal}
-				openCompleteModal={openCompleteModal}
-			/>
+
+			{editingProductId && (
+				<ArtistStudioTrackModal
+					mode="edit"
+					isModalOpen={true}
+					onClose={closeEditTrackModal}
+					openCompleteModal={openCompleteModal}
+					productId={editingProductId}
+				/>
+			)}
+
 			<ArtistStudioDashDeleteTrackModal
 				isModalOpen={isDeleteTrackOpen}
 				onClose={closeDeleteTrackModal}
