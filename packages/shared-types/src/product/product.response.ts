@@ -87,12 +87,14 @@ export const ProductSearchInfoResponseSchema = z.object({
 		z.object({
 			id: z.number().describe("장르 ID"),
 			name: z.string().describe("장르명"),
+			count: z.number().describe("장르 개수"),
 		}),
 	),
 	tags: z.array(
 		z.object({
 			id: z.number().describe("태그 ID"),
 			name: z.string().describe("태그명"),
+			count: z.number().describe("태그 개수"),
 		}),
 	),
 });

@@ -110,17 +110,56 @@ export const BPMDropdown = ({
 		setIsClient(true);
 	}, []);
 
+	// 포털 컨테이너 찾기 - Radix Dialog 내부인지 확인
+	const getPortalContainer = useCallback((): HTMLElement => {
+		if (typeof window === "undefined") return document.body;
+
+		// containerRef부터 시작해서 상위로 올라가며 Dialog 컨테이너 찾기
+		let current: HTMLElement | null = containerRef.current;
+		while (current && current !== document.body) {
+			// Radix Dialog Content 찾기
+			if (
+				current.getAttribute("role") === "dialog" ||
+				current.hasAttribute("data-radix-dialog-content") ||
+				current.querySelector('[role="dialog"]') ||
+				// PopupContent의 클래스나 구조도 확인
+				(current.classList.contains("fixed") && current.style.zIndex)
+			) {
+				return current;
+			}
+			current = current.parentElement;
+		}
+
+		return document.body;
+	}, []);
+
 	// 드롭다운 위치 계산
 	const updateDropdownPosition = useCallback(() => {
-		if (containerRef.current) {
-			const rect = containerRef.current.getBoundingClientRect();
+		if (!containerRef.current) return;
+
+		const container = containerRef.current;
+		const containerRect = container.getBoundingClientRect();
+		const portalContainer = getPortalContainer();
+
+		if (portalContainer === document.body) {
+			// document.body에 렌더링되는 경우 (기존 로직)
 			setDropdownPosition({
-				top: rect.bottom + window.scrollY,
-				left: rect.left + window.scrollX,
-				width: rect.width,
+				top: containerRect.bottom + window.scrollY,
+				left: containerRect.left + window.scrollX,
+				width: containerRect.width,
+			});
+		} else {
+			// Dialog/Popup 내부에 렌더링되는 경우
+			const portalRect = portalContainer.getBoundingClientRect();
+
+			setDropdownPosition({
+				// Portal 컨테이너를 기준으로 상대적 위치 계산
+				top: containerRect.bottom - portalRect.top,
+				left: containerRect.left - portalRect.left,
+				width: containerRect.width,
 			});
 		}
-	}, []);
+	}, [getPortalContainer]);
 
 	// 스크롤 및 리사이즈 이벤트 처리
 	useEffect(() => {
@@ -155,13 +194,21 @@ export const BPMDropdown = ({
 		setIsOpen(!isOpen);
 	}, [isOpen]);
 
-	const handleExactBPMTypeChange = useCallback(() => {
-		onChangeBPMType("exact");
-	}, [onChangeBPMType]);
+	const handleExactBPMTypeChange = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			// radio 버튼의 change 이벤트에서는 stopPropagation을 하지 않음
+			onChangeBPMType("exact");
+		},
+		[onChangeBPMType],
+	);
 
-	const handleRangeBPMTypeChange = useCallback(() => {
-		onChangeBPMType("range");
-	}, [onChangeBPMType]);
+	const handleRangeBPMTypeChange = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			// radio 버튼의 change 이벤트에서는 stopPropagation을 하지 않음
+			onChangeBPMType("range");
+		},
+		[onChangeBPMType],
+	);
 
 	// 숫자 입력값 검증 및 변환 헬퍼 함수
 	const parseNumericInput = useCallback((value: string): number | undefined => {
@@ -184,21 +231,23 @@ export const BPMDropdown = ({
 		return numValue;
 	}, []);
 
-	// 숫자만 입력받도록 필터링하는 핸들러
-	const handleNumericInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
-		const target = e.target as HTMLInputElement;
-		// 숫자가 아닌 문자 제거 (소수점은 허용하지 않음)
-		target.value = target.value.replace(/[^0-9]/g, "");
-	}, []);
-
 	const handleExactBPMChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
-			const parsedValue = parseNumericInput(e.target.value);
+			// change 이벤트에서는 stopPropagation을 하지 않음 (상태 업데이트를 방해할 수 있음)
+			const value = e.target.value;
+
+			// 숫자만 허용 (실시간 필터링)
+			const numericValue = value.replace(/[^0-9]/g, "");
+
+			// 빈 값인 경우에만 undefined로 설정
+			if (numericValue === "") {
+				onChangeExactBPM(undefined as any);
+				return;
+			}
+
+			const parsedValue = parseNumericInput(numericValue);
 			if (parsedValue !== undefined) {
 				onChangeExactBPM(parsedValue);
-			} else if (e.target.value === "") {
-				// 빈 문자열인 경우 명시적으로 0으로 설정하거나 아무것도 하지 않음
-				// 여기서는 빈 값일 때 아무것도 하지 않도록 함
 			}
 		},
 		[onChangeExactBPM, parseNumericInput],
@@ -206,7 +255,19 @@ export const BPMDropdown = ({
 
 	const handleMinBPMChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
-			const parsedValue = parseNumericInput(e.target.value);
+			// change 이벤트에서는 stopPropagation을 하지 않음 (상태 업데이트를 방해할 수 있음)
+			const value = e.target.value;
+
+			// 숫자만 허용 (실시간 필터링)
+			const numericValue = value.replace(/[^0-9]/g, "");
+
+			// 빈 값인 경우에만 undefined로 설정
+			if (numericValue === "") {
+				onChangeBPMRange("min", undefined as any);
+				return;
+			}
+
+			const parsedValue = parseNumericInput(numericValue);
 			if (parsedValue !== undefined) {
 				onChangeBPMRange("min", parsedValue);
 			}
@@ -216,7 +277,19 @@ export const BPMDropdown = ({
 
 	const handleMaxBPMChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
-			const parsedValue = parseNumericInput(e.target.value);
+			// change 이벤트에서는 stopPropagation을 하지 않음 (상태 업데이트를 방해할 수 있음)
+			const value = e.target.value;
+
+			// 숫자만 허용 (실시간 필터링)
+			const numericValue = value.replace(/[^0-9]/g, "");
+
+			// 빈 값인 경우에만 undefined로 설정
+			if (numericValue === "") {
+				onChangeBPMRange("max", undefined as any);
+				return;
+			}
+
+			const parsedValue = parseNumericInput(numericValue);
 			if (parsedValue !== undefined) {
 				onChangeBPMRange("max", parsedValue);
 			}
@@ -241,22 +314,39 @@ export const BPMDropdown = ({
 
 	// 외부 클릭 감지
 	useEffect(() => {
+		if (!isOpen) return;
+
 		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				containerRef.current &&
-				!containerRef.current.contains(event.target as Node) &&
-				dropdownRef.current &&
-				!dropdownRef.current.contains(event.target as Node)
-			) {
+			const target = event.target as HTMLElement;
+			const isInputElement = target.tagName === "INPUT";
+
+			// 드롭다운이 열려있을 때만 처리
+			if (isOpen) {
+				// 트리거 컨테이너나 드롭다운 내부 클릭은 무시
+				if (
+					(containerRef.current && containerRef.current.contains(target)) ||
+					(dropdownRef.current && dropdownRef.current.contains(target))
+				) {
+					// input 요소 클릭이면 포커스 처리를 위해 이벤트 완료 후 포커스 설정
+					if (isInputElement) {
+						setTimeout(() => {
+							target.focus();
+						}, 0);
+					}
+					return;
+				}
+
+				// 외부 클릭이면 드롭다운 닫기
 				setIsOpen(false);
 			}
 		};
 
-		document.addEventListener("mousedown", handleClickOutside);
+		// mousedown 이벤트로 변경하여 더 빠른 처리
+		document.addEventListener("mousedown", handleClickOutside, false);
 		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
+			document.removeEventListener("mousedown", handleClickOutside, false);
 		};
-	}, []);
+	}, [isOpen]);
 
 	// render props를 위한 데이터
 	const renderProps: BPMDropdownRenderProps = {
@@ -306,6 +396,25 @@ export const BPMDropdown = ({
 		}
 	};
 
+	// 드롭다운 클릭 핸들러 - input 요소가 아닌 경우만 전파 방지
+	const handleDropdownClick = useCallback((e: React.MouseEvent) => {
+		const target = e.target as HTMLElement;
+		console.log("🔍 Dropdown clicked:", {
+			tagName: target.tagName,
+			className: target.className,
+			target: target,
+			currentTarget: e.currentTarget,
+		});
+
+		// input 요소가 아닌 경우에만 전파 방지
+		if (target.tagName !== "INPUT") {
+			console.log("🚫 Stopping propagation for non-input element");
+			e.stopPropagation();
+		} else {
+			console.log("✅ Allowing input element to handle click");
+		}
+	}, []);
+
 	// 드롭다운 컨텐츠
 	const dropdownContent = (
 		<div
@@ -313,7 +422,7 @@ export const BPMDropdown = ({
 			id="bpm-select-dropdown"
 			role="dialog"
 			aria-label="BPM 선택 메뉴"
-			className="bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]"
+			className="bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] pointer-events-auto"
 			style={{
 				position: "absolute",
 				top: dropdownPosition.top,
@@ -321,6 +430,7 @@ export const BPMDropdown = ({
 				width: dropdownPosition.width,
 				minWidth: "200px",
 			}}
+			// onClick={handleDropdownClick} // 임시로 제거해서 테스트
 		>
 			<div className="p-4">
 				<div className="flex flex-col gap-4">
@@ -331,11 +441,11 @@ export const BPMDropdown = ({
 							name="bpmType"
 							checked={bpmType === "exact"}
 							onChange={handleExactBPMTypeChange}
-							className="w-4 h-4"
+							className="w-4 h-4 cursor-pointer"
 						/>
 						<label
 							htmlFor="exact"
-							className="text-sm font-medium"
+							className="text-sm font-medium cursor-pointer"
 						>
 							Exact
 						</label>
@@ -346,7 +456,20 @@ export const BPMDropdown = ({
 								pattern="[0-9]*"
 								value={bpmValue ?? ""}
 								onChange={handleExactBPMChange}
-								onInput={handleNumericInput}
+								tabIndex={0}
+								onClick={(e) => {
+									// 이벤트 전파 중단
+									e.stopPropagation();
+
+									// 지연 후 포커스 (React 렌더링 후)
+									setTimeout(() => {
+										(e.target as HTMLInputElement).focus();
+									}, 0);
+								}}
+								onMouseDown={(e) => {
+									// mousedown에서도 전파 중단
+									e.stopPropagation();
+								}}
 								placeholder="BPM"
 								className="text-sm w-20 h-8 px-2 border border-gray-200 rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 							/>
@@ -360,11 +483,11 @@ export const BPMDropdown = ({
 							name="bpmType"
 							checked={bpmType === "range"}
 							onChange={handleRangeBPMTypeChange}
-							className="w-4 h-4"
+							className="w-4 h-4 cursor-pointer"
 						/>
 						<label
 							htmlFor="range"
-							className="text-sm font-medium"
+							className="text-sm font-medium cursor-pointer"
 						>
 							Range
 						</label>
@@ -376,7 +499,20 @@ export const BPMDropdown = ({
 									pattern="[0-9]*"
 									value={bpmRangeValue?.min ? bpmRangeValue.min : ""}
 									onChange={handleMinBPMChange}
-									onInput={handleNumericInput}
+									tabIndex={0}
+									onClick={(e) => {
+										// 이벤트 전파 중단
+										e.stopPropagation();
+
+										// 지연 후 포커스 (React 렌더링 후)
+										setTimeout(() => {
+											(e.target as HTMLInputElement).focus();
+										}, 0);
+									}}
+									onMouseDown={(e) => {
+										// mousedown에서도 전파 중단
+										e.stopPropagation();
+									}}
 									placeholder="Min"
 									className="text-sm w-12 h-8 px-2 border border-gray-200 rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 								/>
@@ -387,7 +523,20 @@ export const BPMDropdown = ({
 									pattern="[0-9]*"
 									value={bpmRangeValue?.max ? bpmRangeValue.max : ""}
 									onChange={handleMaxBPMChange}
-									onInput={handleNumericInput}
+									tabIndex={0}
+									onClick={(e) => {
+										// 이벤트 전파 중단
+										e.stopPropagation();
+
+										// 지연 후 포커스 (React 렌더링 후)
+										setTimeout(() => {
+											(e.target as HTMLInputElement).focus();
+										}, 0);
+									}}
+									onMouseDown={(e) => {
+										// mousedown에서도 전파 중단
+										e.stopPropagation();
+									}}
 									placeholder="Max"
 									className="text-sm w-12 h-8 px-2 border border-gray-200 rounded [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 								/>
@@ -400,7 +549,7 @@ export const BPMDropdown = ({
 			<footer className="flex justify-between items-center px-4 py-3 border-t border-solid border-t-gray-200">
 				<button
 					type="button"
-					className="text-sm font-medium text-gray-500 underline cursor-pointer duration-[0.2s] ease-[ease] transition-[color]"
+					className="text-sm font-medium text-gray-500 underline cursor-pointer duration-[0.2s] ease-[ease] transition-[color] hover:text-gray-700"
 					onClick={handleClearClick}
 					aria-label="선택 초기화"
 				>
@@ -408,7 +557,7 @@ export const BPMDropdown = ({
 				</button>
 				<button
 					type="button"
-					className="p-2 text-sm font-medium text-white bg-blue-600 rounded-lg cursor-pointer border-[none] duration-[0.2s] ease-[ease] transition-[background-color]"
+					className="p-2 text-sm font-medium text-white bg-blue-600 rounded-lg cursor-pointer border-[none] duration-[0.2s] ease-[ease] transition-[background-color] hover:bg-blue-700"
 					onClick={handleCloseClick}
 					aria-label="선택 완료"
 				>
@@ -427,8 +576,8 @@ export const BPMDropdown = ({
 				{renderTrigger()}
 			</div>
 
-			{/* Portal로 드롭다운 렌더링 */}
-			{isClient && isOpen && typeof window !== "undefined" && createPortal(dropdownContent, document.body)}
+			{/* Portal로 드롭다운 렌더링 - 적절한 컨테이너에 */}
+			{isClient && isOpen && typeof window !== "undefined" && createPortal(dropdownContent, getPortalContainer())}
 		</>
 	);
 };

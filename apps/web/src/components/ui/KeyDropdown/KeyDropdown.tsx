@@ -100,7 +100,7 @@ const flatKeys = [
 
 export interface KeyButtonProps {
 	children: React.ReactNode;
-	onClick?: () => void;
+	onClick?: (e: React.MouseEvent) => void;
 	variant?: "key" | "scale";
 	ariaLabel?: string;
 }
@@ -135,7 +135,7 @@ export function KeyButton({ children, onClick, variant = "key", ariaLabel }: Key
 	const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
 		e.preventDefault(); // 기본 동작 방지
 		e.stopPropagation(); // 이벤트 전파 방지
-		onClick?.();
+		onClick?.(e);
 	};
 
 	return (
@@ -286,14 +286,6 @@ export const KeyDropdown = ({
 		[onChangeKey],
 	);
 
-	const handleMajorScaleClick = useCallback(() => {
-		onChangeScale("Major");
-	}, [onChangeScale]);
-
-	const handleMinorScaleClick = useCallback(() => {
-		onChangeScale("Minor");
-	}, [onChangeScale]);
-
 	const handleClearClick = useCallback(
 		(e: React.MouseEvent) => {
 			e.preventDefault();
@@ -318,24 +310,53 @@ export const KeyDropdown = ({
 		[onTabChange],
 	);
 
+	// 키 버튼 클릭 핸들러에서 이벤트 전파 방지
+	const handleKeyButtonClick = useCallback(
+		(key: { label: string; value: string }) => (e: React.MouseEvent) => {
+			e.preventDefault();
+			e.stopPropagation();
+			onKeyClick(key);
+		},
+		[onKeyClick],
+	);
+
+	const handleScaleButtonClick = useCallback(
+		(scale: string) => (e: React.MouseEvent) => {
+			e.preventDefault();
+			e.stopPropagation();
+			onChangeScale(scale);
+		},
+		[onChangeScale],
+	);
+
 	// 외부 클릭 감지
 	useEffect(() => {
+		if (!isOpen) return;
+
 		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				containerRef.current &&
-				!containerRef.current.contains(event.target as Node) &&
-				dropdownRef.current &&
-				!dropdownRef.current.contains(event.target as Node)
-			) {
+			const target = event.target as Node;
+
+			// 드롭다운이 열려있을 때만 처리
+			if (isOpen) {
+				// 트리거 컨테이너나 드롭다운 내부 클릭은 무시
+				if (
+					(containerRef.current && containerRef.current.contains(target)) ||
+					(dropdownRef.current && dropdownRef.current.contains(target))
+				) {
+					return;
+				}
+
+				// 외부 클릭이면 드롭다운 닫기
 				setIsOpen(false);
 			}
 		};
 
-		document.addEventListener("mousedown", handleClickOutside);
+		// mousedown 대신 click 이벤트 사용 (더 안정적)
+		document.addEventListener("click", handleClickOutside, true);
 		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
+			document.removeEventListener("click", handleClickOutside, true);
 		};
-	}, []);
+	}, [isOpen]);
 
 	useEffect(() => {
 		if (keyValue && scaleValue) {
@@ -398,7 +419,7 @@ export const KeyDropdown = ({
 			id="key-select-dropdown"
 			role="dialog"
 			aria-label="음악 키 선택 메뉴"
-			className="bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]"
+			className="bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] pointer-events-auto"
 			style={{
 				position: "absolute",
 				top: dropdownPosition.top,
@@ -406,6 +427,7 @@ export const KeyDropdown = ({
 				width: dropdownPosition.width,
 				minWidth: "300px",
 			}}
+			onClick={(e) => e.stopPropagation()}
 		>
 			<header className="bg-gray-50 border-b border-solid border-b-gray-200">
 				<nav
@@ -417,11 +439,12 @@ export const KeyDropdown = ({
 						role="tab"
 						aria-selected={activeTab === "flat"}
 						aria-controls="flat-keys-panel"
-						className={`flex-1 p-2 text-sm font-medium text-center transition-all cursor-pointer border-b-[3px] border-solid duration-[0.2s] ease-[ease] ${
+						className={cn(
+							"flex-1 p-2 text-sm font-medium text-center transition-all cursor-pointer border-b-[3px] border-solid duration-[0.2s] ease-[ease]",
 							activeTab === "flat"
 								? "bg-white border-b-blue-600 text-neutral-800"
-								: "text-gray-500 bg-gray-50 border-b-transparent"
-						}`}
+								: "text-gray-500 bg-gray-50 border-b-transparent hover:text-gray-700",
+						)}
 						onClick={handleTabClick("flat")}
 					>
 						Flat Keys
@@ -431,11 +454,12 @@ export const KeyDropdown = ({
 						role="tab"
 						aria-selected={activeTab === "sharp"}
 						aria-controls="sharp-keys-panel"
-						className={`flex-1 p-2 text-sm font-medium text-center transition-all cursor-pointer border-b-[3px] border-solid duration-[0.2s] ease-[ease] ${
+						className={cn(
+							"flex-1 p-2 text-sm font-medium text-center transition-all cursor-pointer border-b-[3px] border-solid duration-[0.2s] ease-[ease]",
 							activeTab === "sharp"
 								? "bg-white border-b-blue-600 text-neutral-800"
-								: "text-gray-500 bg-gray-50 border-b-transparent"
-						}`}
+								: "text-gray-500 bg-gray-50 border-b-transparent hover:text-gray-700",
+						)}
 						onClick={handleTabClick("sharp")}
 					>
 						Sharp Keys
@@ -457,7 +481,7 @@ export const KeyDropdown = ({
 									<KeyButton
 										key={key.value}
 										variant="key"
-										onClick={() => onKeyClick(key)}
+										onClick={handleKeyButtonClick(key)}
 										ariaLabel={`${key.label} 키 선택`}
 									>
 										{key.label}
@@ -470,7 +494,7 @@ export const KeyDropdown = ({
 									<KeyButton
 										key={key.value}
 										variant="key"
-										onClick={() => onKeyClick(key)}
+										onClick={handleKeyButtonClick(key)}
 										ariaLabel={`${key.label} 키 선택`}
 									>
 										{key.label}
@@ -491,7 +515,7 @@ export const KeyDropdown = ({
 									<KeyButton
 										key={key.value}
 										variant="key"
-										onClick={() => onKeyClick(key)}
+										onClick={handleKeyButtonClick(key)}
 										ariaLabel={`${key.label} 키 선택`}
 									>
 										{key.label}
@@ -504,7 +528,7 @@ export const KeyDropdown = ({
 									<KeyButton
 										key={key.value}
 										variant="key"
-										onClick={() => onKeyClick(key)}
+										onClick={handleKeyButtonClick(key)}
 										ariaLabel={`${key.label} 키 선택`}
 									>
 										{key.label}
@@ -521,7 +545,7 @@ export const KeyDropdown = ({
 								<KeyButton
 									key={key.value}
 									variant="key"
-									onClick={() => onKeyClick(key)}
+									onClick={handleKeyButtonClick(key)}
 									ariaLabel={`${key.label} 키 선택`}
 								>
 									{key.label}
@@ -539,14 +563,14 @@ export const KeyDropdown = ({
 				>
 					<KeyButton
 						variant="scale"
-						onClick={handleMajorScaleClick}
+						onClick={handleScaleButtonClick("Major")}
 						ariaLabel="장음계 선택"
 					>
 						Major
 					</KeyButton>
 					<KeyButton
 						variant="scale"
-						onClick={handleMinorScaleClick}
+						onClick={handleScaleButtonClick("Minor")}
 						ariaLabel="단음계 선택"
 					>
 						Minor
@@ -557,7 +581,7 @@ export const KeyDropdown = ({
 			<footer className="flex justify-between items-center px-4 py-3 border-t border-solid border-t-gray-200">
 				<button
 					type="button"
-					className="text-sm font-medium text-gray-500 underline cursor-pointer duration-[0.2s] ease-[ease] transition-[color]"
+					className="text-sm font-medium text-gray-500 underline cursor-pointer duration-[0.2s] ease-[ease] transition-[color] hover:text-gray-700"
 					onClick={handleClearClick}
 					aria-label="선택 초기화"
 				>
@@ -565,7 +589,7 @@ export const KeyDropdown = ({
 				</button>
 				<button
 					type="button"
-					className="p-2 text-sm font-medium text-white bg-blue-600 rounded-lg cursor-pointer border-[none] duration-[0.2s] ease-[ease] transition-[background-color]"
+					className="p-2 text-sm font-medium text-white bg-blue-600 rounded-lg cursor-pointer border-[none] duration-[0.2s] ease-[ease] transition-[background-color] hover:bg-blue-700"
 					onClick={handleCloseClick}
 					aria-label="선택 완료"
 				>

@@ -117,6 +117,7 @@ export class ProductService {
 					seller,
 					audioFile: audioFile || null,
 					coverImage: coverImage || null,
+					isPublic: product.isPublic,
 				});
 			}
 

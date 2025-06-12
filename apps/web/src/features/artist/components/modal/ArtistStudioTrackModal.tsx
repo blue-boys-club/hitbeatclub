@@ -17,8 +17,7 @@ import { cn } from "@/common/utils";
 import { AlbumAvatar, Badge, BPMDropdown, Dropdown, Input, KeyDropdown } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
 import { Popup, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
-import { getTagListQueryOption } from "@/apis/tag/query/tag.query-options";
-import { getProductQueryOption } from "@/apis/product/query/product.query-option";
+import { getProductQueryOption, getProductSearchInfoQueryOption } from "@/apis/product/query/product.query-option";
 import { useQuery } from "@tanstack/react-query";
 import MultiTagGenreInput from "@/components/ui/MultiTagGenreInput/MultiTagGenreInput";
 import blankCdImage from "@/assets/images/blank-cd.png";
@@ -64,13 +63,16 @@ const ArtistStudioTrackModal = ({
 	initialFiles,
 	productId,
 }: ArtistStudioTrackModalProps) => {
-	const { data: tagList } = useQuery(getTagListQueryOption());
+	const { data: searchInfo } = useQuery(getProductSearchInfoQueryOption());
 
 	// 편집 모드에서만 제품 데이터 쿼리
 	const { data: productData } = useQuery({
 		...getProductQueryOption(productId || 0),
 		enabled: mode === "edit" && !!productId,
 	});
+	useEffect(() => {
+		console.log(productData);
+	}, [productData]);
 
 	const { mutate: createProduct, isPending: isCreating } = useCreateProductMutation();
 	const { mutate: updateProduct, isPending: isUpdating } = useUpdateProductMutation(productId || 0);
@@ -122,6 +124,9 @@ const ArtistStudioTrackModal = ({
 
 		// 편집 모드일 때 쿼리된 데이터로 기본값 덮어쓰기
 		if (mode === "edit" && productData) {
+			const musicKey = (productData.musicKey as any) || "null";
+			const scaleType = (productData.scaleType as any) || "null";
+
 			return {
 				...baseDefaults,
 				productName: productData.productName,
@@ -133,19 +138,22 @@ const ArtistStudioTrackModal = ({
 				tags: productData.tags?.map((tag: any) => tag.name) || [],
 				minBpm: productData.minBpm || 100,
 				maxBpm: productData.maxBpm || 120,
-				musicKey: (productData.musicKey as any) || "null",
-				scaleType: (productData.scaleType as any) || "null",
+				musicKey: musicKey,
+				scaleType: scaleType,
+				// Key 관련 UI 필드 설정
+				keyValue: musicKey !== "null" ? { label: musicKey, value: musicKey } : undefined,
+				scaleValue: scaleType !== "null" ? scaleType.toLowerCase() : null,
 				// 기본값 사용 (API 응답에 없는 필드들)
 				licenseInfo: baseDefaults.licenseInfo,
 				currency: "KRW",
-				coverImageFileId: (productData as any).coverImage?.id || 1,
-				audioFileFileId: (productData as any).audioFile?.id || 2,
+				coverImageFileId: (productData as any).coverImage?.id || undefined,
+				audioFileFileId: (productData as any).audioFile?.id || undefined,
 				isFreeDownload: (productData as any).isFreeDownload || 0,
 				isPublic: (productData as any).isPublic || 1,
 				uploadedFileIds: {
-					coverImageFileId: (productData as any).coverImage?.id,
-					audioFileFileId: (productData as any).audioFile?.id,
-					zipFileId: (productData as any).zipFile?.id,
+					coverImageFileId: (productData as any).coverImage?.id || undefined,
+					audioFileFileId: (productData as any).audioFile?.id || undefined,
+					zipFileId: (productData as any).zipFile?.id || undefined,
 				},
 				// BPM 관련 필드 설정
 				bpmType: productData.minBpm === productData.maxBpm ? "exact" : "range",
@@ -425,11 +433,19 @@ const ArtistStudioTrackModal = ({
 				scaleType: validatedScaleType,
 				licenseInfo: data.licenseInfo,
 				currency: data.currency || "KRW",
-				coverImageFileId: data.uploadedFileIds.coverImageFileId || data.coverImageFileId,
-				audioFileFileId: data.uploadedFileIds.audioFileFileId || data.audioFileFileId,
-				zipFileId: data.uploadedFileIds.zipFileId,
-				isFreeDownload: data.isFreeDownload || 0,
-				isPublic: data.isPublic || 1,
+				coverImageFileId:
+					data.uploadedFileIds.coverImageFileId ||
+					data.coverImageFileId ||
+					(productData?.coverImage || {}).id ||
+					undefined,
+				audioFileFileId:
+					data.uploadedFileIds.audioFileFileId ||
+					data.audioFileFileId ||
+					(productData?.audioFile || {}).id ||
+					undefined,
+				zipFileId: data.uploadedFileIds.zipFileId || data.zipFileId || (productData?.zipFile || {}).id || undefined,
+				isFreeDownload: data.isFreeDownload ?? 0,
+				isPublic: data.isPublic ?? 1,
 			};
 
 			// 개발 환경에서만 로그 출력
@@ -927,8 +943,9 @@ const ArtistStudioTrackModal = ({
 											maxItems={10}
 											placeholder="장르를 선택하세요"
 											allowDirectInput={false}
-											// suggestedItems={genreList?.data.map((genre) => ({ value: genre.name, count: 0 })) || []}
-											suggestedItems={[]}
+											suggestedItems={
+												searchInfo?.genres?.map((genre) => ({ value: genre.name, count: genre.count })) || []
+											}
 											onChange={field.onChange}
 										/>
 									)}
@@ -955,7 +972,7 @@ const ArtistStudioTrackModal = ({
 											maxItems={10}
 											placeholder="태그를 입력하세요"
 											allowDirectInput={true}
-											suggestedItems={tagList?.data.map((tag) => ({ value: tag.name, count: 0 })) || []}
+											suggestedItems={searchInfo?.tags?.map((tag) => ({ value: tag.name, count: tag.count })) || []}
 											onChange={field.onChange}
 										/>
 									)}
@@ -1090,12 +1107,13 @@ const ArtistStudioTrackModal = ({
 											<Dropdown
 												className="w-full"
 												buttonClassName="border-x-1px border-y-2px"
-												defaultValue={field.value === 1 ? "공개" : "비공개"}
+												value={field.value === 1 ? "공개" : "비공개"}
 												options={[
 													{ label: "공개", value: "공개" },
 													{ label: "비공개", value: "비공개" },
 												]}
 												onChange={(value: string) => {
+													console.log(value);
 													field.onChange(value === "공개" ? 1 : 0);
 													trigger("isPublic");
 												}}

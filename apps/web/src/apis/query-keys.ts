@@ -17,7 +17,8 @@ const QUERY_KEYS = {
 		list: (payload: Omit<ProductListQueryRequest, "page" | "limit">): QueryKey => ["products", "list", payload],
 		infiniteList: (payload: Omit<ProductListQueryRequest, "page" | "limit">): QueryKey => [
 			"products",
-			"infiniteList",
+			"list",
+			"infinite",
 			payload,
 		],
 		one: (productId: number): QueryKey => ["products", productId],
@@ -27,6 +28,7 @@ const QUERY_KEYS = {
 		_key: ["artist"],
 		detail: (id: number): QueryKey => ["artist", id],
 		me: ["artist", "me"],
+		rawProductList: (id: number): QueryKey => ["artist", id, "productList"],
 		productList: (id: number, payload: ArtistProductListQueryRequest): QueryKey => [
 			"artist",
 			id,

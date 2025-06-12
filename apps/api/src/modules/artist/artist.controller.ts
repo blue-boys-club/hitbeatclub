@@ -312,8 +312,6 @@ export class ArtistController {
 				: {}),
 		};
 
-		console.log(where);
-
 		const products = await this.productService.findAll(where, artistProductListQueryRequestDto);
 		const total = await this.productService.getTotal(where);
 

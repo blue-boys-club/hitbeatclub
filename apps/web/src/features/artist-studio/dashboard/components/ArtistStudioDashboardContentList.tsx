@@ -130,7 +130,7 @@ const ArtistStudioDashboardContentList = () => {
 									size={"sm"}
 									rounded={true}
 								>
-									{product.isPublic ? "공개" : "비공개"}
+									{product.isPublic === 1 ? "공개" : "비공개"}
 								</Badge>
 							</div>
 							<div className="flex gap-1">

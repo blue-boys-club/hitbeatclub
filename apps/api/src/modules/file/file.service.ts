@@ -15,6 +15,8 @@ export class FileService {
 	private readonly bucket: string;
 	private readonly s3Region: string;
 	private readonly s3BaseBucketUrl: string;
+	private readonly cloudfrontBaseUrl: string;
+	private readonly cloudfrontEnabled: boolean;
 
 	constructor(
 		private configService: ConfigService,
@@ -30,6 +32,8 @@ export class FileService {
 		this.bucket = this.configService.get("AWS_S3_BUCKET_NAME");
 		this.s3Region = this.configService.get("AWS_REGION");
 		this.s3BaseBucketUrl = `https://${this.bucket}.s3.${this.s3Region}.amazonaws.com`;
+		this.cloudfrontBaseUrl = this.configService.get<string>("aws.cloudfront.baseUrl") ?? this.s3BaseBucketUrl;
+		this.cloudfrontEnabled = this.configService.get<boolean>("aws.cloudfront.enabled");
 	}
 
 	async create(fileCreateRequestDto: FileCreateRequestDto) {
@@ -75,7 +79,7 @@ export class FileService {
 				path,
 				pathWithFilename: key,
 				filename: filename,
-				url: `${this.s3BaseBucketUrl}/${key}`,
+				url: this.generateFileUrl(key),
 				baseUrl: this.s3BaseBucketUrl,
 				mime,
 				size: file.size,
@@ -163,5 +167,13 @@ export class FileService {
 			where: { id },
 			data: { isEnabled: Number(isEnabled) },
 		});
+	}
+
+	/**
+	 * S3 또는 CloudFront URL을 생성합니다
+	 * CloudFront가 활성화된 경우 CloudFront URL을 반환하고, 그렇지 않으면 S3 URL을 반환합니다
+	 */
+	private generateFileUrl(key: string): string {
+		return this.cloudfrontEnabled ? `${this.cloudfrontBaseUrl}/${key}` : `${this.s3BaseBucketUrl}/${key}`;
 	}
 }

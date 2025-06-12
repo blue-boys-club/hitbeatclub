@@ -105,23 +105,38 @@ const MultiTagGenreInput = ({
 		}
 	}, [isFocused, updateDropdownPosition]);
 
-	const handleClickOutside = useCallback((event: MouseEvent) => {
-		if (
-			containerRef.current &&
-			!containerRef.current.contains(event.target as Node) &&
-			dropdownRef.current &&
-			!dropdownRef.current.contains(event.target as Node)
-		) {
-			setIsFocused(false);
-		}
-	}, []);
+	const handleClickOutside = useCallback(
+		(event: MouseEvent) => {
+			if (!isFocused) return;
+
+			const target = event.target as Node;
+
+			// 드롭다운이 포커스된 상태일 때만 처리
+			if (isFocused) {
+				// 트리거 컨테이너나 드롭다운 내부 클릭은 무시
+				if (
+					(containerRef.current && containerRef.current.contains(target)) ||
+					(dropdownRef.current && dropdownRef.current.contains(target))
+				) {
+					return;
+				}
+
+				// 외부 클릭이면 드롭다운 닫기
+				setIsFocused(false);
+			}
+		},
+		[isFocused],
+	);
 
 	useEffect(() => {
-		document.addEventListener("mousedown", handleClickOutside);
+		if (!isFocused) return;
+
+		// click 이벤트 사용 (더 안정적)
+		document.addEventListener("click", handleClickOutside, true);
 		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
+			document.removeEventListener("click", handleClickOutside, true);
 		};
-	}, [handleClickOutside]);
+	}, [handleClickOutside, isFocused]);
 
 	const addItem = useCallback(
 		(text: string) => {
@@ -142,6 +157,16 @@ const MultiTagGenreInput = ({
 		[items, onChange],
 	);
 
+	// 드롭다운 아이템 클릭 핸들러
+	const handleSuggestionClick = useCallback(
+		(value: string) => (e: React.MouseEvent) => {
+			e.preventDefault();
+			e.stopPropagation();
+			addItem(value);
+		},
+		[addItem],
+	);
+
 	const handleRemoveItem = useCallback(
 		(id: string) => {
 			const newItems = items.filter((item) => item.id !== id);
@@ -151,11 +176,22 @@ const MultiTagGenreInput = ({
 		[items, onChange],
 	);
 
-	const handleClearAll = useCallback(() => {
-		setItems([]);
-		setInputValue("");
-		onChange?.([]);
-	}, [onChange]);
+	const handleClearAll = useCallback(
+		(e?: React.MouseEvent) => {
+			e?.preventDefault();
+			e?.stopPropagation();
+			setItems([]);
+			setInputValue("");
+			onChange?.([]);
+		},
+		[onChange],
+	);
+
+	const handleCloseClick = useCallback((e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsFocused(false);
+	}, []);
 
 	const handleBlur = (e: React.FocusEvent) => {
 		if (dropdownRef.current?.contains(e.relatedTarget as Node)) {
@@ -199,7 +235,7 @@ const MultiTagGenreInput = ({
 	const dropdownContent = (
 		<div
 			ref={dropdownRef}
-			className="border rounded-lg bg-white shadow-lg z-[9999]"
+			className="border rounded-lg bg-white shadow-lg z-[9999] pointer-events-auto"
 			style={{
 				position: "absolute",
 				top: dropdownPosition.top,
@@ -207,6 +243,7 @@ const MultiTagGenreInput = ({
 				width: dropdownPosition.width,
 				minWidth: "200px",
 			}}
+			onClick={(e) => e.stopPropagation()}
 		>
 			<div className="flex flex-col py-2 px-3 max-h-[200px] overflow-y-auto">
 				{(useSearchTagTrigger
@@ -218,7 +255,7 @@ const MultiTagGenreInput = ({
 						<div
 							className="flex items-center gap-2 py-1 hover:bg-gray-50 cursor-pointer rounded-sm"
 							key={suggestion.value}
-							onClick={() => addItem(suggestion.value)}
+							onClick={handleSuggestionClick(suggestion.value)}
 						>
 							<div className="cursor-pointer">{isSelected ? <Checkbox /> : <EmptyCheckbox />}</div>
 							<span className="text-hbc-black font-bold text-sm flex-1">{suggestion.value}</span>
@@ -238,7 +275,7 @@ const MultiTagGenreInput = ({
 				<button
 					type="button"
 					className="text-hbc-white bg-hbc-blue px-3 py-1 rounded-lg text-sm font-semibold cursor-pointer hover:bg-blue-600 transition-colors"
-					onClick={() => setIsFocused(false)}
+					onClick={handleCloseClick}
 				>
 					Close
 				</button>

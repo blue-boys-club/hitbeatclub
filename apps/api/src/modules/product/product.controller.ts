@@ -10,6 +10,8 @@ import {
 	UploadedFile,
 	NotFoundException,
 	Query,
+	Inject,
+	forwardRef,
 } from "@nestjs/common";
 import { ProductService } from "./product.service";
 import { ApiOperation, ApiTags, ApiConsumes } from "@nestjs/swagger";
@@ -35,6 +37,7 @@ import { FileService } from "../file/file.service";
 import { ProductUpdateDto } from "./dto/request/product.update.dto";
 import { ProductDetailResponseDto } from "./dto/response/product.detail.response.dto";
 import { PRODUCT_NOT_FOUND_ERROR } from "./product.error";
+import { ARTIST_NOT_FOUND_ERROR } from "../artist/artist.error";
 import { ProductListResponseDto } from "./dto/response/product.list.response.dto";
 import { ProductListQueryRequestDto } from "./dto/request/project.list.request.dto";
 import { ProductUploadFileRequestDto } from "./dto/request/product.upload-file.request.dto";
@@ -42,6 +45,7 @@ import { ProductFindQuery, ProductSearchQuery } from "./decorators/product.decor
 import { ProductSearchInfoResponseDto } from "./dto/response/product.search-info.response.dto";
 import { TagService } from "../tag/tag.service";
 import { GenreService } from "../genre/genre.service";
+import { ArtistService } from "../artist/artist.service";
 
 @Controller("products")
 @ApiTags("product")
@@ -52,6 +56,8 @@ export class ProductController {
 		private readonly fileService: FileService,
 		private readonly tagService: TagService,
 		private readonly genreService: GenreService,
+		@Inject(forwardRef(() => ArtistService))
+		private readonly artistService: ArtistService,
 	) {}
 
 	@Get()
@@ -225,6 +231,12 @@ export class ProductController {
 		@Req() req: AuthenticatedRequest,
 		@Body() createProductDto: ProductCreateDto,
 	): Promise<DatabaseIdResponseDto> {
+		const artist = await this.artistService.findMe(req.user.id);
+
+		if (!artist) {
+			throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
+		}
+
 		const fileIds = {
 			audioFileFileId: createProductDto?.audioFileFileId || null,
 			coverImageFileId: createProductDto?.coverImageFileId || null,
@@ -234,7 +246,7 @@ export class ProductController {
 		delete createProductDto?.audioFileFileId;
 		delete createProductDto?.coverImageFileId;
 		delete createProductDto?.zipFileId;
-		const product = await this.productService.create(req.user.id, createProductDto);
+		const product = await this.productService.create(artist.id, createProductDto);
 
 		if (product?.id && Object.values(fileIds).some((id) => id !== null)) {
 			await this.productService.uploadProductFile({
