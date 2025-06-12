@@ -79,7 +79,7 @@ export class ArtistService {
 			...artist,
 			id: Number(artist.id),
 			userId: Number(artist.userId),
-			profileImageUrl: profileImageFile[0]?.url || null,
+			profileImage: profileImageFile[0] || null,
 			settlement: artist.settlement[0] || null,
 		};
 	}
