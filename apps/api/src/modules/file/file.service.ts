@@ -104,6 +104,7 @@ export class FileService {
 		const files = await this.findFilesByTarget({
 			uploaderId,
 			targetTable,
+			targetId,
 			type,
 		});
 
@@ -121,10 +122,12 @@ export class FileService {
 	async findFilesByTarget({
 		uploaderId,
 		targetTable,
+		targetId,
 		type,
 	}: {
 		uploaderId: number;
 		targetTable: string;
+		targetId: number;
 		type: string;
 	}) {
 		return this.prisma.file
@@ -133,6 +136,7 @@ export class FileService {
 					uploaderId: uploaderId,
 					targetTable: targetTable,
 					type: type,
+					targetId: targetId,
 				},
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
