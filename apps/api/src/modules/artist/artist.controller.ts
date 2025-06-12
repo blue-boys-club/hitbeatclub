@@ -280,8 +280,6 @@ export class ArtistController {
 			throw new ForbiddenException(ARTIST_NOT_FOUND_ERROR);
 		}
 
-		console.log(isPublic, typeof isPublic, artistProductListQueryRequestDto);
-
 		const where = {
 			sellerId: id,
 			...(isPublic !== undefined ? { isPublic: isPublic ? 1 : 0 } : {}),

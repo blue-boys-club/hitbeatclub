@@ -77,7 +77,6 @@ export class ProductService {
 				})
 				.then((data) => this.prisma.serializeBigInt(data))
 				.catch((error) => {
-					console.error(error);
 					throw new BadRequestException(error);
 				});
 
@@ -172,11 +171,6 @@ export class ProductService {
 				delete createProductDto.tags;
 				delete createProductDto.licenseInfo;
 
-				console.log({
-					...createProductDto,
-					sellerId: userId,
-				});
-
 				const product = await tx.product
 					.create({
 						data: {
@@ -218,7 +212,6 @@ export class ProductService {
 
 				return product;
 			} catch (e: any) {
-				console.log(e);
 				throw new BadRequestException({
 					...PRODUCT_CREATE_ERROR,
 					detail: e?.message,
@@ -260,7 +253,7 @@ export class ProductService {
 
 					await this.updateProductTags({ productId: id, tagIds }, tx);
 				}
-				console.log(licenseInfo);
+
 				if (licenseInfo?.length) {
 					// 라이센스 업데이트
 					for (const license of licenseInfo) {
