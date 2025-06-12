@@ -81,6 +81,11 @@ export const ProductListQuerySchema = z.object({
 	maxBpm: z.string().transform(Number).pipe(z.number().int().optional()).describe("120").optional(),
 });
 
+export const ProductSearchQuerySchema = ProductListQuerySchema.extend({
+	keyword: z.string().optional().describe("검색어"),
+});
+
 export type ProductCreateRequest = z.infer<typeof ProductCreateSchema>;
 export type ProductUpdateRequest = z.infer<typeof ProductUpdateSchema>;
 export type ProductListQueryRequest = z.infer<typeof ProductListQuerySchema>;
+export type ProductSearchQueryRequest = z.infer<typeof ProductSearchQuerySchema>;

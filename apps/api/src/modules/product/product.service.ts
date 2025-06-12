@@ -5,7 +5,12 @@ import { ENUM_PRODUCT_FILE_TYPE, ENUM_PRODUCT_SORT } from "./product.enum";
 import { ProductUpdateDto } from "./dto/request/product.update.dto";
 import { FileService } from "../file/file.service";
 import { ProductCreateRequest, ProductListQueryRequest } from "@hitbeatclub/shared-types/product";
-import { PRODUCT_CREATE_ERROR, PRODUCT_LICENSE_NOT_FOUND_ERROR, PRODUCT_UPDATE_ERROR } from "./product.error";
+import {
+	PRODUCT_CREATE_ERROR,
+	PRODUCT_LICENSE_NOT_FOUND_ERROR,
+	PRODUCT_UPDATE_ERROR,
+	PRODUCT_UPDATE_LICENSE_ERROR,
+} from "./product.error";
 
 @Injectable()
 export class ProductService {
@@ -254,7 +259,7 @@ export class ProductService {
 
 					await this.updateProductTags({ productId: id, tagIds }, tx);
 				}
-
+				console.log(licenseInfo);
 				if (licenseInfo?.length) {
 					// 라이센스 업데이트
 					for (const license of licenseInfo) {
@@ -500,26 +505,33 @@ export class ProductService {
 		{ productId, license }: { productId: number; license: { type: string; price: number } },
 		tx?: Prisma.TransactionClient,
 	) {
-		const transaction = tx || this.prisma;
+		try {
+			const transaction = tx || this.prisma;
 
-		const licenseRow = await transaction.license
-			.findFirst({
-				where: { type: license?.type },
-			})
-			.then((data) => this.prisma.serializeBigInt(data));
+			const licenseRow = await transaction.license
+				.findFirst({
+					where: { type: license?.type },
+				})
+				.then((data) => this.prisma.serializeBigInt(data));
 
-		if (!licenseRow?.id) {
-			throw new BadRequestException(PRODUCT_LICENSE_NOT_FOUND_ERROR);
+			if (!licenseRow?.id) {
+				throw new BadRequestException(PRODUCT_LICENSE_NOT_FOUND_ERROR);
+			}
+
+			await transaction.productLicense.update({
+				where: { productId_licenseId: { productId, licenseId: licenseRow?.id } },
+				data: {
+					price: license?.price,
+				},
+			});
+
+			return licenseRow;
+		} catch (e: any) {
+			throw new BadRequestException({
+				...PRODUCT_UPDATE_LICENSE_ERROR,
+				detail: e?.message,
+			});
 		}
-
-		await transaction.productLicense.update({
-			where: { productId_licenseId: { productId, licenseId: licenseRow?.id } },
-			data: {
-				price: license?.price,
-			},
-		});
-
-		return licenseRow;
 	}
 
 	async createProductLicense(
@@ -684,29 +696,6 @@ export class ProductService {
 					_count: {
 						select: {
 							productGenre: true,
-						},
-					},
-				},
-			})
-			.then((data) => this.prisma.serializeBigInt(data));
-	}
-
-	/**
-	 * 모든 태그 조회
-	 * @returns
-	 */
-	async findTagAll() {
-		return await this.prisma.tag
-			.findMany({
-				where: {
-					deletedAt: null,
-				},
-				select: {
-					id: true,
-					name: true,
-					_count: {
-						select: {
-							productTag: true,
 						},
 					},
 				},

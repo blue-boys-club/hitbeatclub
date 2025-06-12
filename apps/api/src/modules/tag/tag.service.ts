@@ -21,6 +21,39 @@ export class TagService {
 		}
 	}
 
+	/**
+	 * 모든 태그별 개수 조회
+	 * @returns
+	 */
+	async findAllWithCount() {
+		return await this.prisma.tag
+			.findMany({
+				where: {
+					deletedAt: null,
+				},
+				select: {
+					id: true,
+					name: true,
+					_count: {
+						select: {
+							productTag: {
+								where: {
+									deletedAt: null,
+								},
+							},
+						},
+					},
+				},
+			})
+			.then((data) =>
+				this.prisma.serializeBigInt(data).map((tag) => ({
+					id: Number(tag.id),
+					name: tag.name,
+					count: tag._count.productTag,
+				})),
+			);
+	}
+
 	async findOne(id: number) {
 		try {
 			const tag = await this.prisma.tag

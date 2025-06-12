@@ -17,22 +17,19 @@ import { IResponse } from "src/common/response/interfaces/response.interface";
 export class TagController {
 	constructor(private readonly tagService: TagService) {}
 
-	@Get()
-	@ApiOperation({ summary: "태그 목록 조회" })
+	@Get("with-count")
+	@ApiOperation({ summary: "태그별 리스트 및 개수 조회" })
 	@AuthenticationDoc()
 	@DocResponse<TagListResponseDto>(tagMessage.find.success, {
 		dto: TagListResponseDto,
 	})
-	async findAll(): Promise<IResponse<TagListResponseDto>> {
-		const tags = await this.tagService.findAll();
+	async findAllWithCount(): Promise<IResponse<TagListResponseDto>> {
+		const tags = await this.tagService.findAllWithCount();
 
 		return {
 			statusCode: 200,
 			message: tagMessage.find.success,
-			data: tags.map((tag) => ({
-				id: Number(tag.id),
-				name: tag.name,
-			})),
+			data: tags,
 		};
 	}
 

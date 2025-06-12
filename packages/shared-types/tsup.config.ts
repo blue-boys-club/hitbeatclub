@@ -13,6 +13,7 @@ export default defineConfig({
 		"file/index": "src/file/index.ts",
 		"settlement/index": "src/settlement/index.ts",
 		"tag/index": "src/tag/index.ts",
+		"genre/index": "src/genre/index.ts",
 	},
 	format: ["cjs", "esm"],
 	dts: true,

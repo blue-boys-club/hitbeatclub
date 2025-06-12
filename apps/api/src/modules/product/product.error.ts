@@ -23,3 +23,9 @@ export const PRODUCT_LICENSE_NOT_FOUND_ERROR = {
 	status: 404,
 	detail: "라이선스를 찾을 수 없습니다.",
 };
+
+export const PRODUCT_UPDATE_LICENSE_ERROR = {
+	title: "Product update license error",
+	code: 1204,
+	status: 400,
+};

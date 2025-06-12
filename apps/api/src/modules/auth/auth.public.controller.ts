@@ -1,15 +1,4 @@
-import {
-	BadRequestException,
-	Body,
-	Controller,
-	Get,
-	NotFoundException,
-	Param,
-	Post,
-	Query,
-	Req,
-	UnauthorizedException,
-} from "@nestjs/common";
+import { Body, Controller, Get, NotFoundException, Post, Query, Req, UnauthorizedException } from "@nestjs/common";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { DocAuth, DocResponse } from "src/common/doc/decorators/doc.decorator";
@@ -22,18 +11,17 @@ import {
 } from "./decorators/auth.social.decorator";
 import { AuthenticatedRequest } from "./dto/request/auth.dto.request";
 import { AuthLoginResponseDto } from "./dto/response/auth.login.response.dto";
-import { AuthJwtAccessProtected } from "./decorators/auth.jwt.decorator";
 import userMessage from "../user/user.message";
 import { UserUpdateDto } from "../user/dto/request/user.update.request.dto";
-import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
 import { AuthLoginDto } from "./dto/request/auth.login.reqeust.dto";
-import { USER_EMAIL_ALREADY_EXISTS_ERROR, USER_INVALID_PASSWORD_ERROR, USER_NOT_FOUND_ERROR } from "../user/user.error";
+import { USER_INVALID_PASSWORD_ERROR, USER_NOT_FOUND_ERROR } from "../user/user.error";
 import { AuthResetPasswordRequestDto } from "./dto/request/auth.reset-password.request.dto";
 import { HelperHashService } from "src/common/helper/services/helper.hash.service";
 import { AuthFindIdDto } from "./dto/request/auth.find-id.request.dto";
 import { AuthFindIdResponseDto } from "./dto/response/auth.find-response.dto";
 import { AuthCheckEmailResponseDto } from "./dto/response/auth.check-email.response.dto";
 import { AuthCheckEmailRequestDto } from "./dto/request/auth.check-email.request.dto";
+import { CreateAccessTokenDto } from "./dto/request/auth.create-token.dto.request";
 
 @ApiTags("auth.public")
 @Controller("auth")
@@ -275,6 +263,29 @@ export class AuthPublicController {
 			statusCode: 200,
 			message: userMessage.checkEmail.success,
 			data: { success: user ? false : true },
+		};
+	}
+
+	@Post("access-token")
+	@ApiOperation({ summary: "Access token 발급" })
+	async createAccessToken(
+		@Body() createAccessTokenDto: CreateAccessTokenDto,
+	): Promise<IResponse<{ id: number; accessToken: string; refreshToken: string }>> {
+		const user = await this.userService.findByEmail(createAccessTokenDto.email);
+
+		const { accessToken, refreshToken } = this.authService.createToken({
+			email: user.email,
+			id: user.id,
+		});
+
+		return {
+			statusCode: 200,
+			message: "success create access token",
+			data: {
+				id: user.id,
+				accessToken,
+				refreshToken,
+			},
 		};
 	}
 

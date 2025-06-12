@@ -38,8 +38,10 @@ import { PRODUCT_NOT_FOUND_ERROR } from "./product.error";
 import { ProductListResponseDto } from "./dto/response/product.list.response.dto";
 import { ProductListQueryRequestDto } from "./dto/request/project.list.request.dto";
 import { ProductUploadFileRequestDto } from "./dto/request/product.upload-file.request.dto";
-import { ProductFindQuery } from "./decorators/product.decorator";
+import { ProductFindQuery, ProductSearchQuery } from "./decorators/product.decorator";
 import { ProductSearchInfoResponseDto } from "./dto/response/product.search-info.response.dto";
+import { TagService } from "../tag/tag.service";
+import { GenreService } from "../genre/genre.service";
 
 @Controller("products")
 @ApiTags("product")
@@ -48,6 +50,8 @@ export class ProductController {
 	constructor(
 		private readonly productService: ProductService,
 		private readonly fileService: FileService,
+		private readonly tagService: TagService,
+		private readonly genreService: GenreService,
 	) {}
 
 	@Get()
@@ -107,6 +111,62 @@ export class ProductController {
 		};
 	}
 
+	@Get("/search")
+	@ApiOperation({ summary: "상품 검색 목록 조회" })
+	@DocAuth({ jwtAccessToken: true })
+	@ProductSearchQuery()
+	@DocResponsePaging<ProductListResponseDto>(productMessage.find.success, {
+		dto: ProductListResponseDto,
+	})
+	async findAllBySearch(
+		@Req() req: AuthenticatedRequest,
+		@Query() productListQueryRequestDto: ProductListQueryRequestDto,
+	): Promise<IResponsePaging<ProductListResponseDto>> {
+		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds } = productListQueryRequestDto;
+
+		const where = {
+			...(productListQueryRequestDto.category === "null" ? {} : { category }),
+			...(musicKey === "null" ? {} : { musicKey }),
+			...(scaleType === "null" ? {} : { scaleType }),
+			...(minBpm ? { minBpm: { lte: minBpm }, maxBpm: { gte: minBpm } } : {}),
+			...(maxBpm ? { minBpm: { lte: maxBpm }, maxBpm: { gte: maxBpm } } : {}),
+			...(genreIds
+				? {
+						productGenre: {
+							some: {
+								deletedAt: null,
+								genreId: { in: genreIds.split(",").map((id) => parseInt(id)) },
+							},
+						},
+					}
+				: {}),
+			...(tagIds
+				? {
+						productTag: {
+							some: {
+								deletedAt: null,
+								tagId: { in: tagIds.split(",").map((id) => parseInt(id)) },
+							},
+						},
+					}
+				: {}),
+		};
+		const products = await this.productService.findAll(where, productListQueryRequestDto);
+
+		const total = await this.productService.getTotal(where);
+		return {
+			statusCode: 200,
+			message: productMessage.find.success,
+			_pagination: {
+				page: productListQueryRequestDto.page,
+				limit: productListQueryRequestDto.limit,
+				totalPage: Math.ceil(total / productListQueryRequestDto.limit),
+				total,
+			},
+			data: products,
+		};
+	}
+
 	@Get("/search-info")
 	@ApiOperation({ summary: "상품 검색 정보 조회" })
 	@DocAuth({ jwtAccessToken: true })
@@ -115,10 +175,10 @@ export class ProductController {
 	})
 	async findProductSearchInfo() {
 		// 장르 조회
-		const genres = await this.productService.findGenreAll();
+		const genres = await this.genreService.findAllWithCount();
 
 		// Tag 조회
-		const tags = await this.productService.findTagAll();
+		const tags = await this.tagService.findAllWithCount();
 		return {
 			statusCode: 200,
 			message: productMessage.findProductSearchInfo.success,
