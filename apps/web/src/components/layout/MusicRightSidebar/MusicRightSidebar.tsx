@@ -32,7 +32,7 @@ export const MusicRightSidebar = memo(() => {
 	const {
 		isOpen,
 		setRightSidebar,
-		currentTrackId = 1,
+		currentTrackId = 12,
 	} = useLayoutStore(
 		useShallow((state) => ({
 			isOpen: state.rightSidebar.isOpen,

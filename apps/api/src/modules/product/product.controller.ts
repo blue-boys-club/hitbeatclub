@@ -207,6 +207,8 @@ export class ProductController {
 			throw new NotFoundException(PRODUCT_NOT_FOUND_ERROR);
 		}
 
+		console.log(product);
+
 		const productFiles = await this.productService.findProductFiles(id);
 
 		return {

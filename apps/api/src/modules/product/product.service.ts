@@ -139,16 +139,34 @@ export class ProductService {
 								profileImageUrl: true,
 							},
 						},
+						productLicense: {
+							select: {
+								licenseId: true,
+								price: true,
+								license: {
+									select: {
+										type: true,
+									},
+								},
+							},
+						},
 					},
 				})
 				.then((data) => this.prisma.serializeBigInt(data) as Product);
 
 			const seller = (product as any).artistSellerIdToArtist;
+			const license = (product as any).productLicense;
 			delete (product as any).artistSellerIdToArtist;
+			delete (product as any).productLicense;
 
 			return {
 				...product,
 				seller,
+				licenseInfo: license.map((l) => ({
+					id: l.licenseId,
+					type: l.license.type,
+					price: l.price,
+				})),
 			};
 		} catch (error) {
 			throw new BadRequestException(error);

@@ -143,8 +143,12 @@ const ArtistStudioTrackModal = ({
 				// Key 관련 UI 필드 설정
 				keyValue: musicKey !== "null" ? { label: musicKey, value: musicKey } : undefined,
 				scaleValue: scaleType !== "null" ? scaleType.toLowerCase() : null,
-				// 기본값 사용 (API 응답에 없는 필드들)
-				licenseInfo: baseDefaults.licenseInfo,
+				// 라이센스 정보 설정 (서버 데이터 우선 사용)
+				licenseInfo:
+					(productData as any).licenseInfo?.map((license: any) => ({
+						type: license.type,
+						price: license.price,
+					})) || baseDefaults.licenseInfo,
 				currency: "KRW",
 				coverImageFileId: (productData as any).coverImage?.id || undefined,
 				audioFileFileId: (productData as any).audioFile?.id || undefined,

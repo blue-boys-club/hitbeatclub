@@ -9,6 +9,7 @@ import { TagButton } from "@/components/ui/TagButton";
 import { LicenseNote, ProductDetailLicense } from "../features/product/components/ProductDetailLicense";
 import { ProductDetailLicenseModal } from "../features/product/components/modal/ProductDetailLicenseModal";
 import { LicenseColor, LicenseType } from "../features/product/product.constants";
+import { LICENSE_MAP_TEMPLATE } from "@/apis/product/product.dummy";
 import { useRouter } from "next/navigation";
 import { useLayoutStore } from "@/stores/layout";
 import { useShallow } from "zustand/react/shallow";
@@ -87,8 +88,22 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 		}
 	};
 
-	// const cheapestLicensePrice = product?.licenses.reduce((min, license) => Math.min(min, license.price), Infinity);
-	const cheapestLicensePrice = 10000;
+	// 라이센스 정보 처리 (모달과 동일한 로직)
+	const licenses = useMemo(() => {
+		if (!product?.licenseInfo) return [];
+
+		return product.licenseInfo.map((licenseInfo) => ({
+			id: licenseInfo.id,
+			type: licenseInfo.type as LicenseType,
+			price: licenseInfo.price,
+			...LICENSE_MAP_TEMPLATE[licenseInfo.type as keyof typeof LICENSE_MAP_TEMPLATE],
+		}));
+	}, [product?.licenseInfo]);
+
+	const cheapestLicensePrice = useMemo(() => {
+		if (licenses.length === 0) return 10000;
+		return Math.min(...licenses.map((license) => license.price));
+	}, [licenses]);
 
 	return (
 		<>
@@ -204,19 +219,19 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 					<h2 className="mb-2.5 text-26px font-bold leading-[32px] tracking-0.26px text-center">라이센스</h2>
 
 					<div className="flex gap-10 w-[787px] mx-auto py-10 border-t-2px border-hbc-black">
-						{/* {product?.licenses.map((license) => (
+						{licenses.map((license) => (
 							<div
 								key={license.id}
 								className="flex flex-1 gap-5"
 							>
 								<ProductDetailLicense
-									type={license.name as LicenseType}
-									price={license.price.toLocaleString()}
+									type={license.type}
+									price={`${license.price.toLocaleString()} KRW`}
 									notes={license.notes as LicenseNote[]}
 									isClickable={false}
 								/>
 							</div>
-						))} */}
+						))}
 					</div>
 				</section>
 			</main>

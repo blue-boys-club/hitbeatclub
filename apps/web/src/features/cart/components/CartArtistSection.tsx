@@ -15,7 +15,7 @@ export type CartItemWithProductDetails = {
 	id: number; // product id
 	imageUrl: string;
 	title: string;
-	licenseId: number;
+	licenseType: "MASTER" | "EXCLUSIVE";
 	licenseName: string;
 	licenseDescription: string;
 	type: "acapella" | "beat";
@@ -41,13 +41,19 @@ export const CartArtistSection = ({ artistId, artistImageUrl, artistName, items 
 
 	// 라이센스 변경 mutation (simulated)
 	const changeLicenseMutation = useMutation({
-		mutationFn: async ({ productId, newLicenseId }: { productId: number; newLicenseId: number }) => {
+		mutationFn: async ({
+			productId,
+			newLicenseType,
+		}: {
+			productId: number;
+			newLicenseType: "MASTER" | "EXCLUSIVE";
+		}) => {
 			// Simulate API call
 			return new Promise<void>((resolve) => {
 				setTimeout(() => {
-					console.log(`라이센스 변경 시도: productId=${productId}, newLicenseId=${newLicenseId}`);
+					console.log(`라이센스 변경 시도: productId=${productId}, newLicenseType=${newLicenseType}`);
 					// Update cart store
-					storeAddItem({ id: productId, licenseId: newLicenseId });
+					storeAddItem({ id: productId, licenseType: newLicenseType });
 					resolve();
 				}, 500);
 			});
@@ -79,8 +85,8 @@ export const CartArtistSection = ({ artistId, artistImageUrl, artistName, items 
 		setSelectedItem(null);
 	};
 
-	const handleChangeLicense = (productId: number, newLicenseId: number) => {
-		changeLicenseMutation.mutate({ productId, newLicenseId });
+	const handleChangeLicense = (productId: number, newLicenseType: "MASTER" | "EXCLUSIVE") => {
+		changeLicenseMutation.mutate({ productId, newLicenseType });
 		handleCloseLicenseModal();
 	};
 
@@ -181,9 +187,9 @@ export const CartArtistSection = ({ artistId, artistImageUrl, artistName, items 
 				<LicenseChangeModal
 					isOpen={isLicenseModalOpen}
 					onClose={handleCloseLicenseModal}
-					currentLicenseId={selectedItem.licenseId} // Pass licenseId (number)
+					currentLicenseType={selectedItem.licenseType} // Pass licenseType
 					currentItemId={selectedItem.id} // Pass product ID
-					onChangeLicense={handleChangeLicense} // Expects (productId, newLicenseId)
+					onChangeLicense={handleChangeLicense} // Expects (productId, newLicenseType)
 				/>
 			)}
 		</>

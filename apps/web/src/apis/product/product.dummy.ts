@@ -21,6 +21,12 @@ type Product = {
 			  }
 		)[];
 	}[];
+	// 새로운 라이센스 구조 추가
+	licenseInfo?: {
+		id: number;
+		type: "MASTER" | "EXCLUSIVE";
+		price: number;
+	}[];
 };
 
 const PRODUCTS: Array<Product> = [
@@ -170,4 +176,41 @@ const PRODUCTS_MAP = PRODUCTS.reduce(
 	{} as Record<number, (typeof PRODUCTS)[number]>,
 );
 
-export { PRODUCTS, PRODUCTS_MAP };
+const LICENSE_MAP_TEMPLATE = {
+	MASTER: {
+		name: "Master",
+		description: "MP3",
+		notes: [
+			"무제한 뮤직비디오 제작 가능",
+			"상업적 라이브 공연에서 자유롭게 사용 가능",
+			"라디오 방송 권한 (무제한 방송국 포함)",
+			"온라인 오디오 스트리밍 무제한 가능",
+			"음원 복제 및 유통 수량 제한 없음",
+			"음악 녹음 및 발매용 사용 가능",
+			"상업적 이용 가능",
+			{
+				text: "저작권 일체 판매",
+				color: "text-hbc-blue",
+			},
+		],
+	},
+	EXCLUSIVE: {
+		name: "Exclusive",
+		description: "MP3, WAV, Stems",
+		notes: [
+			"무제한 뮤직비디오 제작 가능",
+			"상업적 라이브 공연에서 자유롭게 사용 가능",
+			"라디오 방송 권한 (무제한 방송국 포함)",
+			"온라인 오디오 스트리밍 무제한 가능",
+			"음원 복제 및 유통 수량 제한 없음",
+			"음악 녹음 및 발매용 사용 가능",
+			"상업적 이용 가능",
+			{
+				text: "저작권 표기 필수",
+				color: "text-hbc-red",
+			},
+		],
+	},
+};
+
+export { PRODUCTS, PRODUCTS_MAP, LICENSE_MAP_TEMPLATE };

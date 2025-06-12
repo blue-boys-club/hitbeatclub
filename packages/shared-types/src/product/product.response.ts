@@ -80,6 +80,19 @@ export const ProductDetailResponseSchema = z.object({
 		url: z.string().url().describe("ZIP 파일 URL").default("https://example.com/zip.zip"),
 		originName: z.string().describe("ZIP 파일 원본 이름").default("zip.zip"),
 	}),
+	licenseInfo: z
+		.array(
+			z.object({
+				id: z.number().describe("라이센스 ID"),
+				type: z.enum(["MASTER", "EXCLUSIVE"]).describe("라이센스 타입"),
+				price: z.number().describe("라이센스 가격"),
+			}),
+		)
+		.describe("라이센스 정보")
+		.default([
+			{ id: 1, type: "MASTER", price: 50000 },
+			{ id: 2, type: "EXCLUSIVE", price: 30000 },
+		]),
 });
 
 export const ProductSearchInfoResponseSchema = z.object({
