@@ -93,6 +93,8 @@ import { VolumeThumb } from "./VolumeThumb";
 import { Youtube } from "./Youtube";
 import { AddCircle } from "./AddCircle";
 import { Phone } from "./Phone";
+import { StarInCircle } from "./StarInCircle";
+import { HeartFilled } from "./HeartFilled";
 
 export {
 	AddCircle,
@@ -190,4 +192,6 @@ export {
 	Upload,
 	ArrowRight,
 	Phone,
+	StarInCircle,
+	HeartFilled,
 };
