@@ -41,9 +41,8 @@ import { ArtistListResponseDto } from "./dto/response/artist.list.response.dto";
 import { ProductListResponseDto } from "../product/dto/response/product.list.response.dto";
 import { productMessage } from "../product/product.message";
 import { ProductService } from "../product/product.service";
-import { ProductListQueryRequestDto } from "../product/dto/request/project.list.request.dto";
-import { ArtistProductListQueryRequest } from "@hitbeatclub/shared-types/artist";
 import { ArtistProductListQueryRequestDto } from "./dto/request/artist.product-list.request.dto";
+import { PrismaService } from "src/common/prisma/prisma.service";
 @Controller("artists")
 @ApiTags("artist")
 @ApiBearerAuth()
@@ -53,6 +52,7 @@ export class ArtistController {
 		private readonly fileService: FileService,
 		private readonly settlementService: SettlementService,
 		private readonly productService: ProductService,
+		private readonly prisma: PrismaService,
 	) {}
 
 	@Get()
@@ -120,15 +120,20 @@ export class ArtistController {
 
 		delete createArtistDto?.profileImageFileId;
 
-		const artist = await this.artistService.create(req.user.id, createArtistDto);
+		const artist = await this.prisma.$transaction(async (tx) => {
+			const createdArtist = await this.artistService.create(req.user.id, createArtistDto, tx);
 
-		if (profileImageFileId) {
-			await this.artistService.uploadArtistProfile({
-				uploaderId: req.user.id,
-				artistId: artist.id,
-				profileImageFileId,
-			});
-		}
+			if (profileImageFileId) {
+				await this.artistService.uploadArtistProfile({
+					uploaderId: req.user.id,
+					artistId: createdArtist.id,
+					profileImageFileId,
+					tx,
+				});
+			}
+
+			return createdArtist;
+		});
 
 		return {
 			statusCode: 201,

@@ -4,10 +4,11 @@ import { ConfigService } from "@nestjs/config";
 import { AwsS3Dto } from "src/common/aws/dtos/aws.s3.dto";
 import { IAwsS3PutItemOptions } from "src/common/aws/interfaces/aws.interface";
 import { IAwsS3PutItem } from "src/common/aws/interfaces/aws.interface";
-import { FILE_PUT_ITEM_IN_BUCKET_ERROR } from "./file.error";
+import { FILE_PUT_ITEM_IN_BUCKET_ERROR, FILE_UPDATE_FILE_ENABLED_AND_DELETE_ERROR } from "./file.error";
 import { PrismaService } from "src/common/prisma/prisma.service";
 import { FileCreateRequestDto } from "./dto/request/file.create.dto";
 import { v4 as uuidv4 } from "uuid";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class FileService {
@@ -100,22 +101,36 @@ export class FileService {
 	 * 1. 기존 파일을 삭제하고
 	 * 2. 새로운 파일 활성화 한다.
 	 */
-	async updateFileEnabledAndDelete({ uploaderId, newFileId, targetId, targetTable, type }) {
-		const files = await this.findFilesByTarget({
-			uploaderId,
-			targetTable,
-			targetId,
-			type,
-		});
+	async updateFileEnabledAndDelete(
+		{ uploaderId, newFileId, targetId, targetTable, type },
+		tx?: Prisma.TransactionClient,
+	) {
+		const prisma = tx ?? this.prisma;
 
-		for (const file of files) {
-			await this.softDeleteFile(file.id);
+		try {
+			const files = await this.findFilesByTarget({
+				uploaderId,
+				targetTable,
+				targetId,
+				type,
+			});
+
+			for (const file of files) {
+				await this.softDeleteFile(file.id, tx);
+			}
+
+			return await prisma.file
+				.update({
+					where: { id: newFileId },
+					data: { isEnabled: 1, targetId: targetId, deletedAt: null },
+				})
+				.then((data) => this.prisma.serializeBigInt(data));
+		} catch (e) {
+			throw new BadRequestException({
+				...FILE_UPDATE_FILE_ENABLED_AND_DELETE_ERROR,
+				detail: e.message,
+			});
 		}
-
-		return await this.prisma.file.update({
-			where: { id: newFileId },
-			data: { isEnabled: 1, targetId: targetId, deletedAt: null },
-		});
 	}
 
 	// 기존 파일을 찾는다.
@@ -155,8 +170,10 @@ export class FileService {
 			.then((data) => this.prisma.serializeBigInt(data));
 	}
 
-	async softDeleteFile(id: number): Promise<void> {
-		await this.prisma.file.update({
+	async softDeleteFile(id: number, tx?: Prisma.TransactionClient): Promise<void> {
+		const prisma = tx ?? this.prisma;
+
+		await prisma.file.update({
 			where: { id },
 			data: { isEnabled: 0, deletedAt: new Date() },
 		});

@@ -63,7 +63,6 @@ model Artist {
   user                       User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_TO_artist_1")
   productSellerIdToArtist    Product[] @relation("product_seller_idToartist")
   settlement Settlement[]
-  files      File[]         @relation("ArtistToFile")
 
   @@index([userId], map: "FK_user_TO_artist_1")
   @@map("artist")
@@ -156,7 +155,6 @@ model Product {
   deletedAt                 DateTime? @map("deleted_at") @db.Timestamp(0)
   cart                      Cart[]
   artistSellerIdToArtist    Artist?          @relation("product_seller_idToartist", fields: [sellerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_artist_TO_product_1")
-  files                     File[]           @relation("ProductToFile")
   productLicense            ProductLicense[]
   productGenre              ProductGenre[]
   productTag                ProductTag[]
@@ -200,8 +198,6 @@ model File {
   updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
   deletedAt   DateTime? @map("deleted_at") @db.Timestamp(0)
   user        User?     @relation(fields: [uploaderId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_file_uploader")
-  product     Product?  @relation("ProductToFile", fields: [targetId], references: [id], map: "fk_file_product")
-  artist      Artist?   @relation("ArtistToFile", fields: [targetId], references: [id], map: "fk_file_artist")
 
   @@index([uploaderId], map: "idx_file_uploader")
   @@index([targetId], map: "idx_file_target")
