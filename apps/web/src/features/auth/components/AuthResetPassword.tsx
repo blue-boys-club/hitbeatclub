@@ -4,6 +4,8 @@ import { useState } from "react";
 import { HBCLoginMain } from "@/assets/svgs";
 import { AuthResetPasswordCompletionModal } from "./Modal/AuthResetPasswordCompletionModal";
 import { AuthResetPasswordModal } from "./Modal/AuthResetPasswordModal";
+import { Toaster } from "@/components/ui/Toast/toaster";
+import { useRouter } from "next/navigation";
 
 export const AuthResetPassword = () => {
 	const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(true);
@@ -38,6 +40,8 @@ export const AuthResetPassword = () => {
 				isOpen={isCompletionModalOpen}
 				onClose={onCompletionClose}
 			/>
+
+			<Toaster />
 		</>
 	);
 };

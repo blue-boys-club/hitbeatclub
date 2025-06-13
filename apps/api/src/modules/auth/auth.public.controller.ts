@@ -322,26 +322,6 @@ export class AuthPublicController {
 	// 	};
 	// }
 
-	@Post("reset-password")
-	@ApiOperation({ summary: "비밀번호 재설정" })
-	@ApiBody({
-		type: AuthResetPasswordRequestDto,
-	})
-	@DocResponse<{ success: boolean }>("비밀번호 재설정 성공", {})
-	async resetPassword(@Body() resetPasswordDto: AuthResetPasswordRequestDto): Promise<IResponse<{ success: boolean }>> {
-		const success = await this.authService.resetPassword(
-			resetPasswordDto.email,
-			resetPasswordDto.token,
-			resetPasswordDto.newPassword,
-		);
-
-		return {
-			statusCode: 200,
-			message: "비밀번호가 성공적으로 재설정되었습니다.",
-			data: { success },
-		};
-	}
-
 	// @Post("verify-token")
 	// @ApiOperation({ summary: "토큰 검증 (범용)" })
 	// @ApiBody({ type: AuthVerifyTokenRequestDto })
@@ -365,23 +345,23 @@ export class AuthPublicController {
 	// 	}
 	// }
 
-	@Post("verify-password-reset")
-	@ApiOperation({ summary: "비밀번호 재설정 토큰 검증 및 비밀번호 변경" })
-	@ApiBody({ type: AuthVerifyPasswordResetTokenRequestDto })
+	@Post("reset-password")
+	@ApiOperation({ summary: "비밀번호 재설정" })
+	@ApiBody({ type: AuthResetPasswordRequestDto })
 	@DocResponse<{ success: boolean }>("비밀번호 재설정 성공", {})
-	async verifyPasswordResetToken(
-		@Body() verifyPasswordResetDto: AuthVerifyPasswordResetTokenRequestDto,
-	): Promise<IResponse<{ success: boolean }>> {
+	async resetPassword(@Body() resetPasswordDto: AuthResetPasswordRequestDto): Promise<IResponse<{ success: boolean }>> {
 		try {
+			// 비밀번호 확인 검증은 Zod 스키마에서 이미 처리됨 (newPassword === confirmPassword)
+
 			// 토큰 검증 및 소모 (PASSWORD_RESET 목적의 토큰만 허용)
 			const tokenData = await this.accountTokenService.consumeTokenByPurpose(
-				verifyPasswordResetDto.token,
+				resetPasswordDto.token,
 				TokenPurpose.PASSWORD_RESET,
-				verifyPasswordResetDto.email,
+				resetPasswordDto.email,
 			);
 
 			// 새 비밀번호 해시화
-			const hashedPassword = this.helperHashService.hashPassword(verifyPasswordResetDto.newPassword);
+			const hashedPassword = this.helperHashService.hashPassword(resetPasswordDto.newPassword);
 
 			// 비밀번호 업데이트
 			await this.userService.updatePassword(Number(tokenData.user.id), hashedPassword);

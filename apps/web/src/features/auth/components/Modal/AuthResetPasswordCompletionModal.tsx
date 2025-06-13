@@ -1,5 +1,6 @@
 import { PopupButton } from "@/components/ui/PopupButton";
 import { Popup, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
+import Link from "next/link";
 
 interface AuthResetPasswordCompletionModalProps {
 	isOpen: boolean;
@@ -18,7 +19,9 @@ export const AuthResetPasswordCompletionModal = ({ isOpen, onClose }: AuthResetP
 				</PopupHeader>
 
 				<PopupFooter>
-					<PopupButton className="py-2.5 font-bold">확인</PopupButton>
+					<Link href="/auth/login">
+						<PopupButton className="py-2.5 font-bold">확인</PopupButton>
+					</Link>
 				</PopupFooter>
 			</PopupContent>
 		</Popup>

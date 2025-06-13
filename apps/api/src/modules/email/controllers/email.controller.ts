@@ -83,16 +83,17 @@ export class EmailController {
 					throw new BadRequestException("지원하지 않는 이메일 타입입니다.");
 			}
 
-			this.logger.log(`Email sent successfully with token: ${type} to ${to}, token: ${accountToken.token}`);
 			return {
 				success: true,
 				message: "이메일이 성공적으로 발송되었습니다.",
-				type,
-				to,
-				tokenId: accountToken.id.toString(),
+				data: {
+					type,
+					to,
+					tokenId: accountToken.id.toString(),
+				},
 			};
 		} catch (e) {
-			this.logger.error(`Failed to send email: ${e.message}`, e.stack);
+			this.logger.error(e, `Failed to send email: ${e.message}`);
 
 			if (e?.response) {
 				throw new BadRequestException(e.response);
@@ -130,7 +131,7 @@ export class EmailController {
 				message: "이메일 템플릿이 성공적으로 초기화되었습니다.",
 			};
 		} catch (e) {
-			this.logger.error(`Failed to initialize templates: ${e.message}`, e.stack);
+			this.logger.error(e, `Failed to initialize templates: ${e.message}`);
 
 			throw new BadRequestException({
 				message: e.message || "템플릿 초기화 중 오류가 발생했습니다.",

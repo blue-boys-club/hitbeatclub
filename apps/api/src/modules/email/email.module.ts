@@ -26,7 +26,6 @@ export class EmailModule implements OnModuleInit {
 		const appEnv = this.configService.get<string>("app.env", "development");
 
 		if (autoInitTemplates) {
-			console.log("autoInitTemplates", autoInitTemplates);
 			try {
 				this.logger.log(`Initializing email templates on module init for ${appEnv} environment...`);
 				await this.emailService.initializeTemplates();

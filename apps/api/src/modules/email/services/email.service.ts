@@ -114,7 +114,7 @@ export class EmailService implements IEmailService {
 			this.logger.log(`Template ${templateName} deleted successfully`);
 			return true;
 		} catch (err: unknown) {
-			this.logger.error(`Failed to delete template CHANGE_PASSWORD:`, err);
+			this.logger.error(err, `Failed to delete template CHANGE_PASSWORD`);
 			return false;
 		}
 	}
@@ -136,7 +136,7 @@ export class EmailService implements IEmailService {
 			this.logger.log({ result, to }, "Change Password Email Sent");
 			return true;
 		} catch (err: unknown) {
-			this.logger.error(`Failed to send change password email to ${to}:`, err);
+			this.logger.error(err, `Failed to send change password email to ${to}`);
 			return false;
 		}
 	}
@@ -151,7 +151,7 @@ export class EmailService implements IEmailService {
 			);
 			return true;
 		} catch (err: unknown) {
-			this.logger.error(`Failed to create/update template SIGN_UP:`, err);
+			this.logger.error(err, `Failed to create/update template SIGN_UP`);
 			return false;
 		}
 	}
@@ -165,7 +165,7 @@ export class EmailService implements IEmailService {
 
 			return template;
 		} catch (err: unknown) {
-			this.logger.error(`Failed to get template SIGN_UP:`, err);
+			this.logger.error(err, `Failed to get template SIGN_UP`);
 			return;
 		}
 	}
@@ -180,7 +180,7 @@ export class EmailService implements IEmailService {
 			this.logger.log(`Template ${templateName} deleted successfully`);
 			return true;
 		} catch (err: unknown) {
-			this.logger.error(`Failed to delete template SIGN_UP:`, err);
+			this.logger.error(err, `Failed to delete template SIGN_UP`);
 			return false;
 		}
 	}
@@ -203,7 +203,7 @@ export class EmailService implements IEmailService {
 			this.logger.log(`Sign up email sent successfully to ${to}`);
 			return true;
 		} catch (err: unknown) {
-			this.logger.error(`Failed to send sign up email to ${to}:`, err);
+			this.logger.error(err, `Failed to send sign up email to ${to}`);
 			return false;
 		}
 	}
