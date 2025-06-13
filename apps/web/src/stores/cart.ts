@@ -56,7 +56,14 @@ export const useCartStore = create<CartStore>()(
 
 				init: () => set(initialState),
 			})),
-			{ name, storage: createJSONStorage(() => localStorage) },
+			{
+				name,
+				storage: createJSONStorage(() => localStorage),
+				// Changelog
+				// 1: Initial version
+				// 2: Due to refactor, need to clear cart
+				version: 2,
+			},
 		),
 		{ name },
 	),
