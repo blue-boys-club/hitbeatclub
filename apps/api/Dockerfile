@@ -5,7 +5,7 @@ ARG PNPM_VERSION="^10.0.0"
 ARG TURBO_VERSION="^2.4.4"
 
 FROM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS alpine
-RUN apk update && apk add --no-cache libc6-compat curl
+RUN apk update && apk add --no-cache libc6-compat curl tini
 
 FROM alpine AS base
 
@@ -60,9 +60,15 @@ COPY --from=sourcer --chown=api-user:api-group /app/node_modules /app/node_modul
 # Switch to non-root user
 USER api-user
 
+# Change working directory to apps/api for npm_package_version access
+WORKDIR /app/apps/api
+
 ENV NODE_ENV=production
 EXPOSE 4000
 
-CMD [ "node", "apps/api/dist/src/main.js" ]
+# Use tini as entrypoint for proper signal handling
+ENTRYPOINT ["/sbin/tini", "--"]
+
+CMD [ "npm", "run", "start:prod" ]
 
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD curl -f http://localhost:4000/health || exit 1

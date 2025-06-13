@@ -2,14 +2,14 @@ import { Controller, Post, Delete, Param, Body, Req, Get } from "@nestjs/common"
 import { TagService } from "./tag.service";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
-import { DocResponse } from "src/common/doc/decorators/doc.decorator";
-import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
+import { DocResponse } from "~/common/doc/decorators/doc.decorator";
+import { DatabaseIdResponseDto } from "~/common/response/dtos/response.dto";
 import { TagCreateDto } from "./dto/request/tag.create.request.dto";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
-import { AuthenticationDoc } from "src/common/doc/decorators/auth.decorator";
+import { AuthenticationDoc } from "~/common/doc/decorators/auth.decorator";
 import { tagMessage } from "./tag.message";
 import { TagListResponseDto } from "./dto/response/tag.list.response.dto";
-import { IResponse } from "src/common/response/interfaces/response.interface";
+import { IResponse } from "~/common/response/interfaces/response.interface";
 
 @Controller("tags")
 @ApiTags("tag")

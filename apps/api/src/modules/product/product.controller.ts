@@ -17,22 +17,22 @@ import {
 import { ProductService } from "./product.service";
 import { ApiOperation, ApiTags, ApiConsumes } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
-import { DocAuth, DocRequestFile, DocResponse, DocResponsePaging } from "src/common/doc/decorators/doc.decorator";
-import { IResponse, IResponsePaging } from "src/common/response/interfaces/response.interface";
+import { DocAuth, DocRequestFile, DocResponse, DocResponsePaging } from "~/common/doc/decorators/doc.decorator";
+import { IResponse, IResponsePaging } from "~/common/response/interfaces/response.interface";
 import { productMessage } from "./product.message";
-import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
+import { DatabaseIdResponseDto } from "~/common/response/dtos/response.dto";
 import { ProductCreateDto } from "./dto/request/product.create.request.dto";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
 import {
 	ENUM_FILE_MIME_AUDIO,
 	ENUM_FILE_MIME_DOCUMENT,
 	ENUM_FILE_MIME_VIDEO,
-} from "src/common/file/constants/file.enum.constant";
-import { AuthenticationDoc } from "src/common/doc/decorators/auth.decorator";
-import { FileUploadSingle } from "src/common/file/decorators/file.decorator";
-import { ENUM_FILE_MIME_IMAGE } from "src/common/file/constants/file.enum.constant";
-import { FileRequiredPipe } from "src/common/file/pipes/file.required.pipe";
-import { FileTypePipe } from "src/common/file/pipes/file.type.pipe";
+} from "~/common/file/constants/file.enum.constant";
+import { AuthenticationDoc } from "~/common/doc/decorators/auth.decorator";
+import { FileUploadSingle } from "~/common/file/decorators/file.decorator";
+import { ENUM_FILE_MIME_IMAGE } from "~/common/file/constants/file.enum.constant";
+import { FileRequiredPipe } from "~/common/file/pipes/file.required.pipe";
+import { FileTypePipe } from "~/common/file/pipes/file.type.pipe";
 import { FileUploadResponseDto } from "../file/dto/response/file.upload.response.dto";
 import { FileService } from "../file/file.service";
 import { ProductUpdateDto } from "./dto/request/product.update.dto";

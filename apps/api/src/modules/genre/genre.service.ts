@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
-import { PrismaService } from "src/common/prisma/prisma.service";
+import { PrismaService } from "~/common/prisma/prisma.service";
 import { Genre } from "@prisma/client";
 
 @Injectable()

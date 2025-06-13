@@ -18,6 +18,9 @@ export const MUTATION_KEYS = {
 		findEmail: ["auth", "findEmail"],
 		resetPassword: ["auth", "resetPassword"],
 	},
+	email: {
+		sendChangePassword: ["email", "sendChangePassword"],
+	},
 	product: {
 		create: ["product", "create"],
 		update: (productId: number) => ["product", "update", productId],

@@ -8,3 +8,4 @@ export * from "./common";
 export * from "./file";
 export * from "./tag";
 export * from "./genre";
+export * from "./email";

@@ -12,7 +12,7 @@ import {
 	ApiResponse,
 	getSchemaPath,
 } from "@nestjs/swagger";
-import { ENUM_DOC_REQUEST_BODY_TYPE } from "src/common/doc/constants/doc.enum.constant";
+import { ENUM_DOC_REQUEST_BODY_TYPE } from "~/common/doc/constants/doc.enum.constant";
 import {
 	IDocAuthOptions,
 	IDocDefaultOptions,
@@ -23,21 +23,21 @@ import {
 	IDocRequestOptions,
 	IDocResponseFileOptions,
 	IDocResponseOptions,
-} from "src/common/doc/interfaces/doc.interface";
-import { ENUM_FILE_MIME } from "src/common/file/constants/file.enum.constant";
-import { ENUM_PAGINATION_ORDER_DIRECTION_TYPE } from "src/common/pagination/constants/pagination.enum.constant";
-import { ResponseDto } from "src/common/response/dtos/response.dto";
-import { ResponsePagingDto } from "src/common/response/dtos/response.paging.dto";
-import { ENUM_POLICY_STATUS_CODE_ERROR } from "src/common/policy/constants/policy.status-code.constant";
-import { ENUM_REQUEST_STATUS_CODE_ERROR } from "src/common/request/constants/request.status-code.constant";
+} from "~/common/doc/interfaces/doc.interface";
+import { ENUM_FILE_MIME } from "~/common/file/constants/file.enum.constant";
+import { ENUM_PAGINATION_ORDER_DIRECTION_TYPE } from "~/common/pagination/constants/pagination.enum.constant";
+import { ResponseDto } from "~/common/response/dtos/response.dto";
+import { ResponsePagingDto } from "~/common/response/dtos/response.paging.dto";
+import { ENUM_POLICY_STATUS_CODE_ERROR } from "~/common/policy/constants/policy.status-code.constant";
+import { ENUM_REQUEST_STATUS_CODE_ERROR } from "~/common/request/constants/request.status-code.constant";
 import {
 	AUTH_JWT_ACCESS_TOKEN_ERROR,
 	AUTH_JWT_REFRESH_TOKEN_ERROR,
 	AUTH_SOCIAL_GOOGLE_ERROR,
 	AUTH_SOCIAL_KAKAO_ERROR,
 	AUTH_SOCIAL_NAVER_ERROR,
-} from "src/modules/auth/auth.error";
-import { ENUM_APP_STATUS_CODE_ERROR } from "src/constants/app.status-code.constant";
+} from "~/modules/auth/auth.error";
+import { ENUM_APP_STATUS_CODE_ERROR } from "~/constants/app.status-code.constant";
 
 export function DocDefault<T>(options: IDocDefaultOptions<T>): MethodDecorator {
 	const docs = [];

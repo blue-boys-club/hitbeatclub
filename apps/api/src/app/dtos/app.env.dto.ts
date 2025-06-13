@@ -1,6 +1,6 @@
 import { Type } from "class-transformer";
 import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
-import { ENUM_APP_ENVIRONMENT, ENUM_APP_TIMEZONE } from "src/app/constants/app.enum.constant";
+import { ENUM_APP_ENVIRONMENT, ENUM_APP_TIMEZONE } from "~/app/constants/app.enum.constant";
 
 export class AppEnvDto {
 	@IsString()
@@ -89,6 +89,18 @@ export class AppEnvDto {
 	@IsOptional()
 	@IsString()
 	AWS_S3_BUCKET?: string;
+
+	@IsOptional()
+	@IsString()
+	AWS_SES_CREDENTIAL_KEY?: string;
+
+	@IsOptional()
+	@IsString()
+	AWS_SES_CREDENTIAL_SECRET?: string;
+
+	@IsOptional()
+	@IsString()
+	AWS_SES_REGION?: string;
 
 	@IsOptional()
 	@IsString()

@@ -1,59 +1,51 @@
-import {
-    PipeTransform,
-    Injectable,
-    UnsupportedMediaTypeException,
-} from '@nestjs/common';
-import { ENUM_FILE_MIME } from 'src/common/file/constants/file.enum.constant';
-import { ENUM_FILE_STATUS_CODE_ERROR } from 'src/common/file/constants/file.status-code.constant';
-import { IFile } from 'src/common/file/interfaces/file.interface';
+import { PipeTransform, Injectable, UnsupportedMediaTypeException } from "@nestjs/common";
+import { ENUM_FILE_MIME } from "~/common/file/constants/file.enum.constant";
+import { ENUM_FILE_STATUS_CODE_ERROR } from "~/common/file/constants/file.status-code.constant";
+import { IFile } from "~/common/file/interfaces/file.interface";
 
 @Injectable()
 export class FileTypePipe implements PipeTransform {
-    constructor(
-        readonly type: ENUM_FILE_MIME[],
-        readonly field?: string
-    ) {}
+	constructor(
+		readonly type: ENUM_FILE_MIME[],
+		readonly field?: string,
+	) {}
 
-    async transform(value: any): Promise<IFile | IFile[]> {
-        if (!value) {
-            return value;
-        }
+	async transform(value: any): Promise<IFile | IFile[]> {
+		if (!value) {
+			return value;
+		}
 
-        let fieldValue = value;
-        if (this.field) {
-            fieldValue = value[this.field];
-        }
+		let fieldValue = value;
+		if (this.field) {
+			fieldValue = value[this.field];
+		}
 
-        if (
-            !fieldValue ||
-            Object.keys(fieldValue).length === 0 ||
-            (Array.isArray(fieldValue) && fieldValue.length === 0)
-        ) {
-            return value;
-        }
+		if (!fieldValue || Object.keys(fieldValue).length === 0 || (Array.isArray(fieldValue) && fieldValue.length === 0)) {
+			return value;
+		}
 
-        if (Array.isArray(fieldValue)) {
-            for (const val of fieldValue) {
-                await this.validate(val.mimetype);
-            }
+		if (Array.isArray(fieldValue)) {
+			for (const val of fieldValue) {
+				await this.validate(val.mimetype);
+			}
 
-            return value;
-        }
+			return value;
+		}
 
-        const file: IFile = fieldValue as IFile;
-        await this.validate(file.mimetype);
+		const file: IFile = fieldValue as IFile;
+		await this.validate(file.mimetype);
 
-        return value;
-    }
+		return value;
+	}
 
-    async validate(mimetype: string): Promise<void> {
-        if (!this.type.find(val => val === mimetype.toLowerCase())) {
-            throw new UnsupportedMediaTypeException({
-                statusCode: ENUM_FILE_STATUS_CODE_ERROR.MIME_ERROR,
-                message: 'file.error.mimeInvalid',
-            });
-        }
+	async validate(mimetype: string): Promise<void> {
+		if (!this.type.find((val) => val === mimetype.toLowerCase())) {
+			throw new UnsupportedMediaTypeException({
+				statusCode: ENUM_FILE_STATUS_CODE_ERROR.MIME_ERROR,
+				message: "file.error.mimeInvalid",
+			});
+		}
 
-        return;
-    }
+		return;
+	}
 }

@@ -2,11 +2,11 @@ import { Controller, Get } from "@nestjs/common";
 import { GenreService } from "./genre.service";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
-import { DocResponse } from "src/common/doc/decorators/doc.decorator";
-import { AuthenticationDoc } from "src/common/doc/decorators/auth.decorator";
+import { DocResponse } from "~/common/doc/decorators/doc.decorator";
+import { AuthenticationDoc } from "~/common/doc/decorators/auth.decorator";
 import { genreMessage } from "./genre.message";
 import { GenreListWithCountResponseDto } from "./dto/response/genre.list-with-count.response.dto";
-import { IResponse } from "src/common/response/interfaces/response.interface";
+import { IResponse } from "~/common/response/interfaces/response.interface";
 
 @Controller("genres")
 @ApiTags("genre")

@@ -4,8 +4,8 @@ import { ApiOperation, ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { AuthJwtAccessProtected } from "../auth/decorators/auth.jwt.decorator";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
 import subscribeMessage from "./subscribe.message";
-import { DocAuth, DocResponse } from "src/common/doc/decorators/doc.decorator";
-import { IResponse } from "src/common/response/interfaces/response.interface";
+import { DocAuth, DocResponse } from "~/common/doc/decorators/doc.decorator";
+import { IResponse } from "~/common/response/interfaces/response.interface";
 import { SubscribeMembershipResponseDto } from "./dto/response/subscribe.subscribe-membership.dto";
 
 /**

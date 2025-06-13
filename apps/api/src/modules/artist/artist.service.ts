@@ -1,9 +1,9 @@
 import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
-import { PrismaService } from "src/common/prisma/prisma.service";
+import { PrismaService } from "~/common/prisma/prisma.service";
 import { Artist, Prisma } from "@prisma/client";
 import { ArtistCreateDto } from "./dto/request/artist.create.request.dto";
 import { ArtistUpdateDto } from "./dto/request/artist.update.dto";
-import { FileService } from "src/modules/file/file.service";
+import { FileService } from "~/modules/file/file.service";
 import { ArtistListResponse, ENUM_FILE_TYPE } from "@hitbeatclub/shared-types";
 import { ArtistDetailResponseDto } from "./dto/response/artist.detail.response.dto";
 

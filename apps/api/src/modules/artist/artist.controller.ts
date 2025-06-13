@@ -16,21 +16,21 @@ import {
 import { ArtistService } from "./artist.service";
 import { ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
-import { DocRequestFile, DocResponse, DocResponseList } from "src/common/doc/decorators/doc.decorator";
-import { IResponse, IResponsePaging } from "src/common/response/interfaces/response.interface";
+import { DocRequestFile, DocResponse, DocResponseList } from "~/common/doc/decorators/doc.decorator";
+import { IResponse, IResponsePaging } from "~/common/response/interfaces/response.interface";
 import { artistMessage } from "./artist.message";
-import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
+import { DatabaseIdResponseDto } from "~/common/response/dtos/response.dto";
 import { ArtistCreateDto } from "./dto/request/artist.create.request.dto";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
 import { ArtistUpdateDto } from "./dto/request/artist.update.dto";
 import { ArtistDetailResponseDto } from "./dto/response/artist.detail.response.dto";
-import { ENUM_FILE_MIME_IMAGE } from "src/common/file/constants/file.enum.constant";
-import { FileRequiredPipe } from "src/common/file/pipes/file.required.pipe";
-import { FileTypePipe } from "src/common/file/pipes/file.type.pipe";
+import { ENUM_FILE_MIME_IMAGE } from "~/common/file/constants/file.enum.constant";
+import { FileRequiredPipe } from "~/common/file/pipes/file.required.pipe";
+import { FileTypePipe } from "~/common/file/pipes/file.type.pipe";
 import { FileUploadResponseDto } from "../file/dto/response/file.upload.response.dto";
 import { FileService } from "../file/file.service";
-import { AuthenticationDoc } from "src/common/doc/decorators/auth.decorator";
-import { FileUploadSingle } from "src/common/file/decorators/file.decorator";
+import { AuthenticationDoc } from "~/common/doc/decorators/auth.decorator";
+import { FileUploadSingle } from "~/common/file/decorators/file.decorator";
 import { ARTIST_NOT_FOUND_ERROR } from "./artist.error";
 import { ArtistUploadProfileRequestDto } from "./dto/request/artist.upload-profile.request.dto";
 import settlementMessage from "../settlement/settlement.message";
@@ -42,7 +42,7 @@ import { ProductListResponseDto } from "../product/dto/response/product.list.res
 import { productMessage } from "../product/product.message";
 import { ProductService } from "../product/product.service";
 import { ArtistProductListQueryRequestDto } from "./dto/request/artist.product-list.request.dto";
-import { PrismaService } from "src/common/prisma/prisma.service";
+import { PrismaService } from "~/common/prisma/prisma.service";
 @Controller("artists")
 @ApiTags("artist")
 @ApiBearerAuth()

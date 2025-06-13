@@ -1,11 +1,11 @@
 import { PutObjectCommand, PutObjectCommandInput, PutObjectCommandOutput, S3Client } from "@aws-sdk/client-s3";
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { AwsS3Dto } from "src/common/aws/dtos/aws.s3.dto";
-import { IAwsS3PutItemOptions } from "src/common/aws/interfaces/aws.interface";
-import { IAwsS3PutItem } from "src/common/aws/interfaces/aws.interface";
+import { AwsS3Dto } from "~/common/aws/dtos/aws.s3.dto";
+import { IAwsS3PutItemOptions } from "~/common/aws/interfaces/aws.interface";
+import { IAwsS3PutItem } from "~/common/aws/interfaces/aws.interface";
 import { FILE_PUT_ITEM_IN_BUCKET_ERROR, FILE_UPDATE_FILE_ENABLED_AND_DELETE_ERROR } from "./file.error";
-import { PrismaService } from "src/common/prisma/prisma.service";
+import { PrismaService } from "~/common/prisma/prisma.service";
 import { FileCreateRequestDto } from "./dto/request/file.create.dto";
 import { v4 as uuidv4 } from "uuid";
 import { Prisma } from "@prisma/client";

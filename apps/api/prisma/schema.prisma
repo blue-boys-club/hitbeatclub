@@ -36,6 +36,7 @@ model User {
   payments               Payments[]
   userSocialAccount      UserSocialAccount[]
   tag                    Tag[]
+  accountToken           AccountToken[]
 
   @@map("user")
 }
@@ -317,3 +318,32 @@ model Settlement {
 }
 
 
+
+enum TokenPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+  EMAIL_CHANGE
+  PHONE_VERIFICATION
+  PHONE_CHANGE
+}
+
+model AccountToken {
+  id          BigInt   @id @default(autoincrement())
+  token       String   @db.Char(64) @unique      // SHA-256 → 64byte 등
+  purpose     TokenPurpose
+
+  userId      BigInt   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id])
+
+  active      Boolean?  @default(true)            // “현재 유효 토큰인가?”
+  consumedAt  DateTime? @map("consumed_at")      // 검증 직후 기록
+  expiresAt   DateTime  @map("expires_at")
+
+  deletedAt   DateTime? @map("deleted_at")       // 소프트 삭제 시각
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@unique([userId, purpose, active])            // active=true일 때만 unique (null은 무시됨)
+  @@index([expiresAt])
+  @@index([deletedAt])
+  @@map("account_token")
+}

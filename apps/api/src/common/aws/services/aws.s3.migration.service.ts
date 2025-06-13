@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { PrismaService } from "src/common/prisma/prisma.service";
+import { PrismaService } from "~/common/prisma/prisma.service";
 import { AwsS3Service } from "./aws.s3.service";
 
 @Injectable()
