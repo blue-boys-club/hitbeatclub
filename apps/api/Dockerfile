@@ -60,9 +60,13 @@ COPY --from=sourcer --chown=api-user:api-group /app/node_modules /app/node_modul
 # Switch to non-root user
 USER api-user
 
+# Change working directory to apps/api for npm_package_version access
+WORKDIR /app/apps/api
+
 ENV NODE_ENV=production
 EXPOSE 4000
 
-CMD [ "node", "apps/api/dist/src/main.js" ]
+# CMD [ "node", "dist/main.js" ]
+CMD [ "npm", "run", "start:prod" ]
 
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD curl -f http://localhost:4000/health || exit 1
