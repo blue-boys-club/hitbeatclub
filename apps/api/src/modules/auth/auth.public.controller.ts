@@ -22,6 +22,13 @@ import { AuthFindIdResponseDto } from "./dto/response/auth.find-response.dto";
 import { AuthCheckEmailResponseDto } from "./dto/response/auth.check-email.response.dto";
 import { AuthCheckEmailRequestDto } from "./dto/request/auth.check-email.request.dto";
 import { CreateAccessTokenDto } from "./dto/request/auth.create-token.dto.request";
+import { AccountTokenService } from "../account-token/account-token.service";
+import {
+	AuthVerifyTokenRequestDto,
+	AuthVerifyPasswordResetTokenRequestDto,
+	AuthVerifyEmailRequestDto,
+} from "./dto/request/auth.verify-token.request.dto";
+import { TokenPurpose } from "@prisma/client";
 
 @ApiTags("auth.public")
 @Controller("auth")
@@ -31,6 +38,7 @@ export class AuthPublicController {
 		private readonly authService: AuthService,
 		private readonly userService: UserService,
 		private readonly helperHashService: HelperHashService,
+		private readonly accountTokenService: AccountTokenService,
 	) {}
 
 	@Post("login")
@@ -323,7 +331,7 @@ export class AuthPublicController {
 	async resetPassword(@Body() resetPasswordDto: AuthResetPasswordRequestDto): Promise<IResponse<{ success: boolean }>> {
 		const success = await this.authService.resetPassword(
 			resetPasswordDto.email,
-			resetPasswordDto.salt,
+			resetPasswordDto.token,
 			resetPasswordDto.newPassword,
 		);
 
@@ -332,5 +340,85 @@ export class AuthPublicController {
 			message: "비밀번호가 성공적으로 재설정되었습니다.",
 			data: { success },
 		};
+	}
+
+	// @Post("verify-token")
+	// @ApiOperation({ summary: "토큰 검증 (범용)" })
+	// @ApiBody({ type: AuthVerifyTokenRequestDto })
+	// @DocResponse<{ success: boolean }>("토큰 검증 성공", {})
+	// async verifyToken(@Body() verifyTokenDto: AuthVerifyTokenRequestDto): Promise<IResponse<{ success: boolean }>> {
+	// 	try {
+	// 		// 토큰 검증 및 소모 (목적과 이메일 모두 검증)
+	// 		const tokenData = await this.accountTokenService.consumeTokenByPurpose(
+	// 			verifyTokenDto.token,
+	// 			verifyTokenDto.purpose,
+	// 			verifyTokenDto.email,
+	// 		);
+
+	// 		return {
+	// 			statusCode: 200,
+	// 			message: "토큰이 성공적으로 검증되었습니다.",
+	// 			data: { success: true },
+	// 		};
+	// 	} catch (error) {
+	// 		throw new UnauthorizedException("유효하지 않거나 만료된 토큰입니다.");
+	// 	}
+	// }
+
+	@Post("verify-password-reset")
+	@ApiOperation({ summary: "비밀번호 재설정 토큰 검증 및 비밀번호 변경" })
+	@ApiBody({ type: AuthVerifyPasswordResetTokenRequestDto })
+	@DocResponse<{ success: boolean }>("비밀번호 재설정 성공", {})
+	async verifyPasswordResetToken(
+		@Body() verifyPasswordResetDto: AuthVerifyPasswordResetTokenRequestDto,
+	): Promise<IResponse<{ success: boolean }>> {
+		try {
+			// 토큰 검증 및 소모 (PASSWORD_RESET 목적의 토큰만 허용)
+			const tokenData = await this.accountTokenService.consumeTokenByPurpose(
+				verifyPasswordResetDto.token,
+				TokenPurpose.PASSWORD_RESET,
+				verifyPasswordResetDto.email,
+			);
+
+			// 새 비밀번호 해시화
+			const hashedPassword = this.helperHashService.hashPassword(verifyPasswordResetDto.newPassword);
+
+			// 비밀번호 업데이트
+			await this.userService.updatePassword(Number(tokenData.user.id), hashedPassword);
+
+			return {
+				statusCode: 200,
+				message: "비밀번호가 성공적으로 재설정되었습니다.",
+				data: { success: true },
+			};
+		} catch (error) {
+			throw new UnauthorizedException("유효하지 않거나 만료된 토큰입니다.");
+		}
+	}
+
+	@Post("verify-email")
+	@ApiOperation({ summary: "이메일 인증 토큰 검증" })
+	@ApiBody({ type: AuthVerifyEmailRequestDto })
+	@DocResponse<{ success: boolean }>("이메일 인증 성공", {})
+	async verifyEmail(@Body() verifyEmailDto: AuthVerifyEmailRequestDto): Promise<IResponse<{ success: boolean }>> {
+		try {
+			// 토큰 검증 및 소모 (EMAIL_VERIFICATION 목적의 토큰만 허용)
+			const tokenData = await this.accountTokenService.consumeTokenByPurpose(
+				verifyEmailDto.token,
+				TokenPurpose.EMAIL_VERIFICATION,
+				verifyEmailDto.email,
+			);
+
+			// 이메일 인증 완료 처리 (필요한 경우 사용자 상태 업데이트)
+			// await this.userService.markEmailAsVerified(Number(tokenData.user.id));
+
+			return {
+				statusCode: 200,
+				message: "이메일이 성공적으로 인증되었습니다.",
+				data: { success: true },
+			};
+		} catch (error) {
+			throw new UnauthorizedException("유효하지 않거나 만료된 토큰입니다.");
+		}
 	}
 }

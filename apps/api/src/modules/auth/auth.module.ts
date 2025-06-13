@@ -4,9 +4,10 @@ import { AuthJwtAccessStrategy } from "./guards/jwt/strategies/auth.jwt.access.s
 import { AuthJwtRefreshStrategy } from "./guards/jwt/strategies/auth.jwt.refresh.strategy";
 import { AuthPublicController } from "./auth.public.controller";
 import { UserModule } from "../user/user.module";
+import { AccountTokenModule } from "../account-token/account-token.module";
 
 @Module({
-	imports: [UserModule],
+	imports: [UserModule, AccountTokenModule],
 	providers: [AuthService],
 	exports: [AuthService],
 	controllers: [AuthPublicController],

@@ -9,6 +9,7 @@ import { SubscribeModule } from "src/modules/subscribe/subscribe.module";
 import { SettlementModule } from "src/modules/settlement/settlement.module";
 import { TagModule } from "src/modules/tag/tag.module";
 import { GenreModule } from "src/modules/genre/genre.module";
+import { AccountTokenModule } from "src/modules/account-token/account-token.module";
 
 @Module({
 	controllers: [],
@@ -18,6 +19,7 @@ import { GenreModule } from "src/modules/genre/genre.module";
 		AuthModule.forRoot(),
 		UserModule,
 		AwsModule,
+		AccountTokenModule,
 		FileModule,
 		ProductModule,
 		ArtistModule,

@@ -92,6 +92,18 @@ export class AppEnvDto {
 
 	@IsOptional()
 	@IsString()
+	AWS_SES_CREDENTIAL_KEY?: string;
+
+	@IsOptional()
+	@IsString()
+	AWS_SES_CREDENTIAL_SECRET?: string;
+
+	@IsOptional()
+	@IsString()
+	AWS_SES_REGION?: string;
+
+	@IsOptional()
+	@IsString()
 	AWS_CLOUDFRONT_DOMAIN?: string;
 
 	@IsOptional()

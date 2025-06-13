@@ -8,7 +8,7 @@ export const AuthLoginPayloadSchema = z.object({
 export const AuthResetPasswordPayloadSchema = z
 	.object({
 		email: z.string().email().describe("이메일"),
-		salt: z.string().describe("인증 토큰 해시"),
+		token: z.string().describe("인증 토큰 해시"),
 		newPassword: z.string().min(8).max(255).describe("새 비밀번호"),
 		confirmPassword: z.string().min(8).max(255).describe("새 비밀번호 확인"),
 	})

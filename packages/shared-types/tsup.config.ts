@@ -14,6 +14,7 @@ export default defineConfig({
 		"settlement/index": "src/settlement/index.ts",
 		"tag/index": "src/tag/index.ts",
 		"genre/index": "src/genre/index.ts",
+		"email/index": "src/email/index.ts",
 	},
 	format: ["cjs", "esm"],
 	dts: true,

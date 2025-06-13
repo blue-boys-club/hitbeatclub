@@ -65,6 +65,11 @@
 			"types": "./dist/genre/index.d.ts",
 			"import": "./dist/genre/index.mjs",
 			"require": "./dist/genre/index.js"
+		},
+		"./email": {
+			"types": "./dist/email/index.d.ts",
+			"import": "./dist/email/index.mjs",
+			"require": "./dist/email/index.js"
 		}
 	},
 	"files": [
