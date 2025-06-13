@@ -4,16 +4,32 @@ import { useState } from "react";
 import { HBCLoginMain } from "@/assets/svgs";
 import { Button } from "@/components/ui/Button";
 import { AuthFindIdModal } from "./Modal/AuthFindIdModal";
+import { useSendChangePasswordEmailMutation } from "@/apis/email/mutations/useSendChangePasswordEmailMutation";
 
 export const AuthFindIdPassword = () => {
 	const [isIdModalOpen, setIsIdModalOpen] = useState(false);
+	const [email, setEmail] = useState("");
 
-	const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+	const sendChangePasswordEmailMutation = useSendChangePasswordEmailMutation();
+
+	const onSubmitFindId = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+		setIsIdModalOpen(true);
 	};
 
-	const onFindId = () => {
-		setIsIdModalOpen(true);
+	const onSubmitFindPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		if (!email.trim()) return;
+
+		try {
+			await sendChangePasswordEmailMutation.mutateAsync(email);
+			// TODO: 성공 메시지 표시 또는 처리
+			alert("비밀번호 변경 링크가 이메일로 전송되었습니다.");
+		} catch (error) {
+			// TODO: 에러 처리
+			console.error("이메일 전송 실패:", error);
+			alert("이메일 전송에 실패했습니다. 다시 시도해주세요.");
+		}
 	};
 
 	const onCloseModal = () => {
@@ -31,9 +47,10 @@ export const AuthFindIdPassword = () => {
 					<div className="text-2xl font-extrabold mb-9">아이디 / 비밀번호 찾기</div>
 				</div>
 
+				{/* 이메일 찾기 폼 */}
 				<div className="mb-5 text-xl font-bold tracking-[0.22px]">이메일 찾기</div>
 
-				<form onSubmit={onSubmit}>
+				<form onSubmit={onSubmitFindId}>
 					<div className="space-y-4 mb-9">
 						<label
 							htmlFor="name"
@@ -65,19 +82,22 @@ export const AuthFindIdPassword = () => {
 
 					<div className="flex justify-center">
 						<Button
+							type="submit"
 							size={"lg"}
 							className="w-[225px] p-2.5 font-extrabold"
-							onClick={onFindId}
 						>
 							이메일 찾기
 						</Button>
 					</div>
+				</form>
 
-					{/* divider */}
-					<div className="w-full h-[1px] bg-hbc-black my-17.5"></div>
+				{/* divider */}
+				<div className="w-full h-[1px] bg-hbc-black my-17.5"></div>
 
-					<div className="mb-5 text-xl font-bold tracking-[0.22px]">비밀번호 찾기</div>
+				{/* 비밀번호 찾기 폼 */}
+				<div className="mb-5 text-xl font-bold tracking-[0.22px]">비밀번호 찾기</div>
 
+				<form onSubmit={onSubmitFindPassword}>
 					<div>
 						<label
 							htmlFor="email"
@@ -90,6 +110,8 @@ export const AuthFindIdPassword = () => {
 							name="email"
 							type="email"
 							required
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
 							className="w-full px-3 py-2 mb-2 border rounded-md border-hbc-black focus:outline-none"
 						/>
 					</div>
@@ -102,10 +124,12 @@ export const AuthFindIdPassword = () => {
 
 					<div className="flex justify-center">
 						<Button
+							type="submit"
 							size={"lg"}
 							className="w-[225px] p-2.5 font-extrabold"
+							disabled={sendChangePasswordEmailMutation.isPending}
 						>
-							링크 전송
+							{sendChangePasswordEmailMutation.isPending ? "전송 중..." : "링크 전송"}
 						</Button>
 					</div>
 				</form>
