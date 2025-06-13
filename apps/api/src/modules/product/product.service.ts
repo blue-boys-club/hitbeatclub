@@ -11,9 +11,11 @@ import {
 	PRODUCT_UPDATE_ERROR,
 	PRODUCT_UPDATE_LICENSE_ERROR,
 } from "./product.error";
+import { Logger } from "@nestjs/common";
 
 @Injectable()
 export class ProductService {
+	private readonly logger = new Logger(ProductService.name);
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly fileService: FileService,
@@ -33,21 +35,6 @@ export class ProductService {
 								id: true,
 								stageName: true,
 								profileImageUrl: true,
-							},
-						},
-						files: {
-							where: {
-								isEnabled: 1,
-								deletedAt: null,
-								targetTable: "product",
-								type: {
-									in: ["PRODUCT_COVER_IMAGE", "PRODUCT_AUDIO_FILE"],
-								},
-							},
-							select: {
-								id: true,
-								type: true,
-								url: true,
 							},
 						},
 						...(genreIds
@@ -80,13 +67,30 @@ export class ProductService {
 					throw new BadRequestException(error);
 				});
 
+			// Batch load files for all products to avoid N+1 queries
+			const productIds = products.map((p) => p.id);
+			const allFiles = await this.fileService.findFilesByTargetIds({
+				targetIds: productIds,
+				targetTable: "product",
+			});
+
+			// Map files by productId for quick lookup
+			const filesByProductId: Record<number, any[]> = {};
+			for (const file of allFiles) {
+				if (!filesByProductId[file.targetId]) {
+					filesByProductId[file.targetId] = [];
+				}
+				filesByProductId[file.targetId].push(file);
+			}
+
 			const result = [];
 			for (const product of products) {
 				const seller = product.artistSellerIdToArtist;
 				delete product.artistSellerIdToArtist;
 
-				const audioFile = product.files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
-				const coverImage = product.files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
+				const files = filesByProductId[product.id] ?? [];
+				const audioFile = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
+				const coverImage = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
 
 				result.push({
 					id: product.id,
@@ -152,7 +156,7 @@ export class ProductService {
 						},
 					},
 				})
-				.then((data) => this.prisma.serializeBigInt(data) as Product);
+				.then((data) => this.prisma.serializeBigInt(data));
 
 			const seller = (product as any).artistSellerIdToArtist;
 			const license = (product as any).productLicense;
@@ -629,7 +633,8 @@ export class ProductService {
 				});
 			}
 		} catch (e: any) {
-			console.log(e);
+			this.logger.error(e);
+			// throw new BadRequestException(e);
 		}
 	}
 

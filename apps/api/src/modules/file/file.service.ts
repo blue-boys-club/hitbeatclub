@@ -170,6 +170,19 @@ export class FileService {
 			.then((data) => this.prisma.serializeBigInt(data));
 	}
 
+	async findFilesByTargetIds({ targetIds, targetTable }: { targetIds: number[]; targetTable: string }) {
+		return await this.prisma.file
+			.findMany({
+				where: {
+					deletedAt: null,
+					targetId: { in: targetIds },
+					targetTable,
+					isEnabled: 1,
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+	}
+
 	async softDeleteFile(id: number, tx?: Prisma.TransactionClient): Promise<void> {
 		const prisma = tx ?? this.prisma;
 

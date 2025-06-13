@@ -12,6 +12,7 @@ import {
 	Query,
 	Inject,
 	forwardRef,
+	Logger,
 } from "@nestjs/common";
 import { ProductService } from "./product.service";
 import { ApiOperation, ApiTags, ApiConsumes } from "@nestjs/swagger";
@@ -51,6 +52,7 @@ import { ArtistService } from "../artist/artist.service";
 @ApiTags("product")
 @ApiBearerAuth()
 export class ProductController {
+	private readonly logger = new Logger(ProductController.name);
 	constructor(
 		private readonly productService: ProductService,
 		private readonly fileService: FileService,
@@ -207,7 +209,7 @@ export class ProductController {
 			throw new NotFoundException(PRODUCT_NOT_FOUND_ERROR);
 		}
 
-		console.log(product);
+		this.logger.log(product);
 
 		const productFiles = await this.productService.findProductFiles(id);
 
