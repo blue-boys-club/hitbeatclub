@@ -13,7 +13,7 @@ import {
 	AwsSESSendBulkDto,
 	AwsSESSendDto,
 	AwsSESUpdateTemplateDto,
-} from "src/common/aws/dtos/aws.ses.dto";
+} from "~/common/aws/dtos/aws.ses.dto";
 
 export interface IAwsSESService {
 	listTemplates(nextToken?: string): Promise<ListEmailTemplatesCommandOutput>;

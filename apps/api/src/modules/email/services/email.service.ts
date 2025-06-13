@@ -1,10 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { AwsSESService } from "src/common/aws/services/aws.ses.service";
+import { AwsSESService } from "~/common/aws/services/aws.ses.service";
 import { ConfigService } from "@nestjs/config";
-import { IEmailService } from "src/modules/email/interfaces/email.service.interface";
+import { IEmailService } from "~/modules/email/interfaces/email.service.interface";
 import { readFileSync } from "fs";
 import { GetEmailTemplateCommandOutput } from "@aws-sdk/client-sesv2";
-import { IAuthHash } from "src/modules/auth/interfaces/auth.interface";
+import { IAuthHash } from "~/modules/auth/interfaces/auth.interface";
 import path from "path";
 
 @Injectable()
@@ -37,8 +37,8 @@ export class EmailService implements IEmailService {
 		try {
 			await this.awsSESService.getTemplate({ name: templateName });
 			return true;
-		} catch (err: any) {
-			if (err.name === "TemplateDoesNotExistException" || err.Code === "TemplateDoesNotExist") {
+		} catch (err) {
+			if (err.name === "NotFoundException") {
 				return false;
 			}
 			throw err;
@@ -123,7 +123,7 @@ export class EmailService implements IEmailService {
 		try {
 			const templateName = this.getTemplateName("CHANGE_PASSWORD");
 			// 템플릿을 사용하여 이메일 발송
-			await this.awsSESService.send({
+			const result = await this.awsSESService.send({
 				recipients: [to],
 				sender: this.fromEmail,
 				templateName: templateName,
@@ -133,8 +133,7 @@ export class EmailService implements IEmailService {
 					email: to,
 				},
 			});
-
-			this.logger.log(`Change password email sent successfully to ${to}`);
+			this.logger.log({ result, to }, "Change Password Email Sent");
 			return true;
 		} catch (err: unknown) {
 			this.logger.error(`Failed to send change password email to ${to}:`, err);

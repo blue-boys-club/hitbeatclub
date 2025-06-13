@@ -1,14 +1,14 @@
 import { BadRequestException, Body, Controller, Post, Get, Logger } from "@nestjs/common";
 import { ApiTags, ApiResponse, ApiOperation } from "@nestjs/swagger";
 
-import { EmailSendDoc } from "src/modules/email/docs/email.doc";
-import { EmailSendDto } from "src/modules/email/dtos/email.send.dto";
-import { EmailService } from "src/modules/email/services/email.service";
+import { EmailSendDoc } from "~/modules/email/docs/email.doc";
+import { EmailSendDto } from "~/modules/email/dtos/email.send.dto";
+import { EmailService } from "~/modules/email/services/email.service";
 import { EmailType } from "@hitbeatclub/shared-types";
-import { AuthService } from "src/modules/auth/auth.service";
-import { HelperHashService } from "src/common/helper/services/helper.hash.service";
-import { AccountTokenService } from "src/modules/account-token/account-token.service";
-import { UserService } from "src/modules/user/user.service";
+import { AuthService } from "~/modules/auth/auth.service";
+import { HelperHashService } from "~/common/helper/services/helper.hash.service";
+import { AccountTokenService } from "~/modules/account-token/account-token.service";
+import { UserService } from "~/modules/user/user.service";
 import { TokenPurpose } from "@prisma/client";
 
 @ApiTags("email")

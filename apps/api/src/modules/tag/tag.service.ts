@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
-import { PrismaService } from "src/common/prisma/prisma.service";
+import { PrismaService } from "~/common/prisma/prisma.service";
 import { Tag } from "@prisma/client";
 import { TagCreateDto } from "./dto/request/tag.create.request.dto";
 import { TAG_ALREADY_EXISTS_ERROR, TAG_CREATE_ERROR, TAG_MAX_COUNT_ERROR } from "./tag.error";

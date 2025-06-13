@@ -1,8 +1,8 @@
 import { Body, Controller, Get, NotFoundException, Post, Query, Req, UnauthorizedException } from "@nestjs/common";
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
-import { DocAuth, DocResponse } from "src/common/doc/decorators/doc.decorator";
-import { IResponse } from "src/common/response/interfaces/response.interface";
+import { DocAuth, DocResponse } from "~/common/doc/decorators/doc.decorator";
+import { IResponse } from "~/common/response/interfaces/response.interface";
 import { UserService } from "../user/user.service";
 import {
 	AuthSocialGoogleProtected,
@@ -16,7 +16,7 @@ import { UserUpdateDto } from "../user/dto/request/user.update.request.dto";
 import { AuthLoginDto } from "./dto/request/auth.login.reqeust.dto";
 import { USER_INVALID_PASSWORD_ERROR, USER_NOT_FOUND_ERROR } from "../user/user.error";
 import { AuthResetPasswordRequestDto } from "./dto/request/auth.reset-password.request.dto";
-import { HelperHashService } from "src/common/helper/services/helper.hash.service";
+import { HelperHashService } from "~/common/helper/services/helper.hash.service";
 import { AuthFindIdDto } from "./dto/request/auth.find-id.request.dto";
 import { AuthFindIdResponseDto } from "./dto/response/auth.find-response.dto";
 import { AuthCheckEmailResponseDto } from "./dto/response/auth.check-email.response.dto";

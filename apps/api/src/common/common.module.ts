@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
-import configs from "src/configs";
+import configs from "~/configs";
 import { HelperModule } from "./helper/helper.module";
 import { PrismaModule } from "./prisma/prisma.module";
 

@@ -1,12 +1,12 @@
 import { HeadBucketCommandOutput, UploadPartRequest } from "@aws-sdk/client-s3";
-import { ENUM_S3_UPLOAD_TYPE } from "src/common/aws/constants/aws.enum.constant";
-import { AwsS3MultipartDto, AwsS3MultipartPartsDto } from "src/common/aws/dtos/aws.s3-multipart.dto";
-import { AwsS3Dto } from "src/common/aws/dtos/aws.s3.dto";
+import { ENUM_S3_UPLOAD_TYPE } from "~/common/aws/constants/aws.enum.constant";
+import { AwsS3MultipartDto, AwsS3MultipartPartsDto } from "~/common/aws/dtos/aws.s3-multipart.dto";
+import { AwsS3Dto } from "~/common/aws/dtos/aws.s3.dto";
 import {
 	IAwsS3PutItem,
 	IAwsS3PutItemOptions,
 	IAwsS3PutItemWithAclOptions,
-} from "src/common/aws/interfaces/aws.interface";
+} from "~/common/aws/interfaces/aws.interface";
 import { Readable } from "stream";
 
 export interface IAwsS3Service {

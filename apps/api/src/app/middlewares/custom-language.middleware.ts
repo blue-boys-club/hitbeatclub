@@ -1,49 +1,39 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Response, NextFunction } from 'express';
-import { HelperArrayService } from 'src/common/helper/services/helper.array.service';
-import { IRequestApp } from 'src/common/request/interfaces/request.interface';
+import { Injectable, NestMiddleware } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { Response, NextFunction } from "express";
+import { HelperArrayService } from "~/common/helper/services/helper.array.service";
+import { IRequestApp } from "~/common/request/interfaces/request.interface";
 
 @Injectable()
 export class MessageCustomLanguageMiddleware implements NestMiddleware {
-    private readonly availableLanguage: string[];
+	private readonly availableLanguage: string[];
 
-    constructor(
-        private readonly configService: ConfigService,
-        private readonly helperArrayService: HelperArrayService
-    ) {
-        this.availableLanguage = this.configService.get<string[]>(
-            'message.availableLanguage'
-        );
-    }
+	constructor(
+		private readonly configService: ConfigService,
+		private readonly helperArrayService: HelperArrayService,
+	) {
+		this.availableLanguage = this.configService.get<string[]>("message.availableLanguage");
+	}
 
-    async use(
-        req: IRequestApp,
-        res: Response,
-        next: NextFunction
-    ): Promise<void> {
-        let customLang: string =
-            this.configService.get<string>('message.language');
+	async use(req: IRequestApp, res: Response, next: NextFunction): Promise<void> {
+		let customLang: string = this.configService.get<string>("message.language");
 
-        const reqLanguages: string = req.headers['x-custom-lang'] as string;
-        if (reqLanguages) {
-            const language: string[] = this.filterLanguage(reqLanguages);
+		const reqLanguages: string = req.headers["x-custom-lang"] as string;
+		if (reqLanguages) {
+			const language: string[] = this.filterLanguage(reqLanguages);
 
-            if (language.length > 0) {
-                customLang = reqLanguages;
-            }
-        }
+			if (language.length > 0) {
+				customLang = reqLanguages;
+			}
+		}
 
-        req.__language = customLang;
-        req.headers['x-custom-lang'] = customLang;
+		req.__language = customLang;
+		req.headers["x-custom-lang"] = customLang;
 
-        next();
-    }
+		next();
+	}
 
-    private filterLanguage(customLanguage: string): string[] {
-        return this.helperArrayService.getIntersection(
-            [customLanguage],
-            this.availableLanguage
-        );
-    }
+	private filterLanguage(customLanguage: string): string[] {
+		return this.helperArrayService.getIntersection([customLanguage], this.availableLanguage);
+	}
 }

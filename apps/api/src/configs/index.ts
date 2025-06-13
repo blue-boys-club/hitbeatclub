@@ -1,11 +1,11 @@
-import AuthConfig from "src/configs/auth.config";
-import DatabaseConfig from "src/configs/database.config";
-import HelperConfig from "src/configs/helper.config";
-import AwsConfig from "src/configs/aws.config";
-import EmailConfig from "src/configs/email.config";
-import AppConfig from "src/configs/app.config";
-import DocConfig from "src/configs/doc.config";
-import MiddlewareConfig from "src/configs/middleware.config";
+import AuthConfig from "~/configs/auth.config";
+import DatabaseConfig from "~/configs/database.config";
+import HelperConfig from "~/configs/helper.config";
+import AwsConfig from "~/configs/aws.config";
+import EmailConfig from "~/configs/email.config";
+import AppConfig from "~/configs/app.config";
+import DocConfig from "~/configs/doc.config";
+import MiddlewareConfig from "~/configs/middleware.config";
 
 export default [
 	AuthConfig,

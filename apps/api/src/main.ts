@@ -3,7 +3,7 @@ import { AppModule } from "./app/app.module";
 import "dayjs/locale/ko";
 import { Logger, VersioningType } from "@nestjs/common";
 import { useContainer } from "class-validator";
-import swaggerInit from "src/swagger";
+import swaggerInit from "~/swagger";
 import { ConfigService } from "@nestjs/config";
 import { Logger as PinoLogger } from "nestjs-pino";
 import { ZodValidationPipe } from "nestjs-zod";

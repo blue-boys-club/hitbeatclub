@@ -1,11 +1,11 @@
 import { Module, OnModuleInit, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { EmailService } from "src/modules/email/services/email.service";
-import { AwsModule } from "src/common/aws/aws.module";
-import { EmailController } from "src/modules/email/controllers/email.controller";
-import { AuthModule } from "src/modules/auth/auth.module";
-import { AccountTokenModule } from "src/modules/account-token/account-token.module";
-import { UserModule } from "src/modules/user/user.module";
+import { EmailService } from "~/modules/email/services/email.service";
+import { AwsModule } from "~/common/aws/aws.module";
+import { EmailController } from "~/modules/email/controllers/email.controller";
+import { AuthModule } from "~/modules/auth/auth.module";
+import { AccountTokenModule } from "~/modules/account-token/account-token.module";
+import { UserModule } from "~/modules/user/user.module";
 
 @Module({
 	imports: [AwsModule, AuthModule, AccountTokenModule, UserModule],

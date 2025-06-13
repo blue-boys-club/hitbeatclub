@@ -5,8 +5,8 @@ import {
 	IAwsS3PutItemOptions,
 	IAwsS3PutItemWithAclOptions,
 	IAwsS3RandomFilename,
-} from "src/common/aws/interfaces/aws.interface";
-import { IAwsS3Service } from "src/common/aws/interfaces/aws.s3-service.interface";
+} from "~/common/aws/interfaces/aws.interface";
+import { IAwsS3Service } from "~/common/aws/interfaces/aws.s3-service.interface";
 import { Readable } from "stream";
 import {
 	S3Client,
@@ -52,12 +52,12 @@ import {
 	ObjectCannedACL,
 	CompletedPart,
 } from "@aws-sdk/client-s3";
-import { HelperStringService } from "src/common/helper/services/helper.string.service";
-import { AwsS3Dto } from "src/common/aws/dtos/aws.s3.dto";
-import { AwsS3MultipartDto, AwsS3MultipartPartsDto } from "src/common/aws/dtos/aws.s3-multipart.dto";
-import { AWS_S3_MAX_PART_NUMBER } from "src/common/aws/constants/aws.constant";
-import { ENUM_S3_UPLOAD_TYPE } from "src/common/aws/constants/aws.enum.constant";
-import { ENUM_AWS_STATUS_CODE_ERROR } from "src/common/aws/constants/aws.status-code.constant";
+import { HelperStringService } from "~/common/helper/services/helper.string.service";
+import { AwsS3Dto } from "~/common/aws/dtos/aws.s3.dto";
+import { AwsS3MultipartDto, AwsS3MultipartPartsDto } from "~/common/aws/dtos/aws.s3-multipart.dto";
+import { AWS_S3_MAX_PART_NUMBER } from "~/common/aws/constants/aws.constant";
+import { ENUM_S3_UPLOAD_TYPE } from "~/common/aws/constants/aws.enum.constant";
+import { ENUM_AWS_STATUS_CODE_ERROR } from "~/common/aws/constants/aws.status-code.constant";
 
 @Injectable()
 export class AwsS3Service implements IAwsS3Service {

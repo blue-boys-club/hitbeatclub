@@ -2,15 +2,15 @@ import { Controller, Get, Patch, Delete, Param, Body, Req, Post, NotFoundExcepti
 import { UserService } from "./user.service";
 import { ApiOperation, ApiTags, ApiBody } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
-import { DocAuth, DocResponse } from "src/common/doc/decorators/doc.decorator";
+import { DocAuth, DocResponse } from "~/common/doc/decorators/doc.decorator";
 import { AuthJwtAccessProtected } from "../auth/decorators/auth.jwt.decorator";
 import { UserUpdateDto } from "./dto/request/user.update.request.dto";
-import { IResponse } from "src/common/response/interfaces/response.interface";
+import { IResponse } from "~/common/response/interfaces/response.interface";
 import userMessage from "./user.message";
-import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
+import { DatabaseIdResponseDto } from "~/common/response/dtos/response.dto";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
 import { UserFindMeResponseDto } from "./dto/response/user.find-me.response.dto";
-import { AuthenticationDoc } from "src/common/doc/decorators/auth.decorator";
+import { AuthenticationDoc } from "~/common/doc/decorators/auth.decorator";
 
 @Controller("users")
 @ApiTags("user")

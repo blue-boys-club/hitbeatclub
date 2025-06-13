@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
-import { PrismaService } from "src/common/prisma/prisma.service";
+import { PrismaService } from "~/common/prisma/prisma.service";
 import { UserService } from "../user/user.service";
 import { ArtistService } from "../artist/artist.service";
 import { SETTLEMENT_ALREADY_EXISTS_ERROR, SETTLEMENT_NOT_FOUND_ERROR } from "./settlement.error";

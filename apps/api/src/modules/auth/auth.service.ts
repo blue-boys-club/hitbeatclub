@@ -12,7 +12,7 @@ import {
 import { LoginTicket, OAuth2Client as GoogleOAuth2Client, TokenPayload, OAuth2Client } from "google-auth-library";
 import { ConfigService } from "@nestjs/config";
 import { AuthLoginResponse } from "@hitbeatclub/shared-types/auth";
-import { HelperEncryptionService } from "src/common/helper/services/helper.encryption.service";
+import { HelperEncryptionService } from "~/common/helper/services/helper.encryption.service";
 import {
 	IAuthHash,
 	IAuthKakaoTokenResponse,
@@ -20,8 +20,8 @@ import {
 	IAuthNaverTokenResponse,
 	IAuthNaverUserInfoResponse,
 } from "./interfaces/auth.interface";
-import { HelperHashService } from "src/common/helper/services/helper.hash.service";
-import { HelperDateService } from "src/common/helper/services/helper.date.service";
+import { HelperHashService } from "~/common/helper/services/helper.hash.service";
+import { HelperDateService } from "~/common/helper/services/helper.date.service";
 import { UserService } from "../user/user.service";
 import { AuthenticatedRequest } from "./dto/request/auth.dto.request";
 import axios from "axios";

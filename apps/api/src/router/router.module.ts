@@ -1,6 +1,6 @@
 import { DynamicModule, ForwardReference, Module, Type } from "@nestjs/common";
-import { RoutesUserModule } from "src/router/routes/routes.user.module";
-import { RoutesPublicModule } from "src/router/routes/routes.public.module";
+import { RoutesUserModule } from "~/router/routes/routes.user.module";
+import { RoutesPublicModule } from "~/router/routes/routes.public.module";
 
 @Module({})
 export class RouterModule {
