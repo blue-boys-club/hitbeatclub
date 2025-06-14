@@ -4,7 +4,7 @@ import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/common/utils";
 import { KeyDropdown, type KeyValue } from "@/components/ui/KeyDropdown/KeyDropdown";
-import { BPMDropdown, type BPM, type BPMRange } from "@/components/ui/BPMDropdown/BPMDropdown";
+import { BPMDropdown } from "@/components/ui/BPMDropdown/BPMDropdown";
 import MultiTagGenreInput from "@/components/ui/MultiTagGenreInput/MultiTagGenreInput";
 import { TagDropdown } from "@/components/ui/TagDropdown/TagDropdown";
 import { getProductSearchInfoQueryOption } from "@/apis/product/query/product.query-option";
@@ -16,6 +16,7 @@ import type { UserLikeProductListRequest } from "@hitbeatclub/shared-types/user"
 import { useProductLikeFilterParametersStates } from "../hooks/useProductLikeFilterParameters";
 import { LikeSortEnum } from "../types/productLikeFilterParsers";
 import { GenreButton } from "@/components/ui/GenreButton";
+import { CloseWhite } from "@/assets/svgs/CloseWhite";
 
 interface ProductLikeFilterProps {
 	onFilterChange: (filters: Omit<UserLikeProductListRequest, "page" | "limit">) => void;
@@ -70,10 +71,8 @@ export const ProductLikeFilter = ({ onFilterChange, className }: ProductLikeFilt
 
 	const [keyValue, setKeyValue] = useState<KeyValue | undefined>(undefined);
 	const [scaleValue, setScaleValue] = useState<string | null>(null);
-	const [bpmValue, setBpmValue] = useState<BPM>(undefined);
-	const [bpmRangeValue, setBpmRangeValue] = useState<BPMRange>(undefined);
 
-	// nuqs 파라미터와 로컬 상태 동기화 (키/스케일/BPM만)
+	// nuqs 파라미터와 로컬 상태 동기화 (키/스케일만)
 	useEffect(() => {
 		// 키/스케일 상태 동기화
 		if (filterParams.musicKey) {
@@ -87,25 +86,13 @@ export const ProductLikeFilter = ({ onFilterChange, className }: ProductLikeFilt
 		} else {
 			setScaleValue(null);
 		}
-
-		// BPM 상태 동기화
-		if (filterParams.minBpm > 0 && filterParams.maxBpm > 0) {
-			if (filterParams.minBpm === filterParams.maxBpm) {
-				setBpmValue(filterParams.minBpm);
-				setBpmRangeValue(undefined);
-			} else {
-				setBpmValue(undefined);
-				setBpmRangeValue({ min: filterParams.minBpm, max: filterParams.maxBpm });
-			}
-		} else {
-			setBpmValue(undefined);
-			setBpmRangeValue(undefined);
-		}
-	}, [filterParams.musicKey, filterParams.scaleType, filterParams.minBpm, filterParams.maxBpm]);
+	}, [filterParams.musicKey, filterParams.scaleType]);
 
 	// nuqs 파라미터를 UserLikeProductListRequest로 변환
 	const userLikeProductListQuery = useMemo((): Omit<UserLikeProductListRequest, "page" | "limit"> => {
-		const query: Omit<UserLikeProductListRequest, "page" | "limit"> = {};
+		const query: Omit<UserLikeProductListRequest, "page" | "limit"> = {
+			sort: LikeSortEnum.RECENT,
+		};
 
 		// 정렬
 		if (filterParams.sort !== LikeSortEnum.RECENT) {
@@ -211,42 +198,23 @@ export const ProductLikeFilter = ({ onFilterChange, className }: ProductLikeFilt
 		setFilterParams({ musicKey: "", scaleType: "" });
 	}, [setFilterParams]);
 
-	// BPM 타입 변경 핸들러
-	const handleBPMTypeChange = useCallback(
-		(type: "exact" | "range") => {
-			setBpmValue(undefined);
-			setBpmRangeValue(undefined);
-			setFilterParams({ minBpm: 0, maxBpm: 0 });
+	// BPM 제출 핸들러 (드롭다운 닫힐 때만 호출)
+	const handleBPMSubmit = useCallback(
+		(minBpm: number | undefined, maxBpm: number | undefined) => {
+			setFilterParams({
+				minBpm: minBpm || 0,
+				maxBpm: maxBpm || 0,
+			});
 		},
 		[setFilterParams],
 	);
 
-	// 정확한 BPM 변경 핸들러
-	const handleExactBPMChange = useCallback(
-		(bpm: number) => {
-			setBpmValue(bpm);
-			setFilterParams({ minBpm: bpm, maxBpm: bpm });
-		},
-		[setFilterParams],
-	);
-
-	// BPM 범위 변경 핸들러
-	const handleBPMRangeChange = useCallback(
-		(type: "min" | "max", bpm: number) => {
-			setBpmRangeValue((prev) => ({ ...prev, [type]: bpm }));
-			if (type === "min") {
-				setFilterParams({ minBpm: bpm });
-			} else {
-				setFilterParams({ maxBpm: bpm });
-			}
-		},
-		[setFilterParams],
-	);
+	// BPM 임시 변경 핸들러 (더미 함수 - 실제로는 사용되지 않음)
+	const handleMinBpmChange = useCallback(() => {}, []);
+	const handleMaxBpmChange = useCallback(() => {}, []);
 
 	// BPM 초기화 핸들러
 	const handleBPMClear = useCallback(() => {
-		setBpmValue(undefined);
-		setBpmRangeValue(undefined);
 		setFilterParams({ minBpm: 0, maxBpm: 0 });
 	}, [setFilterParams]);
 
@@ -296,6 +264,39 @@ export const ProductLikeFilter = ({ onFilterChange, className }: ProductLikeFilt
 		{ label: "Name", value: LikeSortEnum.NAME },
 	];
 
+	// 카테고리 선택된 옵션 렌더링
+	const renderCategorySelectedOption = (value: string) => {
+		const categoryLabel = value === "BEAT" ? "BEAT" : "ACAPELA";
+
+		return (
+			<div
+				className={cn(
+					"px-2 rounded-[44.63px] outline-2 outline-offset-[-1px] outline-black inline-flex justify-between items-center gap-2 cursor-pointer transition-colors",
+					"bg-black",
+				)}
+			>
+				<div className={cn("text-md font-medium", "text-white")}>{categoryLabel}</div>
+
+				<div
+					onClick={(e) => {
+						e.stopPropagation();
+						setFilterParams({ category: "" });
+					}}
+				>
+					<CloseWhite />
+				</div>
+			</div>
+		);
+	};
+
+	// 카테고리 트리거 요소 가져오기
+	const getCategoryTrigger = () => {
+		if (filterParams.category) {
+			return renderCategorySelectedOption(filterParams.category);
+		}
+		return <span className="font-medium leading-1.5">Category</span>;
+	};
+
 	return (
 		<div className={cn("flex flex-col", className)}>
 			{/* 정렬 */}
@@ -304,15 +305,20 @@ export const ProductLikeFilter = ({ onFilterChange, className }: ProductLikeFilt
 			<div className="flex flex-row justify-between pt-4">
 				<div className="flex gap-1">
 					<TagDropdown
-						trigger={<span className="font-medium leading-[16px]">Category</span>}
+						trigger={getCategoryTrigger()}
 						options={[
 							{ label: "BEAT", value: "BEAT" },
 							{ label: "ACAPELA", value: "ACAPELA" },
 						]}
 						onSelect={(value) => {
-							setFilterParams({ category: value });
+							// 같은 값을 다시 선택하면 해제
+							const newValue = filterParams.category === value ? "" : value;
+							setFilterParams({ category: newValue });
 						}}
-					/>
+						showChevron={filterParams.category ? false : true}
+					>
+						{filterParams.category && renderCategorySelectedOption(filterParams.category)}
+					</TagDropdown>
 
 					{/* 장르 필터 */}
 					<TagDropdown
@@ -363,13 +369,12 @@ export const ProductLikeFilter = ({ onFilterChange, className }: ProductLikeFilt
 
 					{/* BPM 필터 */}
 					<BPMDropdown
-						bpmType="exact"
-						bpmValue={bpmValue}
-						bpmRangeValue={bpmRangeValue}
-						onChangeBPMType={handleBPMTypeChange}
-						onChangeExactBPM={handleExactBPMChange}
-						onChangeBPMRange={handleBPMRangeChange}
+						minBpm={filterParams.minBpm || undefined}
+						maxBpm={filterParams.maxBpm || undefined}
+						onChangeMinBpm={handleMinBpmChange}
+						onChangeMaxBpm={handleMaxBpmChange}
 						onClear={handleBPMClear}
+						onSubmit={handleBPMSubmit}
 						asChild
 					>
 						{({ currentValue }) => (
@@ -414,7 +419,7 @@ export const ProductLikeFilter = ({ onFilterChange, className }: ProductLikeFilt
 					useSearchTagTrigger={true}
 				/>
 
-				<div className="flex flex-col gap-1">
+				<div className="flex flex-row gap-1">
 					{genreItems.map((genre) => (
 						<GenreButton
 							key={genre.id}

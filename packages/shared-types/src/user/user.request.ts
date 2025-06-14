@@ -45,7 +45,7 @@ export const UserUpdatePayloadSchema = z.object({
 export type UserUpdatePayload = z.infer<typeof UserUpdatePayloadSchema>;
 
 export const UserLikeProductListRequestSchema = PaginationRequestSchema.extend({
-	sort: z.enum(["RECENT", "NAME"]).optional(),
+	sort: z.enum(["RECENT", "NAME"]).optional().default("RECENT"),
 	search: z.string().optional(),
 	category: productCategoryEnum.optional().describe("BEAT"),
 	genreIds: z

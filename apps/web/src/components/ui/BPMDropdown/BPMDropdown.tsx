@@ -5,28 +5,15 @@ import { useRef, useState, useMemo, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Slot } from "@radix-ui/react-slot";
 
-// 타입 정의를 직접 여기에 추가 (다른 파일에서 가져오던 타입)
-export type BPM = number | undefined;
-export type BPMRange = { min?: number | undefined; max?: number | undefined } | undefined;
-
-// render prop을 위한 타입 정의
-export interface BPMDropdownRenderProps {
-	currentValue: string | number | undefined;
-	isOpen: boolean;
-	bpmType: "exact" | "range";
-	bpmValue: BPM;
-	bpmRangeValue: BPMRange;
-}
-
+// 간소화된 Props 인터페이스
 export interface BPMDropdownProps {
-	bpmType: "exact" | "range";
-	bpmValue: BPM | undefined;
-	bpmRangeValue: BPMRange | undefined;
-	onChangeBPMType: (type: "exact" | "range") => void;
-	onChangeExactBPM: (bpm: number) => void;
-	onChangeBPMRange: (type: "min" | "max", bpm: number) => void;
+	minBpm?: number;
+	maxBpm?: number;
+	onChangeMinBpm: (bpm: number) => void;
+	onChangeMaxBpm: (bpm: number) => void;
 	onClear: () => void;
-	children?: React.ReactNode | ((props: BPMDropdownRenderProps) => React.ReactNode);
+	onSubmit?: (minBpm: number | undefined, maxBpm: number | undefined) => void; // 드롭다운 닫힐 때 호출
+	children?: React.ReactNode | ((props: { currentValue: string | undefined; isOpen: boolean }) => React.ReactNode);
 	asChild?: boolean;
 	className?: string;
 }
@@ -39,7 +26,7 @@ const BPMTrigger = ({
 	...props
 }: {
 	isOpen: boolean;
-	currentValue: string | number | undefined;
+	currentValue: string | undefined;
 	onClick: () => void;
 	[key: string]: any;
 }) => {
@@ -87,13 +74,12 @@ interface DropdownPosition {
 }
 
 export const BPMDropdown = ({
-	bpmType,
-	bpmValue,
-	bpmRangeValue,
-	onChangeBPMType,
-	onChangeExactBPM,
-	onChangeBPMRange,
+	minBpm,
+	maxBpm,
+	onChangeMinBpm,
+	onChangeMaxBpm,
 	onClear,
+	onSubmit,
 	children,
 	asChild = false,
 	className,
@@ -102,6 +88,16 @@ export const BPMDropdown = ({
 	const [dropdownPosition, setDropdownPosition] = useState<DropdownPosition>({ top: 0, left: 0, width: 0 });
 	const [isClient, setIsClient] = useState(false);
 
+	// 내부 임시 상태 (드롭다운 내에서만 사용)
+	const [tempMinBpm, setTempMinBpm] = useState<number | undefined>(minBpm);
+	const [tempMaxBpm, setTempMaxBpm] = useState<number | undefined>(maxBpm);
+
+	// 내부 모드 상태 관리 (사용자가 명시적으로 선택한 모드)
+	const [internalMode, setInternalMode] = useState<"exact" | "range">(() => {
+		// 초기값: minBpm === maxBpm이면 exact, 아니면 range
+		return minBpm !== undefined && maxBpm !== undefined && minBpm === maxBpm ? "exact" : "range";
+	});
+
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 
@@ -109,6 +105,60 @@ export const BPMDropdown = ({
 	useEffect(() => {
 		setIsClient(true);
 	}, []);
+
+	// Props 변경 시 임시 상태 동기화
+	useEffect(() => {
+		setTempMinBpm(minBpm);
+		setTempMaxBpm(maxBpm);
+	}, [minBpm, maxBpm]);
+
+	// Props 변경 시 내부 모드 동기화 (외부에서 값이 변경되었을 때만)
+	useEffect(() => {
+		if (minBpm !== undefined && maxBpm !== undefined && minBpm === maxBpm && internalMode === "range") {
+			// 외부에서 같은 값으로 설정되었지만 내부 모드가 range면 그대로 유지
+			return;
+		}
+
+		if (minBpm !== undefined && maxBpm !== undefined) {
+			const shouldBeExact = minBpm === maxBpm;
+			if (shouldBeExact && internalMode === "range") {
+				// 값이 같아졌지만 사용자가 range를 선택했다면 그대로 유지
+				return;
+			}
+			if (!shouldBeExact && internalMode === "exact") {
+				// 값이 달라졌는데 exact 모드면 range로 변경
+				setInternalMode("range");
+			}
+		}
+	}, [minBpm, maxBpm, internalMode]);
+
+	// 내부적으로 exact/range 모드 결정 - 내부 상태 우선 사용
+	const isExactMode = internalMode === "exact";
+
+	// 현재 표시값 계산 (외부 값 기준)
+	const currentValue = useMemo(() => {
+		if (minBpm === undefined && maxBpm === undefined) {
+			return undefined;
+		}
+
+		if (isExactMode && minBpm !== undefined) {
+			return minBpm.toString();
+		}
+
+		if (minBpm !== undefined && maxBpm !== undefined) {
+			return `${minBpm} - ${maxBpm}`;
+		}
+
+		if (minBpm !== undefined) {
+			return `${minBpm} - `;
+		}
+
+		if (maxBpm !== undefined) {
+			return ` - ${maxBpm}`;
+		}
+
+		return undefined;
+	}, [minBpm, maxBpm, isExactMode]);
 
 	// 포털 컨테이너 찾기 - Radix Dialog 내부인지 확인
 	const getPortalContainer = useCallback((): HTMLElement => {
@@ -179,35 +229,38 @@ export const BPMDropdown = ({
 		}
 	}, [isOpen, updateDropdownPosition]);
 
-	const currentValue = useMemo(() => {
-		if (bpmType === "exact") {
-			return bpmValue ?? undefined;
-		}
-		if (bpmType === "range" && bpmRangeValue?.min && bpmRangeValue?.max) {
-			return `${bpmRangeValue?.min ?? ""} - ${bpmRangeValue?.max ?? ""}`;
-		}
-		return undefined;
-	}, [bpmValue, bpmRangeValue, bpmType]);
-
 	// useCallback으로 최적화된 핸들러들
 	const handleToggleDropdown = useCallback(() => {
 		setIsOpen(!isOpen);
 	}, [isOpen]);
 
-	const handleExactBPMTypeChange = useCallback(
-		(e: React.ChangeEvent<HTMLInputElement>) => {
-			// radio 버튼의 change 이벤트에서는 stopPropagation을 하지 않음
-			onChangeBPMType("exact");
-		},
-		[onChangeBPMType],
-	);
+	// BPM 모드 변경 핸들러 - 임시 상태만 변경
+	const handleModeChange = useCallback(
+		(mode: "exact" | "range") => {
+			// 내부 모드 상태 먼저 업데이트
+			setInternalMode(mode);
 
-	const handleRangeBPMTypeChange = useCallback(
-		(e: React.ChangeEvent<HTMLInputElement>) => {
-			// radio 버튼의 change 이벤트에서는 stopPropagation을 하지 않음
-			onChangeBPMType("range");
+			if (mode === "exact") {
+				// range에서 exact로 변경 시 - min값 우선 사용
+				const exactValue = tempMinBpm || tempMaxBpm || 120;
+				setTempMinBpm(exactValue);
+				setTempMaxBpm(exactValue);
+			} else {
+				// exact에서 range로 변경 시 - 같은 값으로 시작
+				if (internalMode === "exact" && tempMinBpm !== undefined) {
+					// 현재 exact 값을 min, max 둘 다에 설정
+					setTempMinBpm(tempMinBpm);
+					setTempMaxBpm(tempMinBpm);
+				}
+				// 둘 다 없으면 기본값만 설정
+				else if (!tempMinBpm && !tempMaxBpm) {
+					setTempMinBpm(100);
+					setTempMaxBpm(120);
+				}
+				// 이미 range 값이 있으면 그대로 유지
+			}
 		},
-		[onChangeBPMType],
+		[tempMinBpm, tempMaxBpm, internalMode],
 	);
 
 	// 숫자 입력값 검증 및 변환 헬퍼 함수
@@ -231,70 +284,63 @@ export const BPMDropdown = ({
 		return numValue;
 	}, []);
 
+	// Exact 모드 BPM 변경 - 임시 상태만 변경
 	const handleExactBPMChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
-			// change 이벤트에서는 stopPropagation을 하지 않음 (상태 업데이트를 방해할 수 있음)
 			const value = e.target.value;
-
-			// 숫자만 허용 (실시간 필터링)
 			const numericValue = value.replace(/[^0-9]/g, "");
 
-			// 빈 값인 경우에만 undefined로 설정
 			if (numericValue === "") {
-				onChangeExactBPM(undefined as any);
+				setTempMinBpm(undefined);
+				setTempMaxBpm(undefined);
 				return;
 			}
 
 			const parsedValue = parseNumericInput(numericValue);
 			if (parsedValue !== undefined) {
-				onChangeExactBPM(parsedValue);
+				setTempMinBpm(parsedValue);
+				setTempMaxBpm(parsedValue);
 			}
 		},
-		[onChangeExactBPM, parseNumericInput],
+		[parseNumericInput],
 	);
 
+	// Min BPM 변경 - 임시 상태만 변경
 	const handleMinBPMChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
-			// change 이벤트에서는 stopPropagation을 하지 않음 (상태 업데이트를 방해할 수 있음)
 			const value = e.target.value;
-
-			// 숫자만 허용 (실시간 필터링)
 			const numericValue = value.replace(/[^0-9]/g, "");
 
-			// 빈 값인 경우에만 undefined로 설정
 			if (numericValue === "") {
-				onChangeBPMRange("min", undefined as any);
+				setTempMinBpm(undefined);
 				return;
 			}
 
 			const parsedValue = parseNumericInput(numericValue);
 			if (parsedValue !== undefined) {
-				onChangeBPMRange("min", parsedValue);
+				setTempMinBpm(parsedValue);
 			}
 		},
-		[onChangeBPMRange, parseNumericInput],
+		[parseNumericInput],
 	);
 
+	// Max BPM 변경 - 임시 상태만 변경
 	const handleMaxBPMChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
-			// change 이벤트에서는 stopPropagation을 하지 않음 (상태 업데이트를 방해할 수 있음)
 			const value = e.target.value;
-
-			// 숫자만 허용 (실시간 필터링)
 			const numericValue = value.replace(/[^0-9]/g, "");
 
-			// 빈 값인 경우에만 undefined로 설정
 			if (numericValue === "") {
-				onChangeBPMRange("max", undefined as any);
+				setTempMaxBpm(undefined);
 				return;
 			}
 
 			const parsedValue = parseNumericInput(numericValue);
 			if (parsedValue !== undefined) {
-				onChangeBPMRange("max", parsedValue);
+				setTempMaxBpm(parsedValue);
 			}
 		},
-		[onChangeBPMRange, parseNumericInput],
+		[parseNumericInput],
 	);
 
 	const handleClearClick = useCallback(
@@ -306,11 +352,34 @@ export const BPMDropdown = ({
 		[onClear],
 	);
 
-	const handleCloseClick = useCallback((e: React.MouseEvent) => {
-		e.preventDefault();
-		e.stopPropagation();
-		setIsOpen(false);
-	}, []);
+	// Close 클릭 시 최종 값 제출 및 min/max 순서 교정
+	const handleCloseClick = useCallback(
+		(e: React.MouseEvent) => {
+			e.preventDefault();
+			e.stopPropagation();
+
+			let finalMinBpm = tempMinBpm;
+			let finalMaxBpm = tempMaxBpm;
+
+			// min > max인 경우 순서 바꾸기
+			if (tempMinBpm !== undefined && tempMaxBpm !== undefined && tempMinBpm > tempMaxBpm) {
+				finalMinBpm = tempMaxBpm;
+				finalMaxBpm = tempMinBpm;
+			}
+
+			// 최종 값 제출
+			if (onSubmit) {
+				onSubmit(finalMinBpm, finalMaxBpm);
+			} else {
+				// 기존 방식 호환성 유지
+				if (finalMinBpm !== undefined) onChangeMinBpm(finalMinBpm);
+				if (finalMaxBpm !== undefined) onChangeMaxBpm(finalMaxBpm);
+			}
+
+			setIsOpen(false);
+		},
+		[tempMinBpm, tempMaxBpm, onSubmit, onChangeMinBpm, onChangeMaxBpm],
+	);
 
 	// 외부 클릭 감지
 	useEffect(() => {
@@ -336,7 +405,24 @@ export const BPMDropdown = ({
 					return;
 				}
 
-				// 외부 클릭이면 드롭다운 닫기
+				// 외부 클릭이면 드롭다운 닫기 (순서 교정 포함)
+				let finalMinBpm = tempMinBpm;
+				let finalMaxBpm = tempMaxBpm;
+
+				if (tempMinBpm !== undefined && tempMaxBpm !== undefined && tempMinBpm > tempMaxBpm) {
+					finalMinBpm = tempMaxBpm;
+					finalMaxBpm = tempMinBpm;
+				}
+
+				// 최종 값 제출
+				if (onSubmit) {
+					onSubmit(finalMinBpm, finalMaxBpm);
+				} else {
+					// 기존 방식 호환성 유지
+					if (finalMinBpm !== undefined) onChangeMinBpm(finalMinBpm);
+					if (finalMaxBpm !== undefined) onChangeMaxBpm(finalMaxBpm);
+				}
+
 				setIsOpen(false);
 			}
 		};
@@ -346,15 +432,12 @@ export const BPMDropdown = ({
 		return () => {
 			document.removeEventListener("mousedown", handleClickOutside, false);
 		};
-	}, [isOpen]);
+	}, [isOpen, tempMinBpm, tempMaxBpm, onSubmit, onChangeMinBpm, onChangeMaxBpm]);
 
 	// render props를 위한 데이터
-	const renderProps: BPMDropdownRenderProps = {
+	const renderProps = {
 		currentValue,
 		isOpen,
-		bpmType,
-		bpmValue,
-		bpmRangeValue,
 	};
 
 	// children이 함수인지 확인
@@ -364,7 +447,10 @@ export const BPMDropdown = ({
 	const renderTrigger = () => {
 		if (isChildrenFunction) {
 			// children이 함수인 경우 render props 패턴
-			const childrenAsFunction = children as (props: BPMDropdownRenderProps) => React.ReactNode;
+			const childrenAsFunction = children as (props: {
+				currentValue: string | undefined;
+				isOpen: boolean;
+			}) => React.ReactNode;
 			const triggerElement = childrenAsFunction(renderProps);
 
 			if (asChild) {
@@ -396,25 +482,6 @@ export const BPMDropdown = ({
 		}
 	};
 
-	// 드롭다운 클릭 핸들러 - input 요소가 아닌 경우만 전파 방지
-	const handleDropdownClick = useCallback((e: React.MouseEvent) => {
-		const target = e.target as HTMLElement;
-		console.log("🔍 Dropdown clicked:", {
-			tagName: target.tagName,
-			className: target.className,
-			target: target,
-			currentTarget: e.currentTarget,
-		});
-
-		// input 요소가 아닌 경우에만 전파 방지
-		if (target.tagName !== "INPUT") {
-			console.log("🚫 Stopping propagation for non-input element");
-			e.stopPropagation();
-		} else {
-			console.log("✅ Allowing input element to handle click");
-		}
-	}, []);
-
 	// 드롭다운 컨텐츠
 	const dropdownContent = (
 		<div
@@ -428,9 +495,8 @@ export const BPMDropdown = ({
 				top: dropdownPosition.top,
 				left: dropdownPosition.left,
 				width: dropdownPosition.width,
-				minWidth: "200px",
+				minWidth: "240px",
 			}}
-			// onClick={handleDropdownClick} // 임시로 제거해서 테스트
 		>
 			<div className="p-4">
 				<div className="flex flex-col gap-4">
@@ -439,8 +505,8 @@ export const BPMDropdown = ({
 							type="radio"
 							id="exact"
 							name="bpmType"
-							checked={bpmType === "exact"}
-							onChange={handleExactBPMTypeChange}
+							checked={isExactMode}
+							onChange={() => handleModeChange("exact")}
 							className="w-4 h-4 cursor-pointer"
 						/>
 						<label
@@ -449,25 +515,21 @@ export const BPMDropdown = ({
 						>
 							Exact
 						</label>
-						{bpmType === "exact" && (
+						{isExactMode && (
 							<input
 								type="text"
 								inputMode="numeric"
 								pattern="[0-9]*"
-								value={bpmValue ?? ""}
+								value={tempMinBpm || ""}
 								onChange={handleExactBPMChange}
 								tabIndex={0}
 								onClick={(e) => {
-									// 이벤트 전파 중단
 									e.stopPropagation();
-
-									// 지연 후 포커스 (React 렌더링 후)
 									setTimeout(() => {
 										(e.target as HTMLInputElement).focus();
 									}, 0);
 								}}
 								onMouseDown={(e) => {
-									// mousedown에서도 전파 중단
 									e.stopPropagation();
 								}}
 								placeholder="BPM"
@@ -481,8 +543,8 @@ export const BPMDropdown = ({
 							type="radio"
 							id="range"
 							name="bpmType"
-							checked={bpmType === "range"}
-							onChange={handleRangeBPMTypeChange}
+							checked={!isExactMode}
+							onChange={() => handleModeChange("range")}
 							className="w-4 h-4 cursor-pointer"
 						/>
 						<label
@@ -491,26 +553,22 @@ export const BPMDropdown = ({
 						>
 							Range
 						</label>
-						{bpmType === "range" && (
+						{!isExactMode && (
 							<div className="flex items-center gap-2">
 								<input
 									type="text"
 									inputMode="numeric"
 									pattern="[0-9]*"
-									value={bpmRangeValue?.min ? bpmRangeValue.min : ""}
+									value={tempMinBpm || ""}
 									onChange={handleMinBPMChange}
 									tabIndex={0}
 									onClick={(e) => {
-										// 이벤트 전파 중단
 										e.stopPropagation();
-
-										// 지연 후 포커스 (React 렌더링 후)
 										setTimeout(() => {
 											(e.target as HTMLInputElement).focus();
 										}, 0);
 									}}
 									onMouseDown={(e) => {
-										// mousedown에서도 전파 중단
 										e.stopPropagation();
 									}}
 									placeholder="Min"
@@ -521,20 +579,16 @@ export const BPMDropdown = ({
 									type="text"
 									inputMode="numeric"
 									pattern="[0-9]*"
-									value={bpmRangeValue?.max ? bpmRangeValue.max : ""}
+									value={tempMaxBpm || ""}
 									onChange={handleMaxBPMChange}
 									tabIndex={0}
 									onClick={(e) => {
-										// 이벤트 전파 중단
 										e.stopPropagation();
-
-										// 지연 후 포커스 (React 렌더링 후)
 										setTimeout(() => {
 											(e.target as HTMLInputElement).focus();
 										}, 0);
 									}}
 									onMouseDown={(e) => {
-										// mousedown에서도 전파 중단
 										e.stopPropagation();
 									}}
 									placeholder="Max"

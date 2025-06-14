@@ -22,11 +22,9 @@ import { useQuery } from "@tanstack/react-query";
 import MultiTagGenreInput from "@/components/ui/MultiTagGenreInput/MultiTagGenreInput";
 import blankCdImage from "@/assets/images/blank-cd.png";
 
-export type BPM = number | undefined;
-export type BPMRange = { min?: number | undefined; max?: number | undefined } | undefined;
 export type KeyValue = { label: string; value: string };
 
-// 확장된 폼 스키마 - 파일 관련 필드 추가
+// 확장된 폼 스키마 - 파일 관련 필드 추가, BPM 관련 필드 단순화
 const ExtendedTrackFormSchema = TrackUploadFormSchema.extend({
 	// 파일 업로드 상태
 	uploadedFiles: z.object({
@@ -41,6 +39,9 @@ const ExtendedTrackFormSchema = TrackUploadFormSchema.extend({
 	}),
 	// UI 상태
 	isDragOver: z.boolean(),
+	// Key 관련 UI 필드들
+	keyValue: z.object({ label: z.string(), value: z.string() }).optional(),
+	scaleValue: z.string().nullable(),
 });
 
 type ExtendedTrackFormData = z.infer<typeof ExtendedTrackFormSchema>;
@@ -70,9 +71,6 @@ const ArtistStudioTrackModal = ({
 		...getProductQueryOption(productId || 0),
 		enabled: mode === "edit" && !!productId,
 	});
-	useEffect(() => {
-		console.log(productData);
-	}, [productData]);
 
 	const { mutate: createProduct, isPending: isCreating } = useCreateProductMutation();
 	const { mutate: updateProduct, isPending: isUpdating } = useUpdateProductMutation(productId || 0);
@@ -103,9 +101,6 @@ const ArtistStudioTrackModal = ({
 			coverImageFileId: 1,
 			audioFileFileId: 2,
 			// UI 전용 필드들
-			bpmType: "exact" as const,
-			exactBPM: undefined,
-			bpmRange: { min: undefined, max: undefined },
 			keyValue: undefined,
 			scaleValue: null,
 			// 파일 관련 필드들
@@ -159,13 +154,6 @@ const ArtistStudioTrackModal = ({
 					audioFileFileId: (productData as any).audioFile?.id || undefined,
 					zipFileId: (productData as any).zipFile?.id || undefined,
 				},
-				// BPM 관련 필드 설정
-				bpmType: productData.minBpm === productData.maxBpm ? "exact" : "range",
-				exactBPM: productData.minBpm === productData.maxBpm ? productData.minBpm : undefined,
-				bpmRange:
-					productData.minBpm !== productData.maxBpm
-						? { min: productData.minBpm, max: productData.maxBpm }
-						: { min: undefined, max: undefined },
 			};
 		}
 
@@ -317,12 +305,13 @@ const ArtistStudioTrackModal = ({
 		}
 	}, [mode, isModalOpen, initialFiles, getFileTypeFromExtension, handleFileUpload, setError]);
 
-	// 모달이 닫힐 때 또는 제품 데이터가 변경될 때 폼 초기화
+	// 모달이 열릴 때 폼 초기화
 	useEffect(() => {
-		if (!isModalOpen || (mode === "edit" && productData)) {
-			reset(getDefaultValues());
+		if (isModalOpen) {
+			const defaultValues = getDefaultValues();
+			reset(defaultValues);
 		}
-	}, [isModalOpen, productData, reset, getDefaultValues, mode]);
+	}, [isModalOpen, mode, productData, reset, getDefaultValues]);
 
 	// 드래그 앤 드롭 이벤트 핸들러
 	const handleDragOver = useCallback(
@@ -429,10 +418,8 @@ const ArtistStudioTrackModal = ({
 				category: data.category,
 				genres: data.genres,
 				tags: data.tags || [],
-				minBpm:
-					data.bpmType === "exact" ? data.exactBPM || data.minBpm || 100 : data.bpmRange?.min || data.minBpm || 100,
-				maxBpm:
-					data.bpmType === "exact" ? data.exactBPM || data.maxBpm || 120 : data.bpmRange?.max || data.maxBpm || 120,
+				minBpm: data.minBpm || 100,
+				maxBpm: data.maxBpm || 120,
 				musicKey: validatedMusicKey,
 				scaleType: validatedScaleType,
 				licenseInfo: data.licenseInfo,
@@ -493,7 +480,7 @@ const ArtistStudioTrackModal = ({
 				});
 			}
 		},
-		[mode, createProduct, updateProduct, onClose, openCompleteModal, setError],
+		[mode, createProduct, updateProduct, onClose, openCompleteModal, setError, productData],
 	);
 
 	// 카테고리 변경
@@ -505,44 +492,25 @@ const ArtistStudioTrackModal = ({
 		[setValue, trigger],
 	);
 
-	// BPM 관련 핸들러들
-	const onChangeExactBPM = useCallback(
-		(bpm: number) => {
-			if (isNaN(bpm)) return;
-			setValue("exactBPM", bpm === 0 ? undefined : bpm);
-			trigger("exactBPM");
+	// BPM 관련 핸들러들 - onSubmit 방식으로 변경
+	const onSubmitBPM = useCallback(
+		(minBpm: number | undefined, maxBpm: number | undefined) => {
+			setValue("minBpm", minBpm || 100);
+			setValue("maxBpm", maxBpm || 120);
+			trigger(["minBpm", "maxBpm"]);
 		},
 		[setValue, trigger],
 	);
 
-	const onChangeBPMRange = useCallback(
-		(type: "min" | "max", bpm: number) => {
-			if (isNaN(bpm)) return;
-			const currentRange = getValues("bpmRange") || {};
+	// 호환성을 위한 더미 핸들러들
+	const onChangeMinBpm = useCallback(() => {}, []);
+	const onChangeMaxBpm = useCallback(() => {}, []);
 
-			if (type === "min") {
-				setValue("bpmRange", {
-					...currentRange,
-					min: bpm === 0 ? undefined : bpm,
-				});
-			} else {
-				setValue("bpmRange", {
-					...currentRange,
-					max: bpm === 0 ? undefined : bpm,
-				});
-			}
-			trigger("bpmRange");
-		},
-		[setValue, trigger, getValues],
-	);
-
-	const onChangeBPMType = useCallback(
-		(type: "exact" | "range") => {
-			setValue("bpmType", type);
-			trigger("bpmType");
-		},
-		[setValue, trigger],
-	);
+	const onClearBPM = useCallback(() => {
+		setValue("minBpm", 100);
+		setValue("maxBpm", 120);
+		trigger(["minBpm", "maxBpm"]);
+	}, [setValue, trigger]);
 
 	// Key 관련 핸들러들
 	const onChangeKey = useCallback(
@@ -569,12 +537,6 @@ const ArtistStudioTrackModal = ({
 		setValue("keyValue", undefined);
 		setValue("scaleValue", null);
 		trigger(["keyValue", "scaleValue"]);
-	}, [setValue, trigger]);
-
-	const onClearBPM = useCallback(() => {
-		setValue("exactBPM", undefined);
-		setValue("bpmRange", { min: undefined, max: undefined });
-		trigger(["exactBPM", "bpmRange"]);
 	}, [setValue, trigger]);
 
 	// 라이센스 관련 핸들러들
@@ -932,12 +894,6 @@ const ArtistStudioTrackModal = ({
 										</div>
 									)}
 								</div>
-								{/* <div
-									className={cn(
-										"flex gap-[5px] p-2 border-x-[1px] border-y-[2px] border-black rounded-[5px]",
-										errors.genres && "border-red-500",
-									)}
-								> */}
 								<Controller
 									name="genres"
 									control={control}
@@ -955,7 +911,6 @@ const ArtistStudioTrackModal = ({
 										/>
 									)}
 								/>
-								{/* </div> */}
 							</div>
 
 							{/* 태그 선택 */}
@@ -986,33 +941,26 @@ const ArtistStudioTrackModal = ({
 								/>
 							</div>
 
-							{/* BPM 설정 */}
+							{/* BPM 설정 - 단순화 */}
 							<div className="flex flex-col gap-[5px]">
 								<div className="font-[SUIT] text-xs flex justify-between">
 									<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">BPM</div>
 								</div>
 								<Controller
-									name="bpmType"
+									name="minBpm"
 									control={control}
-									render={({ field: bpmTypeField }) => (
+									render={({ field: minField }) => (
 										<Controller
-											name="exactBPM"
+											name="maxBpm"
 											control={control}
-											render={({ field: exactBPMField }) => (
-												<Controller
-													name="bpmRange"
-													control={control}
-													render={({ field: bpmRangeField }) => (
-														<BPMDropdown
-															bpmType={bpmTypeField.value}
-															bpmValue={exactBPMField.value}
-															bpmRangeValue={bpmRangeField.value}
-															onChangeBPMType={onChangeBPMType}
-															onChangeExactBPM={onChangeExactBPM}
-															onChangeBPMRange={onChangeBPMRange}
-															onClear={onClearBPM}
-														/>
-													)}
+											render={({ field: maxField }) => (
+												<BPMDropdown
+													minBpm={minField.value}
+													maxBpm={maxField.value}
+													onChangeMinBpm={onChangeMinBpm}
+													onChangeMaxBpm={onChangeMaxBpm}
+													onClear={onClearBPM}
+													onSubmit={onSubmitBPM}
 												/>
 											)}
 										/>
