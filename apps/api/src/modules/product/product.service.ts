@@ -21,7 +21,12 @@ export class ProductService {
 		private readonly fileService: FileService,
 	) {}
 
-	async findAll(where: any, { page, limit, sort, genreIds, tagIds }: ProductListQueryRequest, select: string[] = []) {
+	async findAll(
+		where: any,
+		{ page, limit, sort, genreIds, tagIds }: ProductListQueryRequest,
+		select: string[] = [],
+		userId?: number,
+	) {
 		try {
 			const products = await this.prisma.product
 				.findMany({
@@ -53,6 +58,16 @@ export class ProductService {
 										where: {
 											deletedAt: null,
 											tagId: { in: tagIds.split(",").map((id) => parseInt(id)) },
+										},
+									},
+								}
+							: {}),
+						...(userId
+							? {
+									productLike: {
+										where: {
+											userId: BigInt(userId),
+											deletedAt: null,
 										},
 									},
 								}
@@ -168,7 +183,7 @@ export class ProductService {
 		}
 	}
 
-	async findOne(id: number) {
+	async findOne(id: number, userId?: number) {
 		try {
 			const product = await this.prisma.product
 				.findFirst({
@@ -192,6 +207,13 @@ export class ProductService {
 								},
 							},
 						},
+						...(userId
+							? {
+									productLike: {
+										where: { userId: BigInt(userId), deletedAt: null },
+									},
+								}
+							: {}),
 					},
 				})
 				.then((data) => this.prisma.serializeBigInt(data));
@@ -772,8 +794,12 @@ export class ProductService {
 
 	async unlike(userId: number, productId: number) {
 		return await this.prisma.productLike
-			.update({
-				where: { userId_productId: { userId: BigInt(userId), productId: BigInt(productId) } },
+			.updateMany({
+				where: {
+					userId: BigInt(userId),
+					productId: BigInt(productId),
+					deletedAt: null,
+				},
 				data: { deletedAt: new Date() },
 			})
 			.then((data) => this.prisma.serializeBigInt(data));

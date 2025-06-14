@@ -15,6 +15,9 @@ import { PurchaseModal } from "./PurchaseModal";
 import { useQuery } from "@tanstack/react-query";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { useLikeProductMutation } from "@/apis/product/mutations/useLikeProductMutation";
+import { useUnlikeProductMutation } from "@/apis/product/mutations/useUnLikeProductMutation";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * 음악 상세 정보를 보여주는 우측 사이드바 컴포넌트
@@ -26,6 +29,9 @@ import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 export const MusicRightSidebar = memo(() => {
 	const router = useRouter();
 	const { data: user } = useQuery(getUserMeQueryOption());
+	const { toast } = useToast();
+	const likeProductMutation = useLikeProductMutation();
+	const unlikeProductMutation = useUnlikeProductMutation();
 
 	const {
 		isOpen,
@@ -55,10 +61,38 @@ export const MusicRightSidebar = memo(() => {
 
 	const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-	const [isLiked, setIsLiked] = useState(false);
-
 	const onLikeClick = () => {
-		setIsLiked(!isLiked);
+		if (!user) {
+			toast({
+				description: "로그인 후 이용해주세요.",
+			});
+			return;
+		}
+
+		if (!currentTrack) {
+			return;
+		}
+
+		// 현재 좋아요 상태에 따라 적절한 mutation 실행
+		if (currentTrack.isLiked) {
+			unlikeProductMutation.mutate(currentTrack.id, {
+				onError: () => {
+					toast({
+						description: "좋아요 취소에 실패했습니다.",
+						variant: "destructive",
+					});
+				},
+			});
+		} else {
+			likeProductMutation.mutate(currentTrack.id, {
+				onError: () => {
+					toast({
+						description: "좋아요에 실패했습니다.",
+						variant: "destructive",
+					});
+				},
+			});
+		}
 	};
 
 	const onClickFreeDownload = () => {
@@ -143,7 +177,7 @@ export const MusicRightSidebar = memo(() => {
 
 					<div className="flex justify-between pb-4">
 						<div className="flex flex-col gap-0.5">
-							{user?.subscribedAt && !!currentTrack?.isFreeDownload && (
+							{!!currentTrack?.isFreeDownload && (
 								<FreeDownloadButton
 									variant="secondary"
 									className="outline-4 outline-hbc-black px-2.5 font-suisse"
@@ -166,7 +200,7 @@ export const MusicRightSidebar = memo(() => {
 							onClick={onLikeClick}
 							className="flex items-center justify-center w-8 h-8 transition-opacity cursor-pointer hover:opacity-80"
 						>
-							{isLiked ? (
+							{currentTrack?.isLiked ? (
 								<Image
 									src="/assets/ActiveLike.png"
 									alt="active like"

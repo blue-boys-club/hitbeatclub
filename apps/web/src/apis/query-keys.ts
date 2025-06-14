@@ -11,12 +11,14 @@ const QUERY_KEYS = {
 	user: {
 		_key: ["user"],
 		me: ["user", "me"],
+		_likedProducts: ["user", "likedProducts"],
 		likedProducts: (userId: number, payload: UserLikeProductListRequest): QueryKey => [
 			"user",
 			"likedProducts",
 			userId,
 			payload,
 		],
+		_infiniteLikedProducts: ["user", "likedProducts", "infinite"],
 		infiniteLikedProducts: (userId: number, payload: UserLikeProductListRequest): QueryKey => [
 			"user",
 			"likedProducts",
@@ -29,6 +31,7 @@ const QUERY_KEYS = {
 		_key: ["products"],
 		_list: ["products", "list"],
 		list: (payload: Omit<ProductListQueryRequest, "page" | "limit">): QueryKey => ["products", "list", payload],
+		_infiniteList: ["products", "list", "infinite"],
 		infiniteList: (payload: Omit<ProductListQueryRequest, "page" | "limit">): QueryKey => [
 			"products",
 			"list",

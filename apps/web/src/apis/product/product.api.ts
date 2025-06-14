@@ -103,3 +103,19 @@ export const getProductListForDashboard = async () => {
 	const response = await client.get<CommonResponse<ProductListDashboardResponse>>("/products/dashboard");
 	return response.data;
 };
+
+/**
+ * 좋아요 처리
+ */
+export const likeProduct = async (productId: number) => {
+	const response = await client.post<CommonResponseId>(`/products/${productId}/like`);
+	return response.data;
+};
+
+/**
+ * 좋아요 취소
+ */
+export const unlikeProduct = async (productId: number) => {
+	const response = await client.delete<CommonResponseId>(`/products/${productId}/un-like`);
+	return response.data;
+};

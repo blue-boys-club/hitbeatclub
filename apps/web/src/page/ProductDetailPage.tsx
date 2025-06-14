@@ -17,6 +17,8 @@ import { useQuery } from "@tanstack/react-query";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { useToast } from "@/hooks/use-toast";
+import { useLikeProductMutation } from "@/apis/product/mutations/useLikeProductMutation";
+import { useUnlikeProductMutation } from "@/apis/product/mutations/useUnLikeProductMutation";
 import UserProfileImage from "@/assets/images/user-profile.png";
 import { cn } from "@/common/utils";
 
@@ -68,6 +70,8 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 		...getProductQueryOption(trackId),
 	});
 	const { toast } = useToast();
+	const likeProductMutation = useLikeProductMutation();
+	const unlikeProductMutation = useUnlikeProductMutation();
 
 	const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
 	const { data: user } = useQuery(getUserMeQueryOption());
@@ -83,11 +87,30 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 			return;
 		}
 
-		// setIsLiked(!isLiked);
-		// TODO: 좋아요 처리
-		toast({
-			description: "준비중입니다.",
-		});
+		if (!product) {
+			return;
+		}
+
+		// 현재 좋아요 상태에 따라 적절한 mutation 실행
+		if (product.isLiked) {
+			unlikeProductMutation.mutate(product.id, {
+				onError: () => {
+					toast({
+						description: "좋아요 취소에 실패했습니다.",
+						variant: "destructive",
+					});
+				},
+			});
+		} else {
+			likeProductMutation.mutate(product.id, {
+				onError: () => {
+					toast({
+						description: "좋아요에 실패했습니다.",
+						variant: "destructive",
+					});
+				},
+			});
+		}
 	};
 
 	const onClickPurchase = () => {
@@ -198,7 +221,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 							</nav>
 
 							<div className="flex flex-col gap-0.5">
-								{isSubscribed && !!product?.isFreeDownload && (
+								{!!product?.isFreeDownload && (
 									<FreeDownloadButton
 										variant="secondary"
 										className="outline-4 outline-hbc-black px-2.5 font-suisse"
