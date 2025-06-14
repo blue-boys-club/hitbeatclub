@@ -192,14 +192,45 @@ export class ProductService {
 								},
 							},
 						},
+						productGenre: {
+							where: {
+								deletedAt: null,
+							},
+							select: {
+								genre: {
+									select: {
+										id: true,
+										name: true,
+									},
+								},
+							},
+						},
+						productTag: {
+							where: {
+								deletedAt: null,
+							},
+							select: {
+								tag: {
+									select: {
+										id: true,
+										name: true,
+									},
+								},
+							},
+						},
 					},
 				})
 				.then((data) => this.prisma.serializeBigInt(data));
 
 			const seller = product.artistSellerIdToArtist;
 			const license = product.productLicense;
+			const genres = product.productGenre;
+			const tags = product.productTag;
+
 			delete product.artistSellerIdToArtist;
 			delete product.productLicense;
+			delete product.productGenre;
+			delete product.productTag;
 
 			return {
 				...product,
@@ -209,6 +240,18 @@ export class ProductService {
 					type: l.license.type,
 					price: l.price,
 				})),
+				genres: genres.map((pg) => {
+					return {
+						id: pg.genre.id,
+						name: pg.genre.name,
+					};
+				}),
+				tags: tags.map((pt) => {
+					return {
+						id: pt.tag.id,
+						name: pt.tag.name,
+					};
+				}),
 			};
 		} catch (error) {
 			throw new BadRequestException(error);
