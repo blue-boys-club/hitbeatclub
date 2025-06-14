@@ -4,7 +4,7 @@ import LikeItems from "./LikeItems";
 
 const LikeSection = memo(() => {
 	const [search, setSearch] = useState("");
-	const [sort, setSort] = useState<"recent" | "name">("recent");
+	const [sort, setSort] = useState<"RECENT" | "NAME">("RECENT");
 
 	return (
 		<div className="flex flex-col flex-1 h-full overflow-hidden">

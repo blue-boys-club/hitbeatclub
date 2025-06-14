@@ -8,7 +8,7 @@ import { FILE_PUT_ITEM_IN_BUCKET_ERROR, FILE_UPDATE_FILE_ENABLED_AND_DELETE_ERRO
 import { PrismaService } from "~/common/prisma/prisma.service";
 import { FileCreateRequestDto } from "./dto/request/file.create.dto";
 import { v4 as uuidv4 } from "uuid";
-import { Prisma } from "@prisma/client";
+import { File, Prisma } from "@prisma/client";
 
 @Injectable()
 export class FileService {
@@ -180,7 +180,7 @@ export class FileService {
 					isEnabled: 1,
 				},
 			})
-			.then((data) => this.prisma.serializeBigInt(data));
+			.then((data) => this.prisma.serializeBigInt(data) as File[]);
 	}
 
 	async softDeleteFile(id: number, tx?: Prisma.TransactionClient): Promise<void> {

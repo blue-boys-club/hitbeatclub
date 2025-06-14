@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PaginationRequestSchema } from "../common/common.request";
 
 export const UserCreatePayloadSchema = z.object({
 	email: z.string().email().describe("이메일"),
@@ -41,3 +42,10 @@ export const UserUpdatePayloadSchema = z.object({
 });
 
 export type UserUpdatePayload = z.infer<typeof UserUpdatePayloadSchema>;
+
+export const UserLikeProductListRequestSchema = PaginationRequestSchema.extend({
+	sort: z.enum(["RECENT", "NAME"]).optional(),
+	search: z.string().optional(),
+});
+
+export type UserLikeProductListRequest = z.infer<typeof UserLikeProductListRequestSchema>;
