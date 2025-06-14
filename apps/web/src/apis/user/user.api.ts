@@ -79,18 +79,11 @@ export const getLikedProducts = async (
 	userId: number,
 	payload: UserLikeProductListRequest,
 ): Promise<PaginationResponse<ProductRowByDashboardResponse[]>> => {
-	try {
-		const parsed = UserLikeProductListRequestSchema.parse(payload);
-
-		const response = await axiosInstance.get<PaginationResponse<ProductRowByDashboardResponse[]>>(
-			`/users/${userId}/liked-products`,
-			{
-				params: parsed,
-			},
-		);
-		return response.data;
-	} catch (error) {
-		console.error(error);
-		throw error;
-	}
+	const response = await axiosInstance.get<PaginationResponse<ProductRowByDashboardResponse[]>>(
+		`/users/${userId}/liked-products`,
+		{
+			params: payload,
+		},
+	);
+	return response.data;
 };

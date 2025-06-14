@@ -948,7 +948,8 @@ const ArtistStudioTrackModal = ({
 											placeholder="장르를 선택하세요"
 											allowDirectInput={false}
 											suggestedItems={
-												searchInfo?.genres?.map((genre) => ({ value: genre.name, count: genre.count })) || []
+												searchInfo?.genres?.map((genre) => ({ id: genre.id, value: genre.name, count: genre.count })) ||
+												[]
 											}
 											onChange={field.onChange}
 										/>
@@ -976,7 +977,9 @@ const ArtistStudioTrackModal = ({
 											maxItems={10}
 											placeholder="태그를 입력하세요"
 											allowDirectInput={true}
-											suggestedItems={searchInfo?.tags?.map((tag) => ({ value: tag.name, count: tag.count })) || []}
+											suggestedItems={
+												searchInfo?.tags?.map((tag) => ({ id: tag.id, value: tag.name, count: tag.count })) || []
+											}
 											onChange={field.onChange}
 										/>
 									)}

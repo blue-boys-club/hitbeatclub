@@ -16,6 +16,7 @@ interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
 const axiosInstance = axios.create({
 	baseURL: process.env.NEXT_PUBLIC_API_URL,
 	timeout: 10000,
+	paramsSerializer: { indexes: null },
 
 	transformResponse: <T>(data: string): T => {
 		try {

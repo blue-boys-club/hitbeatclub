@@ -279,6 +279,7 @@ export class ArtistController {
 	): Promise<IResponsePaging<ProductListResponseDto>> {
 		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds, isPublic } =
 			artistProductListQueryRequestDto;
+		console.log(artistProductListQueryRequestDto);
 		const artistMe = await this.artistService.findMe(req.user.id);
 
 		if (artistMe.id !== id) {
@@ -293,22 +294,22 @@ export class ArtistController {
 			...(scaleType === "null" || scaleType === undefined ? {} : { scaleType }),
 			...(minBpm ? { minBpm: { lte: minBpm }, maxBpm: { gte: minBpm } } : {}),
 			...(maxBpm ? { minBpm: { lte: maxBpm }, maxBpm: { gte: maxBpm } } : {}),
-			...(genreIds
+			...(genreIds && genreIds.length > 0
 				? {
 						productGenre: {
 							some: {
 								deletedAt: null,
-								genreId: { in: genreIds.split(",").map((id) => parseInt(id)) },
+								genreId: { in: genreIds },
 							},
 						},
 					}
 				: {}),
-			...(tagIds
+			...(tagIds && tagIds.length > 0
 				? {
 						productTag: {
 							some: {
 								deletedAt: null,
-								tagId: { in: tagIds.split(",").map((id) => parseInt(id)) },
+								tagId: { in: tagIds },
 							},
 						},
 					}

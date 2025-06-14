@@ -47,7 +47,7 @@ export class ProductService {
 									productGenre: {
 										where: {
 											deletedAt: null,
-											genreId: { in: genreIds.split(",").map((id) => parseInt(id)) },
+											genreId: { in: genreIds },
 										},
 									},
 								}
@@ -57,7 +57,7 @@ export class ProductService {
 									productTag: {
 										where: {
 											deletedAt: null,
-											tagId: { in: tagIds.split(",").map((id) => parseInt(id)) },
+											tagId: { in: tagIds },
 										},
 									},
 								}

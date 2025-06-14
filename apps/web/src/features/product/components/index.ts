@@ -7,3 +7,4 @@ export * from "./ProductSearch";
 export * from "./ProductSection";
 export * from "./ProductSort";
 export * from "./ProductTrackCarouselItem";
+export * from "./ProductLikeFilter";

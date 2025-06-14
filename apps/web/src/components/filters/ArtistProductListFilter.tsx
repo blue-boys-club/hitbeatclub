@@ -17,6 +17,7 @@ import { SquareDropdown } from "@/components/ui/SquareDropdown/SquareDropdown";
 import { ChevronDown } from "@/assets/svgs/ChevronDown";
 import { useArtistProductParametersStates } from "@/features/artist/hooks/useArtistProductParameters";
 import { FilterStatusEnum, SortEnum } from "@/features/artist/types/artistProductParsers";
+import { GenreButton } from "../ui/GenreButton";
 
 interface ArtistProductListFilterProps {
 	artistId: number;
@@ -36,9 +37,41 @@ export const ArtistProductListFilter = ({ artistId, onDataChange, className }: A
 	// nuqs를 사용한 쿼리 상태 관리
 	const [filterParams, setFilterParams] = useArtistProductParametersStates();
 
-	// 로컬 상태 관리
-	const [searchTags, setSearchTags] = useState<Tag[]>([]);
-	const [genreItems, setGenreItems] = useState<Genre[]>([]);
+	// 로컬 상태 관리 - useMemo로 최적화
+	const searchTags = useMemo<Tag[]>(() => {
+		if (!searchInfo || filterParams.tagIds.length === 0) return [];
+
+		return filterParams.tagIds
+			.map((id) => {
+				const foundTag = searchInfo.tags?.find((tag) => tag.id === id);
+				return foundTag
+					? ({
+							id,
+							text: foundTag.name,
+							isFromDropdown: true,
+						} as Tag)
+					: null;
+			})
+			.filter((tag): tag is Tag => tag !== null);
+	}, [filterParams.tagIds, searchInfo]);
+
+	const genreItems = useMemo<Genre[]>(() => {
+		if (!searchInfo || filterParams.genreIds.length === 0) return [];
+
+		return filterParams.genreIds
+			.map((id) => {
+				const foundGenre = searchInfo.genres?.find((genre) => genre.id === id);
+				return foundGenre
+					? ({
+							id,
+							text: foundGenre.name,
+							isFromDropdown: true,
+						} as Genre)
+					: null;
+			})
+			.filter((genre): genre is Genre => genre !== null);
+	}, [filterParams.genreIds, searchInfo]);
+
 	const [keyValue, setKeyValue] = useState<KeyValue | undefined>(undefined);
 	const [scaleValue, setScaleValue] = useState<string | null>(null);
 	const [bpmValue, setBpmValue] = useState<BPM>(undefined);
@@ -74,6 +107,8 @@ export const ArtistProductListFilter = ({ artistId, onDataChange, className }: A
 		// 장르
 		if (filterParams.genreIds) {
 			query.genreIds = filterParams.genreIds;
+		} else {
+			query.genreIds = [];
 		}
 
 		// 음악 키
@@ -95,9 +130,11 @@ export const ArtistProductListFilter = ({ artistId, onDataChange, className }: A
 		}
 
 		// 태그 - tags 배열을 tagIds로 변환 (실제로는 태그 이름을 ID로 매핑해야 함)
-		if (filterParams.tags.length > 0) {
+		if (filterParams.tagIds.length > 0) {
 			// TODO: 태그 이름을 ID로 변환하는 로직 필요
-			query.tagIds = filterParams.tags.join(",");
+			query.tagIds = filterParams.tagIds;
+		} else {
+			query.tagIds = [];
 		}
 
 		return query;
@@ -134,8 +171,7 @@ export const ArtistProductListFilter = ({ artistId, onDataChange, className }: A
 	// 검색 태그 변경 핸들러
 	const handleSearchTagsChange = useCallback(
 		(tags: Tag[]) => {
-			setSearchTags(tags);
-			setFilterParams({ tags: tags.map((tag) => tag.text), page: 1 });
+			setFilterParams({ tagIds: tags.map((tag) => tag.id), page: 1 });
 		},
 		[setFilterParams],
 	);
@@ -143,20 +179,9 @@ export const ArtistProductListFilter = ({ artistId, onDataChange, className }: A
 	// 장르 변경 핸들러
 	const handleGenreChange = useCallback(
 		(genres: Genre[]) => {
-			setGenreItems(genres);
-			// TODO: 장르 이름을 ID로 변환하는 로직 필요
-			const genreIds = genres
-				.map((genre) => {
-					// 임시로 searchInfo에서 장르 ID 찾기
-					const foundGenre = searchInfo?.genres?.find((g) => g.name === genre.text);
-					return foundGenre?.id.toString() || "";
-				})
-				.filter(Boolean)
-				.join(",");
-
-			setFilterParams({ genreIds, page: 1 });
+			setFilterParams({ genreIds: genres.map((genre) => genre.id), page: 1 });
 		},
-		[setFilterParams, searchInfo?.genres],
+		[setFilterParams],
 	);
 
 	// 키 변경 핸들러
@@ -219,12 +244,29 @@ export const ArtistProductListFilter = ({ artistId, onDataChange, className }: A
 		setFilterParams({ minBpm: 0, maxBpm: 0, page: 1 });
 	}, [setFilterParams]);
 
+	const removeGenre = useCallback(
+		(genre: Genre) => {
+			const newGenreIds = filterParams.genreIds.filter((id) => id !== genre.id);
+			setFilterParams({ genreIds: newGenreIds, page: 1 });
+		},
+		[filterParams.genreIds, setFilterParams],
+	);
+
+	const removeTag = useCallback(
+		(tag: Tag) => {
+			const newTagIds = filterParams.tagIds.filter((id) => id !== tag.id);
+			setFilterParams({ tagIds: newTagIds, page: 1 });
+		},
+		[filterParams.tagIds, setFilterParams],
+	);
+
 	// searchInfo에서 태그 목록을 맵핑
 	const tagSuggestions = useMemo(() => {
 		return (
 			searchInfo?.tags?.map((tag) => ({
+				id: tag.id,
 				value: tag.name,
-				count: 0, // TODO: Add count from API if available
+				count: tag.count || 0,
 			})) || []
 		);
 	}, [searchInfo?.tags]);
@@ -233,8 +275,9 @@ export const ArtistProductListFilter = ({ artistId, onDataChange, className }: A
 	const genreSuggestions = useMemo(() => {
 		return (
 			searchInfo?.genres?.map((genre) => ({
+				id: genre.id,
 				value: genre.name,
-				count: 0, // TODO: Add count from API if available
+				count: genre.count || 0,
 			})) || []
 		);
 	}, [searchInfo?.genres]);
@@ -315,12 +358,16 @@ export const ArtistProductListFilter = ({ artistId, onDataChange, className }: A
 						value: genre.value,
 					}))}
 					onSelect={(value) => {
-						const newGenre: Genre = {
-							id: crypto.randomUUID(),
-							text: value,
-							isFromDropdown: true,
-						};
-						handleGenreChange([...genreItems, newGenre]);
+						// 장르 suggestion에서 실제 ID 찾기
+						const foundGenre = searchInfo?.genres?.find((g) => g.name === value);
+						if (foundGenre) {
+							const newGenre: Genre = {
+								id: foundGenre.id,
+								text: value,
+								isFromDropdown: true,
+							};
+							handleGenreChange([...genreItems, newGenre]);
+						}
 					}}
 				/>
 
@@ -380,16 +427,29 @@ export const ArtistProductListFilter = ({ artistId, onDataChange, className }: A
 			</div>
 
 			{/* 검색 태그 - SearchTag 트리거 사용 */}
-			<div>
+			<div className="flex flex-row gap-2">
 				<MultiTagGenreInput
 					type="tag"
 					maxItems={5}
 					placeholder="Search tag"
 					allowDirectInput={true}
 					suggestedItems={tagSuggestions}
+					initialItems={searchTags}
 					onChange={handleSearchTagsChange}
 					useSearchTagTrigger={true}
 				/>
+
+				<div className="flex flex-col gap-1">
+					{genreItems.map((genre) => (
+						<GenreButton
+							key={genre.id}
+							name={genre.text}
+							showDeleteButton
+							className="bg-white text-black"
+							onDelete={() => removeGenre(genre)}
+						/>
+					))}
+				</div>
 			</div>
 
 			{/* 로딩 및 에러 상태 표시 */}

@@ -49,15 +49,18 @@ export const UserLikeProductListRequestSchema = PaginationRequestSchema.extend({
 	search: z.string().optional(),
 	category: productCategoryEnum.optional().describe("BEAT"),
 	genreIds: z
-		.string()
-		.refine((val) => !val || val.split(",").length <= 3, { message: "최대 3개의 장르만 선택할 수 있습니다." })
+		.union([z.array(z.coerce.number()), z.coerce.number().transform((val) => [val])])
+		.refine((val) => !val || val.length <= 3, { message: "최대 3개의 장르만 선택할 수 있습니다." })
 		.optional()
 		.describe("1,2"),
-	tagIds: z.string().optional().describe("1,3"),
+	tagIds: z
+		.union([z.array(z.coerce.number()), z.coerce.number().transform((val) => [val])])
+		.optional()
+		.describe("1,3"),
 	musicKey: musicKeyEnum.optional().describe("C"),
 	scaleType: scaleTypeEnum.optional().describe("MAJOR"),
-	minBpm: z.string().transform(Number).pipe(z.number().int().optional()).describe("100").optional(),
-	maxBpm: z.string().transform(Number).pipe(z.number().int().optional()).describe("120").optional(),
+	minBpm: z.coerce.number().int().optional().describe("100").optional(),
+	maxBpm: z.coerce.number().int().optional().describe("120").optional(),
 });
 
 export type UserLikeProductListRequest = z.infer<typeof UserLikeProductListRequestSchema>;

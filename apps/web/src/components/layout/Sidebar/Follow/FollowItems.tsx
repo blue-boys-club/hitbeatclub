@@ -6,7 +6,7 @@ import { FollowItem as FollowItemType } from "../types";
 
 interface FollowItemsProps {
 	search?: string;
-	sort?: "recent" | "name";
+	sort?: "RECENT" | "NAME";
 }
 
 const FollowItems = memo(({ search, sort }: FollowItemsProps) => {

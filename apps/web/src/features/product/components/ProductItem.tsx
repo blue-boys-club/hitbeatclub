@@ -14,6 +14,7 @@ interface ProductItemProps {
 	artist?: string;
 	albumImgSrc?: string;
 	tags?: string[];
+	isLiked?: boolean;
 	onPlay?: () => void;
 	onLike?: () => void;
 	onAddToCart?: () => void;
@@ -33,13 +34,13 @@ export const ProductItem = memo(
 		artist = "Moon River",
 		albumImgSrc = "https://placehold.co/70x70.png",
 		tags = ["G-funk", "Trippy", "Flower"],
+		isLiked = false,
 		onPlay,
 		onLike,
 		onAddToCart,
 	}: ProductItemProps) => {
 		const router = useRouter();
 		const [status, setStatus] = useState<"playing" | "paused" | "default">("paused");
-		const [isLiked, setIsLiked] = useState(false);
 		const [cart, setCart] = useState(false);
 
 		const onClickProduct = () => {
@@ -47,7 +48,6 @@ export const ProductItem = memo(
 		};
 
 		const onClickLike = () => {
-			setIsLiked(!isLiked);
 			onLike?.();
 		};
 
