@@ -128,7 +128,7 @@ export class ProductController {
 		dto: ProductListDashboardResponse,
 	})
 	async findAllForDashboard(@Req() req: AuthenticatedRequest): Promise<IResponse<ProductListDashboardResponse>> {
-		const commonSelects = ["id", "productName", "price", "coverImage", "seller", "createdAt"];
+		const commonSelects = ["id", "productName", "price", "coverImage", "audioFile", "seller", "createdAt"];
 		const products = await this.productService.findAll(
 			{
 				isPublic: 1,
@@ -461,6 +461,38 @@ export class ProductController {
 			statusCode: 200,
 			message: "success user photo upload",
 			data: { id: fileRow.id, url: s3Obj.url },
+		};
+	}
+
+	@Post(":id/like")
+	@ApiOperation({ summary: "상품 좋아요" })
+	@AuthenticationDoc()
+	@DocResponse<DatabaseIdResponseDto>(productMessage.like.success, {
+		dto: DatabaseIdResponseDto,
+	})
+	async like(@Req() req: AuthenticatedRequest, @Param("id") id: number): Promise<DatabaseIdResponseDto> {
+		const product = await this.productService.like(req.user.id, id);
+
+		return {
+			statusCode: 200,
+			message: productMessage.like.success,
+			data: { id: product.id },
+		};
+	}
+
+	@Delete(":id/un-like")
+	@ApiOperation({ summary: "상품 좋아요 취소" })
+	@AuthenticationDoc()
+	@DocResponse<DatabaseIdResponseDto>(productMessage.like.success, {
+		dto: DatabaseIdResponseDto,
+	})
+	async unlike(@Req() req: AuthenticatedRequest, @Param("id") id: number): Promise<DatabaseIdResponseDto> {
+		const product = await this.productService.unlike(req.user.id, id);
+
+		return {
+			statusCode: 200,
+			message: productMessage.unlike.success,
+			data: { id: product.id },
 		};
 	}
 }

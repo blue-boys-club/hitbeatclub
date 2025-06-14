@@ -757,4 +757,106 @@ export class ProductService {
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
 	}
+
+	async like(userId: number, productId: number) {
+		return await this.prisma.productLike
+			.create({
+				data: {
+					userId: BigInt(userId),
+					productId: BigInt(productId),
+					deletedAt: null,
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+	}
+
+	async unlike(userId: number, productId: number) {
+		return await this.prisma.productLike
+			.update({
+				where: { userId_productId: { userId: BigInt(userId), productId: BigInt(productId) } },
+				data: { deletedAt: new Date() },
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+	}
+
+	async findLikedProducts(userId: number, page: number = 1, limit: number = 10) {
+		const likedProducts = await this.prisma.productLike
+			.findMany({
+				where: {
+					userId: BigInt(userId),
+					deletedAt: null,
+				},
+				select: {
+					product: {
+						select: {
+							id: true,
+							productName: true,
+							price: true,
+							artistSellerIdToArtist: {
+								select: {
+									id: true,
+									stageName: true,
+									profileImageUrl: true,
+								},
+							},
+							createdAt: true,
+						},
+					},
+				},
+				skip: (page - 1) * Number(limit),
+				take: Number(limit),
+				orderBy: { createdAt: "desc" },
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+
+		const result = [];
+		for (const like of likedProducts) {
+			const seller = {
+				id: like.product.artistSellerIdToArtist.id,
+				stageName: like.product.artistSellerIdToArtist.stageName,
+				profileImageUrl: like.product.artistSellerIdToArtist.profileImageUrl,
+			};
+
+			const productFiles = await this.fileService.findFilesByTargetIds({
+				targetIds: [like.product.id],
+				targetTable: "product",
+			});
+
+			const audioFile = productFiles.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
+			const coverImage = productFiles.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
+			delete like.product.artistSellerIdToArtist;
+
+			result.push({
+				...like.product,
+				seller,
+				audioFile: {
+					id: audioFile?.id,
+					url: audioFile?.url,
+					originName: audioFile?.originName,
+				},
+				coverImage: {
+					id: coverImage?.id,
+					url: coverImage?.url,
+					originName: coverImage?.originName,
+				},
+			});
+		}
+
+		const total = await this.prisma.productLike.count({
+			where: {
+				userId: BigInt(userId),
+				deletedAt: null,
+			},
+		});
+
+		return {
+			data: result,
+			pagination: {
+				page,
+				limit,
+				total,
+				totalPage: Math.ceil(total / limit),
+			},
+		};
+	}
 }

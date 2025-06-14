@@ -1,22 +1,27 @@
-import { Controller, Get, Patch, Delete, Param, Body, Req, Post, NotFoundException } from "@nestjs/common";
+import { Controller, Get, Patch, Delete, Param, Body, Req, Post, NotFoundException, Query } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { ApiOperation, ApiTags, ApiBody } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
-import { DocAuth, DocResponse } from "~/common/doc/decorators/doc.decorator";
-import { AuthJwtAccessProtected } from "../auth/decorators/auth.jwt.decorator";
+import { DocResponse, DocResponsePaging } from "~/common/doc/decorators/doc.decorator";
 import { UserUpdateDto } from "./dto/request/user.update.request.dto";
-import { IResponse } from "~/common/response/interfaces/response.interface";
+import { IResponse, IResponsePaging } from "~/common/response/interfaces/response.interface";
 import userMessage from "./user.message";
 import { DatabaseIdResponseDto } from "~/common/response/dtos/response.dto";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
 import { UserFindMeResponseDto } from "./dto/response/user.find-me.response.dto";
 import { AuthenticationDoc } from "~/common/doc/decorators/auth.decorator";
+import { ProductService } from "../product/product.service";
+import { ProductLikeResponseDto } from "../product/dto/response/product.like.response.dto";
+import { UserLikeProductListRequestDto } from "./dto/request/user.like-product-list.request.dto";
 
 @Controller("users")
 @ApiTags("user")
 @ApiBearerAuth()
 export class UserController {
-	constructor(private readonly userService: UserService) {}
+	constructor(
+		private readonly userService: UserService,
+		private readonly productService: ProductService,
+	) {}
 
 	@Get("me")
 	@ApiOperation({ summary: "내 정보 조회" })
@@ -84,6 +89,30 @@ export class UserController {
 			data: {
 				id,
 			},
+		};
+	}
+
+	@Get(":userId/liked-products")
+	@ApiOperation({ summary: "특정 유저 좋아요 상품 조회" })
+	@AuthenticationDoc()
+	@DocResponsePaging<ProductLikeResponseDto>(userMessage.likedProducts.success, {
+		dto: ProductLikeResponseDto,
+	})
+	async getLikedProducts(
+		@Param("userId") userId: number,
+		@Query() userLikeProductListRequestDto: UserLikeProductListRequestDto,
+	): Promise<IResponsePaging<any>> {
+		const result = await this.productService.findLikedProducts(
+			userId,
+			userLikeProductListRequestDto.page,
+			userLikeProductListRequestDto.limit,
+		);
+
+		return {
+			statusCode: 200,
+			message: userMessage.likedProducts.success,
+			data: result.data,
+			_pagination: result.pagination,
 		};
 	}
 }
