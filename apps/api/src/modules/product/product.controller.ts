@@ -47,6 +47,8 @@ import { ProductSearchInfoResponseDto } from "./dto/response/product.search-info
 import { TagService } from "../tag/tag.service";
 import { GenreService } from "../genre/genre.service";
 import { ArtistService } from "../artist/artist.service";
+import { ENUM_PRODUCT_CATEGORY, ENUM_PRODUCT_SORT } from "./product.enum";
+import { ProductListDashboardResponse } from "./dto/response/product.list-dashboard.response.dto";
 
 @Controller("products")
 @ApiTags("product")
@@ -116,6 +118,89 @@ export class ProductController {
 				total,
 			},
 			data: products,
+		};
+	}
+
+	@Get("dashboard")
+	@ApiOperation({ summary: "대시보드 상품 목록 조회" })
+	@DocAuth({ jwtAccessToken: true })
+	@DocResponse<ProductListDashboardResponse>(productMessage.find.success, {
+		dto: ProductListDashboardResponse,
+	})
+	async findAllForDashboard(@Req() req: AuthenticatedRequest): Promise<IResponse<ProductListDashboardResponse>> {
+		const commonSelects = ["id", "productName", "price", "coverImage", "seller", "createdAt"];
+		const products = await this.productService.findAll(
+			{
+				isPublic: 1,
+			},
+			{
+				page: 1,
+				limit: 10,
+				sort: ENUM_PRODUCT_SORT.RECENT,
+			},
+			commonSelects,
+		);
+
+		const beatProducts = await this.productService.findAll(
+			{
+				isPublic: 1,
+				category: ENUM_PRODUCT_CATEGORY.BEAT,
+			},
+			{
+				page: 1,
+				limit: 10,
+				sort: ENUM_PRODUCT_SORT.RECENT,
+			},
+			commonSelects,
+		);
+
+		const acappellaProducts = await this.productService.findAll(
+			{
+				isPublic: 1,
+				category: ENUM_PRODUCT_CATEGORY.ACAPELA,
+			},
+			{
+				page: 1,
+				limit: 10,
+				sort: ENUM_PRODUCT_SORT.RECENT,
+			},
+			commonSelects,
+		);
+
+		const recommendedProducts = await this.productService.findAll(
+			{
+				isPublic: 1,
+			},
+			{
+				page: 1,
+				limit: 10,
+				sort: ENUM_PRODUCT_SORT.RECENT,
+			},
+			commonSelects,
+		);
+
+		const recentProducts = await this.productService.findAll(
+			{
+				isPublic: 1,
+			},
+			{
+				page: 1,
+				limit: 10,
+				sort: ENUM_PRODUCT_SORT.RECENT,
+			},
+			commonSelects,
+		);
+
+		return {
+			statusCode: 200,
+			message: productMessage.find.success,
+			data: {
+				all: products,
+				beat: beatProducts,
+				acappella: acappellaProducts,
+				recommended: recommendedProducts,
+				recent: recentProducts,
+			},
 		};
 	}
 

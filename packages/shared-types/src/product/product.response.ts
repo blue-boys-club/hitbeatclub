@@ -43,16 +43,47 @@ export const ProductListResponseSchema = z
 			.object({
 				id: z.number().describe("오디오 파일 ID").default(1),
 				url: z.string().url().describe("오디오 파일 URL").default("https://example.com/audio.mp3"),
+				originName: z.string().describe("오디오 파일 원본 이름").default("audio.mp3"),
 			})
 			.nullable(),
 		coverImage: z
 			.object({
 				id: z.number().describe("커버 이미지 ID").default(1),
 				url: z.string().url().describe("커버 이미지 URL").default("https://example.com/cover.jpg"),
+				originName: z.string().describe("커버 이미지 원본 이름").default("cover.jpg"),
 			})
 			.nullable(),
 	})
 	.describe("상품 목록");
+
+const ProductRowByDashboardSchema = z.object({
+	id: z.number().describe("상품 ID").default(13),
+	productName: z.string().describe("상품명").default("Baby, show you instrumental (Em bpm60)"),
+	price: z.number().describe("가격").default(10000),
+	coverImage: z.object({
+		id: z.number().describe("커버 이미지 ID").default(40),
+		url: z
+			.string()
+			.url()
+			.describe("커버 이미지 URL")
+			.default("https://prod-assets.hitbeatclub.com/product/ebcaf2e3-c18d-4738-8b7b-4a21e051dd36"),
+		originName: z.string().describe("커버 이미지 원본 이름").default("333.jpg"),
+	}),
+	seller: z.object({
+		id: z.number().describe("판매자 ID").default(21),
+		stageName: z.string().describe("판매자 닉네임").default("NotJake"),
+		profileImageUrl: z.string().url().describe("판매자 프로필 이미지 URL").default("https://example.com/profile.jpg"),
+	}),
+	createdAt: z.string().datetime().describe("생성 시간").default("2025-06-12T09:10:36.000Z"),
+});
+
+export const ProductListDashboardResponseSchema = z.object({
+	all: z.array(ProductRowByDashboardSchema),
+	beat: z.array(ProductRowByDashboardSchema),
+	acappella: z.array(ProductRowByDashboardSchema),
+	recommended: z.array(ProductRowByDashboardSchema),
+	recent: z.array(ProductRowByDashboardSchema),
+});
 
 export const ProductListPagingResponseSchema = CommonResponsePagingSchema.extend({
 	data: z.array(ProductListResponseSchema),
@@ -116,3 +147,4 @@ export type ProductListPagingResponse = z.infer<typeof ProductListPagingResponse
 export type ProductResponse = z.infer<typeof ProductResponseSchema>;
 export type ProductDetailResponse = z.infer<typeof ProductDetailResponseSchema>;
 export type ProductSearchInfoResponse = z.infer<typeof ProductSearchInfoResponseSchema>;
+export type ProductListDashboardResponse = z.infer<typeof ProductListDashboardResponseSchema>;

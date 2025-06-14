@@ -9,7 +9,6 @@ export function EmailSendDoc(): MethodDecorator {
 			summary: "이메일 전송",
 		}),
 		DocAuth({
-			xApiKey: true,
 			jwtAccessToken: true,
 		}),
 		DocRequest({

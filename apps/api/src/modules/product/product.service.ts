@@ -21,7 +21,7 @@ export class ProductService {
 		private readonly fileService: FileService,
 	) {}
 
-	async findAll(where: any, { page, limit, sort, genreIds, tagIds }: ProductListQueryRequest) {
+	async findAll(where: any, { page, limit, sort, genreIds, tagIds }: ProductListQueryRequest, select: string[] = []) {
 		try {
 			const products = await this.prisma.product
 				.findMany({
@@ -92,36 +92,74 @@ export class ProductService {
 				const audioFile = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
 				const coverImage = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
 
-				result.push({
-					id: product.id,
-					type: product.type,
-					productName: product.productName,
-					description: product.description,
-					price: product.price,
-					category: product.category,
-					isActive: product.isActive,
-					createdAt: product.createdAt,
-					minBpm: product.minBpm,
-					maxBpm: product.maxBpm,
-					musicKey: product.musicKey,
-					scaleType: product.scaleType,
-					genres: product?.productGenre?.length
-						? await this.findProductGenresByIds(
+				const selectedFields = {};
+				if (select.length) {
+					for (const field of select) {
+						if (field === "seller") {
+							selectedFields[field] = seller;
+						} else if (field === "audioFile") {
+							selectedFields[field] = audioFile
+								? {
+										id: audioFile?.id,
+										url: audioFile?.url,
+										originName: audioFile?.originName,
+									}
+								: null;
+						} else if (field === "coverImage") {
+							selectedFields[field] = {
+								id: coverImage?.id,
+								url: coverImage?.url,
+								originName: coverImage?.originName,
+							};
+						} else if (field === "genres" && product?.productGenre?.length) {
+							selectedFields[field] = await this.findProductGenresByIds(
 								product.id,
 								product.productGenre.map((pg) => pg.genreId),
-							)
-						: [],
-					tags: product?.productTag?.length
-						? await this.findProductTagsByIds(
+							);
+						} else if (field === "tags" && product?.productTag?.length) {
+							selectedFields[field] = await this.findProductTagsByIds(
 								product.id,
 								product.productTag.map((pt) => pt.tagId),
-							)
-						: [],
-					seller,
-					audioFile: audioFile || null,
-					coverImage: coverImage || null,
-					isPublic: product.isPublic,
-				});
+							);
+						} else if (field in product) {
+							selectedFields[field] = product[field];
+						}
+					}
+				} else {
+					// select가 없는 경우 모든 필드 포함
+					Object.assign(selectedFields, {
+						id: product.id,
+						type: product.type,
+						productName: product.productName,
+						description: product.description,
+						price: product.price,
+						category: product.category,
+						isActive: product.isActive,
+						createdAt: product.createdAt,
+						minBpm: product.minBpm,
+						maxBpm: product.maxBpm,
+						musicKey: product.musicKey,
+						scaleType: product.scaleType,
+						genres: product?.productGenre?.length
+							? await this.findProductGenresByIds(
+									product.id,
+									product.productGenre.map((pg) => pg.genreId),
+								)
+							: [],
+						tags: product?.productTag?.length
+							? await this.findProductTagsByIds(
+									product.id,
+									product.productTag.map((pt) => pt.tagId),
+								)
+							: [],
+						seller,
+						audioFile: audioFile || null,
+						coverImage: coverImage || null,
+						isPublic: product.isPublic,
+					});
+				}
+
+				result.push(selectedFields);
 			}
 
 			return !result.length ? [] : result;
@@ -158,10 +196,10 @@ export class ProductService {
 				})
 				.then((data) => this.prisma.serializeBigInt(data));
 
-			const seller = (product as any).artistSellerIdToArtist;
-			const license = (product as any).productLicense;
-			delete (product as any).artistSellerIdToArtist;
-			delete (product as any).productLicense;
+			const seller = product.artistSellerIdToArtist;
+			const license = product.productLicense;
+			delete product.artistSellerIdToArtist;
+			delete product.productLicense;
 
 			return {
 				...product,

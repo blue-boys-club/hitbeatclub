@@ -79,6 +79,7 @@ export const ProductListQuerySchema = z.object({
 	scaleType: scaleTypeEnum.optional().describe("MAJOR"),
 	minBpm: z.string().transform(Number).pipe(z.number().int().optional()).describe("100").optional(),
 	maxBpm: z.string().transform(Number).pipe(z.number().int().optional()).describe("120").optional(),
+	select: z.array(z.string()).optional().describe("필터링할 필드명 배열"),
 });
 
 export const ProductSearchQuerySchema = ProductListQuerySchema.extend({
