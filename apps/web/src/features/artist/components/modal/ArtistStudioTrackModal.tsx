@@ -305,6 +305,30 @@ const ArtistStudioTrackModal = ({
 		}
 	}, [mode, isModalOpen, initialFiles, getFileTypeFromExtension, handleFileUpload, setError]);
 
+	// productData에서 Genre 객체 배열 생성
+	const initialGenres = useMemo(() => {
+		if (mode === "edit" && productData?.genres) {
+			return productData.genres.map((genre: any) => ({
+				id: genre.id,
+				text: genre.name,
+				isFromDropdown: true,
+			}));
+		}
+		return [];
+	}, [mode, productData?.genres]);
+
+	// productData에서 Tag 객체 배열 생성
+	const initialTags = useMemo(() => {
+		if (mode === "edit" && productData?.tags) {
+			return productData.tags.map((tag: any) => ({
+				id: tag.id,
+				text: tag.name,
+				isFromDropdown: true,
+			}));
+		}
+		return [];
+	}, [mode, productData?.tags]);
+
 	// 모달이 열릴 때 폼 초기화
 	useEffect(() => {
 		if (isModalOpen) {
@@ -907,6 +931,7 @@ const ArtistStudioTrackModal = ({
 												searchInfo?.genres?.map((genre) => ({ id: genre.id, value: genre.name, count: genre.count })) ||
 												[]
 											}
+											initialItems={initialGenres}
 											onChange={field.onChange}
 										/>
 									)}
@@ -935,6 +960,7 @@ const ArtistStudioTrackModal = ({
 											suggestedItems={
 												searchInfo?.tags?.map((tag) => ({ id: tag.id, value: tag.name, count: tag.count })) || []
 											}
+											initialItems={initialTags}
 											onChange={field.onChange}
 										/>
 									)}

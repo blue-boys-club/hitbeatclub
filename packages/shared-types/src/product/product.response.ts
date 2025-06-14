@@ -92,6 +92,8 @@ export const ProductRowByDashboardSchema = z.object({
 		stageName: z.string().describe("판매자 닉네임").default("NotJake"),
 		profileImageUrl: z.string().url().describe("판매자 프로필 이미지 URL").default("https://example.com/profile.jpg"),
 	}),
+	genres: z.array(z.string()).describe("장르 목록"),
+	tags: z.array(z.string()).describe("태그 목록"),
 	createdAt: z.string().datetime().describe("생성 시간").default("2025-06-12T09:10:36.000Z"),
 });
 

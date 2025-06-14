@@ -949,6 +949,27 @@ export class ProductService {
 								},
 							},
 							createdAt: true,
+
+							productGenre: {
+								select: {
+									genre: {
+										select: {
+											id: true,
+											name: true,
+										},
+									},
+								},
+							},
+							productTag: {
+								select: {
+									tag: {
+										select: {
+											id: true,
+											name: true,
+										},
+									},
+								},
+							},
 						},
 					},
 					createdAt: true,
@@ -1000,6 +1021,8 @@ export class ProductService {
 				createdAt: like.product.createdAt,
 				likedAt: like.createdAt,
 				seller,
+				genres: like.product.productGenre.map((pg) => pg.genre.name),
+				tags: like.product.productTag.map((pt) => pt.tag.name),
 				audioFile: audioFile
 					? {
 							id: audioFile.id,

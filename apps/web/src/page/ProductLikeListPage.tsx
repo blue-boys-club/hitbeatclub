@@ -128,7 +128,8 @@ const ProductLikeListPage = memo(() => {
 							title={product.productName}
 							artist={product.seller?.stageName}
 							albumImgSrc={product.coverImage?.url}
-							tags={[]} // TODO: 태그 정보가 있다면 추가
+							tags={product.tags}
+							// genres={product.genres}
 							isLiked={true}
 							onLike={() => handleLike(product.id)}
 						/>
