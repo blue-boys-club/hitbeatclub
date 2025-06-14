@@ -3,12 +3,13 @@
 import { Acapella, Beat, CloseMosaic, SmallAuthBadge } from "@/assets/svgs";
 import UI from "@/components/ui";
 import Image from "next/image";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { LicenseChangeModal } from "./modal/LicenseChangeModal";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useCartStore } from "@/stores/cart";
 import { PRODUCTS_MAP } from "@/apis/product/product.dummy";
+import UserProfileImage from "@/assets/images/user-profile.png";
 
 // Combined type for cart item with product details
 export type CartItemWithProductDetails = {
@@ -26,7 +27,7 @@ export type CartItemWithProductDetails = {
 // Type for the artist section props
 interface CartArtistSectionProps {
 	artistId: number;
-	artistImageUrl: string;
+	artistImageUrl?: string;
 	artistName: string;
 	items: CartItemWithProductDetails[];
 }
@@ -38,6 +39,10 @@ export const CartArtistSection = ({ artistId, artistImageUrl, artistName, items 
 	const queryClient = useQueryClient();
 	const storeRemoveItem = useCartStore((state) => state.removeItem);
 	const storeAddItem = useCartStore((state) => state.addItem); // addItem handles updates too
+
+	const avatarImageUrl = useMemo(() => {
+		return artistImageUrl || UserProfileImage;
+	}, [artistImageUrl]);
 
 	// 라이센스 변경 mutation (simulated)
 	const changeLicenseMutation = useMutation({
@@ -108,7 +113,7 @@ export const CartArtistSection = ({ artistId, artistImageUrl, artistName, items 
 					<div className="flex items-center gap-17px">
 						<Image
 							className="h-51px w-51px rounded-full outline-2 outline-offset-[-1px] outline-black"
-							src={artistImageUrl} // Use prop
+							src={avatarImageUrl} // Use prop
 							alt={artistName} // Use prop
 							width={51 * 4}
 							height={51 * 4}
