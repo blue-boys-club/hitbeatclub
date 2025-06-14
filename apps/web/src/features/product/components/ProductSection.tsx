@@ -5,11 +5,11 @@ import { SectionHeaderProps } from "@/components/ui/SectionHeader/SectionHeader"
 import { Carousel, CarouselContent, CarouselItem, type CarouselPlugin } from "@/components/ui/Carousel/Carousel";
 import { memo, useEffect, useState } from "react";
 import { ProductTrackCarouselItem } from "./ProductTrackCarouselItem";
-import { ProductListItem } from "../product.types";
+import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
 
 interface ShopSectionProps {
 	sectionHeader: Omit<SectionHeaderProps, "size">;
-	products: ProductListItem[];
+	products: ProductRowByDashboardResponse[];
 }
 
 export const ProductSection = memo(({ sectionHeader, products }: ShopSectionProps) => {
@@ -46,14 +46,20 @@ export const ProductSection = memo(({ sectionHeader, products }: ShopSectionProp
 				plugins={wheelPlugin ? [wheelPlugin] : undefined}
 			>
 				<CarouselContent>
-					{products.map((product) => (
-						<CarouselItem
-							key={product.id}
-							className="p-1 pr-8px basis-auto"
-						>
-							<ProductTrackCarouselItem track={product} />
-						</CarouselItem>
-					))}
+					{products.length === 0 ? (
+						<div className="w-full h-110px flex justify-center items-center">
+							<span className="text-hbc-gray-300">상품이 없습니다.</span>
+						</div>
+					) : (
+						products.map((product) => (
+							<CarouselItem
+								key={product.id}
+								className="p-1 pr-8px basis-auto"
+							>
+								<ProductTrackCarouselItem track={product} />
+							</CarouselItem>
+						))
+					)}
 				</CarouselContent>
 			</Carousel>
 		</div>

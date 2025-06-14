@@ -4,6 +4,7 @@ import { HTMLAttributes, memo } from "react";
 import Image from "next/image";
 import { Connecting } from "@/assets/svgs/Connecting";
 import { assetImageLoader } from "@/common/utils/image-loader";
+import { StaticImageData } from "next/image";
 
 const userAvatarVariants = cva("relative rounded-full", {
 	variants: {
@@ -32,7 +33,7 @@ const userAvatarNotificationVariants = cva("absolute z-10 top-0 right-0", {
 });
 
 export interface UserAvatarProps extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof userAvatarVariants> {
-	src: string;
+	src: string | StaticImageData;
 	alt?: string;
 	isNotification?: boolean;
 }

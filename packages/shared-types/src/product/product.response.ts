@@ -11,6 +11,20 @@ export const ProductResponseSchema = z.object({
 	createdAt: z.string().datetime().describe("생성 시간").default("2025-06-04T17:12:58.000Z"),
 	minBpm: z.number().describe("최소 BPM").default(100),
 	maxBpm: z.number().describe("최대 BPM").default(200),
+	isFreeDownload: z
+		.number()
+		.min(0)
+		.max(1)
+		.transform((val) => val === 1)
+		.describe("무료 다운로드 여부")
+		.default(0),
+	isLiked: z
+		.number()
+		.min(0)
+		.max(1)
+		.transform((val) => val === 1)
+		.describe("좋아요 여부")
+		.default(0),
 	musicKey: z.string().describe("음계").default("C"),
 	scaleType: z.string().describe("조성").default("MAJOR"),
 	genres: z
@@ -29,32 +43,30 @@ export const ProductResponseSchema = z.object({
 			}),
 		)
 		.default([{ id: 1, name: "tag" }]),
+
+	seller: z.object({
+		id: z.number().describe("판매자 ID").default(1),
+		stageName: z.string().describe("판매자 닉네임").default("판매자"),
+		profileImageUrl: z.string().url().describe("판매자 프로필 이미지 URL").default("https://example.com/profile.jpg"),
+	}),
 });
 
-export const ProductListResponseSchema = z
-	.object({
-		...ProductResponseSchema.shape,
-		seller: z.object({
-			id: z.number().describe("판매자 ID").default(1),
-			stageName: z.string().describe("판매자 닉네임").default("판매자"),
-			profileImageUrl: z.string().url().describe("판매자 프로필 이미지 URL").default("https://example.com/profile.jpg"),
-		}),
-		audioFile: z
-			.object({
-				id: z.number().describe("오디오 파일 ID").default(1),
-				url: z.string().url().describe("오디오 파일 URL").default("https://example.com/audio.mp3"),
-				originName: z.string().describe("오디오 파일 원본 이름").default("audio.mp3"),
-			})
-			.nullable(),
-		coverImage: z
-			.object({
-				id: z.number().describe("커버 이미지 ID").default(1),
-				url: z.string().url().describe("커버 이미지 URL").default("https://example.com/cover.jpg"),
-				originName: z.string().describe("커버 이미지 원본 이름").default("cover.jpg"),
-			})
-			.nullable(),
-	})
-	.describe("상품 목록");
+export const ProductListResponseSchema = ProductResponseSchema.extend({
+	audioFile: z
+		.object({
+			id: z.number().describe("오디오 파일 ID").default(1),
+			url: z.string().url().describe("오디오 파일 URL").default("https://example.com/audio.mp3"),
+			originName: z.string().describe("오디오 파일 원본 이름").default("audio.mp3"),
+		})
+		.nullable(),
+	coverImage: z
+		.object({
+			id: z.number().describe("커버 이미지 ID").default(1),
+			url: z.string().url().describe("커버 이미지 URL").default("https://example.com/cover.jpg"),
+			originName: z.string().describe("커버 이미지 원본 이름").default("cover.jpg"),
+		})
+		.nullable(),
+}).describe("상품 목록");
 
 export const ProductRowByDashboardSchema = z.object({
 	id: z.number().describe("상품 ID").default(13),

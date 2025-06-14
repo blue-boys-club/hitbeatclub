@@ -2,7 +2,7 @@
 
 import { memo, useMemo, useState } from "react";
 import Image from "next/image";
-import { Beat, Like, RedPlayCircle } from "@/assets/svgs";
+import { Acapella, Beat, Like, RedPlayCircle } from "@/assets/svgs";
 import { AlbumAvatar, FreeDownloadButton, PurchaseButton, UserAvatar } from "@/components/ui";
 import { GenreButton } from "@/components/ui/GenreButton";
 import { TagButton } from "@/components/ui/TagButton";
@@ -16,6 +16,9 @@ import { useShallow } from "zustand/react/shallow";
 import { useQuery } from "@tanstack/react-query";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { useToast } from "@/hooks/use-toast";
+import UserProfileImage from "@/assets/images/user-profile.png";
+import { cn } from "@/common/utils";
 
 // interface TrackInfo {
 // 	title: string;
@@ -61,10 +64,10 @@ interface ProductDetailPageProps {
 
 const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 	const router = useRouter();
-	const [isLiked, setIsLiked] = useState(false);
 	const { data: product } = useQuery({
 		...getProductQueryOption(trackId),
 	});
+	const { toast } = useToast();
 
 	const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
 	const { data: user } = useQuery(getUserMeQueryOption());
@@ -73,7 +76,18 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 	}, [user?.subscribedAt]);
 
 	const onLikeClick = () => {
-		setIsLiked(!isLiked);
+		if (!user) {
+			toast({
+				description: "로그인 후 이용해주세요.",
+			});
+			return;
+		}
+
+		// setIsLiked(!isLiked);
+		// TODO: 좋아요 처리
+		toast({
+			description: "준비중입니다.",
+		});
 	};
 
 	const onClickPurchase = () => {
@@ -105,6 +119,13 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 		return Math.min(...licenses.map((license) => license.price));
 	}, [licenses]);
 
+	const artistProfileUrl = useMemo(() => {
+		if (!product?.seller?.profileImageUrl || product?.seller?.profileImageUrl === "") {
+			return UserProfileImage;
+		}
+		return product.seller.profileImageUrl;
+	}, [product?.seller?.profileImageUrl]);
+
 	return (
 		<>
 			<main className="px-9 pt-10">
@@ -121,7 +142,8 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 										{product?.productName}
 									</h1>
 									<div>
-										<Beat className="w-[48px] h-[13px]" />
+										{product?.category === "BEAT" && <Beat className="w-[48px] h-[13px]" />}
+										{product?.category === "ACAPELA" && <Acapella className="w-fit h-[13px]" />}
 									</div>
 								</div>
 							</div>
@@ -137,8 +159,8 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 						<div className="flex justify-between items-center">
 							<div className="flex items-center gap-2">
 								<UserAvatar
-									src={product?.seller?.profileImageUrl || "https://placehold.co/51x51"}
-									className="w-[51px] h-[51px] bg-black"
+									src={artistProfileUrl}
+									className={cn("w-[51px] h-[51px] bg-black", artistProfileUrl === UserProfileImage && "bg-white")}
 									size="large"
 								/>
 								<span className="text-16px font-bold">{product?.seller?.stageName}</span>
@@ -147,9 +169,9 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 							<button
 								className="cursor-pointer w-8 h-8 flex justify-center items-center hover:opacity-80 transition-opacity"
 								onClick={onLikeClick}
-								aria-label={isLiked ? "좋아요 취소" : "좋아요"}
+								aria-label={product?.isLiked ? "좋아요 취소" : "좋아요"}
 							>
-								{isLiked ? (
+								{product?.isLiked ? (
 									<Image
 										src="/assets/ActiveLike.png"
 										alt="active like"
@@ -176,13 +198,15 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 							</nav>
 
 							<div className="flex flex-col gap-0.5">
-								<FreeDownloadButton
-									variant="secondary"
-									className="outline-4 outline-hbc-black px-2.5 font-suisse"
-									onClick={onClickFreeDownload}
-								>
-									Free Download
-								</FreeDownloadButton>
+								{isSubscribed && !!product?.isFreeDownload && (
+									<FreeDownloadButton
+										variant="secondary"
+										className="outline-4 outline-hbc-black px-2.5 font-suisse"
+										onClick={onClickFreeDownload}
+									>
+										Free Download
+									</FreeDownloadButton>
+								)}
 								<PurchaseButton
 									iconColor="var(--hbc-white)"
 									className="outline-4 outline-hbc-black font-suisse"

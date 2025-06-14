@@ -23,6 +23,7 @@ const QUERY_KEYS = {
 		],
 		one: (productId: number): QueryKey => ["products", productId],
 		searchInfo: ["products", "searchInfo"],
+		dashboard: ["products", "dashboard"],
 	},
 	artist: {
 		_key: ["artist"],

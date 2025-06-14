@@ -5,10 +5,8 @@ import * as ScrollArea from "@radix-ui/react-scroll-area";
 import Image from "next/image";
 import { cn } from "@/common/utils";
 
-import { ArrowLeftMosaic, ArrowRightMosaic, Beat, Like } from "@/assets/svgs";
-import { AlbumAvatar } from "@/components/ui";
+import { Acapella, ArrowLeftMosaic, ArrowRightMosaic, Beat, Like } from "@/assets/svgs";
 import { FreeDownloadButton } from "@/components/ui/FreeDownloadButton";
-import { GenreButton } from "@/components/ui/GenreButton";
 import { PurchaseButton } from "@/components/ui/PurchaseButton";
 import { useShallow } from "zustand/react/shallow";
 import { useLayoutStore } from "@/stores/layout";
@@ -67,7 +65,7 @@ export const MusicRightSidebar = memo(() => {
 		if (!user?.subscribedAt) {
 			router.push("/subscribe");
 		} else {
-			// alert("준비중입니다.");
+			alert("준비중입니다.");
 			// window.open(currentTrack?.downloadUrl, "_blank");
 		}
 	};
@@ -102,7 +100,8 @@ export const MusicRightSidebar = memo(() => {
 					<div className="flex items-center justify-between gap-2 mb-4">
 						<div className="text-lg font-suisse">{currentTrack?.seller.stageName}</div>
 						<div>
-							<Beat className="w-16 h-4" />
+							{currentTrack?.category === "BEAT" && <Beat className="w-16 h-4" />}
+							{currentTrack?.category === "ACAPELA" && <Acapella className="w-16 h-4" />}
 						</div>
 					</div>
 
@@ -144,13 +143,16 @@ export const MusicRightSidebar = memo(() => {
 
 					<div className="flex justify-between pb-4">
 						<div className="flex flex-col gap-0.5">
-							<FreeDownloadButton
-								variant="secondary"
-								className="outline-4 outline-hbc-black px-2.5 font-suisse"
-								onClick={onClickFreeDownload}
-							>
-								Free Download
-							</FreeDownloadButton>
+							{user?.subscribedAt && !!currentTrack?.isFreeDownload && (
+								<FreeDownloadButton
+									variant="secondary"
+									className="outline-4 outline-hbc-black px-2.5 font-suisse"
+									onClick={onClickFreeDownload}
+								>
+									Free Download
+								</FreeDownloadButton>
+							)}
+
 							<PurchaseButton
 								iconColor="white"
 								className="outline-4 outline-hbc-black"

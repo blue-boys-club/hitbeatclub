@@ -2,15 +2,14 @@ import { checkIsPureEnglish } from "@/common/utils";
 import { cn } from "@/common/utils/tailwind";
 import Link from "next/link";
 import Image from "next/image";
-import { ProductListItem } from "@/features/product/product.types";
+import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
 
 interface MobileProductTrackCarouselItemProps {
-	track: ProductListItem;
+	track: ProductRowByDashboardResponse;
 }
 export const MobileProductTrackCarouselItem = ({ track }: MobileProductTrackCarouselItemProps) => {
-	const { productName, seller, coverImage } = track;
-	const isTitlePureEnglish = checkIsPureEnglish(productName);
-	const isArtistPureEnglish = checkIsPureEnglish(seller?.stageName || "");
+	const isTitlePureEnglish = checkIsPureEnglish(track.productName);
+	const isArtistPureEnglish = checkIsPureEnglish(track.seller?.stageName || "");
 
 	return (
 		<Link
@@ -21,7 +20,7 @@ export const MobileProductTrackCarouselItem = ({ track }: MobileProductTrackCaro
 			<div className="border-y-3px border-x-1px border-black relative w-110px h-110px">
 				<Image
 					alt="커버이미지"
-					src={coverImage?.url || ""}
+					src={track.coverImage?.url || ""}
 					fill
 					className="object-cover"
 				/>
@@ -34,7 +33,7 @@ export const MobileProductTrackCarouselItem = ({ track }: MobileProductTrackCaro
 							isTitlePureEnglish ? "font-suisse" : "font-suit",
 						)}
 					>
-						{productName}
+						{track.productName}
 					</div>
 					{/* {isHit && <Hit />} */}
 				</div>
@@ -44,7 +43,7 @@ export const MobileProductTrackCarouselItem = ({ track }: MobileProductTrackCaro
 						isArtistPureEnglish ? "font-suisse" : "font-suit",
 					)}
 				>
-					<span className="text-hbc-gray-300">{seller?.stageName}</span>
+					<span className="text-hbc-gray-300">{track.seller?.stageName}</span>
 				</div>
 			</div>
 		</Link>
