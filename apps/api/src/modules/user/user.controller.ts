@@ -106,6 +106,8 @@ export class UserController {
 			userId,
 			userLikeProductListRequestDto.page,
 			userLikeProductListRequestDto.limit,
+			userLikeProductListRequestDto.sort,
+			userLikeProductListRequestDto.search,
 		);
 
 		return {

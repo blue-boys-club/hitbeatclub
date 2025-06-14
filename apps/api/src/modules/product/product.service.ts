@@ -21,7 +21,12 @@ export class ProductService {
 		private readonly fileService: FileService,
 	) {}
 
-	async findAll(where: any, { page, limit, sort, genreIds, tagIds }: ProductListQueryRequest, select: string[] = []) {
+	async findAll(
+		where: any,
+		{ page, limit, sort, genreIds, tagIds }: ProductListQueryRequest,
+		select: string[] = [],
+		userId?: number,
+	) {
 		try {
 			const products = await this.prisma.product
 				.findMany({
@@ -57,6 +62,16 @@ export class ProductService {
 									},
 								}
 							: {}),
+						...(userId
+							? {
+									productLike: {
+										where: {
+											userId: BigInt(userId),
+											deletedAt: null,
+										},
+									},
+								}
+							: {}),
 					} as any,
 					orderBy: { createdAt: sort === ENUM_PRODUCT_SORT.RECENT ? "desc" : "asc" },
 					skip: (page - 1) * limit,
@@ -75,12 +90,12 @@ export class ProductService {
 			});
 
 			// Map files by productId for quick lookup
-			const filesByProductId: Record<number, any[]> = {};
+			const filesByProductId: Record<string, any[]> = {};
 			for (const file of allFiles) {
-				if (!filesByProductId[file.targetId]) {
-					filesByProductId[file.targetId] = [];
+				if (!filesByProductId[file.targetId.toString()]) {
+					filesByProductId[file.targetId.toString()] = [];
 				}
-				filesByProductId[file.targetId].push(file);
+				filesByProductId[file.targetId.toString()].push(file);
 			}
 
 			const result = [];
@@ -88,7 +103,7 @@ export class ProductService {
 				const seller = product.artistSellerIdToArtist;
 				delete product.artistSellerIdToArtist;
 
-				const files = filesByProductId[product.id] ?? [];
+				const files = filesByProductId[product.id.toString()] ?? [];
 				const audioFile = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
 				const coverImage = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
 
@@ -168,7 +183,7 @@ export class ProductService {
 		}
 	}
 
-	async findOne(id: number) {
+	async findOne(id: number, userId?: number) {
 		try {
 			const product = await this.prisma.product
 				.findFirst({
@@ -192,6 +207,13 @@ export class ProductService {
 								},
 							},
 						},
+						...(userId
+							? {
+									productLike: {
+										where: { userId: BigInt(userId), deletedAt: null },
+									},
+								}
+							: {}),
 						productGenre: {
 							where: {
 								deletedAt: null,
@@ -815,20 +837,35 @@ export class ProductService {
 
 	async unlike(userId: number, productId: number) {
 		return await this.prisma.productLike
-			.update({
-				where: { userId_productId: { userId: BigInt(userId), productId: BigInt(productId) } },
+			.updateMany({
+				where: {
+					userId: BigInt(userId),
+					productId: BigInt(productId),
+					deletedAt: null,
+				},
 				data: { deletedAt: new Date() },
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
 	}
 
-	async findLikedProducts(userId: number, page: number = 1, limit: number = 10) {
+	async findLikedProducts(
+		userId: number,
+		page: number = 1,
+		limit: number = 10,
+		sort: "RECENT" | "NAME",
+		search: string,
+	) {
+		const where: Prisma.ProductLikeWhereInput = {
+			userId: BigInt(userId),
+			deletedAt: null,
+		};
+		if (search) {
+			where.product = { productName: { contains: search } };
+		}
+
 		const likedProducts = await this.prisma.productLike
 			.findMany({
-				where: {
-					userId: BigInt(userId),
-					deletedAt: null,
-				},
+				where,
 				select: {
 					product: {
 						select: {
@@ -848,11 +885,25 @@ export class ProductService {
 				},
 				skip: (page - 1) * Number(limit),
 				take: Number(limit),
-				orderBy: { createdAt: "desc" },
+				orderBy: sort === "RECENT" ? { createdAt: "desc" } : { product: { productName: "asc" } },
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
 
 		const result = [];
+		const productIds = likedProducts.map((like) => like.product.id);
+		const productFiles = await this.fileService.findFilesByTargetIds({
+			targetIds: productIds,
+			targetTable: "product",
+		});
+
+		const filesByProductId: Record<string, any[]> = {};
+		for (const file of productFiles) {
+			if (!filesByProductId[file.targetId.toString()]) {
+				filesByProductId[file.targetId.toString()] = [];
+			}
+			filesByProductId[file.targetId.toString()].push(file);
+		}
+
 		for (const like of likedProducts) {
 			const seller = {
 				id: like.product.artistSellerIdToArtist.id,
@@ -860,13 +911,9 @@ export class ProductService {
 				profileImageUrl: like.product.artistSellerIdToArtist.profileImageUrl,
 			};
 
-			const productFiles = await this.fileService.findFilesByTargetIds({
-				targetIds: [like.product.id],
-				targetTable: "product",
-			});
-
-			const audioFile = productFiles.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
-			const coverImage = productFiles.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
+			const files = filesByProductId[like.product.id.toString()] ?? [];
+			const audioFile = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
+			const coverImage = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
 			delete like.product.artistSellerIdToArtist;
 
 			result.push({

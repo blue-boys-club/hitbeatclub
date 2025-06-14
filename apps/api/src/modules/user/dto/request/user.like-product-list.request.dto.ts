@@ -1,4 +1,4 @@
 import { createZodDto } from "nestjs-zod";
-import { PaginationRequestSchema } from "@hitbeatclub/shared-types/common";
+import { UserLikeProductListRequestSchema } from "@hitbeatclub/shared-types/user";
 
-export class UserLikeProductListRequestDto extends createZodDto(PaginationRequestSchema) {}
+export class UserLikeProductListRequestDto extends createZodDto(UserLikeProductListRequestSchema) {}

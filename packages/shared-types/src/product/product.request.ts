@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-const licenseTypeEnum = z.enum(["MASTER", "EXCLUSIVE"]);
-const productSortEnum = z.enum(["RECENT", "RECOMMEND", "null"]);
+export const licenseTypeEnum = z.enum(["MASTER", "EXCLUSIVE"]);
+export const productSortEnum = z.enum(["RECENT", "RECOMMEND", "null"]);
 export const productCategoryEnum = z.enum(["BEAT", "ACAPELA", "null"]);
-const musicKeyEnum = z.enum([
+export const musicKeyEnum = z.enum([
 	"C",
 	"Db",
 	"D",
@@ -23,7 +23,7 @@ const musicKeyEnum = z.enum([
 	"As",
 	"null",
 ]);
-const scaleTypeEnum = z.enum(["MAJOR", "MINOR", "null"]);
+export const scaleTypeEnum = z.enum(["MAJOR", "MINOR", "null"]);
 
 export const ProductCreateSchema = z.object({
 	productName: z.string().min(1, "필수 입력사항 입니다.").max(255).default("Sample Product").describe("상품명"),
@@ -79,7 +79,7 @@ export const ProductListQuerySchema = z.object({
 	scaleType: scaleTypeEnum.optional().describe("MAJOR"),
 	minBpm: z.string().transform(Number).pipe(z.number().int().optional()).describe("100").optional(),
 	maxBpm: z.string().transform(Number).pipe(z.number().int().optional()).describe("120").optional(),
-	select: z.array(z.string()).optional().describe("필터링할 필드명 배열"),
+	// select: z.array(z.string()).optional().describe("필터링할 필드명 배열"),
 });
 
 export const ProductSearchQuerySchema = ProductListQuerySchema.extend({

@@ -43,12 +43,14 @@ import { ProductListResponseDto } from "./dto/response/product.list.response.dto
 import { ProductListQueryRequestDto } from "./dto/request/project.list.request.dto";
 import { ProductUploadFileRequestDto } from "./dto/request/product.upload-file.request.dto";
 import { ProductFindQuery, ProductSearchQuery } from "./decorators/product.decorator";
+import { AuthJwtAccessOptional } from "../auth/decorators/auth.jwt.decorator";
 import { ProductSearchInfoResponseDto } from "./dto/response/product.search-info.response.dto";
 import { TagService } from "../tag/tag.service";
 import { GenreService } from "../genre/genre.service";
 import { ArtistService } from "../artist/artist.service";
 import { ENUM_PRODUCT_CATEGORY, ENUM_PRODUCT_SORT } from "./product.enum";
 import { ProductListDashboardResponse } from "./dto/response/product.list-dashboard.response.dto";
+import { ProductLike } from "@prisma/client";
 
 @Controller("products")
 @ApiTags("product")
@@ -67,6 +69,7 @@ export class ProductController {
 	@Get()
 	@ApiOperation({ summary: "상품 목록 조회" })
 	@DocAuth({ jwtAccessToken: true })
+	@AuthJwtAccessOptional()
 	@ProductFindQuery()
 	@DocResponsePaging<ProductListResponseDto>(productMessage.find.success, {
 		dto: ProductListResponseDto,
@@ -76,6 +79,7 @@ export class ProductController {
 		@Query() productListQueryRequestDto: ProductListQueryRequestDto,
 	): Promise<IResponsePaging<ProductListResponseDto>> {
 		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds } = productListQueryRequestDto;
+		const userId = req?.user?.id;
 
 		const where = {
 			...(productListQueryRequestDto.category === "null" ? {} : { category }),
@@ -105,7 +109,18 @@ export class ProductController {
 				: {}),
 			isPublic: 1,
 		};
-		const products = await this.productService.findAll(where, productListQueryRequestDto);
+		const products = (await this.productService.findAll(where, productListQueryRequestDto, [], userId)).map(
+			(product) => {
+				if (product.productLike) {
+					const isLiked = product.productLike.some((like: ProductLike) => BigInt(like.userId) === BigInt(userId));
+					product.isLiked = isLiked;
+					delete product.productLike;
+				} else {
+					product.isLiked = null;
+				}
+				return product;
+			},
+		);
 
 		const total = await this.productService.getTotal(where);
 		return {
@@ -207,6 +222,7 @@ export class ProductController {
 	@Get("/search")
 	@ApiOperation({ summary: "상품 검색 목록 조회" })
 	@DocAuth({ jwtAccessToken: true })
+	@AuthJwtAccessOptional()
 	@ProductSearchQuery()
 	@DocResponsePaging<ProductListResponseDto>(productMessage.find.success, {
 		dto: ProductListResponseDto,
@@ -216,6 +232,7 @@ export class ProductController {
 		@Query() productListQueryRequestDto: ProductListQueryRequestDto,
 	): Promise<IResponsePaging<ProductListResponseDto>> {
 		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds } = productListQueryRequestDto;
+		const userId = req?.user?.id;
 
 		const where = {
 			...(productListQueryRequestDto.category === "null" ? {} : { category }),
@@ -244,7 +261,18 @@ export class ProductController {
 					}
 				: {}),
 		};
-		const products = await this.productService.findAll(where, productListQueryRequestDto);
+		const products = (await this.productService.findAll(where, productListQueryRequestDto, [], userId)).map(
+			(product) => {
+				if (product.productLike) {
+					const isLiked = product.productLike.some((like: ProductLike) => BigInt(like.userId) === BigInt(userId));
+					product.isLiked = isLiked;
+					delete product.productLike;
+				} else {
+					product.isLiked = null;
+				}
+				return product;
+			},
+		);
 
 		const total = await this.productService.getTotal(where);
 		return {
@@ -284,17 +312,25 @@ export class ProductController {
 
 	@Get(":id")
 	@ApiOperation({ summary: "상품 상세 조회" })
+	@AuthJwtAccessOptional()
 	@DocResponse<ProductDetailResponseDto>(productMessage.find.success, {
 		dto: ProductDetailResponseDto,
 	})
 	async findOne(@Req() req: AuthenticatedRequest, @Param("id") id: number) {
-		const product = await this.productService.findOne(id);
+		const userId = req?.user?.id;
+		const product = await this.productService.findOne(id, userId);
+
+		if (product?.productLike) {
+			const isLiked = product.productLike.some((like: ProductLike) => BigInt(like.userId) === BigInt(userId));
+			product.isLiked = isLiked;
+			delete product.productLike;
+		} else {
+			product.isLiked = null;
+		}
 
 		if (!product) {
 			throw new NotFoundException(PRODUCT_NOT_FOUND_ERROR);
 		}
-
-		this.logger.log(product);
 
 		const productFiles = await this.productService.findProductFiles(id);
 

@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { PaginationRequestSchema } from "../common/common.request";
+import { musicKeyEnum, productCategoryEnum, scaleTypeEnum } from "../product/product.request";
 
 export const UserCreatePayloadSchema = z.object({
 	email: z.string().email().describe("이메일"),
@@ -41,3 +43,21 @@ export const UserUpdatePayloadSchema = z.object({
 });
 
 export type UserUpdatePayload = z.infer<typeof UserUpdatePayloadSchema>;
+
+export const UserLikeProductListRequestSchema = PaginationRequestSchema.extend({
+	sort: z.enum(["RECENT", "NAME"]).optional(),
+	search: z.string().optional(),
+	category: productCategoryEnum.optional().describe("BEAT"),
+	genreIds: z
+		.string()
+		.refine((val) => !val || val.split(",").length <= 3, { message: "최대 3개의 장르만 선택할 수 있습니다." })
+		.optional()
+		.describe("1,2"),
+	tagIds: z.string().optional().describe("1,3"),
+	musicKey: musicKeyEnum.optional().describe("C"),
+	scaleType: scaleTypeEnum.optional().describe("MAJOR"),
+	minBpm: z.string().transform(Number).pipe(z.number().int().optional()).describe("100").optional(),
+	maxBpm: z.string().transform(Number).pipe(z.number().int().optional()).describe("120").optional(),
+});
+
+export type UserLikeProductListRequest = z.infer<typeof UserLikeProductListRequestSchema>;

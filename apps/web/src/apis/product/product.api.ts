@@ -1,6 +1,7 @@
 import {
 	ProductCreateSchema,
 	ProductDetailResponse,
+	ProductListDashboardResponse,
 	ProductListPagingResponse,
 	ProductListQueryRequest,
 	ProductSearchInfoResponse,
@@ -85,7 +86,36 @@ export const uploadProductFile = async (file: File, type: PRODUCT_FILE_TYPE) => 
 	return response.data;
 };
 
+/**
+ * 상품 검색 정보 조회 (장르, 태그)
+ * @returns 상품 검색 정보 (장르, 태그)
+ */
 export const getProductSearchInfo = async () => {
 	const response = await client.get<CommonResponse<ProductSearchInfoResponse>>("/products/search-info");
+	return response.data;
+};
+
+/**
+ * 메인 페이지(대쉬보드) 상품 목록 조회
+ * @returns 메인 페이지(대쉬보드) 상품 목록
+ */
+export const getProductListForDashboard = async () => {
+	const response = await client.get<CommonResponse<ProductListDashboardResponse>>("/products/dashboard");
+	return response.data;
+};
+
+/**
+ * 좋아요 처리
+ */
+export const likeProduct = async (productId: number) => {
+	const response = await client.post<CommonResponseId>(`/products/${productId}/like`);
+	return response.data;
+};
+
+/**
+ * 좋아요 취소
+ */
+export const unlikeProduct = async (productId: number) => {
+	const response = await client.delete<CommonResponseId>(`/products/${productId}/un-like`);
 	return response.data;
 };

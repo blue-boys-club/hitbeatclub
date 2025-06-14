@@ -1,5 +1,6 @@
 import { ArtistProductListQueryRequest } from "@hitbeatclub/shared-types/artist";
 import { ProductListQueryRequest } from "@hitbeatclub/shared-types/product";
+import { UserLikeProductListRequest } from "@hitbeatclub/shared-types/user";
 
 type QueryKey = Array<
 	string | number | boolean | Record<string, string | number | boolean | Array<number | string | boolean>>
@@ -10,11 +11,27 @@ const QUERY_KEYS = {
 	user: {
 		_key: ["user"],
 		me: ["user", "me"],
+		_likedProducts: ["user", "likedProducts"],
+		likedProducts: (userId: number, payload: UserLikeProductListRequest): QueryKey => [
+			"user",
+			"likedProducts",
+			userId,
+			payload,
+		],
+		_infiniteLikedProducts: ["user", "likedProducts", "infinite"],
+		infiniteLikedProducts: (userId: number, payload: UserLikeProductListRequest): QueryKey => [
+			"user",
+			"likedProducts",
+			"infinite",
+			userId,
+			payload,
+		],
 	},
 	products: {
 		_key: ["products"],
 		_list: ["products", "list"],
 		list: (payload: Omit<ProductListQueryRequest, "page" | "limit">): QueryKey => ["products", "list", payload],
+		_infiniteList: ["products", "list", "infinite"],
 		infiniteList: (payload: Omit<ProductListQueryRequest, "page" | "limit">): QueryKey => [
 			"products",
 			"list",
@@ -23,6 +40,7 @@ const QUERY_KEYS = {
 		],
 		one: (productId: number): QueryKey => ["products", productId],
 		searchInfo: ["products", "searchInfo"],
+		dashboard: ["products", "dashboard"],
 	},
 	artist: {
 		_key: ["artist"],
