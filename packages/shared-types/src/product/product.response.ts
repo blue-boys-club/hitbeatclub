@@ -23,8 +23,9 @@ export const ProductResponseSchema = z.object({
 		.min(0)
 		.max(1)
 		.transform((val) => val === 1)
+		.nullable()
 		.describe("좋아요 여부")
-		.default(0),
+		.default(null),
 	musicKey: z.string().describe("음계").default("C"),
 	scaleType: z.string().describe("조성").default("MAJOR"),
 	genres: z

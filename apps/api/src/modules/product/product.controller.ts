@@ -115,6 +115,8 @@ export class ProductController {
 					const isLiked = product.productLike.some((like: ProductLike) => BigInt(like.userId) === BigInt(userId));
 					product.isLiked = isLiked;
 					delete product.productLike;
+				} else {
+					product.isLiked = null;
 				}
 				return product;
 			},
@@ -265,6 +267,8 @@ export class ProductController {
 					const isLiked = product.productLike.some((like: ProductLike) => BigInt(like.userId) === BigInt(userId));
 					product.isLiked = isLiked;
 					delete product.productLike;
+				} else {
+					product.isLiked = null;
 				}
 				return product;
 			},
@@ -320,6 +324,8 @@ export class ProductController {
 			const isLiked = product.productLike.some((like: ProductLike) => BigInt(like.userId) === BigInt(userId));
 			product.isLiked = isLiked;
 			delete product.productLike;
+		} else {
+			product.isLiked = null;
 		}
 
 		if (!product) {
