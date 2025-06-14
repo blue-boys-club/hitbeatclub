@@ -106,43 +106,43 @@ export const ProductFilters = memo(({ onFiltersChange }: ProductFiltersProps) =>
 		);
 	};
 
+	const getTriggerElement = (defaultTrigger: string, filter: keyof FiltersState) => {
+		const selectedValue = filters[filter];
+		if (selectedValue) {
+			return renderSelectedOption(selectedValue, filter);
+		}
+		return defaultTrigger;
+	};
+
 	return (
 		<div className="flex items-center gap-2 mt-3.5 mb-1.5">
 			<TagDropdown
-				trigger={"Category"}
+				trigger={getTriggerElement("Category", "category")}
 				options={categories}
 				onSelect={(value) => onChangeFilter("category", value)}
 				showChevron={filters.category ? false : true}
-			>
-				{filters.category && renderSelectedOption(filters.category, "category")}
-			</TagDropdown>
+			/>
 
 			<TagDropdown
-				trigger="Genre"
+				trigger={getTriggerElement("Genre", "genre")}
 				options={genres}
 				onSelect={(value) => onChangeFilter("genre", value)}
 				showChevron={filters.genre ? false : true}
-			>
-				{filters.genre && renderSelectedOption(filters.genre, "genre")}
-			</TagDropdown>
+			/>
 
 			<TagDropdown
-				trigger="Key"
+				trigger={getTriggerElement("Key", "key")}
 				options={keys}
 				onSelect={(value) => onChangeFilter("key", value)}
 				showChevron={filters.key ? false : true}
-			>
-				{filters.key && renderSelectedOption(filters.key, "key")}
-			</TagDropdown>
+			/>
 
 			<TagDropdown
-				trigger="BPM"
+				trigger={getTriggerElement("BPM", "bpms")}
 				options={bpms}
 				onSelect={(value) => onChangeFilter("bpms", value)}
 				showChevron={filters.bpms ? false : true}
-			>
-				{filters.bpms && renderSelectedOption(filters.bpms, "bpms")}
-			</TagDropdown>
+			/>
 		</div>
 	);
 });

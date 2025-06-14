@@ -65,20 +65,23 @@ export const ProductCreateSchema = z.object({
 export const ProductUpdateSchema = ProductCreateSchema.partial();
 
 export const ProductListQuerySchema = z.object({
-	page: z.string().transform(Number).pipe(z.number().min(1)).describe("1"),
-	limit: z.string().transform(Number).pipe(z.number().min(1)).describe("10"),
+	page: z.coerce.number().min(1).describe("1"),
+	limit: z.coerce.number().min(1).describe("10"),
 	category: productCategoryEnum.optional().describe("BEAT"),
 	sort: productSortEnum.optional().describe("RECENT"),
 	genreIds: z
-		.string()
-		.refine((val) => !val || val.split(",").length <= 3, { message: "최대 3개의 장르만 선택할 수 있습니다." })
+		.union([z.array(z.coerce.number()), z.coerce.number().transform((val) => [val])])
+		.refine((val) => !val || val.length <= 3, { message: "최대 3개의 장르만 선택할 수 있습니다." })
 		.optional()
 		.describe("1,2"),
-	tagIds: z.string().optional().describe("1,3"),
+	tagIds: z
+		.union([z.array(z.coerce.number()), z.coerce.number().transform((val) => [val])])
+		.optional()
+		.describe("1,3"),
 	musicKey: musicKeyEnum.optional().describe("C"),
 	scaleType: scaleTypeEnum.optional().describe("MAJOR"),
-	minBpm: z.string().transform(Number).pipe(z.number().int().optional()).describe("100").optional(),
-	maxBpm: z.string().transform(Number).pipe(z.number().int().optional()).describe("120").optional(),
+	minBpm: z.coerce.number().int().optional().describe("100").optional(),
+	maxBpm: z.coerce.number().int().optional().describe("120").optional(),
 	// select: z.array(z.string()).optional().describe("필터링할 필드명 배열"),
 });
 

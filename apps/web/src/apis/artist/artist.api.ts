@@ -4,6 +4,7 @@ import {
 	ArtistProductListQueryRequest,
 	ArtistResponse,
 	ArtistUpdateRequest,
+	ArtistProductListQuerySchema,
 } from "@hitbeatclub/shared-types/artist";
 import type { CommonResponse, CommonResponseId } from "@/apis/api.type";
 import { ArtistUploadProfileRequest } from "./artist.type";
@@ -93,8 +94,15 @@ export const updateArtistSettlement = async (id: number, payload: SettlementUpda
  * @returns 아티스트 컨텐츠 목록
  */
 export const getArtistContentList = async (id: number, payload: ArtistProductListQueryRequest) => {
-	const response = await axiosInstance.get<ProductListPagingResponse>(`/artists/${id}/products`, {
-		params: payload,
-	});
-	return response.data;
+	try {
+		const parsed = ArtistProductListQuerySchema.parse(payload);
+		const response = await axiosInstance.get<ProductListPagingResponse>(`/artists/${id}/products`, {
+			params: parsed,
+			// paramsSerializer: { indexes: null },
+		});
+		return response.data;
+	} catch (error) {
+		console.error(error);
+		throw error;
+	}
 };

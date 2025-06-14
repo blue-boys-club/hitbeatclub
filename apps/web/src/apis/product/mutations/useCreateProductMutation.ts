@@ -18,6 +18,7 @@ export const useCreateProductMutation = () => {
 			}
 
 			void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products._list });
+			void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.searchInfo });
 		},
 	});
 };

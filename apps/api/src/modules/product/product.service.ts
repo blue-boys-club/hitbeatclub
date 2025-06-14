@@ -12,6 +12,7 @@ import {
 	PRODUCT_UPDATE_LICENSE_ERROR,
 } from "./product.error";
 import { Logger } from "@nestjs/common";
+import { UserLikeProductListRequest } from "@hitbeatclub/shared-types/user";
 
 @Injectable()
 export class ProductService {
@@ -47,7 +48,7 @@ export class ProductService {
 									productGenre: {
 										where: {
 											deletedAt: null,
-											genreId: { in: genreIds.split(",").map((id) => parseInt(id)) },
+											genreId: { in: genreIds },
 										},
 									},
 								}
@@ -57,7 +58,7 @@ export class ProductService {
 									productTag: {
 										where: {
 											deletedAt: null,
-											tagId: { in: tagIds.split(",").map((id) => parseInt(id)) },
+											tagId: { in: tagIds },
 										},
 									},
 								}
@@ -848,20 +849,83 @@ export class ProductService {
 			.then((data) => this.prisma.serializeBigInt(data));
 	}
 
-	async findLikedProducts(
-		userId: number,
-		page: number = 1,
-		limit: number = 10,
-		sort: "RECENT" | "NAME",
-		search: string,
-	) {
+	async findLikedProducts(userId: number, payload: UserLikeProductListRequest) {
+		// 기본값 설정
+		const page = payload.page || 1;
+		const limit = payload.limit || 10;
+
+		// 복합 조건을 위한 where 조건 구성
+		const productWhereConditions: Prisma.ProductWhereInput = {};
+
+		// 검색어 조건
+		if (payload.search) {
+			productWhereConditions.productName = { contains: payload.search };
+		}
+
+		// 카테고리 조건
+		if (payload.category) {
+			productWhereConditions.category = payload.category;
+		}
+
+		// 장르 조건
+		if (payload.genreIds?.length) {
+			productWhereConditions.productGenre = {
+				some: {
+					genreId: { in: payload.genreIds },
+					deletedAt: null,
+				},
+			};
+		}
+
+		// 태그 조건
+		if (payload.tagIds?.length) {
+			productWhereConditions.productTag = {
+				some: {
+					tagId: { in: payload.tagIds },
+					deletedAt: null,
+				},
+			};
+		}
+
+		// 음악키 조건
+		if (payload.musicKey) {
+			productWhereConditions.musicKey = payload.musicKey;
+		}
+
+		// BPM 조건
+		if (payload.minBpm || payload.maxBpm) {
+			productWhereConditions.AND = [];
+			if (payload.minBpm) {
+				productWhereConditions.AND.push({
+					OR: [
+						{ minBpm: { gte: payload.minBpm } },
+						{ AND: [{ minBpm: { lte: payload.minBpm } }, { maxBpm: { gte: payload.minBpm } }] },
+					],
+				});
+			}
+			if (payload.maxBpm) {
+				productWhereConditions.AND.push({
+					OR: [
+						{ maxBpm: { lte: payload.maxBpm } },
+						{ AND: [{ minBpm: { lte: payload.maxBpm } }, { maxBpm: { gte: payload.maxBpm } }] },
+					],
+				});
+			}
+		}
+
+		// 스케일 타입 조건
+		if (payload.scaleType) {
+			productWhereConditions.scaleType = payload.scaleType;
+		}
+
+		// 삭제되지 않은 제품만
+		productWhereConditions.deletedAt = null;
+
 		const where: Prisma.ProductLikeWhereInput = {
 			userId: BigInt(userId),
 			deletedAt: null,
+			product: productWhereConditions,
 		};
-		if (search) {
-			where.product = { productName: { contains: search } };
-		}
 
 		const likedProducts = await this.prisma.productLike
 			.findMany({
@@ -872,6 +936,11 @@ export class ProductService {
 							id: true,
 							productName: true,
 							price: true,
+							category: true,
+							minBpm: true,
+							maxBpm: true,
+							musicKey: true,
+							scaleType: true,
 							artistSellerIdToArtist: {
 								select: {
 									id: true,
@@ -880,22 +949,47 @@ export class ProductService {
 								},
 							},
 							createdAt: true,
+
+							productGenre: {
+								select: {
+									genre: {
+										select: {
+											id: true,
+											name: true,
+										},
+									},
+								},
+							},
+							productTag: {
+								select: {
+									tag: {
+										select: {
+											id: true,
+											name: true,
+										},
+									},
+								},
+							},
 						},
 					},
+					createdAt: true,
 				},
-				skip: (page - 1) * Number(limit),
-				take: Number(limit),
-				orderBy: sort === "RECENT" ? { createdAt: "desc" } : { product: { productName: "asc" } },
+				skip: (page - 1) * limit,
+				take: limit,
+				orderBy: payload.sort === "RECENT" ? { createdAt: "desc" } : { product: { productName: "asc" } },
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
 
 		const result = [];
 		const productIds = likedProducts.map((like) => like.product.id);
+
+		// 파일 정보 일괄 조회
 		const productFiles = await this.fileService.findFilesByTargetIds({
 			targetIds: productIds,
 			targetTable: "product",
 		});
 
+		// 파일을 productId별로 그룹화
 		const filesByProductId: Record<string, any[]> = {};
 		for (const file of productFiles) {
 			if (!filesByProductId[file.targetId.toString()]) {
@@ -914,29 +1008,41 @@ export class ProductService {
 			const files = filesByProductId[like.product.id.toString()] ?? [];
 			const audioFile = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
 			const coverImage = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
-			delete like.product.artistSellerIdToArtist;
 
 			result.push({
-				...like.product,
+				id: like.product.id,
+				productName: like.product.productName,
+				price: like.product.price,
+				category: like.product.category,
+				minBpm: like.product.minBpm,
+				maxBpm: like.product.maxBpm,
+				musicKey: like.product.musicKey,
+				scaleType: like.product.scaleType,
+				createdAt: like.product.createdAt,
+				likedAt: like.createdAt,
 				seller,
-				audioFile: {
-					id: audioFile?.id,
-					url: audioFile?.url,
-					originName: audioFile?.originName,
-				},
-				coverImage: {
-					id: coverImage?.id,
-					url: coverImage?.url,
-					originName: coverImage?.originName,
-				},
+				genres: like.product.productGenre.map((pg) => pg.genre.name),
+				tags: like.product.productTag.map((pt) => pt.tag.name),
+				audioFile: audioFile
+					? {
+							id: audioFile.id,
+							url: audioFile.url,
+							originName: audioFile.originName,
+						}
+					: null,
+				coverImage: coverImage
+					? {
+							id: coverImage.id,
+							url: coverImage.url,
+							originName: coverImage.originName,
+						}
+					: null,
 			});
 		}
 
+		// 총 개수 조회 (동일한 조건 사용)
 		const total = await this.prisma.productLike.count({
-			where: {
-				userId: BigInt(userId),
-				deletedAt: null,
-			},
+			where,
 		});
 
 		return {

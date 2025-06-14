@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, memo } from "react";
-import { Beat, Like, PauseCircle, PlayCircle, ShoppingBag, SmallEqualizer } from "@/assets/svgs";
+import { Acapella, Beat, Like, PauseCircle, PlayCircle, ShoppingBag, SmallEqualizer } from "@/assets/svgs";
 import { AlbumCoverCard } from "@/components/ui";
 import { TagButton } from "@/components/ui/TagButton";
 import { cn } from "@/common/utils";
@@ -14,6 +14,8 @@ interface ProductItemProps {
 	artist?: string;
 	albumImgSrc?: string;
 	tags?: string[];
+	type?: "BEAT" | "ACAPELLA";
+	isLiked?: boolean;
 	onPlay?: () => void;
 	onLike?: () => void;
 	onAddToCart?: () => void;
@@ -33,13 +35,14 @@ export const ProductItem = memo(
 		artist = "Moon River",
 		albumImgSrc = "https://placehold.co/70x70.png",
 		tags = ["G-funk", "Trippy", "Flower"],
+		type = "BEAT",
+		isLiked = false,
 		onPlay,
 		onLike,
 		onAddToCart,
 	}: ProductItemProps) => {
 		const router = useRouter();
 		const [status, setStatus] = useState<"playing" | "paused" | "default">("paused");
-		const [isLiked, setIsLiked] = useState(false);
 		const [cart, setCart] = useState(false);
 
 		const onClickProduct = () => {
@@ -47,7 +50,6 @@ export const ProductItem = memo(
 		};
 
 		const onClickLike = () => {
-			setIsLiked(!isLiked);
 			onLike?.();
 		};
 
@@ -94,7 +96,7 @@ export const ProductItem = memo(
 					>
 						<p className="flex items-center gap-2.5 text-16px font-bold">
 							{title}
-							<Beat />
+							{type === "BEAT" ? <Beat /> : <Acapella />}
 						</p>
 						<p className="text-16px">{artist}</p>
 					</div>

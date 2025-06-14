@@ -102,13 +102,7 @@ export class UserController {
 		@Param("userId") userId: number,
 		@Query() userLikeProductListRequestDto: UserLikeProductListRequestDto,
 	): Promise<IResponsePaging<any>> {
-		const result = await this.productService.findLikedProducts(
-			userId,
-			userLikeProductListRequestDto.page,
-			userLikeProductListRequestDto.limit,
-			userLikeProductListRequestDto.sort,
-			userLikeProductListRequestDto.search,
-		);
+		const result = await this.productService.findLikedProducts(userId, userLikeProductListRequestDto);
 
 		return {
 			statusCode: 200,

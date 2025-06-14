@@ -87,22 +87,22 @@ export class ProductController {
 			...(scaleType === "null" ? {} : { scaleType }),
 			...(minBpm ? { minBpm: { lte: minBpm }, maxBpm: { gte: minBpm } } : {}),
 			...(maxBpm ? { minBpm: { lte: maxBpm }, maxBpm: { gte: maxBpm } } : {}),
-			...(genreIds
+			...(genreIds && genreIds.length > 0
 				? {
 						productGenre: {
 							some: {
 								deletedAt: null,
-								genreId: { in: genreIds.split(",").map((id) => parseInt(id)) },
+								genreId: { in: genreIds },
 							},
 						},
 					}
 				: {}),
-			...(tagIds
+			...(tagIds && tagIds.length > 0
 				? {
 						productTag: {
 							some: {
 								deletedAt: null,
-								tagId: { in: tagIds.split(",").map((id) => parseInt(id)) },
+								tagId: { in: tagIds },
 							},
 						},
 					}
@@ -240,22 +240,22 @@ export class ProductController {
 			...(scaleType === "null" ? {} : { scaleType }),
 			...(minBpm ? { minBpm: { lte: minBpm }, maxBpm: { gte: minBpm } } : {}),
 			...(maxBpm ? { minBpm: { lte: maxBpm }, maxBpm: { gte: maxBpm } } : {}),
-			...(genreIds
+			...(genreIds && genreIds.length > 0
 				? {
 						productGenre: {
 							some: {
 								deletedAt: null,
-								genreId: { in: genreIds.split(",").map((id) => parseInt(id)) },
+								genreId: { in: genreIds },
 							},
 						},
 					}
 				: {}),
-			...(tagIds
+			...(tagIds && tagIds.length > 0
 				? {
 						productTag: {
 							some: {
 								deletedAt: null,
-								tagId: { in: tagIds.split(",").map((id) => parseInt(id)) },
+								tagId: { in: tagIds },
 							},
 						},
 					}

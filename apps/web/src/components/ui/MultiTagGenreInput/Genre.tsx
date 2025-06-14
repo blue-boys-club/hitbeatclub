@@ -2,7 +2,7 @@ import { cn } from "@/common/utils";
 import { CloseWhite } from "@/assets/svgs";
 
 export interface Genre {
-	id: string;
+	id: number;
 	text: string;
 	isFromDropdown?: boolean;
 }
