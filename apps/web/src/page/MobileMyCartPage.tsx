@@ -1,8 +1,24 @@
+"use client";
+
 import { Cart } from "@/assets/svgs";
 import { MobileMyPageTitle } from "@/features/mobile/my/components";
 import { MobileMyCartItem } from "@/features/mobile/my/components";
+import { PaymentMethodModal } from "@/features/mobile/my/components/modals";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export const MobileMyCartPage = () => {
+	const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+	const { toast } = useToast();
+
+	const handleCheckoutClick = () => {
+		setIsPaymentModalOpen(true);
+	};
+
+	const handleCloseModal = () => {
+		setIsPaymentModalOpen(false);
+	};
+
 	return (
 		<div className="h-full flex flex-col justify-between">
 			<div>
@@ -40,12 +56,26 @@ export const MobileMyCartPage = () => {
 								결제 관련 이용약관을 확인하였으며, 이에 동의합니다.
 							</span>
 						</div>
-						<button className="h-10 rounded-5px bg-black text-white font-semibold text-16px leading-100%">
+						<button
+							onClick={handleCheckoutClick}
+							className="h-10 rounded-5px bg-black text-white font-semibold text-16px leading-100%"
+						>
 							Checkout
+						</button>
+						<button
+							onClick={() => toast({ description: "좋아요 목록에서 삭제되었습니다." })}
+							className="h-10 rounded-5px bg-black text-white font-semibold text-16px leading-100%"
+						>
+							Toast Open (삭제할 것)
 						</button>
 					</div>
 				</div>
 			</div>
+
+			<PaymentMethodModal
+				isOpen={isPaymentModalOpen}
+				onClose={handleCloseModal}
+			/>
 		</div>
 	);
 };

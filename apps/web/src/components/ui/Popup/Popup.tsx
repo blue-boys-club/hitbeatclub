@@ -7,7 +7,26 @@ import { PopupButton as BasicPopupButton } from "@/components/ui/PopupButton";
 import { cn } from "@/common/utils";
 import { CloseModal } from "@/assets/svgs/CloseModal";
 
-const Popup = DialogPrimitive.Root;
+type PopupVariant = "default" | "mobile";
+
+interface PopupContextValue {
+	variant: PopupVariant;
+}
+
+const PopupContext = React.createContext<PopupContextValue>({ variant: "default" });
+
+interface PopupRootProps extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root> {
+	variant?: PopupVariant;
+}
+
+const PopupRoot: React.FC<PopupRootProps> = ({ variant = "default", children, ...props }) => (
+	<PopupContext.Provider value={{ variant }}>
+		<DialogPrimitive.Root {...props}>{children}</DialogPrimitive.Root>
+	</PopupContext.Provider>
+);
+PopupRoot.displayName = "PopupRoot";
+
+const Popup = PopupRoot;
 
 const PopupTrigger = DialogPrimitive.Trigger;
 
@@ -31,34 +50,44 @@ const PopupOverlay = React.forwardRef<
 PopupOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const PopupContent = React.forwardRef<
-	React.ElementRef<typeof DialogPrimitive.Content>,
+	React.ComponentRef<typeof DialogPrimitive.Content>,
 	React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-	<PopupPortal>
-		<PopupOverlay />
-		<DialogPrimitive.Content
-			ref={ref}
-			className={cn(
-				"fixed left-[50%] top-[50%] z-[70] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-[5px] bg-hbc-white duration-200",
-				"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-				"data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
-				className,
-			)}
-			{...props}
-		>
-			<div className="relative p-[50px] overflow-y-auto max-h-[80vh] grid gap-[25px]">{children}</div>
-			<DialogPrimitive.Close
+>(({ className, children, ...props }, ref) => {
+	const { variant } = React.useContext(PopupContext);
+	const isMobile = variant === "mobile";
+
+	return (
+		<PopupPortal>
+			<PopupOverlay />
+			<DialogPrimitive.Content
+				ref={ref}
 				className={cn(
-					"absolute right-[-18px] top-[-18px] z-[60] cursor-pointer",
-					"disabled:hidden disabled:pointer-events-none",
+					"fixed left-[50%] top-[50%] z-[70] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-[5px] bg-hbc-white duration-200",
+					"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+					"data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+					className,
 				)}
+				{...props}
 			>
-				<CloseModal />
-				<span className="sr-only">Close</span>
-			</DialogPrimitive.Close>
-		</DialogPrimitive.Content>
-	</PopupPortal>
-));
+				<div
+					className={cn("relative overflow-y-auto max-h-[80vh] grid gap-[25px]", isMobile ? "p-[32px]" : "p-[50px]")}
+				>
+					{children}
+				</div>
+				<DialogPrimitive.Close
+					className={cn(
+						"absolute z-[60] cursor-pointer",
+						"disabled:hidden disabled:pointer-events-none",
+						isMobile ? "right-[-8px] top-[-10px]" : "right-[-18px] top-[-18px]",
+					)}
+				>
+					<CloseModal variant={variant} />
+					<span className="sr-only">Close</span>
+				</DialogPrimitive.Close>
+			</DialogPrimitive.Content>
+		</PopupPortal>
+	);
+});
 PopupContent.displayName = DialogPrimitive.Content.displayName;
 
 const PopupHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (

@@ -30,6 +30,7 @@ import { FreeDownloadButton } from "./FreeDownloadButton";
 import { PurchaseButton } from "./PurchaseButton";
 import { AlbumCoverCard } from "./AlbumCoverCard";
 import { SectionHeader } from "./SectionHeader";
+import { Checkbox } from "./Checkbox";
 
 const UI = {
 	BodyLarge,
@@ -64,6 +65,7 @@ const UI = {
 	PurchaseButton,
 	AlbumCoverCard,
 	SectionHeader,
+	Checkbox,
 };
 
 export default UI;
@@ -97,4 +99,5 @@ export {
 	PurchaseButton,
 	AlbumCoverCard,
 	SectionHeader,
+	Checkbox,
 };
