@@ -93,6 +93,15 @@ import { VolumeThumb } from "./VolumeThumb";
 import { Youtube } from "./Youtube";
 import { AddCircle } from "./AddCircle";
 import { Phone } from "./Phone";
+import { StarInCircle } from "./StarInCircle";
+import { HeartFilled } from "./HeartFilled";
+import { Paypal } from "./Paypal";
+import { Card } from "./Card";
+import { Polygon } from "./Polygon";
+import { Return } from "./Return";
+import { ArrowLeftShort } from "./ArrowLeftShort";
+import { ArrowDown } from "./ArrowDown";
+import { Outlink } from "./Outlink";
 
 export {
 	AddCircle,
@@ -190,4 +199,13 @@ export {
 	Upload,
 	ArrowRight,
 	Phone,
+	StarInCircle,
+	HeartFilled,
+	Paypal,
+	Card,
+	Polygon,
+	Return,
+	ArrowLeftShort,
+	ArrowDown,
+	Outlink,
 };

@@ -1,3 +1,5 @@
+"use client";
+
 import { Check } from "@/assets/svgs/Check";
 import { X } from "@/assets/svgs/X";
 import { MobileFilterButton } from "@/components/ui/MobileFilterButton";

@@ -1,5 +1,4 @@
 import React, { memo } from "react";
-import { ProductItem } from "../../../product/components/ProductItem";
 import { MobileProductItem } from "./MobileProductItem";
 
 export const MobileProductList = memo(() => {

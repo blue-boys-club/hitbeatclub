@@ -3,10 +3,7 @@
 import Image from "next/image";
 import bannerBackground from "@/assets/images/shop-banner-bg.jpeg";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import {
-	getProductListForDashboardQueryOption,
-	getProductListQueryOption,
-} from "@/apis/product/query/product.query-option";
+import { getProductListForDashboardQueryOption } from "@/apis/product/query/product.query-option";
 import { Button } from "@/components/ui/Button";
 import { MobileProductSection } from "@/features/mobile/product/components/MobileProductSection";
 import { useState } from "react";

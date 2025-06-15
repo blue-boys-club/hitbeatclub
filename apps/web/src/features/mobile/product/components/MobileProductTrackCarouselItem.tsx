@@ -8,8 +8,9 @@ interface MobileProductTrackCarouselItemProps {
 	track: ProductRowByDashboardResponse;
 }
 export const MobileProductTrackCarouselItem = ({ track }: MobileProductTrackCarouselItemProps) => {
-	const isTitlePureEnglish = checkIsPureEnglish(track.productName);
-	const isArtistPureEnglish = checkIsPureEnglish(track.seller?.stageName || "");
+	const { productName, seller, coverImage } = track;
+	const isTitlePureEnglish = checkIsPureEnglish(productName);
+	const isArtistPureEnglish = checkIsPureEnglish(seller?.stageName || "");
 
 	return (
 		<Link
@@ -20,7 +21,7 @@ export const MobileProductTrackCarouselItem = ({ track }: MobileProductTrackCaro
 			<div className="border-y-3px border-x-1px border-black relative w-110px h-110px">
 				<Image
 					alt="커버이미지"
-					src={track.coverImage?.url || ""}
+					src={coverImage?.url || ""}
 					fill
 					className="object-cover"
 				/>
@@ -33,7 +34,7 @@ export const MobileProductTrackCarouselItem = ({ track }: MobileProductTrackCaro
 							isTitlePureEnglish ? "font-suisse" : "font-suit",
 						)}
 					>
-						{track.productName}
+						{productName}
 					</div>
 					{/* {isHit && <Hit />} */}
 				</div>
@@ -43,7 +44,7 @@ export const MobileProductTrackCarouselItem = ({ track }: MobileProductTrackCaro
 						isArtistPureEnglish ? "font-suisse" : "font-suit",
 					)}
 				>
-					<span className="text-hbc-gray-300">{track.seller?.stageName}</span>
+					<span className="text-hbc-gray-300">{seller?.stageName}</span>
 				</div>
 			</div>
 		</Link>
