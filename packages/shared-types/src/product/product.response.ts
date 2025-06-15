@@ -49,6 +49,7 @@ export const ProductResponseSchema = z.object({
 		id: z.number().describe("판매자 ID").default(1),
 		stageName: z.string().describe("판매자 닉네임").default("판매자"),
 		profileImageUrl: z.string().url().describe("판매자 프로필 이미지 URL").default("https://example.com/profile.jpg"),
+		isVerified: z.number().describe("인증 여부").default(1),
 	}),
 });
 
@@ -115,6 +116,7 @@ export const ProductDetailResponseSchema = z.object({
 		id: z.number().describe("판매자 ID").default(1),
 		stageName: z.string().describe("판매자 닉네임").default("판매자"),
 		profileImageUrl: z.string().url().describe("판매자 프로필 이미지 URL").default("https://example.com/profile.jpg"),
+		isVerified: z.number().describe("인증 여부").default(1),
 	}),
 	audioFile: z.object({
 		id: z.number().describe("오디오 파일 ID").default(1),

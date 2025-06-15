@@ -15,6 +15,7 @@ export default defineConfig({
 		"tag/index": "src/tag/index.ts",
 		"genre/index": "src/genre/index.ts",
 		"email/index": "src/email/index.ts",
+		"cart/index": "src/cart/index.ts",
 	},
 	format: ["cjs", "esm"],
 	dts: true,

@@ -70,6 +70,11 @@
 			"types": "./dist/email/index.d.ts",
 			"import": "./dist/email/index.mjs",
 			"require": "./dist/email/index.js"
+		},
+		"./cart": {
+			"types": "./dist/cart/index.d.ts",
+			"import": "./dist/cart/index.mjs",
+			"require": "./dist/cart/index.js"
 		}
 	},
 	"files": [

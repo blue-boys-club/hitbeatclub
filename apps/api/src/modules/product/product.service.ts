@@ -41,6 +41,7 @@ export class ProductService {
 								id: true,
 								stageName: true,
 								profileImageUrl: true,
+								isVerified: true,
 							},
 						},
 						...(genreIds
@@ -195,6 +196,7 @@ export class ProductService {
 								id: true,
 								stageName: true,
 								profileImageUrl: true,
+								isVerified: true,
 							},
 						},
 						productLicense: {

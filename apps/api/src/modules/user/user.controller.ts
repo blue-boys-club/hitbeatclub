@@ -2,7 +2,7 @@ import { Controller, Get, Patch, Delete, Param, Body, Req, Post, NotFoundExcepti
 import { UserService } from "./user.service";
 import { ApiOperation, ApiTags, ApiBody } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
-import { DocResponse, DocResponsePaging } from "~/common/doc/decorators/doc.decorator";
+import { DocResponse, DocResponseList, DocResponsePaging } from "~/common/doc/decorators/doc.decorator";
 import { UserUpdateDto } from "./dto/request/user.update.request.dto";
 import { IResponse, IResponsePaging } from "~/common/response/interfaces/response.interface";
 import userMessage from "./user.message";
@@ -13,6 +13,10 @@ import { AuthenticationDoc } from "~/common/doc/decorators/auth.decorator";
 import { ProductService } from "../product/product.service";
 import { ProductLikeResponseDto } from "../product/dto/response/product.like.response.dto";
 import { UserLikeProductListRequestDto } from "./dto/request/user.like-product-list.request.dto";
+import { CartListResponseDto } from "../cart/dto/response/cart.list.response.dto";
+import { CartService } from "../cart/cart.service";
+import cartMessage from "../cart/cart.message";
+import { CartCreateRequestDto } from "../cart/dto/request/cart.create.request.dto";
 
 @Controller("users")
 @ApiTags("user")
@@ -21,6 +25,7 @@ export class UserController {
 	constructor(
 		private readonly userService: UserService,
 		private readonly productService: ProductService,
+		private readonly cartService: CartService,
 	) {}
 
 	@Get("me")
@@ -109,6 +114,61 @@ export class UserController {
 			message: userMessage.likedProducts.success,
 			data: result.data,
 			_pagination: result.pagination,
+		};
+	}
+
+	@Get(":userId/cart")
+	@ApiOperation({ summary: "장바구니 조회" })
+	@AuthenticationDoc()
+	@DocResponseList<CartListResponseDto>(cartMessage.find.success, {
+		dto: CartListResponseDto,
+	})
+	async findCart(@Param("userId") userId: number): Promise<IResponse<CartListResponseDto[]>> {
+		const result = await this.cartService.findAll(userId);
+
+		return {
+			statusCode: 200,
+			message: cartMessage.find.success,
+			data: result,
+		};
+	}
+
+	@Post(":userId/cart")
+	@ApiOperation({ summary: "장바구니 추가" })
+	@AuthenticationDoc()
+	@DocResponse<DatabaseIdResponseDto>(cartMessage.create.success, {
+		dto: DatabaseIdResponseDto,
+	})
+	async createCart(
+		@Req() req: AuthenticatedRequest,
+		@Body() cartCreateRequestDto: CartCreateRequestDto,
+	): Promise<DatabaseIdResponseDto> {
+		const result = await this.cartService.create(req.user.id, cartCreateRequestDto);
+
+		return {
+			statusCode: 200,
+			message: cartMessage.create.success,
+			data: { id: result.id },
+		};
+	}
+
+	@Delete(":userId/cart/:cartId")
+	@ApiOperation({ summary: "장바구니 삭제" })
+	@AuthenticationDoc()
+	@DocResponse<DatabaseIdResponseDto>(cartMessage.remove.success, {
+		dto: DatabaseIdResponseDto,
+	})
+	async removeCart(
+		@Req() req: AuthenticatedRequest,
+		@Param("userId") userId: number,
+		@Param("cartId") cartId: number,
+	): Promise<DatabaseIdResponseDto> {
+		const cart = await this.cartService.remove(userId, cartId);
+
+		return {
+			statusCode: 200,
+			message: cartMessage.remove.success,
+			data: { id: cart.id },
 		};
 	}
 }
