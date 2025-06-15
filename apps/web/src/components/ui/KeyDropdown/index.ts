@@ -1,2 +1,2 @@
-export { KeyDropdown } from "./KeyDropdown";
-export type { KeyButtonProps, KeyDropdownProps } from "./KeyDropdown";
+export { KeyDropdown, KeyButton } from "./KeyDropdown";
+export type { KeyButtonProps, KeyDropdownProps, KeyValue, KeyDropdownRenderProps } from "./KeyDropdown";

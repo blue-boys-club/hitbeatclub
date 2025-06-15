@@ -9,25 +9,28 @@ import {
 	Req,
 	NotFoundException,
 	UploadedFile,
+	ForbiddenException,
+	Query,
+	ParseIntPipe,
 } from "@nestjs/common";
 import { ArtistService } from "./artist.service";
 import { ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
-import { DocRequestFile, DocResponse, DocResponseList } from "src/common/doc/decorators/doc.decorator";
-import { IResponse } from "src/common/response/interfaces/response.interface";
+import { DocRequestFile, DocResponse, DocResponseList } from "~/common/doc/decorators/doc.decorator";
+import { IResponse, IResponsePaging } from "~/common/response/interfaces/response.interface";
 import { artistMessage } from "./artist.message";
-import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
+import { DatabaseIdResponseDto } from "~/common/response/dtos/response.dto";
 import { ArtistCreateDto } from "./dto/request/artist.create.request.dto";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
 import { ArtistUpdateDto } from "./dto/request/artist.update.dto";
 import { ArtistDetailResponseDto } from "./dto/response/artist.detail.response.dto";
-import { ENUM_FILE_MIME_IMAGE } from "src/common/file/constants/file.enum.constant";
-import { FileRequiredPipe } from "src/common/file/pipes/file.required.pipe";
-import { FileTypePipe } from "src/common/file/pipes/file.type.pipe";
+import { ENUM_FILE_MIME_IMAGE } from "~/common/file/constants/file.enum.constant";
+import { FileRequiredPipe } from "~/common/file/pipes/file.required.pipe";
+import { FileTypePipe } from "~/common/file/pipes/file.type.pipe";
 import { FileUploadResponseDto } from "../file/dto/response/file.upload.response.dto";
 import { FileService } from "../file/file.service";
-import { AuthenticationDoc } from "src/common/doc/decorators/auth.decorator";
-import { FileUploadSingle } from "src/common/file/decorators/file.decorator";
+import { AuthenticationDoc } from "~/common/doc/decorators/auth.decorator";
+import { FileUploadSingle } from "~/common/file/decorators/file.decorator";
 import { ARTIST_NOT_FOUND_ERROR } from "./artist.error";
 import { ArtistUploadProfileRequestDto } from "./dto/request/artist.upload-profile.request.dto";
 import settlementMessage from "../settlement/settlement.message";
@@ -35,6 +38,11 @@ import { SettlementCreateDto } from "../settlement/dto/request/settlement.create
 import { SettlementService } from "../settlement/settlement.service";
 import { SettlementUpdateDto } from "../settlement/dto/request/settlement.update.dto";
 import { ArtistListResponseDto } from "./dto/response/artist.list.response.dto";
+import { ProductListResponseDto } from "../product/dto/response/product.list.response.dto";
+import { productMessage } from "../product/product.message";
+import { ProductService } from "../product/product.service";
+import { ArtistProductListQueryRequestDto } from "./dto/request/artist.product-list.request.dto";
+import { PrismaService } from "~/common/prisma/prisma.service";
 @Controller("artists")
 @ApiTags("artist")
 @ApiBearerAuth()
@@ -43,6 +51,8 @@ export class ArtistController {
 		private readonly artistService: ArtistService,
 		private readonly fileService: FileService,
 		private readonly settlementService: SettlementService,
+		private readonly productService: ProductService,
+		private readonly prisma: PrismaService,
 	) {}
 
 	@Get()
@@ -110,15 +120,20 @@ export class ArtistController {
 
 		delete createArtistDto?.profileImageFileId;
 
-		const artist = await this.artistService.create(req.user.id, createArtistDto);
+		const artist = await this.prisma.$transaction(async (tx) => {
+			const createdArtist = await this.artistService.create(req.user.id, createArtistDto, tx);
 
-		if (profileImageFileId) {
-			await this.artistService.uploadArtistProfile({
-				uploaderId: req.user.id,
-				artistId: artist.id,
-				profileImageFileId,
-			});
-		}
+			if (profileImageFileId) {
+				await this.artistService.uploadArtistProfile({
+					uploaderId: req.user.id,
+					artistId: createdArtist.id,
+					profileImageFileId,
+					tx,
+				});
+			}
+
+			return createdArtist;
+		});
 
 		return {
 			statusCode: 201,
@@ -248,6 +263,72 @@ export class ArtistController {
 			statusCode: 200,
 			message: settlementMessage.update.success,
 			data: settlement,
+		};
+	}
+
+	@Get(":id/products")
+	@ApiOperation({ summary: "(자기 자신의) 아티스트 제품 목록 조회" })
+	@AuthenticationDoc()
+	@DocResponseList<ProductListResponseDto>(productMessage.find.success, {
+		dto: ProductListResponseDto,
+	})
+	async findProducts(
+		@Req() req: AuthenticatedRequest,
+		@Param("id", ParseIntPipe) id: number,
+		@Query() artistProductListQueryRequestDto: ArtistProductListQueryRequestDto,
+	): Promise<IResponsePaging<ProductListResponseDto>> {
+		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds, isPublic } =
+			artistProductListQueryRequestDto;
+		console.log(artistProductListQueryRequestDto);
+		const artistMe = await this.artistService.findMe(req.user.id);
+
+		if (artistMe.id !== id) {
+			throw new ForbiddenException(ARTIST_NOT_FOUND_ERROR);
+		}
+
+		const where = {
+			sellerId: id,
+			...(isPublic !== undefined ? { isPublic: isPublic ? 1 : 0 } : {}),
+			...(category === "null" || category === undefined ? {} : { category }),
+			...(musicKey === "null" || musicKey === undefined ? {} : { musicKey }),
+			...(scaleType === "null" || scaleType === undefined ? {} : { scaleType }),
+			...(minBpm ? { minBpm: { lte: minBpm }, maxBpm: { gte: minBpm } } : {}),
+			...(maxBpm ? { minBpm: { lte: maxBpm }, maxBpm: { gte: maxBpm } } : {}),
+			...(genreIds && genreIds.length > 0
+				? {
+						productGenre: {
+							some: {
+								deletedAt: null,
+								genreId: { in: genreIds },
+							},
+						},
+					}
+				: {}),
+			...(tagIds && tagIds.length > 0
+				? {
+						productTag: {
+							some: {
+								deletedAt: null,
+								tagId: { in: tagIds },
+							},
+						},
+					}
+				: {}),
+		};
+
+		const products = await this.productService.findAll(where, artistProductListQueryRequestDto);
+		const total = await this.productService.getTotal(where);
+
+		return {
+			statusCode: 200,
+			message: productMessage.find.success,
+			_pagination: {
+				page: artistProductListQueryRequestDto.page,
+				limit: artistProductListQueryRequestDto.limit,
+				totalPage: Math.ceil(total / artistProductListQueryRequestDto.limit),
+				total,
+			},
+			data: products,
 		};
 	}
 }

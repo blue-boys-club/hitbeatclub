@@ -1,4 +1,4 @@
-import { useState, memo, useMemo, useEffect, useCallback } from "react";
+import { useState, memo, useMemo, useCallback } from "react";
 import * as Popup from "@/components/ui/Popup";
 import { cn } from "@/common/utils";
 import { useRouter } from "next/navigation";
@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCartStore } from "@/stores/cart";
 import { useShallow } from "zustand/react/shallow";
 import { useToast } from "@/hooks/use-toast";
-import { LicenseOption } from "@/features/cart/components/modal/LicenseChangeModal";
+import { LICENSE_MAP_TEMPLATE } from "@/apis/product/product.dummy";
 
 interface ProductDetailLicenseModalProps {
 	isOpen: boolean;
@@ -15,20 +15,35 @@ interface ProductDetailLicenseModalProps {
 	productId: number;
 }
 
+type LicenseType = "MASTER" | "EXCLUSIVE";
+
 export const ProductDetailLicenseModal = memo(({ isOpen, onClose, productId }: ProductDetailLicenseModalProps) => {
 	const router = useRouter();
 	const { data: product } = useQuery({
 		...getProductQueryOption(productId),
 		enabled: isOpen && !!productId,
 	});
-	// TODO: 라이센스 데이터 받아오기
-	// const licenses = useMemo(() => product?.licenses, [product]);
-	const licenses = useMemo(() => [] as LicenseOption[], []);
-	const [selectedLicenseId, setSelectedLicenseId] = useState<number>(licenses?.[0]?.id ?? 0);
+
+	// 상품의 라이센스 정보와 템플릿 정보를 조합
+	const licenses = useMemo(() => {
+		if (!product?.licenseInfo) return [];
+
+		return product.licenseInfo.map((licenseInfo) => ({
+			id: licenseInfo.id,
+			type: licenseInfo.type,
+			price: licenseInfo.price,
+			...LICENSE_MAP_TEMPLATE[licenseInfo.type as LicenseType],
+		}));
+	}, [product?.licenseInfo]);
+
+	const [selectedLicenseType, setSelectedLicenseType] = useState<LicenseType>("MASTER");
+
+	// 선택된 라이센스 정보
 	const selectedLicense = useMemo(
-		() => licenses?.find((license) => license.id === selectedLicenseId),
-		[licenses, selectedLicenseId],
+		() => licenses.find((license) => license.type === selectedLicenseType),
+		[licenses, selectedLicenseType],
 	);
+
 	const { addItem } = useCartStore(
 		useShallow((state) => ({
 			addItem: state.addItem,
@@ -37,20 +52,12 @@ export const ProductDetailLicenseModal = memo(({ isOpen, onClose, productId }: P
 
 	const { toast } = useToast();
 
-	useEffect(() => {
-		if (licenses && licenses.length > 0 && selectedLicenseId === 0) {
-			setSelectedLicenseId(licenses[0]!.id);
-		}
-	}, [licenses, selectedLicenseId]);
-
 	const addToCart = useCallback(() => {
-		if (selectedLicenseId) {
-			addItem({
-				id: productId,
-				licenseId: selectedLicenseId,
-			});
-		}
-	}, [addItem, productId, selectedLicenseId]);
+		addItem({
+			id: productId,
+			licenseType: selectedLicenseType,
+		});
+	}, [addItem, productId, selectedLicenseType]);
 
 	const handleCart = useCallback(() => {
 		addToCart();
@@ -66,8 +73,7 @@ export const ProductDetailLicenseModal = memo(({ isOpen, onClose, productId }: P
 		onClose();
 	}, [addToCart, router, onClose]);
 
-	if (!product) {
-		// Handle case where item is not provided, or return a loading/error state
+	if (!product || !licenses.length) {
 		return null;
 	}
 
@@ -84,19 +90,19 @@ export const ProductDetailLicenseModal = memo(({ isOpen, onClose, productId }: P
 
 					<div className="flex flex-col items-center justify-start w-full gap-25px">
 						<div className="flex items-start justify-start gap-4">
-							{licenses?.map((option) => (
+							{licenses.map((option) => (
 								<div
-									key={option.id}
+									key={option.type}
 									className={cn(
 										"p-12px rounded-lg outline-2 outline-offset-[-2px] outline-black flex flex-col justify-start items-center gap-[5px] cursor-pointer h-fit",
-										selectedLicenseId === option.id ? "bg-black" : "bg-white",
+										selectedLicenseType === option.type ? "bg-black" : "bg-white",
 									)}
-									onClick={() => setSelectedLicenseId(option.id)}
+									onClick={() => setSelectedLicenseType(option.type as LicenseType)}
 								>
 									<div
 										className={cn(
 											"text-18px font-medium leading-160% tracking-018px",
-											selectedLicenseId === option.id ? "text-white font-suisse" : "text-black font-bold font-suit",
+											selectedLicenseType === option.type ? "text-white font-suisse" : "text-black font-bold font-suit",
 										)}
 									>
 										{option.name}
@@ -104,7 +110,7 @@ export const ProductDetailLicenseModal = memo(({ isOpen, onClose, productId }: P
 									<div
 										className={cn(
 											"text-18px font-medium font-suisse leading-160% tracking-018px",
-											selectedLicenseId === option.id ? "text-white" : "text-black",
+											selectedLicenseType === option.type ? "text-white" : "text-black",
 										)}
 									>
 										{option.price.toLocaleString()} KRW
@@ -112,7 +118,7 @@ export const ProductDetailLicenseModal = memo(({ isOpen, onClose, productId }: P
 									<div
 										className={cn(
 											"text-12px font-medium font-suisse leading-150% tracking-012px",
-											selectedLicenseId === option.id ? "text-white" : "text-black",
+											selectedLicenseType === option.type ? "text-white" : "text-black",
 										)}
 									>
 										{option.description}

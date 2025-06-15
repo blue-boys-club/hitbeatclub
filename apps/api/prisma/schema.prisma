@@ -36,6 +36,8 @@ model User {
   payments               Payments[]
   userSocialAccount      UserSocialAccount[]
   tag                    Tag[]
+  accountToken           AccountToken[]
+  productLike            ProductLike[]
 
   @@map("user")
 }
@@ -63,7 +65,6 @@ model Artist {
   user                       User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_TO_artist_1")
   productSellerIdToArtist    Product[] @relation("product_seller_idToartist")
   settlement Settlement[]
-  files      File[]         @relation("ArtistToFile")
 
   @@index([userId], map: "FK_user_TO_artist_1")
   @@map("artist")
@@ -156,10 +157,10 @@ model Product {
   deletedAt                 DateTime? @map("deleted_at") @db.Timestamp(0)
   cart                      Cart[]
   artistSellerIdToArtist    Artist?          @relation("product_seller_idToartist", fields: [sellerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_artist_TO_product_1")
-  files                     File[]           @relation("ProductToFile")
   productLicense            ProductLicense[]
   productGenre              ProductGenre[]
   productTag                ProductTag[]
+  productLike               ProductLike[]
 
   @@index([sellerId], map: "FK_artist_TO_product_1")
   @@map("product")
@@ -200,8 +201,6 @@ model File {
   updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
   deletedAt   DateTime? @map("deleted_at") @db.Timestamp(0)
   user        User?     @relation(fields: [uploaderId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_file_uploader")
-  product     Product?  @relation("ProductToFile", fields: [targetId], references: [id], map: "fk_file_product")
-  artist      Artist?   @relation("ArtistToFile", fields: [targetId], references: [id], map: "fk_file_artist")
 
   @@index([uploaderId], map: "idx_file_uploader")
   @@index([targetId], map: "idx_file_target")
@@ -291,6 +290,22 @@ model ProductTag {
   @@map("product_tag")
 }
 
+model ProductLike {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  productId BigInt   @map("product_id")
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamp(0) 
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "FK_user_TO_product_like_1")
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade, map: "FK_product_TO_product_like_1")
+
+  @@unique([userId, productId, deletedAt], map: "ux_product_like__user_product")
+  @@index([userId], map: "FK_user_TO_product_like_1")
+  @@index([productId], map: "FK_product_TO_product_like_1")
+  @@map("product_like")
+}
+
 enum SettlementType {
   BANK_ACCOUNT
   PAYPAL
@@ -321,3 +336,32 @@ model Settlement {
 }
 
 
+
+enum TokenPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+  EMAIL_CHANGE
+  PHONE_VERIFICATION
+  PHONE_CHANGE
+}
+
+model AccountToken {
+  id          BigInt   @id @default(autoincrement())
+  token       String   @db.Char(64) @unique      // SHA-256 → 64byte 등
+  purpose     TokenPurpose
+
+  userId      BigInt   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id])
+
+  active      Boolean?  @default(true)            // “현재 유효 토큰인가?”
+  consumedAt  DateTime? @map("consumed_at")      // 검증 직후 기록
+  expiresAt   DateTime  @map("expires_at")
+
+  deletedAt   DateTime? @map("deleted_at")       // 소프트 삭제 시각
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@unique([userId, purpose, active])            // active=true일 때만 unique (null은 무시됨)
+  @@index([expiresAt])
+  @@index([deletedAt])
+  @@map("account_token")
+}

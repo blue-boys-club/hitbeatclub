@@ -219,7 +219,7 @@ ContactSection.displayName = "ContactSection";
  * 아티스트 스튜디오 계정 설정의 프로필 폼 컴포넌트
  */
 export const ArtistStudioAccountSettingProfileForm = memo(() => {
-	const [formData, setFormData] = useState<ProfileFormData>({
+	const initialFormData: ProfileFormData = {
 		stageName: "",
 		slug: "",
 		description: "",
@@ -229,7 +229,11 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 		contactList: [],
 		country: "KOR",
 		city: "",
-	});
+	};
+
+	// 복잡한 배열 조작이 필요한 것들만 로컬 상태로 관리
+	const [snsList, setSnsList] = useState<BaseItem[]>([]);
+	const [contactList, setContactList] = useState<BaseItem[]>([]);
 
 	const [selectedSns, setSelectedSns] = useState<BaseItem>({ label: SNS_OPTIONS[0]?.value || "", value: "" });
 	const [selectedContact, setSelectedContact] = useState<BaseItem>({
@@ -245,65 +249,60 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 		formState: { errors },
 		watch,
 		reset,
+		setValue,
+		getValues,
 	} = useForm<ProfileFormData>({
 		resolver: zodResolver(ProfileFormSchema),
-		defaultValues: formData,
+		defaultValues: initialFormData,
 	});
 
 	const { data: artistMe, isLoading, isError } = useQuery(getArtistMeQueryOption());
 	const { mutate: updateArtist } = useUpdateArtistMutation();
 	const { mutate: uploadProfile } = useUploadArtistProfileMutation();
 
-	const onChangeField = useCallback((field: keyof ProfileFormData, value: string | BaseItem) => {
-		setFormData((prev: ProfileFormData) => ({
-			...prev,
-			[field]: value,
-		}));
-	}, []);
+	const onChangeField = useCallback(
+		(field: keyof ProfileFormData, value: string) => {
+			setValue(field, value);
+		},
+		[setValue],
+	);
 
 	const onAddSns = useCallback(() => {
 		const { label, value } = selectedSns;
 		if (!label || !value) return;
 
-		setFormData((prev: ProfileFormData) => {
+		setSnsList((prev) => {
 			let existingIndex = -1;
 
 			if (label === "etc") {
 				// etc 타입은 같은 링크(value) 기준으로 중복 체크
-				existingIndex = (prev.snsList || []).findIndex((sns: BaseItem) => sns.label === "etc" && sns.value === value);
+				existingIndex = prev.findIndex((sns: BaseItem) => sns.label === "etc" && sns.value === value);
 			} else {
 				// 다른 타입은 label 기준으로 중복 체크 (기존 로직)
-				existingIndex = (prev.snsList || []).findIndex((sns: BaseItem) => sns.label === label);
+				existingIndex = prev.findIndex((sns: BaseItem) => sns.label === label);
 			}
 
 			if (existingIndex !== -1) {
 				// 중복된 경우, etc 타입이 아니면 기존 아이템 업데이트
 				if (label !== "etc") {
-					const updatedSnsList = [...(prev.snsList || [])];
+					const updatedSnsList = [...prev];
 					updatedSnsList[existingIndex] = { label, value };
-					return {
-						...prev,
-						snsList: updatedSnsList,
-					};
+					return updatedSnsList;
 				} else {
 					// etc 타입이면서 같은 링크가 이미 있으면 추가하지 않음
 					return prev;
 				}
 			} else {
 				// 새 아이템 추가
-				return {
-					...prev,
-					snsList: [...(prev.snsList || []), { label, value }],
-				};
+				return [...prev, { label, value }];
 			}
 		});
 		setSelectedSns({ label, value: "" });
 	}, [selectedSns]);
 
 	const onRemoveSns = useCallback((label: string, value?: string) => {
-		setFormData((prev: ProfileFormData) => ({
-			...prev,
-			snsList: (prev.snsList || []).filter((sns: BaseItem) => {
+		setSnsList((prev) =>
+			prev.filter((sns: BaseItem) => {
 				if (label === "etc") {
 					// etc 타입은 label과 value 모두 일치해야 삭제
 					return !(sns.label === label && sns.value === value);
@@ -312,40 +311,31 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 					return sns.label !== label;
 				}
 			}),
-		}));
+		);
 	}, []);
 
 	const onAddContact = useCallback(() => {
 		const { label, value } = selectedContact;
 		if (!label || !value) return;
 
-		setFormData((prev: ProfileFormData) => {
-			const existingIndex = (prev.contactList || []).findIndex((contact: BaseItem) => contact.label === label);
+		setContactList((prev) => {
+			const existingIndex = prev.findIndex((contact: BaseItem) => contact.label === label);
 
 			if (existingIndex !== -1) {
 				// 기존 아이템 업데이트
-				const updatedContactList = [...(prev.contactList || [])];
+				const updatedContactList = [...prev];
 				updatedContactList[existingIndex] = { label, value };
-				return {
-					...prev,
-					contactList: updatedContactList,
-				};
+				return updatedContactList;
 			} else {
 				// 새 아이템 추가
-				return {
-					...prev,
-					contactList: [...(prev.contactList || []), { label, value }],
-				};
+				return [...prev, { label, value }];
 			}
 		});
 		setSelectedContact({ label, value: "" });
 	}, [selectedContact]);
 
 	const onRemoveContact = useCallback((label: string) => {
-		setFormData((prev: ProfileFormData) => ({
-			...prev,
-			contactList: (prev.contactList || []).filter((contact: BaseItem) => contact.label !== label),
-		}));
+		setContactList((prev) => prev.filter((contact: BaseItem) => contact.label !== label));
 	}, []);
 
 	const onClosePopup = useCallback(() => {
@@ -361,12 +351,11 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 				},
 				{
 					onSuccess: (response) => {
+						console.log("profileImageUrl", response.data.url);
+						console.log("profileImageFileId", response.data.id);
 						// URL을 UI에 표시하고, fileId를 form data에 저장
-						setFormData((prev) => ({
-							...prev,
-							profileImageUrl: response.data.url,
-							profileImageFileId: response.data.id,
-						}));
+						setValue("profileImageUrl", response.data.url);
+						setValue("profileImageFileId", response.data.id);
 					},
 					onError: (error) => {
 						console.error("파일 업로드 실패:", error);
@@ -374,7 +363,7 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 				},
 			);
 		},
-		[uploadProfile],
+		[uploadProfile, setValue],
 	);
 
 	const onSubmitForm = useCallback(
@@ -386,17 +375,15 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 				slug,
 				description,
 				profileImageFileId,
-				instagramAccount: (formData.snsList || []).find((sns: BaseItem) => sns.label === "instagram")?.value,
-				youtubeAccount: (formData.snsList || []).find((sns: BaseItem) => sns.label === "youtube")?.value,
-				tiktokAccount: (formData.snsList || []).find((sns: BaseItem) => sns.label === "tiktok")?.value,
-				soundcloudAccount: (formData.snsList || []).find((sns: BaseItem) => sns.label === "soundcloud")?.value,
-				etcAccounts: (formData.snsList || [])
-					.filter((sns: BaseItem) => sns.label === "etc")
-					.map((sns: BaseItem) => sns.value),
+				instagramAccount: (snsList || []).find((sns: BaseItem) => sns.label === "instagram")?.value,
+				youtubeAccount: (snsList || []).find((sns: BaseItem) => sns.label === "youtube")?.value,
+				tiktokAccount: (snsList || []).find((sns: BaseItem) => sns.label === "tiktok")?.value,
+				soundcloudAccount: (snsList || []).find((sns: BaseItem) => sns.label === "soundcloud")?.value,
+				etcAccounts: (snsList || []).filter((sns: BaseItem) => sns.label === "etc").map((sns: BaseItem) => sns.value),
 				// etcAccounts: ["https://twitter.com/djcool"]
-				kakaoAccount: (formData.contactList || []).find((contact: BaseItem) => contact.label === "kakao")?.value,
-				lineAccount: (formData.contactList || []).find((contact: BaseItem) => contact.label === "line")?.value,
-				discordAccount: (formData.contactList || []).find((contact: BaseItem) => contact.label === "discord")?.value,
+				kakaoAccount: (contactList || []).find((contact: BaseItem) => contact.label === "kakao")?.value,
+				lineAccount: (contactList || []).find((contact: BaseItem) => contact.label === "line")?.value,
+				discordAccount: (contactList || []).find((contact: BaseItem) => contact.label === "discord")?.value,
 				country: country,
 				city: city,
 			};
@@ -406,7 +393,7 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 				setIsPopupOpen(true);
 			}
 		},
-		[formData, artistMe, updateArtist],
+		[snsList, contactList, artistMe, updateArtist],
 	);
 
 	useEffect(() => {
@@ -438,14 +425,15 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 				slug: artistMe.slug || "",
 				description: artistMe.description || "",
 				profileImageFileId: undefined,
-				profileImageUrl: artistMe.profileImageUrl || "",
-				snsList,
-				contactList,
+				profileImageUrl: artistMe.profileImageUrl || artistMe.profileImage?.url || "",
+				snsList: [],
+				contactList: [],
 				country: artistMe.country || "",
 				city: artistMe.city || "",
 			};
 
-			setFormData(newFormData);
+			setSnsList(snsList);
+			setContactList(contactList);
 			// 폼 데이터를 리셋하여 새로운 값으로 업데이트
 			reset(newFormData);
 		}
@@ -456,13 +444,13 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 		return country ? getRegionOptionsByCountry(country as CountryCode) : [];
 	}, [country]);
 
-	const profileUrlWatch = watch("profileImageUrl");
+	const profileImageUrl = watch("profileImageUrl");
 	const profileUrl = useMemo(() => {
-		if (!profileUrlWatch || profileUrlWatch === "") {
+		if (!profileImageUrl || profileImageUrl === "") {
 			return UserProfileImage;
 		}
-		return profileUrlWatch;
-	}, [profileUrlWatch]);
+		return profileImageUrl;
+	}, [profileImageUrl]);
 
 	return (
 		<>
@@ -618,7 +606,7 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 											render={() => (
 												<SnsSection
 													selectedSns={selectedSns}
-													userSnsList={formData.snsList || []}
+													userSnsList={snsList || []}
 													errors={errors}
 													onChangeLabel={(label) => {
 														setSelectedSns((prev) => ({ ...prev, label: label }));
@@ -638,7 +626,7 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 											render={() => (
 												<ContactSection
 													selectedContact={selectedContact}
-													userContactList={formData.contactList || []}
+													userContactList={contactList || []}
 													errors={errors}
 													onChangeLabel={(label) => {
 														setSelectedContact((prev) => ({ ...prev, label: label }));

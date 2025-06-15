@@ -1,13 +1,14 @@
 import { PutObjectCommand, PutObjectCommandInput, PutObjectCommandOutput, S3Client } from "@aws-sdk/client-s3";
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { AwsS3Dto } from "src/common/aws/dtos/aws.s3.dto";
-import { IAwsS3PutItemOptions } from "src/common/aws/interfaces/aws.interface";
-import { IAwsS3PutItem } from "src/common/aws/interfaces/aws.interface";
-import { FILE_PUT_ITEM_IN_BUCKET_ERROR } from "./file.error";
-import { PrismaService } from "src/common/prisma/prisma.service";
+import { AwsS3Dto } from "~/common/aws/dtos/aws.s3.dto";
+import { IAwsS3PutItemOptions } from "~/common/aws/interfaces/aws.interface";
+import { IAwsS3PutItem } from "~/common/aws/interfaces/aws.interface";
+import { FILE_PUT_ITEM_IN_BUCKET_ERROR, FILE_UPDATE_FILE_ENABLED_AND_DELETE_ERROR } from "./file.error";
+import { PrismaService } from "~/common/prisma/prisma.service";
 import { FileCreateRequestDto } from "./dto/request/file.create.dto";
 import { v4 as uuidv4 } from "uuid";
+import { File, Prisma } from "@prisma/client";
 
 @Injectable()
 export class FileService {
@@ -15,6 +16,8 @@ export class FileService {
 	private readonly bucket: string;
 	private readonly s3Region: string;
 	private readonly s3BaseBucketUrl: string;
+	private readonly cloudfrontBaseUrl: string;
+	private readonly cloudfrontEnabled: boolean;
 
 	constructor(
 		private configService: ConfigService,
@@ -30,6 +33,8 @@ export class FileService {
 		this.bucket = this.configService.get("AWS_S3_BUCKET_NAME");
 		this.s3Region = this.configService.get("AWS_REGION");
 		this.s3BaseBucketUrl = `https://${this.bucket}.s3.${this.s3Region}.amazonaws.com`;
+		this.cloudfrontBaseUrl = this.configService.get<string>("aws.cloudfront.baseUrl") ?? this.s3BaseBucketUrl;
+		this.cloudfrontEnabled = this.configService.get<boolean>("aws.cloudfront.enabled");
 	}
 
 	async create(fileCreateRequestDto: FileCreateRequestDto) {
@@ -75,7 +80,7 @@ export class FileService {
 				path,
 				pathWithFilename: key,
 				filename: filename,
-				url: `${this.s3BaseBucketUrl}/${key}`,
+				url: this.generateFileUrl(key),
 				baseUrl: this.s3BaseBucketUrl,
 				mime,
 				size: file.size,
@@ -96,31 +101,48 @@ export class FileService {
 	 * 1. 기존 파일을 삭제하고
 	 * 2. 새로운 파일 활성화 한다.
 	 */
-	async updateFileEnabledAndDelete({ uploaderId, newFileId, targetId, targetTable, type }) {
-		const files = await this.findFilesByTarget({
-			uploaderId,
-			targetTable,
-			type,
-		});
+	async updateFileEnabledAndDelete(
+		{ uploaderId, newFileId, targetId, targetTable, type },
+		tx?: Prisma.TransactionClient,
+	) {
+		const prisma = tx ?? this.prisma;
 
-		for (const file of files) {
-			await this.softDeleteFile(file.id);
+		try {
+			const files = await this.findFilesByTarget({
+				uploaderId,
+				targetTable,
+				targetId,
+				type,
+			});
+
+			for (const file of files) {
+				await this.softDeleteFile(file.id, tx);
+			}
+
+			return await prisma.file
+				.update({
+					where: { id: newFileId },
+					data: { isEnabled: 1, targetId: targetId, deletedAt: null },
+				})
+				.then((data) => this.prisma.serializeBigInt(data));
+		} catch (e) {
+			throw new BadRequestException({
+				...FILE_UPDATE_FILE_ENABLED_AND_DELETE_ERROR,
+				detail: e.message,
+			});
 		}
-
-		return await this.prisma.file.update({
-			where: { id: newFileId },
-			data: { isEnabled: 1, targetId: targetId, deletedAt: null },
-		});
 	}
 
 	// 기존 파일을 찾는다.
 	async findFilesByTarget({
 		uploaderId,
 		targetTable,
+		targetId,
 		type,
 	}: {
 		uploaderId: number;
 		targetTable: string;
+		targetId: number;
 		type: string;
 	}) {
 		return this.prisma.file
@@ -129,6 +151,7 @@ export class FileService {
 					uploaderId: uploaderId,
 					targetTable: targetTable,
 					type: type,
+					targetId: targetId,
 				},
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
@@ -147,8 +170,23 @@ export class FileService {
 			.then((data) => this.prisma.serializeBigInt(data));
 	}
 
-	async softDeleteFile(id: number): Promise<void> {
-		await this.prisma.file.update({
+	async findFilesByTargetIds({ targetIds, targetTable }: { targetIds: number[]; targetTable: string }) {
+		return await this.prisma.file
+			.findMany({
+				where: {
+					deletedAt: null,
+					targetId: { in: targetIds },
+					targetTable,
+					isEnabled: 1,
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data) as File[]);
+	}
+
+	async softDeleteFile(id: number, tx?: Prisma.TransactionClient): Promise<void> {
+		const prisma = tx ?? this.prisma;
+
+		await prisma.file.update({
 			where: { id },
 			data: { isEnabled: 0, deletedAt: new Date() },
 		});
@@ -163,5 +201,13 @@ export class FileService {
 			where: { id },
 			data: { isEnabled: Number(isEnabled) },
 		});
+	}
+
+	/**
+	 * S3 또는 CloudFront URL을 생성합니다
+	 * CloudFront가 활성화된 경우 CloudFront URL을 반환하고, 그렇지 않으면 S3 URL을 반환합니다
+	 */
+	private generateFileUrl(key: string): string {
+		return this.cloudfrontEnabled ? `${this.cloudfrontBaseUrl}/${key}` : `${this.s3BaseBucketUrl}/${key}`;
 	}
 }

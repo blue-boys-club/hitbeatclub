@@ -1,8 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
-import { IRequestApp } from "src/common/request/interfaces/request.interface";
+import { IRequestApp } from "~/common/request/interfaces/request.interface";
 import { TokenPayload } from "google-auth-library";
-import { AUTH_SOCIAL_NAVER_ERROR } from "src/modules/auth/auth.error";
-import { AuthService } from "src/modules/auth/auth.service";
+import { AUTH_SOCIAL_NAVER_ERROR } from "~/modules/auth/auth.error";
+import { AuthService } from "~/modules/auth/auth.service";
 import { ConfigService } from "@nestjs/config";
 
 @Injectable()

@@ -1,10 +1,10 @@
 import { Module } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { AuthModule } from "../modules/auth/auth.module";
-import { CommonModule } from "src/common/common.module";
+import { CommonModule } from "~/common/common.module";
 import { AppMiddlewareModule } from "./app.middleware.module";
 import { LoggerModule } from "nestjs-pino";
-import { RouterModule } from "src/router/router.module";
+import { RouterModule } from "~/router/router.module";
 
 @Module({
 	imports: [

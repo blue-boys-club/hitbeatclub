@@ -19,6 +19,13 @@ export const ArtistResponseSchema = z.object({
 	country: z.string().nullable().describe("국가").default("대한민국"),
 	city: z.string().nullable().describe("도시").default("서울"),
 	settlement: SettlementResponseSchema.nullable().describe("정산 정보"),
+	profileImage: z
+		.object({
+			id: z.number().describe("프로필 이미지 ID").default(1),
+			url: z.string().nullable().describe("프로필 이미지 URL").default("https://example.com/profile.jpg"),
+		})
+		.nullable()
+		.describe("프로필 이미지"),
 	createdAt: z.date().nullable().describe("생성일").default(new Date("2024-01-01")),
 	updatedAt: z.date().nullable().describe("수정일").default(new Date("2024-01-01")),
 	deletedAt: z.date().nullable().describe("삭제일").default(null),

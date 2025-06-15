@@ -1,7 +1,7 @@
 "use client";
 
 import * as Popup from "@/components/ui/Popup";
-import { useMemo, useState, useEffect, useCallback, memo } from "react";
+import { useMemo, useState, useCallback, memo } from "react";
 import { cn } from "@/common/utils";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -9,6 +9,7 @@ import { getProductQueryOption } from "@/apis/product/query/product.query-option
 import { useCartStore } from "@/stores/cart";
 import { useShallow } from "zustand/react/shallow";
 import { useToast } from "@/hooks/use-toast";
+import { LICENSE_MAP_TEMPLATE } from "@/apis/product/product.dummy";
 
 interface PurchaseModalProps {
 	isOpen: boolean;
@@ -16,13 +17,7 @@ interface PurchaseModalProps {
 	productId: number; // Changed from item
 }
 
-type LicenseOption = {
-	id: number;
-	name: string;
-	description: string;
-	price: number;
-	notes?: (string | { text: string; color?: string })[]; // Changed from benefits
-};
+type LicenseType = "MASTER" | "EXCLUSIVE";
 
 export const PurchaseModal = memo(({ isOpen, onClose, productId }: PurchaseModalProps) => {
 	const router = useRouter();
@@ -33,42 +28,25 @@ export const PurchaseModal = memo(({ isOpen, onClose, productId }: PurchaseModal
 
 	const { toast } = useToast();
 
-	// TODO: 라이센스 데이터 받아오기
-	// const licenses = useMemo(() => product?.licenses as LicenseOption[] | undefined, [product]); // Cast if necessary
-	const licenses = useMemo(
-		() => [
-			{
-				id: 1,
-				name: "라이센스 1",
-				description: "라이센스 1 설명",
-				price: 10000,
-				notes: [
-					{
-						text: "라이센스 1 설명",
-						color: "red",
-					},
-				],
-			},
-		],
-		[],
-	);
+	// 상품의 라이센스 정보와 템플릿 정보를 조합
+	const licenses = useMemo(() => {
+		if (!product?.licenseInfo) return [];
 
-	const [selectedLicenseId, setSelectedLicenseId] = useState<number>(licenses?.[0]?.id ?? 0);
+		return product.licenseInfo.map((licenseInfo) => ({
+			id: licenseInfo.id,
+			type: licenseInfo.type,
+			price: licenseInfo.price,
+			...LICENSE_MAP_TEMPLATE[licenseInfo.type as LicenseType],
+		}));
+	}, [product?.licenseInfo]);
+
+	const [selectedLicenseType, setSelectedLicenseType] = useState<LicenseType>("MASTER");
+
+	// 선택된 라이센스 정보
 	const selectedLicense = useMemo(
-		() => licenses?.find((license) => license.id === selectedLicenseId),
-		[licenses, selectedLicenseId],
+		() => licenses.find((license) => license.type === selectedLicenseType),
+		[licenses, selectedLicenseType],
 	);
-
-	useEffect(() => {
-		if (licenses && licenses.length > 0) {
-			const currentSelectionIsValid = licenses.some((l) => l.id === selectedLicenseId);
-			if (!currentSelectionIsValid || selectedLicenseId === 0) {
-				setSelectedLicenseId(licenses[0]!.id);
-			}
-		} else if (!licenses) {
-			setSelectedLicenseId(0);
-		}
-	}, [licenses, selectedLicenseId]);
 
 	const { addItem } = useCartStore(
 		useShallow((state) => ({
@@ -77,13 +55,13 @@ export const PurchaseModal = memo(({ isOpen, onClose, productId }: PurchaseModal
 	);
 
 	const addToCart = useCallback(() => {
-		if (selectedLicenseId && product) {
+		if (product) {
 			addItem({
-				id: productId, // or product.id
-				licenseId: selectedLicenseId,
+				id: productId,
+				licenseType: selectedLicenseType,
 			});
 		}
-	}, [addItem, productId, product, selectedLicenseId]);
+	}, [addItem, productId, product, selectedLicenseType]);
 
 	const handleCart = useCallback(() => {
 		addToCart();
@@ -99,7 +77,7 @@ export const PurchaseModal = memo(({ isOpen, onClose, productId }: PurchaseModal
 		onClose();
 	}, [addToCart, router, onClose]);
 
-	if (!product || !licenses || licenses.length === 0) {
+	if (!product || !licenses.length) {
 		return isOpen ? (
 			<Popup.Popup
 				open={isOpen}
@@ -133,17 +111,17 @@ export const PurchaseModal = memo(({ isOpen, onClose, productId }: PurchaseModal
 						<div className="flex items-start justify-start gap-4">
 							{licenses.map((option) => (
 								<div
-									key={option.id}
+									key={option.type}
 									className={cn(
 										"p-12px rounded-lg outline-2 outline-offset-[-2px] outline-black flex flex-col justify-start items-center gap-[5px] cursor-pointer h-fit",
-										selectedLicenseId === option.id ? "bg-black" : "bg-white",
+										selectedLicenseType === option.type ? "bg-black" : "bg-white",
 									)}
-									onClick={() => setSelectedLicenseId(option.id)}
+									onClick={() => setSelectedLicenseType(option.type as LicenseType)}
 								>
 									<div
 										className={cn(
 											"text-18px font-medium leading-160% tracking-018px",
-											selectedLicenseId === option.id ? "text-white font-suisse" : "text-black font-bold font-suit",
+											selectedLicenseType === option.type ? "text-white font-suisse" : "text-black font-bold font-suit",
 										)}
 									>
 										{option.name}
@@ -151,7 +129,7 @@ export const PurchaseModal = memo(({ isOpen, onClose, productId }: PurchaseModal
 									<div
 										className={cn(
 											"text-18px font-medium font-suisse leading-160% tracking-018px",
-											selectedLicenseId === option.id ? "text-white" : "text-black",
+											selectedLicenseType === option.type ? "text-white" : "text-black",
 										)}
 									>
 										{option.price.toLocaleString()} KRW
@@ -159,7 +137,7 @@ export const PurchaseModal = memo(({ isOpen, onClose, productId }: PurchaseModal
 									<div
 										className={cn(
 											"text-12px font-medium font-suisse leading-150% tracking-012px",
-											selectedLicenseId === option.id ? "text-white" : "text-black",
+											selectedLicenseType === option.type ? "text-white" : "text-black",
 										)}
 									>
 										{option.description}
@@ -174,16 +152,16 @@ export const PurchaseModal = memo(({ isOpen, onClose, productId }: PurchaseModal
 									{selectedLicense?.name} 라이센스 사용범위
 								</div>
 								<div className="flex flex-col items-start justify-center gap-10px">
-									{selectedLicense?.notes?.map((note, index) => (
+									{selectedLicense?.notes?.map((benefit, index) => (
 										<div
 											key={index}
 											className={cn(
 												"text-[12px] font-bold font-suit leading-150% tracking-012px",
 												"text-hbc-gray-400",
-												typeof note === "object" && note.color,
+												typeof benefit === "object" && benefit.color,
 											)}
 										>
-											{typeof note === "string" ? note : note.text}
+											{typeof benefit === "string" ? benefit : benefit.text}
 										</div>
 									))}
 								</div>

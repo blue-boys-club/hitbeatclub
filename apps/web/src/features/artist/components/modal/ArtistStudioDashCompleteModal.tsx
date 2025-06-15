@@ -23,7 +23,7 @@ const ArtistStudioDashCompleteModal = ({ isModalOpen, onClose }: ArtistStudioDas
 				<PopupHeader>
 					<PopupTitle>수정이 완료되었습니다!</PopupTitle>
 					<PopupDescription>
-						<div className="text-center">트랙 수정이 완료 되었습니다.</div>
+						<span className="text-center">트랙 수정이 완료 되었습니다.</span>
 					</PopupDescription>
 				</PopupHeader>
 				<PopupFooter>

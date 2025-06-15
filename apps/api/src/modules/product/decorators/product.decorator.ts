@@ -70,3 +70,17 @@ export const ProductFindQuery = () => {
 		}),
 	);
 };
+
+export const ProductSearchQuery = () => {
+	return applyDecorators(
+		ApiQuery({
+			name: "keyword",
+			type: String,
+			required: false,
+			description: "검색어",
+			example: "Search for artists, beats, acappellas",
+			nullable: true,
+		}),
+		ProductFindQuery(),
+	);
+};

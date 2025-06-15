@@ -12,6 +12,7 @@ export const UserFindMeResponseSchema = UserUpdatePayloadSchema.omit({
 	isAgreedPrivacyPolicy: true,
 	isAgreedEmail: true,
 }).extend({
+	id: z.number().describe("사용자 ID"),
 	agreedTermsAt: z.date().describe("이용약관 동의 일시"),
 	agreedPrivacyPolicyAt: z.date().describe("개인정보처리방침 동의 일시"),
 	agreedEmailAt: z.date().describe("이메일 수신 동의 일시"),

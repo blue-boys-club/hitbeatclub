@@ -1,9 +1,9 @@
 import { UserCreatePayload, UserFindMeResponse, UserUpdatePayload } from "@hitbeatclub/shared-types/user";
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { PrismaService } from "src/common/prisma/prisma.service";
+import { PrismaService } from "~/common/prisma/prisma.service";
 import { User, Prisma } from "@prisma/client";
 import { UserFindMeResponseDto } from "./dto/response/user.find-me.response.dto";
-import { HelperHashService } from "src/common/helper/services/helper.hash.service";
+import { HelperHashService } from "~/common/helper/services/helper.hash.service";
 
 @Injectable()
 export class UserService {

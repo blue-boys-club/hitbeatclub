@@ -1,286 +1,304 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import {
-  CreateTemplateCommand,
-  CreateTemplateCommandInput,
-  CreateTemplateCommandOutput,
-  DeleteTemplateCommand,
-  DeleteTemplateCommandInput,
-  DeleteTemplateCommandOutput,
-  GetTemplateCommand,
-  GetTemplateCommandInput,
-  GetTemplateCommandOutput,
-  ListTemplatesCommand,
-  ListTemplatesCommandInput,
-  ListTemplatesCommandOutput,
-  SESClient,
-  SendBulkTemplatedEmailCommand,
-  SendBulkTemplatedEmailCommandInput,
-  SendBulkTemplatedEmailCommandOutput,
-  SendTemplatedEmailCommand,
-  SendTemplatedEmailCommandInput,
-  SendTemplatedEmailCommandOutput,
-  UpdateTemplateCommand,
-  UpdateTemplateCommandInput,
-  UpdateTemplateCommandOutput,
-  SendEmailCommand,
-} from '@aws-sdk/client-ses';
+	SESv2Client,
+	SendEmailCommand,
+	SendBulkEmailCommand,
+	CreateEmailTemplateCommand,
+	UpdateEmailTemplateCommand,
+	DeleteEmailTemplateCommand,
+	GetEmailTemplateCommand,
+	ListEmailTemplatesCommand,
+	CreateEmailTemplateCommandInput,
+	CreateEmailTemplateCommandOutput,
+	UpdateEmailTemplateCommandInput,
+	UpdateEmailTemplateCommandOutput,
+	DeleteEmailTemplateCommandInput,
+	DeleteEmailTemplateCommandOutput,
+	GetEmailTemplateCommandInput,
+	GetEmailTemplateCommandOutput,
+	ListEmailTemplatesCommandInput,
+	ListEmailTemplatesCommandOutput,
+	SendEmailCommandInput,
+	SendEmailCommandOutput,
+	SendBulkEmailCommandInput,
+	SendBulkEmailCommandOutput,
+} from "@aws-sdk/client-sesv2";
 import {
-  AwsSESCreateTemplateDto,
-  AwsSESGetTemplateDto,
-  AwsSESSendBulkDto,
-  AwsSESSendDto,
-  AwsSESUpdateTemplateDto,
-} from 'src/common/aws/dtos/aws.ses.dto';
-import { IAwsSESService } from 'src/common/aws/interfaces/aws.ses-service.interface';
+	AwsSESCreateTemplateDto,
+	AwsSESGetTemplateDto,
+	AwsSESSendBulkDto,
+	AwsSESSendDto,
+	AwsSESUpdateTemplateDto,
+} from "~/common/aws/dtos/aws.ses.dto";
+import { IAwsSESService } from "~/common/aws/interfaces/aws.ses-service.interface";
 
 @Injectable()
 export class AwsSESService implements IAwsSESService {
-  private readonly sesClient: SESClient;
+	private readonly sesClient: SESv2Client;
+	private readonly logger = new Logger(AwsSESService.name);
 
-  constructor(private readonly configService: ConfigService) {
-    this.sesClient = new SESClient({
-      credentials: {
-        accessKeyId: this.configService.get<string>('aws.ses.credential.key'),
-        secretAccessKey: this.configService.get<string>(
-          'aws.ses.credential.secret',
-        ),
-      },
-      region: this.configService.get<string>('aws.ses.region'),
-    });
-  }
+	constructor(private readonly configService: ConfigService) {
+		this.sesClient = new SESv2Client({
+			credentials: {
+				accessKeyId:
+					this.configService.get<string>("aws.ses.credential.key") ?? this.configService.get("AWS_ACCESS_KEY_ID"),
+				secretAccessKey:
+					this.configService.get<string>("aws.ses.credential.secret") ??
+					this.configService.get("AWS_SECRET_ACCESS_KEY"),
+			},
+			region: this.configService.get<string>("aws.ses.region") ?? this.configService.get("AWS_REGION"),
+		});
+	}
 
-  async listTemplates(nextToken?: string): Promise<ListTemplatesCommandOutput> {
-    const command: ListTemplatesCommand = new ListTemplatesCommand({
-      MaxItems: 20,
-      NextToken: nextToken,
-    });
+	async listTemplates(nextToken?: string): Promise<ListEmailTemplatesCommandOutput> {
+		const command: ListEmailTemplatesCommand = new ListEmailTemplatesCommand({
+			PageSize: 20,
+			NextToken: nextToken,
+		});
 
-    try {
-      const listTemplate: ListTemplatesCommandOutput =
-        await this.sesClient.send<
-          ListTemplatesCommandInput,
-          ListTemplatesCommandOutput
-        >(command);
-      return listTemplate;
-    } catch (err: any) {
-      throw err;
-    }
-  }
+		try {
+			const listTemplate: ListEmailTemplatesCommandOutput = await this.sesClient.send<
+				ListEmailTemplatesCommandInput,
+				ListEmailTemplatesCommandOutput
+			>(command);
+			return listTemplate;
+		} catch (err: any) {
+			this.logger.error(err);
+			throw err;
+		}
+	}
 
-  async getTemplate({
-    name,
-  }: AwsSESGetTemplateDto): Promise<GetTemplateCommandOutput> {
-    const command: GetTemplateCommand = new GetTemplateCommand({
-      TemplateName: name,
-    });
+	async getTemplate({ name }: AwsSESGetTemplateDto): Promise<GetEmailTemplateCommandOutput> {
+		const command: GetEmailTemplateCommand = new GetEmailTemplateCommand({
+			TemplateName: name,
+		});
 
-    try {
-      const getTemplate: GetTemplateCommandOutput = await this.sesClient.send<
-        GetTemplateCommandInput,
-        GetTemplateCommandOutput
-      >(command);
+		try {
+			const getTemplate: GetEmailTemplateCommandOutput = await this.sesClient.send<
+				GetEmailTemplateCommandInput,
+				GetEmailTemplateCommandOutput
+			>(command);
 
-      return getTemplate;
-    } catch (err: any) {
-      throw err;
-    }
-  }
+			return getTemplate;
+		} catch (err: any) {
+			this.logger.error(err);
+			throw err;
+		}
+	}
 
-  async createTemplate({
-    name,
-    subject,
-    htmlBody,
-    plainTextBody,
-  }: AwsSESCreateTemplateDto): Promise<CreateTemplateCommandOutput> {
-    if (!htmlBody && !plainTextBody) {
-      throw new Error('body is null');
-    }
+	async createTemplate({
+		name,
+		subject,
+		htmlBody,
+		plainTextBody,
+	}: AwsSESCreateTemplateDto): Promise<CreateEmailTemplateCommandOutput> {
+		if (!htmlBody && !plainTextBody) {
+			throw new Error("body is null");
+		}
 
-    const command: CreateTemplateCommand = new CreateTemplateCommand({
-      Template: {
-        TemplateName: name,
-        SubjectPart: subject,
-        HtmlPart: htmlBody,
-        TextPart: plainTextBody,
-      },
-    });
+		const command: CreateEmailTemplateCommand = new CreateEmailTemplateCommand({
+			TemplateName: name,
+			TemplateContent: {
+				Subject: subject,
+				Html: htmlBody,
+				Text: plainTextBody,
+			},
+		});
 
-    try {
-      const create: CreateTemplateCommandOutput = await this.sesClient.send<
-        CreateTemplateCommandInput,
-        CreateTemplateCommandOutput
-      >(command);
+		try {
+			const create: CreateEmailTemplateCommandOutput = await this.sesClient.send<
+				CreateEmailTemplateCommandInput,
+				CreateEmailTemplateCommandOutput
+			>(command);
 
-      return create;
-    } catch (err: any) {
-      throw err;
-    }
-  }
+			return create;
+		} catch (err: any) {
+			this.logger.error(err);
+			throw err;
+		}
+	}
 
-  async updateTemplate({
-    name,
-    subject,
-    htmlBody,
-    plainTextBody,
-  }: AwsSESUpdateTemplateDto): Promise<UpdateTemplateCommandOutput> {
-    if (!htmlBody && !plainTextBody) {
-      throw new Error('body is null');
-    }
+	async updateTemplate({
+		name,
+		subject,
+		htmlBody,
+		plainTextBody,
+	}: AwsSESUpdateTemplateDto): Promise<UpdateEmailTemplateCommandOutput> {
+		if (!htmlBody && !plainTextBody) {
+			throw new Error("body is null");
+		}
 
-    const command: UpdateTemplateCommand = new UpdateTemplateCommand({
-      Template: {
-        TemplateName: name,
-        SubjectPart: subject,
-        HtmlPart: htmlBody,
-        TextPart: plainTextBody,
-      },
-    });
+		const command: UpdateEmailTemplateCommand = new UpdateEmailTemplateCommand({
+			TemplateName: name,
+			TemplateContent: {
+				Subject: subject,
+				Html: htmlBody,
+				Text: plainTextBody,
+			},
+		});
 
-    try {
-      const update: UpdateTemplateCommandOutput = await this.sesClient.send<
-        UpdateTemplateCommandInput,
-        UpdateTemplateCommandOutput
-      >(command);
+		try {
+			const update: UpdateEmailTemplateCommandOutput = await this.sesClient.send<
+				UpdateEmailTemplateCommandInput,
+				UpdateEmailTemplateCommandOutput
+			>(command);
 
-      return update;
-    } catch (err: any) {
-      throw err;
-    }
-  }
+			return update;
+		} catch (err: any) {
+			this.logger.error(err);
+			throw err;
+		}
+	}
 
-  async deleteTemplate({
-    name,
-  }: AwsSESGetTemplateDto): Promise<DeleteTemplateCommandOutput> {
-    const command: DeleteTemplateCommand = new DeleteTemplateCommand({
-      TemplateName: name,
-    });
+	async deleteTemplate({ name }: AwsSESGetTemplateDto): Promise<DeleteEmailTemplateCommandOutput> {
+		const command: DeleteEmailTemplateCommand = new DeleteEmailTemplateCommand({
+			TemplateName: name,
+		});
 
-    try {
-      const del: DeleteTemplateCommandOutput = await this.sesClient.send<
-        DeleteTemplateCommandInput,
-        DeleteTemplateCommandOutput
-      >(command);
+		try {
+			const del: DeleteEmailTemplateCommandOutput = await this.sesClient.send<
+				DeleteEmailTemplateCommandInput,
+				DeleteEmailTemplateCommandOutput
+			>(command);
 
-      return del;
-    } catch (err: any) {
-      throw err;
-    }
-  }
+			return del;
+		} catch (err: any) {
+			this.logger.error(err);
+			throw err;
+		}
+	}
 
-  async sendEmail<T>({
-    subject,
-    recipients,
-    sender,
-    replyTo,
-    bcc,
-    cc,
-    htmlBody,
-    textBody,
-  }: AwsSESSendDto<T>): Promise<void> {
-    const params = {
-      Destination: {
-        ToAddresses: recipients,
-        BccAddresses: bcc ?? [],
-        CcAddresses: cc ?? [],
-      },
-      Message: {
-        Body: {
-          Html: {
-            Charset: 'UTF-8',
-            Data: htmlBody,
-          },
-          Text: {
-            Charset: 'UTF-8',
-            Data: textBody ?? htmlBody,
-          },
-        },
-        Subject: {
-          Charset: 'UTF-8',
-          Data: subject,
-        },
-      },
-      Source: sender,
-      ReplyToAddresses: [replyTo ?? sender],
-    };
+	async sendEmail<T>({
+		subject,
+		recipients,
+		sender,
+		replyTo,
+		bcc,
+		cc,
+		htmlBody,
+		textBody,
+	}: AwsSESSendDto<T>): Promise<SendEmailCommandOutput> {
+		const command = new SendEmailCommand({
+			FromEmailAddress: sender,
+			Destination: {
+				ToAddresses: recipients,
+				BccAddresses: bcc ?? [],
+				CcAddresses: cc ?? [],
+			},
+			Content: {
+				Simple: {
+					Subject: {
+						Data: subject,
+						Charset: "UTF-8",
+					},
+					Body: {
+						Html: htmlBody
+							? {
+									Data: htmlBody,
+									Charset: "UTF-8",
+								}
+							: undefined,
+						Text: textBody
+							? {
+									Data: textBody,
+									Charset: "UTF-8",
+								}
+							: undefined,
+					},
+				},
+			},
+			ReplyToAddresses: replyTo ? [replyTo] : undefined,
+		});
 
-    const command = new SendEmailCommand(params);
+		try {
+			const result = await this.sesClient.send(command);
+			return result;
+		} catch (error) {
+			this.logger.error(error);
+			throw error;
+		}
+	}
 
-    try {
-      const result = await this.sesClient.send(command);
-    } catch (error) {
-      throw error;
-    }
-  }
+	async send<T>({
+		recipients,
+		sender,
+		replyTo,
+		bcc,
+		cc,
+		templateName,
+		templateData,
+	}: AwsSESSendDto<T>): Promise<SendEmailCommandOutput> {
+		const command: SendEmailCommand = new SendEmailCommand({
+			FromEmailAddress: sender,
+			Destination: {
+				ToAddresses: recipients,
+				BccAddresses: bcc ?? [],
+				CcAddresses: cc ?? [],
+			},
+			Content: {
+				Template: {
+					TemplateName: templateName,
+					TemplateData: JSON.stringify(templateData ?? {}),
+				},
+			},
+			ReplyToAddresses: replyTo ? [replyTo] : undefined,
+		});
 
-  async send<T>({
-    recipients,
-    sender,
-    replyTo,
-    bcc,
-    cc,
-    templateName,
-    templateData,
-  }: AwsSESSendDto<T>): Promise<SendTemplatedEmailCommandOutput> {
-    const command: SendTemplatedEmailCommand = new SendTemplatedEmailCommand({
-      Template: templateName,
-      Destination: {
-        ToAddresses: recipients,
-        BccAddresses: bcc ?? [],
-        CcAddresses: cc ?? [],
-      },
-      Source: sender,
-      TemplateData: JSON.stringify(templateData ?? ''),
-      ReplyToAddresses: [replyTo ?? sender],
-    });
+		try {
+			const sendWithTemplate: SendEmailCommandOutput = await this.sesClient.send<
+				SendEmailCommandInput,
+				SendEmailCommandOutput
+			>(command);
 
-    try {
-      const sendWithTemplate: SendTemplatedEmailCommandOutput =
-        await this.sesClient.send<
-          SendTemplatedEmailCommandInput,
-          SendTemplatedEmailCommandOutput
-        >(command);
+			return sendWithTemplate;
+		} catch (err: any) {
+			this.logger.error(err);
+			throw err;
+		}
+	}
 
-      return sendWithTemplate;
-    } catch (err: any) {
-      throw err;
-    }
-  }
+	async sendBulk({
+		recipients,
+		sender,
+		replyTo,
+		bcc,
+		cc,
+		templateName,
+	}: AwsSESSendBulkDto): Promise<SendBulkEmailCommandOutput> {
+		const command: SendBulkEmailCommand = new SendBulkEmailCommand({
+			FromEmailAddress: sender,
+			DefaultContent: {
+				Template: {
+					TemplateName: templateName,
+					TemplateData: JSON.stringify({}),
+				},
+			},
+			BulkEmailEntries: recipients.map((recipient) => ({
+				Destination: {
+					ToAddresses: [recipient.recipient],
+					BccAddresses: bcc ?? [],
+					CcAddresses: cc ?? [],
+				},
+				ReplacementEmailContent: {
+					ReplacementTemplate: {
+						ReplacementTemplateData: JSON.stringify(recipient.templateData ?? {}),
+					},
+				},
+			})),
+			ReplyToAddresses: replyTo ? [replyTo] : undefined,
+		});
 
-  async sendBulk({
-    recipients,
-    sender,
-    replyTo,
-    bcc,
-    cc,
-    templateName,
-  }: AwsSESSendBulkDto): Promise<SendBulkTemplatedEmailCommandOutput> {
-    const command: SendBulkTemplatedEmailCommand =
-      new SendBulkTemplatedEmailCommand({
-        Template: templateName,
-        DefaultTemplateData: JSON.stringify({}),
-        Destinations: recipients.map((e) => ({
-          Destination: {
-            ToAddresses: [e.recipient],
-            BccAddresses: bcc ?? [],
-            CcAddresses: cc ?? [],
-          },
-          ReplacementTemplateData: JSON.stringify(e.templateData ?? ''),
-        })),
-        Source: sender,
-        ReplyToAddresses: [replyTo ?? sender],
-      });
+		try {
+			const sendWithTemplate: SendBulkEmailCommandOutput = await this.sesClient.send<
+				SendBulkEmailCommandInput,
+				SendBulkEmailCommandOutput
+			>(command);
 
-    try {
-      const sendWithTemplate: SendBulkTemplatedEmailCommandOutput =
-        await this.sesClient.send<
-          SendBulkTemplatedEmailCommandInput,
-          SendBulkTemplatedEmailCommandOutput
-        >(command);
-
-      return sendWithTemplate;
-    } catch (err: any) {
-      throw err;
-    }
-  }
+			return sendWithTemplate;
+		} catch (err: any) {
+			this.logger.error(err);
+			throw err;
+		}
+	}
 }

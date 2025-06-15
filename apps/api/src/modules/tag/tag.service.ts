@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
-import { PrismaService } from "src/common/prisma/prisma.service";
+import { PrismaService } from "~/common/prisma/prisma.service";
 import { Tag } from "@prisma/client";
 import { TagCreateDto } from "./dto/request/tag.create.request.dto";
 import { TAG_ALREADY_EXISTS_ERROR, TAG_CREATE_ERROR, TAG_MAX_COUNT_ERROR } from "./tag.error";
@@ -19,6 +19,39 @@ export class TagService {
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
+	}
+
+	/**
+	 * 모든 태그별 개수 조회
+	 * @returns
+	 */
+	async findAllWithCount() {
+		return await this.prisma.tag
+			.findMany({
+				where: {
+					deletedAt: null,
+				},
+				select: {
+					id: true,
+					name: true,
+					_count: {
+						select: {
+							productTag: {
+								where: {
+									deletedAt: null,
+								},
+							},
+						},
+					},
+				},
+			})
+			.then((data) =>
+				this.prisma.serializeBigInt(data).map((tag) => ({
+					id: Number(tag.id),
+					name: tag.name,
+					count: tag._count.productTag,
+				})),
+			);
 	}
 
 	async findOne(id: number) {

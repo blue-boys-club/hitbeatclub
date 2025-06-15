@@ -10,13 +10,16 @@
 		"target": "ES2022",
 		"sourceMap": true,
 		"outDir": "./dist",
-		"baseUrl": "./",
+		"baseUrl": "./src",
 		"incremental": true,
 		"skipLibCheck": true,
 		"allowJs": false,
 		"esModuleInterop": true,
 		"moduleResolution": "NodeNext",
-		"resolveJsonModule": true
+		"resolveJsonModule": true,
+		"paths": {
+			"~/*": ["./*"]
+		}
 	},
 	"include": ["src", "test"],
 	"exclude": ["node_modules", "dist", "coverage", "logs", "data"]

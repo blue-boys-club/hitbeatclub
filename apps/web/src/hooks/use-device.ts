@@ -1,3 +1,5 @@
+"use client";
+
 import { RESPONSIVE_BREAKPOINTS } from "@/lib/ui.constant";
 import { useMediaQuery } from "./use-media-query";
 

@@ -12,8 +12,7 @@ import {
 import { LoginTicket, OAuth2Client as GoogleOAuth2Client, TokenPayload, OAuth2Client } from "google-auth-library";
 import { ConfigService } from "@nestjs/config";
 import { AuthLoginResponse } from "@hitbeatclub/shared-types/auth";
-import { HelperEncryptionService } from "src/common/helper/services/helper.encryption.service";
-import { ENUM_EMAIL } from "../email/constants/email.enum.constant";
+import { HelperEncryptionService } from "~/common/helper/services/helper.encryption.service";
 import {
 	IAuthHash,
 	IAuthKakaoTokenResponse,
@@ -21,11 +20,12 @@ import {
 	IAuthNaverTokenResponse,
 	IAuthNaverUserInfoResponse,
 } from "./interfaces/auth.interface";
-import { HelperHashService } from "src/common/helper/services/helper.hash.service";
-import { HelperDateService } from "src/common/helper/services/helper.date.service";
+import { HelperHashService } from "~/common/helper/services/helper.hash.service";
+import { HelperDateService } from "~/common/helper/services/helper.date.service";
 import { UserService } from "../user/user.service";
 import { AuthenticatedRequest } from "./dto/request/auth.dto.request";
 import axios from "axios";
+import { EmailType } from "@hitbeatclub/shared-types";
 
 @Injectable()
 export class AuthService {
@@ -48,7 +48,7 @@ export class AuthService {
 		clientSecret: string;
 	};
 
-	private readonly hashInfo: object;
+	private readonly hashInfo: Record<EmailType, Record<string, string | number>>;
 
 	constructor(
 		private readonly helperHashService: HelperHashService,
@@ -81,18 +81,19 @@ export class AuthService {
 		};
 
 		this.hashInfo = {
-			[ENUM_EMAIL.CHANGE_PASSWORD]: {
+			["CHANGE_PASSWORD"]: {
 				expiredIn: this.configService.get<number>("auth.password.expiredIn"),
 				saltLength: this.configService.get<number>("auth.password.saltLength"),
 			},
-			[ENUM_EMAIL.EMAIL]: {
+			["EMAIL"]: {
 				expiredIn: this.configService.get<number>("auth.email.expiredIn"),
 				saltLength: this.configService.get<number>("auth.email.saltLength"),
 			},
-			[ENUM_EMAIL.SIGN_UP]: {
+			["SIGN_UP"]: {
 				signUp: this.configService.get<number>("auth.email.signUp"),
 				saltLength: this.configService.get<number>("auth.signUp.saltLength"),
 			},
+			["WElCOME"]: {},
 		};
 	}
 
@@ -156,9 +157,9 @@ export class AuthService {
 	 * @param text
 	 * @returns
 	 */
-	createHashInfo(type: ENUM_EMAIL, text: string): IAuthHash {
-		const salt: string = this.createSalt(this.hashInfo[type].saltLength);
-		const expired: Date = this.helperDateService.forwardInSeconds(this.hashInfo[type].expiredIn);
+	createHashInfo(type: EmailType, text: string): IAuthHash {
+		const salt: string = this.createSalt(Number(this.hashInfo[type].saltLength));
+		const expired: Date = this.helperDateService.forwardInSeconds(Number(this.hashInfo[type].expiredIn));
 
 		const created: Date = this.helperDateService.create();
 		const hash = this.helperHashService.bcrypt(text, salt);
@@ -261,7 +262,7 @@ export class AuthService {
 	 * @param newPassword 새 비밀번호
 	 * @returns 성공 여부
 	 */
-	async resetPassword(email: string, salt: string, newPassword: string): Promise<boolean> {
+	async resetPassword(email: string, token: string, newPassword: string): Promise<boolean> {
 		// 사용자 조회
 		const user = await this.userService.findByEmail(email);
 		if (!user) {
@@ -270,7 +271,7 @@ export class AuthService {
 
 		// TODO: salt 검증 로직 추가 (실제 구현에서는 Redis나 DB에서 salt 검증)
 		// 현재는 간단히 salt가 있는지만 확인
-		if (!salt) {
+		if (!token) {
 			throw new BadRequestException("유효하지 않은 인증 토큰입니다.");
 		}
 

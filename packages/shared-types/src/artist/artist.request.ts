@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ProductListQuerySchema } from "../product/product.request";
 
 export const ArtistCreateSchema = z.object({
 	stageName: z.string().min(1).max(30).describe("스테이지명").default("DJ Cool"),
@@ -26,3 +27,9 @@ export const ArtistUpdateSchema = ArtistCreateSchema.partial();
 
 export type ArtistCreateRequest = z.infer<typeof ArtistCreateSchema>;
 export type ArtistUpdateRequest = z.infer<typeof ArtistUpdateSchema>;
+
+export const ArtistProductListQuerySchema = ProductListQuerySchema.extend({
+	isPublic: z.coerce.boolean().optional(),
+});
+
+export type ArtistProductListQueryRequest = z.infer<typeof ArtistProductListQuerySchema>;

@@ -1,9 +1,9 @@
 import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
-import { PrismaService } from "src/common/prisma/prisma.service";
-import { Artist } from "@prisma/client";
+import { PrismaService } from "~/common/prisma/prisma.service";
+import { Artist, Prisma } from "@prisma/client";
 import { ArtistCreateDto } from "./dto/request/artist.create.request.dto";
 import { ArtistUpdateDto } from "./dto/request/artist.update.dto";
-import { FileService } from "src/modules/file/file.service";
+import { FileService } from "~/modules/file/file.service";
 import { ArtistListResponse, ENUM_FILE_TYPE } from "@hitbeatclub/shared-types";
 import { ArtistDetailResponseDto } from "./dto/response/artist.detail.response.dto";
 
@@ -16,32 +16,22 @@ export class ArtistService {
 
 	async findAll(): Promise<ArtistListResponse[]> {
 		try {
-			const artists = await this.prisma.artist
-				.findMany({
-					where: { deletedAt: null },
-					orderBy: { createdAt: "desc" },
-					include: {
-						files: {
-							where: {
-								isEnabled: 1,
-								deletedAt: null,
-								targetTable: "artist",
-								type: ENUM_FILE_TYPE.ARTIST_PROFILE_IMAGE,
-							},
-							select: {
-								id: true,
-								url: true,
-							},
-						},
-					},
-				})
-				.then((data) => this.prisma.serializeBigInt(data));
+			const artists = await this.prisma.$queryRaw`
+				SELECT 
+					a.id,
+					a.stage_name as stageName,
+					f.url as profileImageUrl
+				FROM artist a
+				LEFT JOIN file f ON a.id = f.target_id 
+					AND f.target_table = 'artist'
+					AND f.type = ${ENUM_FILE_TYPE.ARTIST_PROFILE_IMAGE}
+					AND f.is_enabled = 1
+					AND f.deleted_at IS NULL
+				WHERE a.deleted_at IS NULL
+				ORDER BY a.id DESC
+			`.then((data) => this.prisma.serializeBigInt(data));
 
-			return artists.map((artist) => ({
-				id: artist.id,
-				name: artist.stageName,
-				profileImageUrl: artist.files[0]?.url || null,
-			}));
+			return artists;
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -79,7 +69,7 @@ export class ArtistService {
 			...artist,
 			id: Number(artist.id),
 			userId: Number(artist.userId),
-			profileImageUrl: profileImageFile[0]?.url || null,
+			profileImage: profileImageFile[0] || null,
 			settlement: artist.settlement[0] || null,
 		};
 	}
@@ -143,8 +133,10 @@ export class ArtistService {
 		}
 	}
 
-	async create(userId: number, createArtistDto: ArtistCreateDto) {
-		const artist = await this.prisma.artist
+	async create(userId: number, createArtistDto: ArtistCreateDto, tx?: Prisma.TransactionClient) {
+		const prisma = tx ?? this.prisma;
+
+		const artist = await prisma.artist
 			.create({
 				data: {
 					...createArtistDto,
@@ -186,19 +178,24 @@ export class ArtistService {
 		uploaderId,
 		artistId,
 		profileImageFileId,
+		tx,
 	}: {
 		uploaderId: number;
 		artistId: number;
 		profileImageFileId: number;
+		tx?: Prisma.TransactionClient;
 	}) {
 		if (profileImageFileId) {
-			await this.fileService.updateFileEnabledAndDelete({
-				uploaderId,
-				newFileId: profileImageFileId,
-				targetTable: "artist",
-				targetId: artistId,
-				type: ENUM_FILE_TYPE.ARTIST_PROFILE_IMAGE,
-			});
+			await this.fileService.updateFileEnabledAndDelete(
+				{
+					uploaderId,
+					newFileId: profileImageFileId,
+					targetTable: "artist",
+					targetId: artistId,
+					type: ENUM_FILE_TYPE.ARTIST_PROFILE_IMAGE,
+				},
+				tx,
+			);
 		}
 	}
 }

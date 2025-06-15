@@ -5,11 +5,11 @@ import bannerBackground from "@/assets/images/shop-banner-bg.jpeg";
 import { ProductSection } from "@/features/product/components/ProductSection";
 import { Footer } from "@/components/layout/Footer";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { getProductListQueryOption } from "@/apis/product/query/product.query-option";
+import { getProductListForDashboardQueryOption } from "@/apis/product/query/product.query-option";
 
 export default function ProductMainPage() {
-	const { data: products = [] } = useQuery({
-		...getProductListQueryOption(),
+	const { data } = useQuery({
+		...getProductListForDashboardQueryOption(),
 		placeholderData: keepPreviousData,
 	});
 
@@ -34,7 +34,7 @@ export default function ProductMainPage() {
 						href: "#",
 					},
 				}}
-				products={products}
+				products={data?.all || []}
 			/>
 
 			<ProductSection
@@ -45,7 +45,7 @@ export default function ProductMainPage() {
 						href: "#",
 					},
 				}}
-				products={products}
+				products={data?.beat || []}
 			/>
 
 			<ProductSection
@@ -56,7 +56,7 @@ export default function ProductMainPage() {
 						href: "#",
 					},
 				}}
-				products={products}
+				products={data?.acappella || []}
 			/>
 
 			<ProductSection
@@ -64,7 +64,7 @@ export default function ProductMainPage() {
 					title: "Recommended",
 					subtitle: "당신을 위한 오늘의 추천곡",
 				}}
-				products={products}
+				products={data?.recommended || []}
 			/>
 
 			<ProductSection
@@ -72,7 +72,7 @@ export default function ProductMainPage() {
 					title: "Recent",
 					subtitle: "최근 재생한 항목",
 				}}
-				products={products}
+				products={data?.recent || []}
 			/>
 
 			<Footer />

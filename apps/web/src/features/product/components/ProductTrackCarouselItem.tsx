@@ -2,15 +2,15 @@ import { checkIsPureEnglish } from "@/common/utils";
 import { cn } from "@/common/utils/tailwind";
 import Link from "next/link";
 import { AlbumCoverCard } from "@/components/ui";
-import { ProductListItem } from "../product.types";
+import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
 
 interface ProductTrackCarouselItemProps {
-	track: ProductListItem;
+	track: ProductRowByDashboardResponse;
 }
 export const ProductTrackCarouselItem = ({ track }: ProductTrackCarouselItemProps) => {
 	const { productName, seller, coverImage } = track;
-	const isTitlePureEnglish = checkIsPureEnglish(productName);
-	const isArtistPureEnglish = checkIsPureEnglish(seller?.stageName || "");
+	const isTitlePureEnglish = checkIsPureEnglish(track.productName);
+	const isArtistPureEnglish = checkIsPureEnglish(track.seller?.stageName || "");
 
 	return (
 		<Link

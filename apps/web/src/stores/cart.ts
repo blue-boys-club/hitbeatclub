@@ -4,7 +4,7 @@ import { immer } from "zustand/middleware/immer";
 
 interface CartItem {
 	id: number;
-	licenseId: number;
+	licenseType: "MASTER" | "EXCLUSIVE";
 }
 
 export interface CartState {
@@ -36,8 +36,8 @@ export const useCartStore = create<CartStore>()(
 					set((state) => {
 						const existingItemIndex = state.items.findIndex((i) => i.id === item.id);
 						if (existingItemIndex !== -1) {
-							// If item already exists, update its licenseId
-							state.items[existingItemIndex]!.licenseId = item.licenseId;
+							// If item already exists, update its licenseType
+							state.items[existingItemIndex]!.licenseType = item.licenseType;
 						} else {
 							// Otherwise, add the new item
 							state.items.push(item);
@@ -56,7 +56,14 @@ export const useCartStore = create<CartStore>()(
 
 				init: () => set(initialState),
 			})),
-			{ name, storage: createJSONStorage(() => localStorage) },
+			{
+				name,
+				storage: createJSONStorage(() => localStorage),
+				// Changelog
+				// 1: Initial version
+				// 2: Due to refactor, need to clear cart
+				version: 2,
+			},
 		),
 		{ name },
 	),

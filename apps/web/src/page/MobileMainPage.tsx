@@ -3,7 +3,7 @@
 import Image from "next/image";
 import bannerBackground from "@/assets/images/shop-banner-bg.jpeg";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { getProductListQueryOption } from "@/apis/product/query/product.query-option";
+import { getProductListForDashboardQueryOption } from "@/apis/product/query/product.query-option";
 import { Button } from "@/components/ui/Button";
 import { MobileProductSection } from "@/features/mobile/product/components/MobileProductSection";
 import { useState } from "react";
@@ -11,8 +11,8 @@ import { cn } from "@/common/utils";
 import { Footer } from "@/components/layout/Footer";
 
 export default function MobileMainPage() {
-	const { data: products = [] } = useQuery({
-		...getProductListQueryOption(),
+	const { data } = useQuery({
+		...getProductListForDashboardQueryOption(),
 		placeholderData: keepPreviousData,
 	});
 
@@ -26,16 +26,19 @@ export default function MobileMainPage() {
 					title="ALL"
 					description="당신을 위한 오늘의 추천곡"
 					href="#"
+					products={data?.all || []}
 				/>
 				<MobileProductSection
 					type="carousel"
 					title="Beat"
 					href="#"
+					products={data?.beat || []}
 				/>
 				<MobileProductSection
 					type="carousel"
 					title="Acappella"
 					href="#"
+					products={data?.acappella || []}
 				/>
 			</>
 		),
@@ -44,6 +47,7 @@ export default function MobileMainPage() {
 				type="gallery"
 				title="Beat"
 				href="#"
+				products={data?.beat || []}
 			/>
 		),
 		ACAPELLA: (
@@ -51,6 +55,7 @@ export default function MobileMainPage() {
 				type="gallery"
 				title="Acappella"
 				href="#"
+				products={data?.acappella || []}
 			/>
 		),
 	};

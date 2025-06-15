@@ -1,7 +1,14 @@
-import type { CommonResponse as SharedCommonResponse } from "@hitbeatclub/shared-types/common";
+import type {
+	CommonResponse as SharedCommonResponse,
+	CommonResponsePaging as SharedCommonResponsePaging,
+} from "@hitbeatclub/shared-types/common";
 export type { CommonResponseId } from "@hitbeatclub/shared-types/common";
 
 export interface CommonResponse<T> extends SharedCommonResponse {
+	data: T;
+}
+
+export interface PaginationResponse<T> extends SharedCommonResponsePaging {
 	data: T;
 }
 

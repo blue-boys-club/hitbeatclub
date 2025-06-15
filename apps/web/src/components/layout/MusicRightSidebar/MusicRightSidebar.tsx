@@ -5,10 +5,8 @@ import * as ScrollArea from "@radix-ui/react-scroll-area";
 import Image from "next/image";
 import { cn } from "@/common/utils";
 
-import { ArrowLeftMosaic, ArrowRightMosaic, Beat, Like } from "@/assets/svgs";
-import { AlbumAvatar } from "@/components/ui";
+import { Acapella, ArrowLeftMosaic, ArrowRightMosaic, Beat, Like } from "@/assets/svgs";
 import { FreeDownloadButton } from "@/components/ui/FreeDownloadButton";
-import { GenreButton } from "@/components/ui/GenreButton";
 import { PurchaseButton } from "@/components/ui/PurchaseButton";
 import { useShallow } from "zustand/react/shallow";
 import { useLayoutStore } from "@/stores/layout";
@@ -17,6 +15,9 @@ import { PurchaseModal } from "./PurchaseModal";
 import { useQuery } from "@tanstack/react-query";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { useLikeProductMutation } from "@/apis/product/mutations/useLikeProductMutation";
+import { useUnlikeProductMutation } from "@/apis/product/mutations/useUnLikeProductMutation";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * 음악 상세 정보를 보여주는 우측 사이드바 컴포넌트
@@ -28,11 +29,14 @@ import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 export const MusicRightSidebar = memo(() => {
 	const router = useRouter();
 	const { data: user } = useQuery(getUserMeQueryOption());
+	const { toast } = useToast();
+	const likeProductMutation = useLikeProductMutation();
+	const unlikeProductMutation = useUnlikeProductMutation();
 
 	const {
 		isOpen,
 		setRightSidebar,
-		currentTrackId = 1,
+		currentTrackId = 12,
 	} = useLayoutStore(
 		useShallow((state) => ({
 			isOpen: state.rightSidebar.isOpen,
@@ -57,17 +61,45 @@ export const MusicRightSidebar = memo(() => {
 
 	const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-	const [isLiked, setIsLiked] = useState(false);
-
 	const onLikeClick = () => {
-		setIsLiked(!isLiked);
+		if (!user) {
+			toast({
+				description: "로그인 후 이용해주세요.",
+			});
+			return;
+		}
+
+		if (!currentTrack) {
+			return;
+		}
+
+		// 현재 좋아요 상태에 따라 적절한 mutation 실행
+		if (currentTrack.isLiked) {
+			unlikeProductMutation.mutate(currentTrack.id, {
+				onError: () => {
+					toast({
+						description: "좋아요 취소에 실패했습니다.",
+						variant: "destructive",
+					});
+				},
+			});
+		} else {
+			likeProductMutation.mutate(currentTrack.id, {
+				onError: () => {
+					toast({
+						description: "좋아요에 실패했습니다.",
+						variant: "destructive",
+					});
+				},
+			});
+		}
 	};
 
 	const onClickFreeDownload = () => {
 		if (!user?.subscribedAt) {
 			router.push("/subscribe");
 		} else {
-			// alert("준비중입니다.");
+			alert("준비중입니다.");
 			// window.open(currentTrack?.downloadUrl, "_blank");
 		}
 	};
@@ -102,7 +134,8 @@ export const MusicRightSidebar = memo(() => {
 					<div className="flex items-center justify-between gap-2 mb-4">
 						<div className="text-lg font-suisse">{currentTrack?.seller.stageName}</div>
 						<div>
-							<Beat className="w-16 h-4" />
+							{currentTrack?.category === "BEAT" && <Beat className="w-16 h-4" />}
+							{currentTrack?.category === "ACAPELA" && <Acapella className="w-16 h-4" />}
 						</div>
 					</div>
 
@@ -144,13 +177,16 @@ export const MusicRightSidebar = memo(() => {
 
 					<div className="flex justify-between pb-4">
 						<div className="flex flex-col gap-0.5">
-							<FreeDownloadButton
-								variant="secondary"
-								className="outline-4 outline-hbc-black px-2.5 font-suisse"
-								onClick={onClickFreeDownload}
-							>
-								Free Download
-							</FreeDownloadButton>
+							{!!currentTrack?.isFreeDownload && (
+								<FreeDownloadButton
+									variant="secondary"
+									className="outline-4 outline-hbc-black px-2.5 font-suisse"
+									onClick={onClickFreeDownload}
+								>
+									Free Download
+								</FreeDownloadButton>
+							)}
+
 							<PurchaseButton
 								iconColor="white"
 								className="outline-4 outline-hbc-black"
@@ -164,7 +200,7 @@ export const MusicRightSidebar = memo(() => {
 							onClick={onLikeClick}
 							className="flex items-center justify-center w-8 h-8 transition-opacity cursor-pointer hover:opacity-80"
 						>
-							{isLiked ? (
+							{currentTrack?.isLiked ? (
 								<Image
 									src="/assets/ActiveLike.png"
 									alt="active like"

@@ -12,12 +12,15 @@ export const useSignInWithEmail = (
 		"mutationKey" | "mutationFn"
 	>,
 ) => {
+	const { onSuccess, ...rest } = options || {};
 	return useMutation({
 		mutationKey: MUTATION_KEYS.auth.login.email,
 		mutationFn: signInWithEmail,
-		onSuccess: (data) => {
+		onSuccess: (data, variables, context) => {
+			console.log("data", data);
 			signInOnSuccess(data.data, "email");
+			onSuccess?.(data, variables, context);
 		},
-		...options,
+		...rest,
 	});
 };

@@ -30,17 +30,9 @@ export const ProfileFormSchema = ArtistUpdateSchema.extend({
 	),
 });
 
-// 트랙 업로드 모달용 UI 확장 스키마 (ProductCreateSchema 기반)
+// 트랙 업로드 모달용 UI 확장 스키마 (ProductCreateSchema 기반) - BPM 필드 단순화
 export const TrackUploadFormSchema = deepRemoveDefaults(ProductCreateSchema).extend({
 	// UI에서만 사용되는 필드들
-	bpmType: z.enum(["exact", "range"]),
-	exactBPM: z.number().optional(),
-	bpmRange: z
-		.object({
-			min: z.number().optional(),
-			max: z.number().optional(),
-		})
-		.optional(),
 	keyValue: z
 		.object({
 			label: z.string(),

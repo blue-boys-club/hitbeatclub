@@ -1,14 +1,19 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import MultiTagInput from "./MultiTagInput";
+import MultiTagInput from "./MultiTagGenreInput";
 
 const meta: Meta<typeof MultiTagInput> = {
 	title: "UI/MultiTagInput",
 	component: MultiTagInput,
 	tags: ["autodocs"],
 	argTypes: {
-		maxTags: {
+		maxItems: {
 			control: "number",
-			description: "최대 태그 개수",
+			description: "최대 태그/장르 개수",
+		},
+		type: {
+			control: "select",
+			options: ["genre", "tag"],
+			description: "태그/장르 타입",
 		},
 		placeholder: {
 			control: "text",
@@ -18,14 +23,6 @@ const meta: Meta<typeof MultiTagInput> = {
 			control: "boolean",
 			description: "직접 입력 허용 여부",
 		},
-		tagColor: {
-			control: "text",
-			description: "태그 배경색",
-		},
-		tagTextColor: {
-			control: "text",
-			description: "태그 텍스트 색상",
-		},
 	},
 };
 
@@ -33,53 +30,49 @@ export default meta;
 type Story = StoryObj<typeof MultiTagInput>;
 
 const suggestedTags = [
-	{ tag: "음악", count: 120 },
-	{ tag: "댄스", count: 85 },
-	{ tag: "힙합", count: 65 },
-	{ tag: "재즈", count: 45 },
-	{ tag: "클래식", count: 30 },
+	{ value: "음악", count: 120 },
+	{ value: "댄스", count: 85 },
+	{ value: "힙합", count: 65 },
+	{ value: "재즈", count: 45 },
+	{ value: "클래식", count: 30 },
 ];
 
 export const Default: Story = {
 	args: {
-		maxTags: 5,
+		maxItems: 5,
+		type: "tag",
 		placeholder: "태그를 입력하세요",
 		allowDirectInput: true,
-		suggestedTags,
-		tagColor: "bg-hbc-black",
-		tagTextColor: "text-hbc-white",
+		suggestedItems: suggestedTags,
 	},
 };
 
-export const WhiteTheme: Story = {
+export const Genre: Story = {
 	args: {
-		maxTags: 5,
-		placeholder: "태그를 입력하세요",
+		maxItems: 5,
+		type: "genre",
+		placeholder: "장르를 입력하세요",
 		allowDirectInput: true,
-		suggestedTags,
-		tagColor: "bg-white",
-		tagTextColor: "text-hbc-black",
+		suggestedItems: suggestedTags,
 	},
 };
 
 export const LimitedTags: Story = {
 	args: {
-		maxTags: 3,
+		maxItems: 3,
+		type: "tag",
 		placeholder: "최대 3개의 태그만 입력 가능합니다",
 		allowDirectInput: true,
-		suggestedTags,
-		tagColor: "bg-hbc-black",
-		tagTextColor: "text-hbc-white",
+		suggestedItems: suggestedTags,
 	},
 };
 
 export const NoDirectInput: Story = {
 	args: {
-		maxTags: 5,
+		maxItems: 5,
+		type: "tag",
 		placeholder: "제안된 태그만 선택 가능합니다",
 		allowDirectInput: false,
-		suggestedTags,
-		tagColor: "bg-hbc-black",
-		tagTextColor: "text-hbc-white",
+		suggestedItems: suggestedTags,
 	},
 };

@@ -1,16 +1,15 @@
 import { checkIsPureEnglish } from "@/common/utils";
 import { cn } from "@/common/utils/tailwind";
 import Link from "next/link";
-import { ProductListItem } from "../../../product/product.types";
 import Image from "next/image";
+import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
 
 interface MobileProductTrackGalleryItemProps {
-	track: ProductListItem;
+	track: ProductRowByDashboardResponse;
 }
 export const MobileProductTrackGalleryItem = ({ track }: MobileProductTrackGalleryItemProps) => {
-	const { productName, seller, coverImage } = track;
-	const isTitlePureEnglish = checkIsPureEnglish(productName);
-	const isArtistPureEnglish = checkIsPureEnglish(seller?.stageName || "");
+	const isTitlePureEnglish = checkIsPureEnglish(track.productName);
+	const isArtistPureEnglish = checkIsPureEnglish(track.seller?.stageName || "");
 
 	return (
 		<Link
@@ -21,7 +20,7 @@ export const MobileProductTrackGalleryItem = ({ track }: MobileProductTrackGalle
 			<div className="border-y-3px border-x-1px border-black relative w-full aspect-square">
 				<Image
 					alt="커버이미지"
-					src={coverImage?.url || ""}
+					src={track.coverImage?.url || ""}
 					fill
 					className="object-cover"
 				/>
@@ -34,14 +33,14 @@ export const MobileProductTrackGalleryItem = ({ track }: MobileProductTrackGalle
 							isTitlePureEnglish ? "font-suisse" : "font-suit",
 						)}
 					>
-						{productName}
+						{track.productName}
 					</div>
 					{/* {isHit && <Hit />} */}
 				</div>
 				<div
 					className={cn("text-10px font-normal leading-10px w-full", isArtistPureEnglish ? "font-suisse" : "font-suit")}
 				>
-					<span className="text-hbc-gray-300 truncate block">{seller?.stageName}</span>
+					<span className="text-hbc-gray-300 truncate block">{track.seller?.stageName}</span>
 				</div>
 			</div>
 		</Link>

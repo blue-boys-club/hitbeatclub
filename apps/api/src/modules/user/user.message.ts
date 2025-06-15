@@ -26,6 +26,9 @@ const userMessage = {
 	checkEmail: {
 		success: "success user check email",
 	},
+	likedProducts: {
+		success: "success user liked products",
+	},
 };
 
 export default userMessage;

@@ -1,7 +1,7 @@
 import { applyDecorators } from "@nestjs/common";
-import { DocAuth } from "src/common/doc/decorators/doc.decorator";
-import { AuthJwtAccessProtected } from "src/modules/auth/decorators/auth.jwt.decorator";
-import { UserProtected } from "src/modules/user/decorators/user.decorator";
+import { DocAuth } from "~/common/doc/decorators/doc.decorator";
+import { AuthJwtAccessProtected } from "~/modules/auth/decorators/auth.jwt.decorator";
+import { UserProtected } from "~/modules/user/decorators/user.decorator";
 
 /**
  * 인증 관련 데코레이터를 한 번에 적용하는 함수

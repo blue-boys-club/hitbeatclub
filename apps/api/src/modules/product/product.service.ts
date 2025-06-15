@@ -1,20 +1,33 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
-import { PrismaService } from "src/common/prisma/prisma.service";
+import { PrismaService } from "~/common/prisma/prisma.service";
 import { Prisma, Product } from "@prisma/client";
 import { ENUM_PRODUCT_FILE_TYPE, ENUM_PRODUCT_SORT } from "./product.enum";
 import { ProductUpdateDto } from "./dto/request/product.update.dto";
 import { FileService } from "../file/file.service";
 import { ProductCreateRequest, ProductListQueryRequest } from "@hitbeatclub/shared-types/product";
-import { PRODUCT_CREATE_ERROR, PRODUCT_LICENSE_NOT_FOUND_ERROR, PRODUCT_UPDATE_ERROR } from "./product.error";
+import {
+	PRODUCT_CREATE_ERROR,
+	PRODUCT_LICENSE_NOT_FOUND_ERROR,
+	PRODUCT_UPDATE_ERROR,
+	PRODUCT_UPDATE_LICENSE_ERROR,
+} from "./product.error";
+import { Logger } from "@nestjs/common";
+import { UserLikeProductListRequest } from "@hitbeatclub/shared-types/user";
 
 @Injectable()
 export class ProductService {
+	private readonly logger = new Logger(ProductService.name);
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly fileService: FileService,
 	) {}
 
-	async findAll(where: any, { page, limit, sort, genreIds, tagIds }: ProductListQueryRequest) {
+	async findAll(
+		where: any,
+		{ page, limit, sort, genreIds, tagIds }: ProductListQueryRequest,
+		select: string[] = [],
+		userId?: number,
+	) {
 		try {
 			const products = await this.prisma.product
 				.findMany({
@@ -30,27 +43,12 @@ export class ProductService {
 								profileImageUrl: true,
 							},
 						},
-						files: {
-							where: {
-								isEnabled: 1,
-								deletedAt: null,
-								targetTable: "product",
-								type: {
-									in: ["PRODUCT_COVER_IMAGE", "PRODUCT_AUDIO_FILE"],
-								},
-							},
-							select: {
-								id: true,
-								type: true,
-								url: true,
-							},
-						},
 						...(genreIds
 							? {
 									productGenre: {
 										where: {
 											deletedAt: null,
-											genreId: { in: genreIds.split(",").map((id) => parseInt(id)) },
+											genreId: { in: genreIds },
 										},
 									},
 								}
@@ -60,7 +58,17 @@ export class ProductService {
 									productTag: {
 										where: {
 											deletedAt: null,
-											tagId: { in: tagIds.split(",").map((id) => parseInt(id)) },
+											tagId: { in: tagIds },
+										},
+									},
+								}
+							: {}),
+						...(userId
+							? {
+									productLike: {
+										where: {
+											userId: BigInt(userId),
+											deletedAt: null,
 										},
 									},
 								}
@@ -70,45 +78,104 @@ export class ProductService {
 					skip: (page - 1) * limit,
 					take: limit,
 				})
-				.then((data) => this.prisma.serializeBigInt(data));
+				.then((data) => this.prisma.serializeBigInt(data))
+				.catch((error) => {
+					throw new BadRequestException(error);
+				});
+
+			// Batch load files for all products to avoid N+1 queries
+			const productIds = products.map((p) => p.id);
+			const allFiles = await this.fileService.findFilesByTargetIds({
+				targetIds: productIds,
+				targetTable: "product",
+			});
+
+			// Map files by productId for quick lookup
+			const filesByProductId: Record<string, any[]> = {};
+			for (const file of allFiles) {
+				if (!filesByProductId[file.targetId.toString()]) {
+					filesByProductId[file.targetId.toString()] = [];
+				}
+				filesByProductId[file.targetId.toString()].push(file);
+			}
 
 			const result = [];
 			for (const product of products) {
 				const seller = product.artistSellerIdToArtist;
 				delete product.artistSellerIdToArtist;
 
-				const audioFile = product.files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
-				const coverImage = product.files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
+				const files = filesByProductId[product.id.toString()] ?? [];
+				const audioFile = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
+				const coverImage = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
 
-				result.push({
-					id: product.id,
-					type: product.type,
-					productName: product.productName,
-					description: product.description,
-					price: product.price,
-					category: product.category,
-					isActive: product.isActive,
-					createdAt: product.createdAt,
-					minBpm: product.minBpm,
-					maxBpm: product.maxBpm,
-					musicKey: product.musicKey,
-					scaleType: product.scaleType,
-					genres: product?.productGenre?.length
-						? await this.findProductGenresByIds(
+				const selectedFields = {};
+				if (select.length) {
+					for (const field of select) {
+						if (field === "seller") {
+							selectedFields[field] = seller;
+						} else if (field === "audioFile") {
+							selectedFields[field] = audioFile
+								? {
+										id: audioFile?.id,
+										url: audioFile?.url,
+										originName: audioFile?.originName,
+									}
+								: null;
+						} else if (field === "coverImage") {
+							selectedFields[field] = {
+								id: coverImage?.id,
+								url: coverImage?.url,
+								originName: coverImage?.originName,
+							};
+						} else if (field === "genres" && product?.productGenre?.length) {
+							selectedFields[field] = await this.findProductGenresByIds(
 								product.id,
 								product.productGenre.map((pg) => pg.genreId),
-							)
-						: [],
-					tags: product?.productTag?.length
-						? await this.findProductTagsByIds(
+							);
+						} else if (field === "tags" && product?.productTag?.length) {
+							selectedFields[field] = await this.findProductTagsByIds(
 								product.id,
 								product.productTag.map((pt) => pt.tagId),
-							)
-						: [],
-					seller,
-					audioFile: audioFile || null,
-					coverImage: coverImage || null,
-				});
+							);
+						} else if (field in product) {
+							selectedFields[field] = product[field];
+						}
+					}
+				} else {
+					// select가 없는 경우 모든 필드 포함
+					Object.assign(selectedFields, {
+						id: product.id,
+						type: product.type,
+						productName: product.productName,
+						description: product.description,
+						price: product.price,
+						category: product.category,
+						isActive: product.isActive,
+						createdAt: product.createdAt,
+						minBpm: product.minBpm,
+						maxBpm: product.maxBpm,
+						musicKey: product.musicKey,
+						scaleType: product.scaleType,
+						genres: product?.productGenre?.length
+							? await this.findProductGenresByIds(
+									product.id,
+									product.productGenre.map((pg) => pg.genreId),
+								)
+							: [],
+						tags: product?.productTag?.length
+							? await this.findProductTagsByIds(
+									product.id,
+									product.productTag.map((pt) => pt.tagId),
+								)
+							: [],
+						seller,
+						audioFile: audioFile || null,
+						coverImage: coverImage || null,
+						isPublic: product.isPublic,
+					});
+				}
+
+				result.push(selectedFields);
 			}
 
 			return !result.length ? [] : result;
@@ -117,7 +184,7 @@ export class ProductService {
 		}
 	}
 
-	async findOne(id: number) {
+	async findOne(id: number, userId?: number) {
 		try {
 			const product = await this.prisma.product
 				.findFirst({
@@ -130,16 +197,84 @@ export class ProductService {
 								profileImageUrl: true,
 							},
 						},
+						productLicense: {
+							select: {
+								licenseId: true,
+								price: true,
+								license: {
+									select: {
+										type: true,
+									},
+								},
+							},
+						},
+						...(userId
+							? {
+									productLike: {
+										where: { userId: BigInt(userId), deletedAt: null },
+									},
+								}
+							: {}),
+						productGenre: {
+							where: {
+								deletedAt: null,
+							},
+							select: {
+								genre: {
+									select: {
+										id: true,
+										name: true,
+									},
+								},
+							},
+						},
+						productTag: {
+							where: {
+								deletedAt: null,
+							},
+							select: {
+								tag: {
+									select: {
+										id: true,
+										name: true,
+									},
+								},
+							},
+						},
 					},
 				})
-				.then((data) => this.prisma.serializeBigInt(data) as Product);
+				.then((data) => this.prisma.serializeBigInt(data));
 
-			const seller = (product as any).artistSellerIdToArtist;
-			delete (product as any).artistSellerIdToArtist;
+			const seller = product.artistSellerIdToArtist;
+			const license = product.productLicense;
+			const genres = product.productGenre;
+			const tags = product.productTag;
+
+			delete product.artistSellerIdToArtist;
+			delete product.productLicense;
+			delete product.productGenre;
+			delete product.productTag;
 
 			return {
 				...product,
 				seller,
+				licenseInfo: license.map((l) => ({
+					id: l.licenseId,
+					type: l.license.type,
+					price: l.price,
+				})),
+				genres: genres.map((pg) => {
+					return {
+						id: pg.genre.id,
+						name: pg.genre.name,
+					};
+				}),
+				tags: tags.map((pt) => {
+					return {
+						id: pt.tag.id,
+						name: pt.tag.name,
+					};
+				}),
 			};
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -161,11 +296,6 @@ export class ProductService {
 				delete createProductDto.genres;
 				delete createProductDto.tags;
 				delete createProductDto.licenseInfo;
-
-				console.log({
-					...createProductDto,
-					sellerId: userId,
-				});
 
 				const product = await tx.product
 					.create({
@@ -208,7 +338,6 @@ export class ProductService {
 
 				return product;
 			} catch (e: any) {
-				console.log(e);
 				throw new BadRequestException({
 					...PRODUCT_CREATE_ERROR,
 					detail: e?.message,
@@ -496,26 +625,33 @@ export class ProductService {
 		{ productId, license }: { productId: number; license: { type: string; price: number } },
 		tx?: Prisma.TransactionClient,
 	) {
-		const transaction = tx || this.prisma;
+		try {
+			const transaction = tx || this.prisma;
 
-		const licenseRow = await transaction.license
-			.findFirst({
-				where: { type: license?.type },
-			})
-			.then((data) => this.prisma.serializeBigInt(data));
+			const licenseRow = await transaction.license
+				.findFirst({
+					where: { type: license?.type },
+				})
+				.then((data) => this.prisma.serializeBigInt(data));
 
-		if (!licenseRow?.id) {
-			throw new BadRequestException(PRODUCT_LICENSE_NOT_FOUND_ERROR);
+			if (!licenseRow?.id) {
+				throw new BadRequestException(PRODUCT_LICENSE_NOT_FOUND_ERROR);
+			}
+
+			await transaction.productLicense.update({
+				where: { productId_licenseId: { productId, licenseId: licenseRow?.id } },
+				data: {
+					price: license?.price,
+				},
+			});
+
+			return licenseRow;
+		} catch (e: any) {
+			throw new BadRequestException({
+				...PRODUCT_UPDATE_LICENSE_ERROR,
+				detail: e?.message,
+			});
 		}
-
-		await transaction.productLicense.update({
-			where: { productId_licenseId: { productId, licenseId: licenseRow?.id } },
-			data: {
-				price: license?.price,
-			},
-		});
-
-		return licenseRow;
 	}
 
 	async createProductLicense(
@@ -601,7 +737,8 @@ export class ProductService {
 				});
 			}
 		} catch (e: any) {
-			console.log(e);
+			this.logger.error(e);
+			// throw new BadRequestException(e);
 		}
 	}
 
@@ -677,22 +814,245 @@ export class ProductService {
 				select: {
 					id: true,
 					name: true,
+					_count: {
+						select: {
+							productGenre: true,
+						},
+					},
 				},
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
 	}
 
-	async findTagAll() {
-		return await this.prisma.tag
-			.findMany({
-				where: {
+	async like(userId: number, productId: number) {
+		return await this.prisma.productLike
+			.create({
+				data: {
+					userId: BigInt(userId),
+					productId: BigInt(productId),
 					deletedAt: null,
-				},
-				select: {
-					id: true,
-					name: true,
 				},
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
+	}
+
+	async unlike(userId: number, productId: number) {
+		return await this.prisma.productLike
+			.updateMany({
+				where: {
+					userId: BigInt(userId),
+					productId: BigInt(productId),
+					deletedAt: null,
+				},
+				data: { deletedAt: new Date() },
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+	}
+
+	async findLikedProducts(userId: number, payload: UserLikeProductListRequest) {
+		// 기본값 설정
+		const page = payload.page || 1;
+		const limit = payload.limit || 10;
+
+		// 복합 조건을 위한 where 조건 구성
+		const productWhereConditions: Prisma.ProductWhereInput = {};
+
+		// 검색어 조건
+		if (payload.search) {
+			productWhereConditions.productName = { contains: payload.search };
+		}
+
+		// 카테고리 조건
+		if (payload.category) {
+			productWhereConditions.category = payload.category;
+		}
+
+		// 장르 조건
+		if (payload.genreIds?.length) {
+			productWhereConditions.productGenre = {
+				some: {
+					genreId: { in: payload.genreIds },
+					deletedAt: null,
+				},
+			};
+		}
+
+		// 태그 조건
+		if (payload.tagIds?.length) {
+			productWhereConditions.productTag = {
+				some: {
+					tagId: { in: payload.tagIds },
+					deletedAt: null,
+				},
+			};
+		}
+
+		// 음악키 조건
+		if (payload.musicKey) {
+			productWhereConditions.musicKey = payload.musicKey;
+		}
+
+		// BPM 조건
+		if (payload.minBpm || payload.maxBpm) {
+			productWhereConditions.AND = [];
+			if (payload.minBpm) {
+				productWhereConditions.AND.push({
+					OR: [
+						{ minBpm: { gte: payload.minBpm } },
+						{ AND: [{ minBpm: { lte: payload.minBpm } }, { maxBpm: { gte: payload.minBpm } }] },
+					],
+				});
+			}
+			if (payload.maxBpm) {
+				productWhereConditions.AND.push({
+					OR: [
+						{ maxBpm: { lte: payload.maxBpm } },
+						{ AND: [{ minBpm: { lte: payload.maxBpm } }, { maxBpm: { gte: payload.maxBpm } }] },
+					],
+				});
+			}
+		}
+
+		// 스케일 타입 조건
+		if (payload.scaleType) {
+			productWhereConditions.scaleType = payload.scaleType;
+		}
+
+		// 삭제되지 않은 제품만
+		productWhereConditions.deletedAt = null;
+
+		const where: Prisma.ProductLikeWhereInput = {
+			userId: BigInt(userId),
+			deletedAt: null,
+			product: productWhereConditions,
+		};
+
+		const likedProducts = await this.prisma.productLike
+			.findMany({
+				where,
+				select: {
+					product: {
+						select: {
+							id: true,
+							productName: true,
+							price: true,
+							category: true,
+							minBpm: true,
+							maxBpm: true,
+							musicKey: true,
+							scaleType: true,
+							artistSellerIdToArtist: {
+								select: {
+									id: true,
+									stageName: true,
+									profileImageUrl: true,
+								},
+							},
+							createdAt: true,
+
+							productGenre: {
+								select: {
+									genre: {
+										select: {
+											id: true,
+											name: true,
+										},
+									},
+								},
+							},
+							productTag: {
+								select: {
+									tag: {
+										select: {
+											id: true,
+											name: true,
+										},
+									},
+								},
+							},
+						},
+					},
+					createdAt: true,
+				},
+				skip: (page - 1) * limit,
+				take: limit,
+				orderBy: payload.sort === "RECENT" ? { createdAt: "desc" } : { product: { productName: "asc" } },
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+
+		const result = [];
+		const productIds = likedProducts.map((like) => like.product.id);
+
+		// 파일 정보 일괄 조회
+		const productFiles = await this.fileService.findFilesByTargetIds({
+			targetIds: productIds,
+			targetTable: "product",
+		});
+
+		// 파일을 productId별로 그룹화
+		const filesByProductId: Record<string, any[]> = {};
+		for (const file of productFiles) {
+			if (!filesByProductId[file.targetId.toString()]) {
+				filesByProductId[file.targetId.toString()] = [];
+			}
+			filesByProductId[file.targetId.toString()].push(file);
+		}
+
+		for (const like of likedProducts) {
+			const seller = {
+				id: like.product.artistSellerIdToArtist.id,
+				stageName: like.product.artistSellerIdToArtist.stageName,
+				profileImageUrl: like.product.artistSellerIdToArtist.profileImageUrl,
+			};
+
+			const files = filesByProductId[like.product.id.toString()] ?? [];
+			const audioFile = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
+			const coverImage = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
+
+			result.push({
+				id: like.product.id,
+				productName: like.product.productName,
+				price: like.product.price,
+				category: like.product.category,
+				minBpm: like.product.minBpm,
+				maxBpm: like.product.maxBpm,
+				musicKey: like.product.musicKey,
+				scaleType: like.product.scaleType,
+				createdAt: like.product.createdAt,
+				likedAt: like.createdAt,
+				seller,
+				genres: like.product.productGenre.map((pg) => pg.genre.name),
+				tags: like.product.productTag.map((pt) => pt.tag.name),
+				audioFile: audioFile
+					? {
+							id: audioFile.id,
+							url: audioFile.url,
+							originName: audioFile.originName,
+						}
+					: null,
+				coverImage: coverImage
+					? {
+							id: coverImage.id,
+							url: coverImage.url,
+							originName: coverImage.originName,
+						}
+					: null,
+			});
+		}
+
+		// 총 개수 조회 (동일한 조건 사용)
+		const total = await this.prisma.productLike.count({
+			where,
+		});
+
+		return {
+			data: result,
+			pagination: {
+				page,
+				limit,
+				total,
+				totalPage: Math.ceil(total / limit),
+			},
+		};
 	}
 }

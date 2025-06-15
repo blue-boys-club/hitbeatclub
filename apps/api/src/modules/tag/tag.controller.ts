@@ -1,19 +1,37 @@
-import { Controller, Post, Delete, Param, Body, Req } from "@nestjs/common";
+import { Controller, Post, Delete, Param, Body, Req, Get } from "@nestjs/common";
 import { TagService } from "./tag.service";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
-import { DocResponse } from "src/common/doc/decorators/doc.decorator";
-import { DatabaseIdResponseDto } from "src/common/response/dtos/response.dto";
+import { DocResponse } from "~/common/doc/decorators/doc.decorator";
+import { DatabaseIdResponseDto } from "~/common/response/dtos/response.dto";
 import { TagCreateDto } from "./dto/request/tag.create.request.dto";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
-import { AuthenticationDoc } from "src/common/doc/decorators/auth.decorator";
+import { AuthenticationDoc } from "~/common/doc/decorators/auth.decorator";
 import { tagMessage } from "./tag.message";
+import { TagListResponseDto } from "./dto/response/tag.list.response.dto";
+import { IResponse } from "~/common/response/interfaces/response.interface";
 
 @Controller("tags")
 @ApiTags("tag")
 @ApiBearerAuth()
 export class TagController {
 	constructor(private readonly tagService: TagService) {}
+
+	@Get("with-count")
+	@ApiOperation({ summary: "태그별 리스트 및 개수 조회" })
+	@AuthenticationDoc()
+	@DocResponse<TagListResponseDto>(tagMessage.find.success, {
+		dto: TagListResponseDto,
+	})
+	async findAllWithCount(): Promise<IResponse<TagListResponseDto>> {
+		const tags = await this.tagService.findAllWithCount();
+
+		return {
+			statusCode: 200,
+			message: tagMessage.find.success,
+			data: tags,
+		};
+	}
 
 	@Post()
 	@ApiOperation({ summary: "태그 생성" })

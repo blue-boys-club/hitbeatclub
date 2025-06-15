@@ -1,5 +1,12 @@
-import { CommonResponse, CommonResponseId } from "@/apis/api.type";
-import { UserFindMeResponse, UserUpdatePayload, UserUpdatePayloadSchema } from "@hitbeatclub/shared-types/user";
+import { CommonResponse, CommonResponseId, PaginationResponse } from "@/apis/api.type";
+import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
+import {
+	UserFindMeResponse,
+	UserLikeProductListRequest,
+	UserLikeProductListRequestSchema,
+	UserUpdatePayload,
+	UserUpdatePayloadSchema,
+} from "@hitbeatclub/shared-types/user";
 import axiosInstance from "@/apis/api.client";
 
 /**
@@ -60,5 +67,23 @@ export const leaveMe = async (userId: number): Promise<CommonResponseId> => {
 export const socialJoinUser = async (userId: number, data: UserUpdatePayload): Promise<CommonResponseId> => {
 	const parsed = UserUpdatePayloadSchema.parse(data);
 	const response = await axiosInstance.patch<CommonResponseId>(`/users/${userId}/social-join`, parsed);
+	return response.data;
+};
+
+/**
+ * 좋아요 상품 조회
+ * @param userId 유저 아이디
+ * @returns 좋아요 상품 목록
+ */
+export const getLikedProducts = async (
+	userId: number,
+	payload: UserLikeProductListRequest,
+): Promise<PaginationResponse<ProductRowByDashboardResponse[]>> => {
+	const response = await axiosInstance.get<PaginationResponse<ProductRowByDashboardResponse[]>>(
+		`/users/${userId}/liked-products`,
+		{
+			params: payload,
+		},
+	);
 	return response.data;
 };

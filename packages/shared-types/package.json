@@ -55,6 +55,21 @@
 			"types": "./dist/settlement/index.d.ts",
 			"import": "./dist/settlement/index.mjs",
 			"require": "./dist/settlement/index.js"
+		},
+		"./tag": {
+			"types": "./dist/tag/index.d.ts",
+			"import": "./dist/tag/index.mjs",
+			"require": "./dist/tag/index.js"
+		},
+		"./genre": {
+			"types": "./dist/genre/index.d.ts",
+			"import": "./dist/genre/index.mjs",
+			"require": "./dist/genre/index.js"
+		},
+		"./email": {
+			"types": "./dist/email/index.d.ts",
+			"import": "./dist/email/index.mjs",
+			"require": "./dist/email/index.js"
 		}
 	},
 	"files": [

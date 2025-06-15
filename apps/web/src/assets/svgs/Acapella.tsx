@@ -2,8 +2,9 @@ interface AcapellaProps {
 	width?: string;
 	height?: string;
 	fill?: string;
+	className?: string;
 }
-export const Acapella = ({ width = "49", height = "7", fill = "#001EFF" }: AcapellaProps) => {
+export const Acapella = ({ width = "49", height = "7", fill = "#001EFF", className }: AcapellaProps) => {
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
@@ -11,6 +12,7 @@ export const Acapella = ({ width = "49", height = "7", fill = "#001EFF" }: Acape
 			height={height}
 			viewBox="0 0 49 7"
 			fill="none"
+			className={className}
 		>
 			<path
 				d="M25.7923 6.39314V5.03878H29.3495V3.93531H26.3481V2.58095H29.3495V1.47051H25.8386V0.118477H30.8525V6.39314H25.7923Z"

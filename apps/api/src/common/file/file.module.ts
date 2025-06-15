@@ -1,5 +1,5 @@
 import { Module, forwardRef } from "@nestjs/common";
-import { FileService } from "src/common/file/services/file.service";
+import { FileService } from "~/common/file/services/file.service";
 
 @Module({
 	imports: [],

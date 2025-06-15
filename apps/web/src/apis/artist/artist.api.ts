@@ -1,9 +1,16 @@
 import axiosInstance from "@/apis/api.client";
-import { ArtistCreateRequest, ArtistResponse, ArtistUpdateRequest } from "@hitbeatclub/shared-types/artist";
+import {
+	ArtistCreateRequest,
+	ArtistProductListQueryRequest,
+	ArtistResponse,
+	ArtistUpdateRequest,
+	ArtistProductListQuerySchema,
+} from "@hitbeatclub/shared-types/artist";
 import type { CommonResponse, CommonResponseId } from "@/apis/api.type";
 import { ArtistUploadProfileRequest } from "./artist.type";
 import { FileUploadResponse } from "@hitbeatclub/shared-types/file";
 import { SettlementCreateRequest, SettlementUpdateRequest } from "@hitbeatclub/shared-types/settlement";
+import { ProductListPagingResponse } from "@hitbeatclub/shared-types/product";
 
 /**
  * 아티스트 내 정보 조회
@@ -45,6 +52,11 @@ export const updateArtist = async (id: number, payload: ArtistUpdateRequest) => 
 	return response.data;
 };
 
+/**
+ * 아티스트 프로필 이미지 업로드
+ * @param payload 아티스트 프로필 이미지 업로드 페이로드
+ * @returns 아티스트 프로필 이미지 업로드 결과
+ */
 export const uploadArtistProfile = async (payload: ArtistUploadProfileRequest) => {
 	const formData = new FormData();
 	formData.append("file", payload.file);
@@ -54,12 +66,43 @@ export const uploadArtistProfile = async (payload: ArtistUploadProfileRequest) =
 	return response.data;
 };
 
+/**
+ * 아티스트 정산 데이터 생성
+ * @param id 아티스트 아이디
+ * @param payload 아티스트 정산 데이터 생성 페이로드
+ * @returns 아티스트 정산 데이터 생성 결과
+ */
 export const createArtistSettlement = async (id: number, payload: SettlementCreateRequest) => {
 	const response = await axiosInstance.post<CommonResponseId>(`/artists/${id}/settlement`, payload);
 	return response.data;
 };
 
+/**
+ * 아티스트 정산 데이터 업데이트
+ * @param id 아티스트 아이디
+ * @param payload 아티스트 정산 데이터 업데이트 페이로드
+ * @returns 아티스트 정산 데이터 업데이트 결과
+ */
 export const updateArtistSettlement = async (id: number, payload: SettlementUpdateRequest) => {
 	const response = await axiosInstance.patch<CommonResponseId>(`/artists/${id}/settlement`, payload);
 	return response.data;
+};
+
+/**
+ * 아티스트 컨텐츠 목록 조회
+ * @param id 아티스트 아이디
+ * @returns 아티스트 컨텐츠 목록
+ */
+export const getArtistContentList = async (id: number, payload: ArtistProductListQueryRequest) => {
+	try {
+		const parsed = ArtistProductListQuerySchema.parse(payload);
+		const response = await axiosInstance.get<ProductListPagingResponse>(`/artists/${id}/products`, {
+			params: parsed,
+			// paramsSerializer: { indexes: null },
+		});
+		return response.data;
+	} catch (error) {
+		console.error(error);
+		throw error;
+	}
 };
