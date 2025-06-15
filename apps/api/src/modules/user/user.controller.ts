@@ -98,7 +98,7 @@ export class UserController {
 	}
 
 	@Get(":userId/liked-products")
-	@ApiOperation({ summary: "특정 유저 좋아요 상품 조회" })
+	@ApiOperation({ summary: "유저 좋아요 상품 조회" })
 	@AuthenticationDoc()
 	@DocResponsePaging<ProductLikeResponseDto>(userMessage.likedProducts.success, {
 		dto: ProductLikeResponseDto,

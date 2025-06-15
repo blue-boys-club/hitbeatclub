@@ -873,7 +873,7 @@ export class ProductService {
 		if (payload.genreIds?.length) {
 			productWhereConditions.productGenre = {
 				some: {
-					genreId: { in: payload.genreIds },
+					genreId: { in: payload.genreIds.map((id) => BigInt(id)) },
 					deletedAt: null,
 				},
 			};
@@ -883,7 +883,7 @@ export class ProductService {
 		if (payload.tagIds?.length) {
 			productWhereConditions.productTag = {
 				some: {
-					tagId: { in: payload.tagIds },
+					tagId: { in: payload.tagIds.map((id) => BigInt(id)) },
 					deletedAt: null,
 				},
 			};
