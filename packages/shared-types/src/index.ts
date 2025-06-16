@@ -10,3 +10,5 @@ export * from "./tag";
 export * from "./genre";
 export * from "./email";
 export * from "./cart";
+export * from "./coupon";
+export * from "./subscribe";

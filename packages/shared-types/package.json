@@ -75,6 +75,11 @@
 			"types": "./dist/cart/index.d.ts",
 			"import": "./dist/cart/index.mjs",
 			"require": "./dist/cart/index.js"
+		},
+		"./coupon": {
+			"types": "./dist/coupon/index.d.ts",
+			"import": "./dist/coupon/index.mjs",
+			"require": "./dist/coupon/index.js"
 		}
 	},
 	"files": [
