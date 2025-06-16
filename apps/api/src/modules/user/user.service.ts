@@ -65,8 +65,8 @@ export class UserService {
 			.then((data) => this.prisma.serializeBigInt(data));
 	}
 
-	async findMe(id: number): Promise<UserFindMeResponseDto> {
-		return await this.prisma.user
+	async findMe(id: number) {
+		const user = await this.prisma.user
 			.findUnique({
 				where: { id, deletedAt: null },
 				select: {
@@ -82,10 +82,20 @@ export class UserService {
 					agreedTermsAt: true,
 					agreedPrivacyPolicyAt: true,
 					agreedEmailAt: true,
-					subscribedAt: true,
+					subscribe: {
+						where: {
+							deletedAt: null,
+						},
+					},
 				},
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
+
+		return {
+			...user,
+			subscribedAt: user.subscribe[0]?.createdAt || null,
+			subscribe: user.subscribe[0] || null,
+		};
 	}
 
 	async update(
