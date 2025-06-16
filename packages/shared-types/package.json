@@ -80,6 +80,11 @@
 			"types": "./dist/coupon/index.d.ts",
 			"import": "./dist/coupon/index.mjs",
 			"require": "./dist/coupon/index.js"
+		},
+		"./notice": {
+			"types": "./dist/notice/index.d.ts",
+			"import": "./dist/notice/index.mjs",
+			"require": "./dist/notice/index.js"
 		}
 	},
 	"files": [

@@ -114,7 +114,7 @@ export class FileService {
 				targetId,
 				type,
 			});
-
+			console.log("files > ", files);
 			for (const file of files) {
 				await this.softDeleteFile(file.id, tx);
 			}
@@ -145,6 +145,12 @@ export class FileService {
 		targetId: number;
 		type: string;
 	}) {
+		console.log({
+			uploaderId,
+			targetTable,
+			targetId,
+			type,
+		});
 		return this.prisma.file
 			.findMany({
 				where: {

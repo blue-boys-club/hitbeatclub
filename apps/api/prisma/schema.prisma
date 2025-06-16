@@ -454,3 +454,15 @@ model Coupon {
 
   @@map("coupon")
 }
+
+model Notice {
+  id          BigInt    @id @default(autoincrement())
+  title       String    @db.VarChar(255)
+  content     String    @db.Text
+  viewCount   Int       @default(0) @map("view_count")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamp(0)
+
+  @@map("notice")
+}

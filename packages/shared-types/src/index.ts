@@ -12,3 +12,4 @@ export * from "./email";
 export * from "./cart";
 export * from "./coupon";
 export * from "./subscribe";
+export * from "./notice";
