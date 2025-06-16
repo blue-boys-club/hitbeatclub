@@ -22,3 +22,42 @@ export const UserFindMeResponseSchema = UserUpdatePayloadSchema.omit({
 export type UserFindMeResponse = z.infer<typeof UserFindMeResponseSchema>;
 
 export type UserUpdateResponse = z.infer<typeof UserUpdateResponseSchema>;
+
+export const UserFollowedArtistResponseSchema = z.object({
+	id: z.number().describe("팔로잉 ID"),
+	artistId: z.number().describe("아티스트 ID"),
+	status: z.enum(["active", "blocked"]).describe("팔로잉 상태"),
+	createdAt: z.date().describe("팔로잉 시작 일시"),
+	artist: z
+		.object({
+			id: z.number().describe("아티스트 ID"),
+			stageName: z.string().nullable().describe("아티스트 스테이지명"),
+			profileImageUrl: z.string().nullable().describe("아티스트 프로필 이미지"),
+			isVerified: z.number().describe("인증 상태"),
+			description: z.string().nullable().describe("아티스트 설명"),
+			country: z.string().nullable().describe("국가"),
+			city: z.string().nullable().describe("도시"),
+		})
+		.describe("아티스트 정보"),
+});
+
+export type UserFollowedArtistResponse = z.infer<typeof UserFollowedArtistResponseSchema>;
+
+export const UserFollowArtistListResponseSchema = z.object({
+	artistId: z.number().describe("아티스트 ID"),
+	stageName: z.string().nullable().describe("아티스트 스테이지명"),
+	profileImageUrl: z.string().nullable().describe("아티스트 프로필 이미지"),
+	followerCount: z.number().describe("팔로워 수"),
+});
+
+export type UserFollowArtistListResponse = z.infer<typeof UserFollowArtistListResponseSchema>;
+
+export const UserFollowArtistResponseSchema = z.object({
+	id: z.number().describe("팔로잉 ID"),
+	artistId: z.number().describe("아티스트 ID"),
+	createdAt: z.date().describe("팔로잉 시작 일시"),
+	updatedAt: z.date().describe("팔로잉 업데이트 일시"),
+	deletedAt: z.date().describe("팔로잉 삭제 일시").nullable(),
+});
+
+export type UserFollowArtistResponse = z.infer<typeof UserFollowArtistResponseSchema>;

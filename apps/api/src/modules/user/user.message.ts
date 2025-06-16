@@ -29,6 +29,15 @@ const userMessage = {
 	likedProducts: {
 		success: "success user liked products",
 	},
+	followedArtists: {
+		success: "success user followed artists",
+	},
+	followArtist: {
+		success: "success follow artist",
+	},
+	unfollowArtist: {
+		success: "success unfollow artist",
+	},
 };
 
 export default userMessage;

@@ -4,6 +4,9 @@ import { PrismaService } from "~/common/prisma/prisma.service";
 import { User, Prisma } from "@prisma/client";
 import { UserFindMeResponseDto } from "./dto/response/user.find-me.response.dto";
 import { HelperHashService } from "~/common/helper/services/helper.hash.service";
+import { ARTIST_NOT_FOUND_ERROR } from "../artist/artist.error";
+import { ALREADY_FOLLOWING_ARTIST_ERROR, NOT_FOLLOWING_ARTIST_ERROR } from "./user.error";
+import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
 
 @Injectable()
 export class UserService {
@@ -172,5 +175,156 @@ export class UserService {
 			where: { id: BigInt(id) },
 			data: { subscribedAt },
 		});
+	}
+
+	// 팔로우한 아티스트 목록 조회
+	async findFollowedArtists(
+		userId: number,
+		options: {
+			page?: number;
+			limit?: number;
+			sort?: "RECENT" | "POPULAR";
+			search?: string;
+		},
+	) {
+		const { page = 1, limit = 10, sort = "RECENT", search } = options;
+		const skip = (page - 1) * limit;
+
+		const where: any = {
+			userId: BigInt(userId),
+			deletedAt: null,
+		};
+
+		if (search) {
+			where.artist = {
+				stageName: {
+					contains: search,
+				},
+			};
+		}
+
+		const orderBy: any = {};
+		if (sort === "RECENT") {
+			orderBy.createdAt = "desc";
+		} else if (sort === "POPULAR") {
+			orderBy.artist = {
+				_count: {
+					select: {
+						userArtistFollow: true,
+					},
+				},
+				orderBy: {
+					_count: "desc",
+				},
+			};
+		}
+
+		const [follows, total]: any = await Promise.all([
+			this.prisma.$queryRaw`
+				SELECT 
+					a.id as "artistId",
+					a.stage_name as "stageName", 
+					f.url as "profileImageUrl",
+					(SELECT COUNT(*) FROM user_artist_follow WHERE artist_id = a.id) as "followerCount"
+				FROM user_artist_follow uaf
+				INNER JOIN artist a ON a.id = uaf.artist_id 
+				LEFT JOIN file f ON f.target_table = 'artist'
+					AND f.target_id = a.id
+					AND f.type = ${ENUM_FILE_TYPE.ARTIST_PROFILE_IMAGE}
+					AND f.is_enabled = 1
+				WHERE uaf.user_id = ${BigInt(userId)}
+					AND uaf.deleted_at IS NULL
+					${search ? Prisma.sql`AND a.stage_name LIKE ${`%${search}%`}` : Prisma.empty}
+				${
+					sort === "RECENT"
+						? Prisma.sql`ORDER BY uaf.created_at DESC`
+						: sort === "POPULAR"
+							? Prisma.sql`ORDER BY (SELECT COUNT(*) FROM user_artist_follow WHERE artist_id = a.id) DESC`
+							: Prisma.empty
+				}
+				LIMIT ${limit}
+				OFFSET ${skip}
+			`,
+			this.prisma.userArtistFollow.count({ where }),
+		]);
+
+		return {
+			data: follows.map((follow) => this.prisma.serializeBigInt(follow)),
+			pagination: {
+				page,
+				limit,
+				total,
+				totalPage: Math.ceil(total / limit),
+			},
+		};
+	}
+
+	// 아티스트 팔로우
+	async followArtist(userId: number, artistId: number) {
+		const existingFollow = await this.prisma.userArtistFollow.findFirst({
+			where: {
+				userId: userId,
+				artistId: artistId,
+				deletedAt: null,
+			},
+			select: {
+				userId: true,
+				artistId: true,
+				createdAt: true,
+				updatedAt: true,
+				deletedAt: true,
+			},
+		});
+
+		if (existingFollow) {
+			throw new BadRequestException(ALREADY_FOLLOWING_ARTIST_ERROR);
+		}
+
+		// 아티스트가 존재하는지 확인
+		const artist = await this.prisma.artist.findFirst({
+			where: { id: artistId, deletedAt: null },
+		});
+
+		if (!artist) {
+			throw new BadRequestException(ARTIST_NOT_FOUND_ERROR);
+		}
+
+		const follow = await this.prisma.userArtistFollow.create({
+			data: {
+				userId: userId,
+				artistId: artistId,
+			},
+		});
+
+		return this.prisma.serializeBigInt(follow);
+	}
+
+	// 아티스트 언팔로우
+	async unfollowArtist(userId: number, artistId: number) {
+		const existingFollow = await this.prisma.userArtistFollow.findFirst({
+			where: {
+				userId: userId,
+				artistId: artistId,
+				deletedAt: null,
+			},
+		});
+
+		if (!existingFollow) {
+			throw new BadRequestException(NOT_FOLLOWING_ARTIST_ERROR);
+		}
+
+		const follow = await this.prisma.userArtistFollow.update({
+			where: {
+				userId_artistId: {
+					userId: userId,
+					artistId: artistId,
+				},
+			},
+			data: {
+				deletedAt: new Date(),
+			},
+		});
+
+		return this.prisma.serializeBigInt(follow);
 	}
 }

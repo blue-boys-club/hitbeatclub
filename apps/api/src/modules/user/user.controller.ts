@@ -1,6 +1,6 @@
 import { Controller, Get, Patch, Delete, Param, Body, Req, Post, NotFoundException, Query } from "@nestjs/common";
 import { UserService } from "./user.service";
-import { ApiOperation, ApiTags, ApiBody } from "@nestjs/swagger";
+import { ApiOperation, ApiTags, ApiBody, ApiQuery } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
 import { DocResponse, DocResponseList, DocResponsePaging } from "~/common/doc/decorators/doc.decorator";
 import { UserUpdateDto } from "./dto/request/user.update.request.dto";
@@ -17,6 +17,9 @@ import { CartListResponseDto } from "../cart/dto/response/cart.list.response.dto
 import { CartService } from "../cart/cart.service";
 import cartMessage from "../cart/cart.message";
 import { CartCreateRequestDto } from "../cart/dto/request/cart.create.request.dto";
+import { UserFollowArtistListResponseDto } from "./dto/response/user.follow-artist-list.response.dto";
+import { UserFollowArtistListRequestDto } from "./dto/request/user.follow-artist-list.request.dto";
+import { UserFollowArtistResponseDto } from "./dto/response/user.follow-artist.response.dto";
 
 @Controller("users")
 @ApiTags("user")
@@ -98,7 +101,7 @@ export class UserController {
 	}
 
 	@Get(":userId/liked-products")
-	@ApiOperation({ summary: "유저 좋아요 상품 조회" })
+	@ApiOperation({ summary: "좋아요 상품 조회" })
 	@AuthenticationDoc()
 	@DocResponsePaging<ProductLikeResponseDto>(userMessage.likedProducts.success, {
 		dto: ProductLikeResponseDto,
@@ -169,6 +172,80 @@ export class UserController {
 			statusCode: 200,
 			message: cartMessage.remove.success,
 			data: { id: cart.id },
+		};
+	}
+
+	@Get(":userId/followed-artists")
+	@ApiOperation({ summary: "팔로우한 아티스트 목록 조회" })
+	@AuthenticationDoc()
+	@ApiQuery({
+		name: "sort",
+		required: false,
+		enum: ["RECENT", "POPULAR"],
+		description: "정렬 방식 (기본값: RECENT)",
+		example: "RECENT",
+	})
+	@ApiQuery({
+		name: "search",
+		required: false,
+		type: String,
+		description: "아티스트 이름 검색",
+		example: "아티스트명",
+	})
+	@DocResponsePaging<UserFollowArtistListResponseDto>(userMessage.followedArtists.success, {
+		dto: UserFollowArtistListResponseDto,
+	})
+	async findFollowedArtists(
+		@Param("userId") userId: number,
+		@Query() query: UserFollowArtistListRequestDto,
+	): Promise<IResponsePaging<UserFollowArtistListResponseDto>> {
+		const result = await this.userService.findFollowedArtists(userId, query);
+
+		return {
+			statusCode: 200,
+			message: userMessage.followedArtists.success,
+			data: result.data,
+			_pagination: result.pagination,
+		};
+	}
+
+	@Post(":userId/followed-artists/:artistId")
+	@ApiOperation({ summary: "아티스트 팔로우" })
+	@AuthenticationDoc()
+	@DocResponse<UserFollowArtistResponseDto>(userMessage.followArtist.success, {
+		dto: UserFollowArtistResponseDto,
+	})
+	async followArtist(
+		@Req() req: AuthenticatedRequest,
+		@Param("userId") userId: number,
+		@Param("artistId") artistId: number,
+	): Promise<IResponse<UserFollowArtistResponseDto>> {
+		const result = await this.userService.followArtist(userId, artistId);
+
+		return {
+			statusCode: 200,
+			message: userMessage.followArtist.success,
+			data: result,
+		};
+	}
+
+	@Delete(":userId/followed-artists/:artistId")
+	@ApiOperation({ summary: "아티스트 언팔로우" })
+	@AuthenticationDoc()
+	@DocResponse<UserFollowArtistResponseDto>(userMessage.unfollowArtist.success, {
+		dto: UserFollowArtistResponseDto,
+	})
+	async unfollowArtist(
+		@Req() req: AuthenticatedRequest,
+		@Param("userId") userId: number,
+		@Param("artistId") artistId: number,
+	): Promise<IResponse<UserFollowArtistResponseDto>> {
+		const result = await this.userService.unfollowArtist(userId, artistId);
+
+		return {
+			statusCode: 200,
+			message: userMessage.unfollowArtist.success,
+			data: result,
 		};
 	}
 }

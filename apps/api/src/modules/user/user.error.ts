@@ -18,3 +18,17 @@ export const USER_EMAIL_ALREADY_EXISTS_ERROR = {
 	status: 400,
 	detail: "이미 존재하는 이메일입니다.",
 };
+
+export const ALREADY_FOLLOWING_ARTIST_ERROR = {
+	title: "Already following artist",
+	code: 1003,
+	status: 400,
+	detail: "이미 팔로우하고 있는 아티스트입니다.",
+};
+
+export const NOT_FOLLOWING_ARTIST_ERROR = {
+	title: "Not following artist",
+	code: 1004,
+	status: 400,
+	detail: "팔로우하고 있지 않은 아티스트입니다.",
+};

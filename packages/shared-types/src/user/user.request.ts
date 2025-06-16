@@ -45,7 +45,7 @@ export const UserUpdatePayloadSchema = z.object({
 export type UserUpdatePayload = z.infer<typeof UserUpdatePayloadSchema>;
 
 export const UserLikeProductListRequestSchema = PaginationRequestSchema.extend({
-	sort: z.enum(["RECENT", "NAME"]).optional().default("RECENT"),
+	sort: z.enum(["RECENT", "POPULAR"]).optional().default("RECENT"),
 	search: z.string().optional(),
 	category: productCategoryEnum.optional().describe("BEAT"),
 	genreIds: z
@@ -64,3 +64,22 @@ export const UserLikeProductListRequestSchema = PaginationRequestSchema.extend({
 });
 
 export type UserLikeProductListRequest = z.infer<typeof UserLikeProductListRequestSchema>;
+
+export const UserFollowArtistListRequestSchema = PaginationRequestSchema.extend({
+	sort: z.enum(["RECENT", "POPULAR"]).optional().default("RECENT"),
+	search: z.string().optional().describe("아티스트 이름 검색"),
+});
+
+export type UserFollowArtistListRequest = z.infer<typeof UserFollowArtistListRequestSchema>;
+
+export const UserFollowArtistRequestSchema = z.object({
+	artistId: z.coerce.number().positive().describe("팔로잉할 아티스트 ID"),
+});
+
+export type UserFollowArtistRequest = z.infer<typeof UserFollowArtistRequestSchema>;
+
+export const UserUnfollowArtistRequestSchema = z.object({
+	artistId: z.coerce.number().positive().describe("언팔로우할 아티스트 ID"),
+});
+
+export type UserUnfollowArtistRequest = z.infer<typeof UserUnfollowArtistRequestSchema>;
