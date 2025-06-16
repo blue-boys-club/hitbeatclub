@@ -1,8 +1,8 @@
 import {
 	UserCreatePayload,
 	UserDeletePayload,
-	UserFindMeResponse,
 	UserUpdatePayload,
+	UserPasswordResetPayload,
 } from "@hitbeatclub/shared-types/user";
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "~/common/prisma/prisma.service";
@@ -10,7 +10,14 @@ import { User, Prisma } from "@prisma/client";
 import { UserFindMeResponseDto } from "./dto/response/user.find-me.response.dto";
 import { HelperHashService } from "~/common/helper/services/helper.hash.service";
 import { ARTIST_NOT_FOUND_ERROR } from "../artist/artist.error";
-import { ALREADY_FOLLOWING_ARTIST_ERROR, NOT_FOLLOWING_ARTIST_ERROR, USER_PROFILE_UPDATE_ERROR } from "./user.error";
+import {
+	ALREADY_FOLLOWING_ARTIST_ERROR,
+	NOT_FOLLOWING_ARTIST_ERROR,
+	USER_CURRENT_PASSWORD_INVALID_ERROR,
+	USER_NOT_FOUND_ERROR,
+	USER_PROFILE_UPDATE_ERROR,
+	USER_RESET_PASSWORD_ERROR,
+} from "./user.error";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
 import { UserProfileUpdatePayload } from "@hitbeatclub/shared-types/user";
 
@@ -335,7 +342,7 @@ export class UserService {
 		return this.prisma.serializeBigInt(follow);
 	}
 
-	async updateProfile(id: number, updateData: UserProfileUpdatePayload): Promise<User> {
+	async updateProfile(id: number, updateData: UserProfileUpdatePayload) {
 		try {
 			return this.prisma.user
 				.update({
@@ -348,6 +355,52 @@ export class UserService {
 		} catch (e: any) {
 			throw new BadRequestException({
 				...USER_PROFILE_UPDATE_ERROR,
+				detail: e.message,
+			});
+		}
+	}
+
+	// 비밀번호 재설정
+	async resetPassword(id: number, resetData: UserPasswordResetPayload) {
+		try {
+			// 현재 사용자 조회
+			const user = await this.prisma.user.findFirst({
+				where: { id: id, deletedAt: null },
+			});
+
+			if (!user) {
+				throw new BadRequestException(USER_NOT_FOUND_ERROR);
+			}
+
+			// 현재 비밀번호 확인
+			const isCurrentPasswordValid = this.helperHashService.comparePassword(
+				resetData.currentPassword,
+				user.password || "",
+			);
+
+			if (!isCurrentPasswordValid) {
+				throw new BadRequestException(USER_CURRENT_PASSWORD_INVALID_ERROR);
+			}
+
+			// 새 비밀번호 해시화
+			const hashedNewPassword = this.helperHashService.hashPassword(resetData.newPassword);
+
+			// 비밀번호 업데이트
+			return this.prisma.user
+				.update({
+					where: { id },
+					data: {
+						password: hashedNewPassword,
+						updatedAt: new Date(),
+					},
+				})
+				.then((data) => this.prisma.serializeBigInt(data));
+		} catch (e: any) {
+			if (e?.response) {
+				throw new BadRequestException(e.response);
+			}
+			throw new BadRequestException({
+				...USER_RESET_PASSWORD_ERROR,
 				detail: e.message,
 			});
 		}

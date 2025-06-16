@@ -101,3 +101,16 @@ export const UserDeletePayloadSchema = z.object({
 });
 
 export type UserDeletePayload = z.infer<typeof UserDeletePayloadSchema>;
+
+export const UserPasswordResetPayloadSchema = z
+	.object({
+		currentPassword: z.string().min(8).max(255).describe("현재 비밀번호"),
+		newPassword: z.string().min(8).max(255).describe("새 비밀번호"),
+		confirmPassword: z.string().min(8).max(255).describe("비밀번호 확인"),
+	})
+	.refine((data) => data.newPassword === data.confirmPassword, {
+		message: "새 비밀번호와 비밀번호 확인이 일치하지 않습니다",
+		path: ["confirmPassword"],
+	});
+
+export type UserPasswordResetPayload = z.infer<typeof UserPasswordResetPayloadSchema>;

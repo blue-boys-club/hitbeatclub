@@ -29,3 +29,10 @@ export const PRODUCT_UPDATE_LICENSE_ERROR = {
 	code: 1204,
 	status: 400,
 };
+
+export const PRODUCT_ALREADY_LIKED_ERROR = {
+	title: "Product already liked",
+	code: 1205,
+	status: 400,
+	detail: "이미 좋아요를 눌렀습니다.",
+};

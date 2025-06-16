@@ -6,6 +6,7 @@ import { ProductUpdateDto } from "./dto/request/product.update.dto";
 import { FileService } from "../file/file.service";
 import { ProductCreateRequest, ProductListQueryRequest } from "@hitbeatclub/shared-types/product";
 import {
+	PRODUCT_ALREADY_LIKED_ERROR,
 	PRODUCT_CREATE_ERROR,
 	PRODUCT_LICENSE_NOT_FOUND_ERROR,
 	PRODUCT_UPDATE_ERROR,
@@ -827,6 +828,21 @@ export class ProductService {
 	}
 
 	async like(userId: number, productId: number) {
+		// 이미 좋아요 눌렀는지 체크
+		const existingLike = await this.prisma.productLike
+			.findFirst({
+				where: {
+					userId: userId,
+					productId: productId,
+					deletedAt: null,
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+
+		if (existingLike) {
+			throw new BadRequestException(PRODUCT_ALREADY_LIKED_ERROR);
+		}
+
 		return await this.prisma.productLike
 			.create({
 				data: {

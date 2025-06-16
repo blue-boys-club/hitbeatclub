@@ -38,3 +38,23 @@ export const USER_PROFILE_UPDATE_ERROR = {
 	code: 1005,
 	status: 400,
 };
+
+export const USER_RESET_PASSWORD_ERROR = {
+	title: "User reset password error",
+	code: 1006,
+	status: 400,
+};
+
+export const USER_RESET_PASSWORD_ID_MISMATCH_ERROR = {
+	title: "User reset password id mismatch error",
+	code: 1007,
+	status: 400,
+	detail: "로그인한 사용자와 다릅니다.",
+};
+
+export const USER_CURRENT_PASSWORD_INVALID_ERROR = {
+	title: "User reset password is current password invalid error",
+	code: 1008,
+	status: 400,
+	detail: "현재 비밀번호가 일치하지 않습니다.",
+};

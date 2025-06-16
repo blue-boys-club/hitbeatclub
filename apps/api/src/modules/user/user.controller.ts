@@ -1,4 +1,16 @@
-import { Controller, Get, Patch, Delete, Param, Body, Req, Post, NotFoundException, Query } from "@nestjs/common";
+import {
+	Controller,
+	Get,
+	Patch,
+	Delete,
+	Param,
+	Body,
+	Req,
+	Post,
+	NotFoundException,
+	Query,
+	BadRequestException,
+} from "@nestjs/common";
 import { UserService } from "./user.service";
 import { ApiOperation, ApiTags, ApiBody, ApiQuery } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
@@ -23,6 +35,8 @@ import { UserFollowArtistResponseDto } from "./dto/response/user.follow-artist.r
 import { CartUpdateRequestDto } from "../cart/dto/request/cart.update.request.dto";
 import { UserProfileUpdateDto } from "./dto/request/user.profile-update.request.dto";
 import { UserDeleteDto } from "./dto/request/user.delete.request.dto";
+import { UserPasswordResetDto } from "./dto/request/user.password-reset.request.dto";
+import { USER_RESET_PASSWORD_ID_MISMATCH_ERROR } from "./user.error";
 
 @Controller("users")
 @ApiTags("user")
@@ -100,6 +114,30 @@ export class UserController {
 			data: {
 				id: user.id,
 			},
+		};
+	}
+
+	@Patch(":id/password")
+	@ApiOperation({ summary: "비밀번호 재설정" })
+	@AuthenticationDoc()
+	@DocResponse<DatabaseIdResponseDto>(userMessage.resetPassword.success, {
+		dto: DatabaseIdResponseDto,
+	})
+	async resetPassword(
+		@Req() req: AuthenticatedRequest,
+		@Param("id") id: number,
+		@Body() userPasswordResetDto: UserPasswordResetDto,
+	): Promise<DatabaseIdResponseDto> {
+		if (Number(id) !== req.user.id) {
+			throw new BadRequestException(USER_RESET_PASSWORD_ID_MISMATCH_ERROR);
+		}
+
+		const user = await this.userService.resetPassword(id, userPasswordResetDto);
+
+		return {
+			statusCode: 200,
+			message: userMessage.resetPassword.success,
+			data: { id: user.id },
 		};
 	}
 
@@ -288,7 +326,7 @@ export class UserController {
 			statusCode: 200,
 			message: userMessage.updateProfile.success,
 			data: {
-				id: Number(user.id),
+				id: user.id,
 			},
 		};
 	}

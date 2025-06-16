@@ -1,6 +1,6 @@
 import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
 import { createZodDto } from "nestjs-zod";
-import { CommonResponseIdSchema, CommonResponseSchema } from "@hitbeatclub/shared-types/common";
+import { CommonResponseIdSchema } from "@hitbeatclub/shared-types/common";
 
 export class ResponseMetadataDto {
 	language: string;
