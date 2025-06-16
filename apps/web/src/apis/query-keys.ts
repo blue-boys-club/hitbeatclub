@@ -59,6 +59,10 @@ const QUERY_KEYS = {
 		list: ["tag", "list"],
 		one: (id: number): QueryKey => ["tag", id],
 	},
+	cart: {
+		_key: ["cart"],
+		list: ["cart", "list"],
+	},
 };
 
 export { QUERY_KEYS };

@@ -27,7 +27,7 @@ const LikeItems = memo(({ search, sort }: LikeItemsProps) => {
 
 	const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } = useInfiniteQuery({
 		...getLikedProductsInfiniteListQueryOption(userMe?.id || 0, {
-			sort: sort,
+			sort: sort || "RECENT",
 			search: search,
 		}),
 		placeholderData: keepPreviousData,

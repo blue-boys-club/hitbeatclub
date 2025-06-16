@@ -4,10 +4,10 @@ import { cn } from "@/common/utils";
 import { useRouter } from "next/navigation";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 import { useQuery } from "@tanstack/react-query";
-import { useCartStore } from "@/stores/cart";
-import { useShallow } from "zustand/react/shallow";
 import { useToast } from "@/hooks/use-toast";
 import { LICENSE_MAP_TEMPLATE } from "@/apis/product/product.dummy";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { useCreateCartItemMutation } from "@/apis/user/mutations";
 
 interface ProductDetailLicenseModalProps {
 	isOpen: boolean;
@@ -19,10 +19,19 @@ type LicenseType = "MASTER" | "EXCLUSIVE";
 
 export const ProductDetailLicenseModal = memo(({ isOpen, onClose, productId }: ProductDetailLicenseModalProps) => {
 	const router = useRouter();
+	const { toast } = useToast();
+
+	// 사용자 정보 가져오기
+	const { data: user } = useQuery(getUserMeQueryOption());
+
+	// 상품 정보 가져오기
 	const { data: product } = useQuery({
 		...getProductQueryOption(productId),
 		enabled: isOpen && !!productId,
 	});
+
+	// 장바구니 생성 mutation
+	const createCartItemMutation = useCreateCartItemMutation(user?.id ?? 0);
 
 	// 상품의 라이센스 정보와 템플릿 정보를 조합
 	const licenses = useMemo(() => {
@@ -44,33 +53,58 @@ export const ProductDetailLicenseModal = memo(({ isOpen, onClose, productId }: P
 		[licenses, selectedLicenseType],
 	);
 
-	const { addItem } = useCartStore(
-		useShallow((state) => ({
-			addItem: state.addItem,
-		})),
-	);
+	// 장바구니에 추가하는 함수
+	const addToCart = useCallback(async () => {
+		if (!user) {
+			toast({
+				description: "로그인 후 이용해주세요.",
+				variant: "destructive",
+			});
+			return false;
+		}
 
-	const { toast } = useToast();
+		if (!selectedLicense) {
+			toast({
+				description: "라이센스를 선택해주세요.",
+				variant: "destructive",
+			});
+			return false;
+		}
 
-	const addToCart = useCallback(() => {
-		addItem({
-			id: productId,
-			licenseType: selectedLicenseType,
-		});
-	}, [addItem, productId, selectedLicenseType]);
+		try {
+			await createCartItemMutation.mutateAsync({
+				productId: productId,
+				licenseId: selectedLicense.id,
+			});
+			return true;
+		} catch (error) {
+			console.error("Failed to add item to cart:", error);
+			toast({
+				description: "장바구니 추가에 실패했습니다.",
+				variant: "destructive",
+			});
+			return false;
+		}
+	}, [user, selectedLicense, productId, createCartItemMutation, toast]);
 
-	const handleCart = useCallback(() => {
-		addToCart();
-		toast({
-			title: "장바구니에 추가되었습니다.",
-		});
-		onClose();
+	// 장바구니 담기 핸들러
+	const handleCart = useCallback(async () => {
+		const success = await addToCart();
+		if (success) {
+			toast({
+				description: "장바구니에 추가되었습니다.",
+			});
+			onClose();
+		}
 	}, [addToCart, onClose, toast]);
 
-	const handlePurchase = useCallback(() => {
-		addToCart();
-		router.push("/cart");
-		onClose();
+	// 구매하기 핸들러 (장바구니 담고 이동)
+	const handlePurchase = useCallback(async () => {
+		const success = await addToCart();
+		if (success) {
+			router.push("/cart");
+			onClose();
+		}
 	}, [addToCart, router, onClose]);
 
 	if (!product || !licenses.length) {
@@ -151,8 +185,18 @@ export const ProductDetailLicenseModal = memo(({ isOpen, onClose, productId }: P
 					</div>
 
 					<Popup.PopupFooter>
-						<Popup.PopupButton onClick={handleCart}>장바구니 담기</Popup.PopupButton>
-						<Popup.PopupButton onClick={handlePurchase}>구매하기</Popup.PopupButton>
+						<Popup.PopupButton
+							onClick={handleCart}
+							disabled={createCartItemMutation.isPending}
+						>
+							{createCartItemMutation.isPending ? "추가 중..." : "장바구니 담기"}
+						</Popup.PopupButton>
+						<Popup.PopupButton
+							onClick={handlePurchase}
+							disabled={createCartItemMutation.isPending}
+						>
+							{createCartItemMutation.isPending ? "처리 중..." : "구매하기"}
+						</Popup.PopupButton>
 					</Popup.PopupFooter>
 				</Popup.PopupContent>
 			</Popup.Popup>

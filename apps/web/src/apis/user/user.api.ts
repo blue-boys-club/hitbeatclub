@@ -1,13 +1,14 @@
 import { CommonResponse, CommonResponseId, PaginationResponse } from "@/apis/api.type";
-import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
+import { CartCreateRequestSchema, CartListResponse, ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
 import {
 	UserFindMeResponse,
 	UserLikeProductListRequest,
-	UserLikeProductListRequestSchema,
 	UserUpdatePayload,
 	UserUpdatePayloadSchema,
 } from "@hitbeatclub/shared-types/user";
 import axiosInstance from "@/apis/api.client";
+import { z } from "zod";
+import { UpdateCartItemPayload } from "./user.type";
 
 /**
  * 내 정보 조회
@@ -85,5 +86,45 @@ export const getLikedProducts = async (
 			params: payload,
 		},
 	);
+	return response.data;
+};
+
+/**
+ * 장바구니 목록 조회
+ * @returns 장바구니 목록
+ */
+export const getCartList = async (userId: number) => {
+	const response = await axiosInstance.get<CommonResponse<CartListResponse>>(`/users/${userId}/cart`);
+	return response.data;
+};
+
+/**
+ * 장바구니 상품 추가
+ * @param payload 장바구니 상품 추가 요청 데이터
+ * @returns 장바구니 상품 추가 결과
+ */
+export const createCartItem = async (userId: number, payload: z.input<typeof CartCreateRequestSchema>) => {
+	const response = await axiosInstance.post<CommonResponseId>(`/users/${userId}/cart`, payload);
+	return response.data;
+};
+
+/**
+ * 장바구니 상품 삭제
+ * @param id 장바구니 상품 ID
+ * @returns 장바구니 상품 삭제 결과
+ */
+export const deleteCartItem = async (userId: number, cartItemId: number) => {
+	const response = await axiosInstance.delete<CommonResponseId>(`/users/${userId}/cart/${cartItemId}`);
+	return response.data;
+};
+
+/**
+ * 장바구니 상품 업데이트 (라이센스)
+ * @param id 장바구니 상품 ID
+ * @param payload 장바구니 상품 업데이트 요청 데이터
+ * @returns 장바구니 상품 업데이트 결과
+ */
+export const updateCartItem = async (userId: number, { id, licenseId }: UpdateCartItemPayload) => {
+	const response = await axiosInstance.patch<CommonResponseId>(`/users/${userId}/cart/${id}`, { licenseId });
 	return response.data;
 };

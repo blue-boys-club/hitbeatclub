@@ -20,6 +20,7 @@ import { CartCreateRequestDto } from "../cart/dto/request/cart.create.request.dt
 import { UserFollowArtistListResponseDto } from "./dto/response/user.follow-artist-list.response.dto";
 import { UserFollowArtistListRequestDto } from "./dto/request/user.follow-artist-list.request.dto";
 import { UserFollowArtistResponseDto } from "./dto/response/user.follow-artist.response.dto";
+import { CartUpdateRequestDto } from "../cart/dto/request/cart.update.request.dto";
 
 @Controller("users")
 @ApiTags("user")
@@ -172,6 +173,26 @@ export class UserController {
 			statusCode: 200,
 			message: cartMessage.remove.success,
 			data: { id: cart.id },
+		};
+	}
+
+	@Patch(":userId/cart/:cartId")
+	@ApiOperation({ summary: "장바구니 수정" })
+	@AuthenticationDoc()
+	@DocResponse<DatabaseIdResponseDto>(cartMessage.update.success, {
+		dto: DatabaseIdResponseDto,
+	})
+	async updateCart(
+		@Param("userId") userId: number,
+		@Param("cartId") cartId: number,
+		@Body() cartUpdateRequestDto: CartUpdateRequestDto,
+	): Promise<DatabaseIdResponseDto> {
+		const result = await this.cartService.update(userId, cartId, cartUpdateRequestDto);
+
+		return {
+			statusCode: 200,
+			message: cartMessage.update.success,
+			data: { id: result.id },
 		};
 	}
 

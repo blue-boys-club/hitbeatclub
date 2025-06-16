@@ -1,3 +1,4 @@
+import { deepRemoveDefaults } from "@/lib/schema.utils";
 import axiosInstance from "@/apis/api.client";
 import type { CommonResponse, CommonResponseId } from "@/apis/api.type";
 import { z } from "zod";
@@ -32,7 +33,7 @@ export const signInWithGoogle = async ({ code }: { code: string }) => {
  * @returns 로그인 응답
  */
 export const signInWithEmail = async (payload: z.input<typeof AuthLoginPayloadSchema>) => {
-	const parsed = AuthLoginPayloadSchema.parse(payload);
+	const parsed = deepRemoveDefaults(AuthLoginPayloadSchema).parse(payload);
 	const response = await axiosInstance.post<CommonResponse<AuthLoginResponse>>("/auth/login", parsed);
 	return response.data;
 };
@@ -43,7 +44,7 @@ export const signInWithEmail = async (payload: z.input<typeof AuthLoginPayloadSc
  * @returns 이메일 중복 확인 응답
  */
 export const checkEmail = async (payload: z.input<typeof AuthCheckEmailRequestSchema>) => {
-	const parsed = AuthCheckEmailRequestSchema.parse(payload);
+	const parsed = deepRemoveDefaults(AuthCheckEmailRequestSchema).parse(payload);
 	const response = await axiosInstance.get<CommonResponse<AuthCheckEmailResponse>>(`/auth/check-email`, {
 		params: parsed,
 	});
@@ -56,7 +57,7 @@ export const checkEmail = async (payload: z.input<typeof AuthCheckEmailRequestSc
  * @returns 아이디 찾기 응답
  */
 export const findEmail = async (payload: z.input<typeof AuthFindIdPayloadSchema>) => {
-	const parsed = AuthFindIdPayloadSchema.parse(payload);
+	const parsed = deepRemoveDefaults(AuthFindIdPayloadSchema).parse(payload);
 	const response = await axiosInstance.get<CommonResponse<AuthFindIdResponse>>(`/auth/find-email`, {
 		params: parsed,
 	});
@@ -69,7 +70,7 @@ export const findEmail = async (payload: z.input<typeof AuthFindIdPayloadSchema>
  * @returns 회원가입 응답
  */
 export const joinWithEmail = async (payload: z.input<typeof UserUpdatePayloadSchema>) => {
-	const parsed = UserUpdatePayloadSchema.parse(payload);
+	const parsed = deepRemoveDefaults(UserUpdatePayloadSchema).parse(payload);
 	const response = await axiosInstance.post<CommonResponse<AuthLoginResponse>>("/auth/join", parsed);
 	return response.data;
 };
@@ -80,7 +81,7 @@ export const joinWithEmail = async (payload: z.input<typeof UserUpdatePayloadSch
  * @returns 비밀번호 재설정 응답
  */
 export const resetPassword = async (payload: z.input<typeof AuthResetPasswordPayloadSchema>) => {
-	const parsed = AuthResetPasswordPayloadSchema.parse(payload);
+	const parsed = deepRemoveDefaults(AuthResetPasswordPayloadSchema).parse(payload);
 	const response = await axiosInstance.post<CommonResponseId>(`/auth/reset-password`, parsed);
 	return response.data;
 };
