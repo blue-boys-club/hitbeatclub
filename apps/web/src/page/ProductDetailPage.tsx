@@ -3,11 +3,10 @@
 import { memo, useMemo, useState } from "react";
 import Image from "next/image";
 import { Acapella, Beat, Like, RedPlayCircle } from "@/assets/svgs";
-import { AlbumAvatar, FreeDownloadButton, PurchaseButton, UserAvatar } from "@/components/ui";
+import { AlbumAvatar, FreeDownloadButton, UserAvatar } from "@/components/ui";
 import { GenreButton } from "@/components/ui/GenreButton";
 import { TagButton } from "@/components/ui/TagButton";
-import { LicenseNote, ProductDetailLicense } from "../features/product/components/ProductDetailLicense";
-import { ProductDetailLicenseModal } from "../features/product/components/modal/ProductDetailLicenseModal";
+import { LicenseNote, ProductDetailLicense, PurchaseWithCartTrigger } from "../features/product/components";
 import { LicenseColor, LicenseType } from "../features/product/product.constants";
 import { LICENSE_MAP_TEMPLATE } from "@/apis/product/product.dummy";
 import { useRouter } from "next/navigation";
@@ -73,8 +72,8 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 	const likeProductMutation = useLikeProductMutation();
 	const unlikeProductMutation = useUnlikeProductMutation();
 
-	const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
 	const { data: user } = useQuery(getUserMeQueryOption());
+
 	const isSubscribed = useMemo(() => {
 		return !!user?.subscribedAt;
 	}, [user?.subscribedAt]);
@@ -113,10 +112,6 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 		}
 	};
 
-	const onClickPurchase = () => {
-		setIsLicenseModalOpen(true);
-	};
-
 	const onClickFreeDownload = () => {
 		if (!isSubscribed) {
 			router.push("/subscribe");
@@ -125,7 +120,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 		}
 	};
 
-	// 라이센스 정보 처리 (모달과 동일한 로직)
+	// 라이센스 정보 처리 (라이센스 표시용)
 	const licenses = useMemo(() => {
 		if (!product?.licenseInfo) return [];
 
@@ -136,11 +131,6 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 			...LICENSE_MAP_TEMPLATE[licenseInfo.type as keyof typeof LICENSE_MAP_TEMPLATE],
 		}));
 	}, [product?.licenseInfo]);
-
-	const cheapestLicensePrice = useMemo(() => {
-		if (licenses.length === 0) return 10000;
-		return Math.min(...licenses.map((license) => license.price));
-	}, [licenses]);
 
 	const artistProfileUrl = useMemo(() => {
 		if (!product?.seller?.profileImageUrl || product?.seller?.profileImageUrl === "") {
@@ -230,13 +220,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 										Free Download
 									</FreeDownloadButton>
 								)}
-								<PurchaseButton
-									iconColor="var(--hbc-white)"
-									className="outline-4 outline-hbc-black font-suisse"
-									onClick={onClickPurchase}
-								>
-									{cheapestLicensePrice?.toLocaleString()} KRW
-								</PurchaseButton>
+								{product && <PurchaseWithCartTrigger productId={product.id} />}
 							</div>
 						</div>
 
@@ -282,14 +266,6 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 					</div>
 				</section>
 			</main>
-
-			{product && (
-				<ProductDetailLicenseModal
-					productId={product.id}
-					isOpen={isLicenseModalOpen}
-					onClose={() => setIsLicenseModalOpen(false)}
-				/>
-			)}
 		</>
 	);
 });
