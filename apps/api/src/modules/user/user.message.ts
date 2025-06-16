@@ -11,6 +11,9 @@ const userMessage = {
 	update: {
 		success: "success user update",
 	},
+	updateProfile: {
+		success: "success user profile update",
+	},
 	delete: {
 		success: "success user delete",
 	},

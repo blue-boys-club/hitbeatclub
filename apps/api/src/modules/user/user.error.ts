@@ -32,3 +32,9 @@ export const NOT_FOLLOWING_ARTIST_ERROR = {
 	status: 400,
 	detail: "팔로우하고 있지 않은 아티스트입니다.",
 };
+
+export const USER_PROFILE_UPDATE_ERROR = {
+	title: "User profile update error",
+	code: 1005,
+	status: 400,
+};

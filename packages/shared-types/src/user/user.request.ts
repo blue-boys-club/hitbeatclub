@@ -83,3 +83,15 @@ export const UserUnfollowArtistRequestSchema = z.object({
 });
 
 export type UserUnfollowArtistRequest = z.infer<typeof UserUnfollowArtistRequestSchema>;
+
+export const UserProfileUpdatePayloadSchema = z.object({
+	name: z.string().min(1).max(100).describe("사용자 이름").optional().default("John Doe"),
+	stageName: z.string().min(1).max(30).describe("활동명").optional().default("DJ Cool"),
+	phoneNumber: z.string().max(11).describe("전화번호").optional().default("01012345678"),
+	birthDate: z.string().datetime().describe("생년월일").optional().default("1990-01-01T00:00:00Z"),
+	gender: z.enum(["M", "F"]).describe("성별 (M/F)").optional().default("M"),
+	country: z.string().max(4).describe("국가 코드").optional().default("KR"),
+	region: z.string().max(100).describe("지역").optional().default("Seoul"),
+});
+
+export type UserProfileUpdatePayload = z.infer<typeof UserProfileUpdatePayloadSchema>;

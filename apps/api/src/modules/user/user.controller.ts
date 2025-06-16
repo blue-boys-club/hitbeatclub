@@ -21,6 +21,7 @@ import { UserFollowArtistListResponseDto } from "./dto/response/user.follow-arti
 import { UserFollowArtistListRequestDto } from "./dto/request/user.follow-artist-list.request.dto";
 import { UserFollowArtistResponseDto } from "./dto/response/user.follow-artist.response.dto";
 import { CartUpdateRequestDto } from "../cart/dto/request/cart.update.request.dto";
+import { UserProfileUpdateDto } from "./dto/request/user.profile-update.request.dto";
 
 @Controller("users")
 @ApiTags("user")
@@ -267,6 +268,27 @@ export class UserController {
 			statusCode: 200,
 			message: userMessage.unfollowArtist.success,
 			data: result,
+		};
+	}
+
+	@Patch(":id")
+	@ApiOperation({ summary: "사용자 프로필 수정" })
+	@AuthenticationDoc()
+	@DocResponse<DatabaseIdResponseDto>(userMessage.updateProfile.success, {
+		dto: DatabaseIdResponseDto,
+	})
+	async updateProfile(
+		@Param("id") id: number,
+		@Body() userProfileUpdateDto: UserProfileUpdateDto,
+	): Promise<DatabaseIdResponseDto> {
+		const user = await this.userService.updateProfile(id, userProfileUpdateDto);
+
+		return {
+			statusCode: 200,
+			message: userMessage.updateProfile.success,
+			data: {
+				id: Number(user.id),
+			},
 		};
 	}
 }

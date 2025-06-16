@@ -5,8 +5,9 @@ import { User, Prisma } from "@prisma/client";
 import { UserFindMeResponseDto } from "./dto/response/user.find-me.response.dto";
 import { HelperHashService } from "~/common/helper/services/helper.hash.service";
 import { ARTIST_NOT_FOUND_ERROR } from "../artist/artist.error";
-import { ALREADY_FOLLOWING_ARTIST_ERROR, NOT_FOLLOWING_ARTIST_ERROR } from "./user.error";
+import { ALREADY_FOLLOWING_ARTIST_ERROR, NOT_FOLLOWING_ARTIST_ERROR, USER_PROFILE_UPDATE_ERROR } from "./user.error";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
+import { UserProfileUpdatePayload } from "@hitbeatclub/shared-types/user";
 
 @Injectable()
 export class UserService {
@@ -326,5 +327,23 @@ export class UserService {
 		});
 
 		return this.prisma.serializeBigInt(follow);
+	}
+
+	async updateProfile(id: number, updateData: UserProfileUpdatePayload): Promise<User> {
+		try {
+			return this.prisma.user
+				.update({
+					where: { id },
+					data: {
+						...updateData,
+					},
+				})
+				.then((data) => this.prisma.serializeBigInt(data));
+		} catch (e: any) {
+			throw new BadRequestException({
+				...USER_PROFILE_UPDATE_ERROR,
+				detail: e.message,
+			});
+		}
 	}
 }
