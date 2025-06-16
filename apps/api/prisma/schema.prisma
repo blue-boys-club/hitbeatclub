@@ -28,6 +28,7 @@ model User {
   subscribedAt           DateTime?             @map("subscribed_at") @db.Timestamp(0)
   createdAt              DateTime?             @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt              DateTime?             @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedReason          String?               @map("deleted_reason") @db.VarChar(255)
   deletedAt              DateTime?             @map("deleted_at") @db.Timestamp(0)
   musicType              String?               @db.VarChar(10)
   artist                 Artist[]

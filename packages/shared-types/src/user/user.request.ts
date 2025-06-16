@@ -95,3 +95,9 @@ export const UserProfileUpdatePayloadSchema = z.object({
 });
 
 export type UserProfileUpdatePayload = z.infer<typeof UserProfileUpdatePayloadSchema>;
+
+export const UserDeletePayloadSchema = z.object({
+	deletedReason: z.string().min(1).max(255).describe("탈퇴 사유").default("개인정보 보호"),
+});
+
+export type UserDeletePayload = z.infer<typeof UserDeletePayloadSchema>;

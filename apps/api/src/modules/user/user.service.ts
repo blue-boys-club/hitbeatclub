@@ -1,4 +1,9 @@
-import { UserCreatePayload, UserFindMeResponse, UserUpdatePayload } from "@hitbeatclub/shared-types/user";
+import {
+	UserCreatePayload,
+	UserDeletePayload,
+	UserFindMeResponse,
+	UserUpdatePayload,
+} from "@hitbeatclub/shared-types/user";
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "~/common/prisma/prisma.service";
 import { User, Prisma } from "@prisma/client";
@@ -99,15 +104,16 @@ export class UserService {
 		}
 	}
 
-	async softDelete(id: number): Promise<User> {
+	async softDelete(id: number, userDeletePayload: UserDeletePayload) {
 		return this.prisma.user
 			.update({
-				where: { id: id },
+				where: { id },
 				data: {
 					deletedAt: new Date(),
+					deletedReason: userDeletePayload.deletedReason,
 				},
 			})
-			.then((data) => this.prisma.serializeBigInt(data) as User);
+			.then((data) => this.prisma.serializeBigInt(data));
 	}
 
 	async findById(id: number): Promise<User | null> {

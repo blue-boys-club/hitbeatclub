@@ -22,6 +22,7 @@ import { UserFollowArtistListRequestDto } from "./dto/request/user.follow-artist
 import { UserFollowArtistResponseDto } from "./dto/response/user.follow-artist.response.dto";
 import { CartUpdateRequestDto } from "../cart/dto/request/cart.update.request.dto";
 import { UserProfileUpdateDto } from "./dto/request/user.profile-update.request.dto";
+import { UserDeleteDto } from "./dto/request/user.delete.request.dto";
 
 @Controller("users")
 @ApiTags("user")
@@ -90,14 +91,14 @@ export class UserController {
 		dto: DatabaseIdResponseDto,
 	})
 	@Delete(":id")
-	async softDelete(@Param("id") id: number): Promise<DatabaseIdResponseDto> {
-		await this.userService.softDelete(id);
+	async softDelete(@Param("id") id: number, @Body() userDeletePayload: UserDeleteDto): Promise<DatabaseIdResponseDto> {
+		const user = await this.userService.softDelete(id, userDeletePayload);
 
 		return {
 			statusCode: 200,
 			message: userMessage.delete.success,
 			data: {
-				id,
+				id: user.id,
 			},
 		};
 	}
