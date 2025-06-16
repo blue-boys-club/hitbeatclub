@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/common/utils";

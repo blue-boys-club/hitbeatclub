@@ -1,3 +1,5 @@
+"use client";
+
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Popup, PopupContent, PopupFooter, PopupHeader, PopupTitle, PopupButton } from "@/components/ui/Popup";
 import { useFormContext } from "react-hook-form";

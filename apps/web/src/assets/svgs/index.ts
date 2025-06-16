@@ -102,6 +102,7 @@ import { Return } from "./Return";
 import { ArrowLeftShort } from "./ArrowLeftShort";
 import { ArrowDown } from "./ArrowDown";
 import { Outlink } from "./Outlink";
+import { Apple } from "./Apple";
 
 export {
 	AddCircle,
@@ -208,4 +209,5 @@ export {
 	ArrowLeftShort,
 	ArrowDown,
 	Outlink,
+	Apple,
 };
