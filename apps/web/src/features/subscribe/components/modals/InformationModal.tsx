@@ -1,3 +1,5 @@
+"use client";
+
 import { memo, useState } from "react";
 import { Popup, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
 import Link from "next/link";
