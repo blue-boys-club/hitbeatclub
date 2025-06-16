@@ -9,7 +9,7 @@ import { UpdateCartItemPayload } from "./cart.type";
  * @returns 장바구니 목록
  */
 export const getCartList = async () => {
-	const response = await axiosInstance.get<CommonResponse<CartListResponse[]>>("/carts");
+	const response = await axiosInstance.get<CommonResponse<CartListResponse>>("/carts");
 	return response.data;
 };
 

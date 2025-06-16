@@ -10,7 +10,6 @@ import {
 	CART_REMOVE_ERROR,
 	CART_FIND_ERROR,
 	CART_ITEM_NOT_FOUND_ERROR,
-	CART_ITEM_ALREADY_EXISTS_ERROR,
 	CART_UPDATE_ERROR,
 } from "./cart.error";
 
@@ -35,9 +34,19 @@ export class CartService {
 				.then((data) => this.prisma.serializeBigInt(data));
 
 			if (existingItem) {
-				throw new BadRequestException(CART_ITEM_ALREADY_EXISTS_ERROR);
+				// 기존 항목이 있으면 라이센스만 업데이트 (silent update)
+				return await this.prisma.cart
+					.update({
+						where: { id: existingItem.id },
+						data: {
+							licenseId: cartCreateDto.licenseId,
+							updatedAt: new Date(),
+						},
+					})
+					.then((data) => this.prisma.serializeBigInt(data));
 			}
 
+			// 새로운 항목 생성
 			return await this.prisma.cart
 				.create({
 					data: {
