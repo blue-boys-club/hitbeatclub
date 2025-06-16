@@ -35,5 +35,6 @@ export const MUTATION_KEYS = {
 	cart: {
 		create: ["cart", "create"],
 		delete: ["cart", "delete"],
+		update: ["cart", "update"],
 	},
 };

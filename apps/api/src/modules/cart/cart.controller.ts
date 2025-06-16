@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Param, Body, Req, ParseIntPipe } from "@nestjs/common";
+import { Controller, Get, Post, Delete, Patch, Param, Body, Req, ParseIntPipe } from "@nestjs/common";
 import { CartService } from "./cart.service";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
@@ -7,6 +7,7 @@ import { IResponse } from "~/common/response/interfaces/response.interface";
 import cartMessage from "./cart.message";
 import { DatabaseIdResponseDto } from "~/common/response/dtos/response.dto";
 import { CartCreateRequestDto } from "./dto/request/cart.create.request.dto";
+import { CartUpdateRequestDto } from "./dto/request/cart.update.request.dto";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
 import { CartListResponseDto } from "./dto/response/cart.list.response.dto";
 import { AuthenticationDoc } from "~/common/doc/decorators/auth.decorator";
@@ -71,6 +72,28 @@ export class CartController {
 			message: cartMessage.remove.success,
 			data: {
 				id,
+			},
+		};
+	}
+
+	@Patch(":id")
+	@ApiOperation({ summary: "장바구니 아이템 라이센스 변경" })
+	@AuthenticationDoc()
+	@DocResponse<DatabaseIdResponseDto>(cartMessage.update.success, {
+		dto: DatabaseIdResponseDto,
+	})
+	async update(
+		@Req() req: AuthenticatedRequest,
+		@Param("id", ParseIntPipe) id: number,
+		@Body() cartUpdateDto: CartUpdateRequestDto,
+	): Promise<DatabaseIdResponseDto> {
+		const updatedCartItem = await this.cartService.update(req.user.id, id, cartUpdateDto);
+
+		return {
+			statusCode: 200,
+			message: cartMessage.update.success,
+			data: {
+				id: Number(updatedCartItem.id),
 			},
 		};
 	}

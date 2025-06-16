@@ -32,3 +32,10 @@ export const CART_ITEM_ALREADY_EXISTS_ERROR = {
 	status: 400,
 	detail: "이미 장바구니에 담긴 상품입니다.",
 };
+
+export const CART_UPDATE_ERROR = {
+	title: "Cart update error",
+	code: 1305,
+	status: 400,
+	detail: "장바구니 업데이트에 실패했습니다.",
+};
