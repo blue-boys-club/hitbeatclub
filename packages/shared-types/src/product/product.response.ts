@@ -51,6 +51,20 @@ export const ProductResponseSchema = z.object({
 		profileImageUrl: z.string().url().describe("판매자 프로필 이미지 URL").default("https://example.com/profile.jpg"),
 		isVerified: z.number().describe("인증 여부").default(1),
 	}),
+	licenseInfo: z.array(
+		z.object({
+			id: z.number().describe("라이센스 ID"),
+			type: z.enum(["MASTER", "EXCLUSIVE"]).describe("라이센스 타입"),
+			price: z.number().describe("라이센스 가격"),
+		}),
+	),
+	coverImage: z
+		.object({
+			id: z.number().describe("커버 이미지 ID").default(1),
+			url: z.string().url().describe("커버 이미지 URL").default("https://example.com/cover.jpg"),
+			originName: z.string().describe("커버 이미지 원본 이름").default("cover.jpg"),
+		})
+		.nullable(),
 });
 
 export const ProductListResponseSchema = ProductResponseSchema.extend({
@@ -59,13 +73,6 @@ export const ProductListResponseSchema = ProductResponseSchema.extend({
 			id: z.number().describe("오디오 파일 ID").default(1),
 			url: z.string().url().describe("오디오 파일 URL").default("https://example.com/audio.mp3"),
 			originName: z.string().describe("오디오 파일 원본 이름").default("audio.mp3"),
-		})
-		.nullable(),
-	coverImage: z
-		.object({
-			id: z.number().describe("커버 이미지 ID").default(1),
-			url: z.string().url().describe("커버 이미지 URL").default("https://example.com/cover.jpg"),
-			originName: z.string().describe("커버 이미지 원본 이름").default("cover.jpg"),
 		})
 		.nullable(),
 }).describe("상품 목록");

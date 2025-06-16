@@ -1,6 +1,7 @@
 import { QUERY_KEYS } from "@/apis/query-keys";
 import { useAuthStore } from "@/stores/auth";
-import { getLikedProducts, getUserMe } from "../user.api";
+import { useShallow } from "zustand/react/shallow";
+import { getCartList, getLikedProducts, getUserMe } from "../user.api";
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { UserLikeProductListRequest, UserLikeProductListRequestSchema } from "@hitbeatclub/shared-types/user";
 
@@ -44,7 +45,7 @@ export const getLikedProductsInfiniteListQueryOption = (
 	payload: Omit<UserLikeProductListRequest, "page" | "limit">,
 ) => {
 	return infiniteQueryOptions({
-		queryKey: QUERY_KEYS.user.infiniteLikedProducts(userId, payload),
+		queryKey: QUERY_KEYS.user.infiniteLikedProducts(userId, payload as UserLikeProductListRequest),
 		queryFn: ({ pageParam }) => getLikedProducts(userId, pageParam as UserLikeProductListRequest),
 		select: (response) => ({
 			pages: response.pages.map((page) => page.data),
@@ -70,5 +71,17 @@ export const getLikedProductsInfiniteListQueryOption = (
 			limit: 10,
 		},
 		enabled: !!userId,
+	});
+};
+
+/**
+ *
+ */
+export const useCartListQueryOptions = (userId: number) => {
+	return queryOptions({
+		queryKey: QUERY_KEYS.cart.list,
+		queryFn: () => getCartList(userId),
+		enabled: !!userId,
+		select: (data) => data.data,
 	});
 };
