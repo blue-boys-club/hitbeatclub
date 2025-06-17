@@ -3,7 +3,7 @@ export enum ViewType {
 	LIST = "LIST",
 }
 
-export type SortOption = "Recent" | "A-Z" | "Popular";
+export type SortOption = "RECENT" | "NAME" | "POPULAR";
 
 export interface SortOptionType {
 	label: string;
@@ -11,10 +11,10 @@ export interface SortOptionType {
 }
 
 export interface Artist {
-	id: string;
-	name: string;
-	image: string;
-	followers: number;
+	artistId: number;
+	stageName: string;
+	profileImageUrl: string;
+	followerCount: number;
 	isFollowing: boolean;
 }
 

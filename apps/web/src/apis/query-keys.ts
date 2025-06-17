@@ -1,6 +1,7 @@
 import { ArtistProductListQueryRequest } from "@hitbeatclub/shared-types/artist";
 import { ProductListQueryRequest } from "@hitbeatclub/shared-types/product";
 import { UserLikeProductListRequest } from "@hitbeatclub/shared-types/user";
+import { UserFollowedArtistListPayload } from "./user/user.type";
 
 type QueryKey = Array<
 	string | number | boolean | Record<string, string | number | boolean | Array<number | string | boolean>>
@@ -62,6 +63,17 @@ const QUERY_KEYS = {
 	cart: {
 		_key: ["cart"],
 		list: ["cart", "list"],
+	},
+	followedArtists: {
+		_key: ["followedArtists"],
+		list: (userId: number, payload: UserFollowedArtistListPayload) => ["followedArtists", "list", userId, payload],
+		infiniteList: (userId: number, payload: UserFollowedArtistListPayload) => [
+			"followedArtists",
+			"list",
+			"infinite",
+			userId,
+			payload,
+		],
 	},
 };
 

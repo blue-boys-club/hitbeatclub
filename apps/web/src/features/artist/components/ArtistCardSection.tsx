@@ -2,15 +2,72 @@
 import { cn } from "@/common/utils";
 import { ArtistAvatar } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Artist, ArtistCardProps, ViewType } from "../artist.types";
 import { useRouter } from "next/navigation";
+import { useDeleteFollowedArtistMutation } from "../../../apis/user/mutations/useDeleteFollowedArtistMutation";
+import { useQuery } from "@tanstack/react-query";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { useUpdateFollowedArtistMutation } from "../../../apis/user/mutations/useUpdateFollowedArtistMutation";
 
-const ArtistCardSection = ({ artists, activeView }: ArtistCardProps) => {
-	const handleFollow = () => {};
+const ArtistCardSection = ({
+	artists,
+	activeView = ViewType.GRID,
+	hasNextPage,
+	loadMoreRef,
+}: ArtistCardProps & { hasNextPage: boolean; loadMoreRef: (node?: Element | null) => void }) => {
+	const { data: user } = useQuery(getUserMeQueryOption());
+	const { mutate: followArtist } = useUpdateFollowedArtistMutation(user?.id ?? 0);
+	const { mutate: deleteFollowedArtist } = useDeleteFollowedArtistMutation(user?.id ?? 0);
+
+	// 아티스트별 팔로우 상태를 추적하는 상태
+	const [followStates, setFollowStates] = useState<Record<number, boolean>>({});
+
+	// 초기 팔로우 상태 설정 (모든 아티스트를 팔로우 중으로 가정)
+	useEffect(() => {
+		if (artists) {
+			const initialStates = artists.reduce(
+				(acc, artist) => {
+					acc[artist.artistId] = true; // 초기에는 모든 아티스트가 팔로우 중
+					return acc;
+				},
+				{} as Record<number, boolean>,
+			);
+			setFollowStates(initialStates);
+		}
+	}, [artists]);
+
+	const handleFollow = (e: React.MouseEvent, artistId: number) => {
+		e.stopPropagation();
+
+		const isCurrentlyFollowing = followStates[artistId];
+
+		if (isCurrentlyFollowing) {
+			// 현재 팔로우 중이면 언팔로우
+			deleteFollowedArtist(artistId, {
+				onSuccess: () => {
+					setFollowStates((prev) => ({
+						...prev,
+						[artistId]: false,
+					}));
+				},
+			});
+		} else {
+			// 현재 팔로우하지 않으면 팔로우
+			followArtist(artistId, {
+				onSuccess: () => {
+					setFollowStates((prev) => ({
+						...prev,
+						[artistId]: true,
+					}));
+				},
+			});
+		}
+	};
+
 	const router = useRouter();
 
-	const onClickArtist = (artistId: string) => {
+	const onClickArtist = (artistId: number) => {
 		router.push(`/artists/${artistId}`);
 	};
 
@@ -22,81 +79,91 @@ const ArtistCardSection = ({ artists, activeView }: ArtistCardProps) => {
 					activeView === ViewType.LIST && "flex flex-col",
 				)}
 			>
-				{artists.length > 0 ? (
-					artists.map((artist: Artist) => (
-						<li
-							key={artist.id}
-							className={cn(
-								activeView === ViewType.GRID && "flex flex-col items-center justify-center gap-2",
-								activeView === ViewType.LIST && "flex items-center justify-between border-t-4px py-2",
-							)}
-							onClick={() => onClickArtist(artist.id)}
-						>
-							<div
+				{artists && artists.length > 0 ? (
+					artists.map((artist: Artist) => {
+						const isFollowing = followStates[artist.artistId];
+
+						return (
+							<li
+								key={artist.artistId}
 								className={cn(
-									activeView === ViewType.GRID && "flex flex-col gap-2",
-									activeView === ViewType.LIST && "flex items-center gap-4",
+									activeView === ViewType.GRID && "flex flex-col items-center justify-center gap-2 cursor-pointer",
+									activeView === ViewType.LIST && "flex items-center justify-between border-t-4px py-2 cursor-pointer",
 								)}
+								onClick={() => onClickArtist(artist.artistId)}
 							>
-								<div className="flex items-center justify-center pt-2">
-									<ArtistAvatar
-										src={artist.image}
-										alt={artist.name}
-										className={cn(
-											activeView === ViewType.GRID && "size-[174px]",
-											activeView === ViewType.LIST && "size-[59px]",
-											"bg-black",
-										)}
-									/>
-								</div>
 								<div
 									className={cn(
-										activeView === ViewType.GRID && "flex flex-col",
-										activeView === ViewType.LIST && "flex flex-col items-start",
+										activeView === ViewType.GRID && "flex flex-col gap-2",
+										activeView === ViewType.LIST && "flex items-center gap-4",
 									)}
 								>
-									<p
+									<div className="flex items-center justify-center pt-2">
+										<ArtistAvatar
+											src={artist.profileImageUrl}
+											alt={artist.stageName}
+											className={cn(
+												activeView === ViewType.GRID && "size-[174px]",
+												activeView === ViewType.LIST && "size-[59px]",
+												"bg-black",
+											)}
+										/>
+									</div>
+									<div
 										className={cn(
-											"text-[#000]",
-											"text-center",
-											"font-suisse-intl",
-											"text-[20px]",
-											"not-italic",
-											"font-semibold",
-											"leading-[28px]",
-											"tracking-[0.2px]",
+											activeView === ViewType.GRID && "flex flex-col",
+											activeView === ViewType.LIST && "flex flex-col items-start",
 										)}
 									>
-										{artist.name}
-									</p>
-									<p
-										className={cn(
-											"text-center",
-											"text-[#4D4D4F]",
-											"font-suisse-intl",
-											"text-[12px]",
-											"not-italic",
-											"font-[450]",
-											"leading-[150%]",
-											"tracking-[0.12px]",
-										)}
-									>
-										{artist.followers} Followers
-									</p>
+										<p
+											className={cn(
+												"text-[#000]",
+												"text-center",
+												"font-suisse-intl",
+												"text-[20px]",
+												"not-italic",
+												"font-semibold",
+												"leading-[28px]",
+												"tracking-[0.2px]",
+											)}
+										>
+											{artist.stageName}
+										</p>
+										<p
+											className={cn(
+												"text-center",
+												"text-[#4D4D4F]",
+												"font-suisse-intl",
+												"text-[12px]",
+												"not-italic",
+												"font-[450]",
+												"leading-[150%]",
+												"tracking-[0.12px]",
+											)}
+										>
+											{artist.followerCount} Followers
+										</p>
+									</div>
 								</div>
-							</div>
-							<Button
-								size="sm"
-								rounded="full"
-								variant={artist.isFollowing ? "fill" : "outline"}
-								onClick={handleFollow}
-							>
-								{artist.isFollowing ? "Following" : "Follow"}
-							</Button>
-						</li>
-					))
+								<Button
+									size="sm"
+									rounded="full"
+									variant={isFollowing ? "fill" : "outline"}
+									onClick={(e) => handleFollow(e, artist.artistId)}
+								>
+									{isFollowing ? "Following" : "Follow"}
+								</Button>
+							</li>
+						);
+					})
 				) : (
 					<div>팔로우 한 아티스트가 없습니다.</div>
+				)}
+				{hasNextPage && (
+					<div
+						ref={loadMoreRef}
+						className="h-4"
+					/>
 				)}
 			</ul>
 		</section>

@@ -1,12 +1,14 @@
 "use client";
+import { getUserMeQueryOption, useFollowedArtistsQueryOptions } from "@/apis/user/query/user.query-option";
 import { Grid, Menu } from "@/assets/svgs";
 import { cn } from "@/common/utils";
 import { SquareDropdown } from "@/components/ui";
 import { SearchTag } from "@/components/ui/SearchTag";
 import { SORT_OPTIONS } from "@/features/artist/artist.constants";
 import { ViewType, type ArtistSearchBarProps, type SortOption } from "@/features/artist/artist.types";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useEffect } from "react";
 
 const ArtistSearchBar = ({
 	activeView,
