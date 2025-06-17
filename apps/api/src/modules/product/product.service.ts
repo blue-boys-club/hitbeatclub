@@ -939,6 +939,19 @@ export class ProductService {
 		// 삭제되지 않은 제품만
 		productWhereConditions.deletedAt = null;
 
+		const orderBy: Prisma.ProductLikeOrderByWithRelationInput = {};
+		if (payload.sort === "RECENT") {
+			orderBy.createdAt = "desc";
+		} else if (payload.sort === "NAME") {
+			orderBy.product = { productName: "asc" };
+		} else if (payload.sort === "POPULAR") {
+			orderBy.product = {
+				productLike: {
+					_count: "desc",
+				},
+			};
+		}
+
 		const where: Prisma.ProductLikeWhereInput = {
 			userId: BigInt(userId),
 			deletedAt: null,
@@ -994,7 +1007,7 @@ export class ProductService {
 				},
 				skip: (page - 1) * limit,
 				take: limit,
-				orderBy: payload.sort === "RECENT" ? { createdAt: "desc" } : { product: { productName: "asc" } },
+				orderBy: orderBy,
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
 
