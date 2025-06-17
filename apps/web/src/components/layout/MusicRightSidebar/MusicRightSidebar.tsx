@@ -16,6 +16,7 @@ import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { useLikeProductMutation } from "@/apis/product/mutations/useLikeProductMutation";
 import { useUnlikeProductMutation } from "@/apis/product/mutations/useUnLikeProductMutation";
 import { useToast } from "@/hooks/use-toast";
+import { useAudioStore } from "@/stores/audio";
 import { PurchaseWithCartTrigger } from "@/features/product/components";
 
 /**
@@ -28,9 +29,18 @@ import { PurchaseWithCartTrigger } from "@/features/product/components";
 export const MusicRightSidebar = memo(() => {
 	const router = useRouter();
 	const { data: user } = useQuery(getUserMeQueryOption());
+
 	const { toast } = useToast();
 	const likeProductMutation = useLikeProductMutation();
 	const unlikeProductMutation = useUnlikeProductMutation();
+
+	const { audioStoreId, audioStoreIsLiked, updateIsLiked } = useAudioStore(
+		useShallow((state) => ({
+			audioStoreId: state.id,
+			audioStoreIsLiked: state.isLiked,
+			updateIsLiked: state.updateIsLiked,
+		})),
+	);
 
 	const {
 		isOpen,
@@ -50,6 +60,8 @@ export const MusicRightSidebar = memo(() => {
 		select: (data) => data.data,
 	});
 
+	const isLiked = audioStoreId === Number(currentTrackId) ? audioStoreIsLiked : currentTrack?.isLiked;
+
 	const handleToggleOpen = () => {
 		setRightSidebar(!isOpen);
 	};
@@ -67,8 +79,14 @@ export const MusicRightSidebar = memo(() => {
 		}
 
 		// 현재 좋아요 상태에 따라 적절한 mutation 실행
-		if (currentTrack.isLiked) {
+		if (isLiked) {
 			unlikeProductMutation.mutate(currentTrack.id, {
+				onSuccess: () => {
+					// 현재 트랙이 스토어의 트랙과 같으면 스토어도 업데이트
+					if (audioStoreId === currentTrack.id) {
+						updateIsLiked(false);
+					}
+				},
 				onError: () => {
 					toast({
 						description: "좋아요 취소에 실패했습니다.",
@@ -78,6 +96,12 @@ export const MusicRightSidebar = memo(() => {
 			});
 		} else {
 			likeProductMutation.mutate(currentTrack.id, {
+				onSuccess: () => {
+					// 현재 트랙이 스토어의 트랙과 같으면 스토어도 업데이트
+					if (audioStoreId === currentTrack.id) {
+						updateIsLiked(true);
+					}
+				},
 				onError: () => {
 					toast({
 						description: "좋아요에 실패했습니다.",
@@ -187,7 +211,7 @@ export const MusicRightSidebar = memo(() => {
 							onClick={onLikeClick}
 							className="flex items-center justify-center w-8 h-8 transition-opacity cursor-pointer hover:opacity-80"
 						>
-							{currentTrack?.isLiked ? (
+							{isLiked ? (
 								<Image
 									src="/assets/ActiveLike.png"
 									alt="active like"

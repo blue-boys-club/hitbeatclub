@@ -9,6 +9,8 @@ import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
 import type { UserLikeProductListRequest } from "@hitbeatclub/shared-types/user";
 import { ProductItem } from "@/features/product/components";
 import { useUnlikeProductMutation } from "@/apis/product/mutations";
+import { useAudioStore } from "@/stores/audio";
+import { useShallow } from "zustand/react/shallow";
 
 /**
  * 좋아요 페이지의 메인 컴포넌트
@@ -21,6 +23,12 @@ const ProductLikeListPage = memo(() => {
 	const { data: userMe, isSuccess: isUserMeSuccess } = useQuery({
 		...getUserMeQueryOption(),
 	});
+
+	const { updateIsLiked } = useAudioStore(
+		useShallow((state) => ({
+			updateIsLiked: state.updateIsLiked,
+		})),
+	);
 
 	// 필터 상태 관리
 	const [filters, setFilters] = useState<Omit<UserLikeProductListRequest, "page" | "limit">>({
@@ -86,9 +94,13 @@ const ProductLikeListPage = memo(() => {
 	);
 
 	const { mutate: unlikeProduct } = useUnlikeProductMutation();
+
 	const handleLike = useCallback((productId: number) => {
-		console.log(productId);
-		unlikeProduct(productId);
+		unlikeProduct(productId, {
+			onSuccess: () => {
+				updateIsLiked(false);
+			},
+		});
 	}, []);
 
 	// 사용자 정보가 없으면 null 반환

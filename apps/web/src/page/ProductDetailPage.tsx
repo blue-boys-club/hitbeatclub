@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useMemo, useState } from "react";
+import { memo, useMemo, useState, useCallback } from "react";
 import Image from "next/image";
 import { Acapella, Beat, Like, RedPlayCircle } from "@/assets/svgs";
 import { AlbumAvatar, FreeDownloadButton, UserAvatar } from "@/components/ui";
@@ -10,8 +10,6 @@ import { LicenseNote, ProductDetailLicense, PurchaseWithCartTrigger } from "../f
 import { LicenseColor, LicenseType } from "../features/product/product.constants";
 import { LICENSE_MAP_TEMPLATE } from "@/apis/product/product.dummy";
 import { useRouter } from "next/navigation";
-import { useLayoutStore } from "@/stores/layout";
-import { useShallow } from "zustand/react/shallow";
 import { useQuery } from "@tanstack/react-query";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
@@ -20,45 +18,8 @@ import { useLikeProductMutation } from "@/apis/product/mutations/useLikeProductM
 import { useUnlikeProductMutation } from "@/apis/product/mutations/useUnLikeProductMutation";
 import UserProfileImage from "@/assets/images/user-profile.png";
 import { cn } from "@/common/utils";
+import { useAudioStore } from "@/stores/audio";
 import Link from "next/link";
-
-// interface TrackInfo {
-// 	title: string;
-// 	artist: string;
-// 	description: string;
-// 	albumImgSrc: string;
-// 	price: number;
-// 	genres: string[];
-// 	tags: string[];
-// }
-
-// const LICENSE_INFO = {
-// 	Exclusive: {
-// 		price: "140,000 KRW",
-// 		specialNote: {
-// 			text: "저작권 표기 필수",
-// 			color: LicenseColor.RED,
-// 		},
-// 	},
-// 	Master: {
-// 		price: "40,000 KRW",
-// 		specialNote: {
-// 			text: "저작권 일체 판매",
-// 			color: LicenseColor.BLUE,
-// 		},
-// 	},
-// } as const;
-
-// const trackInfo: TrackInfo = {
-// 	title: "Secret Garden",
-// 	artist: "NotJake",
-// 	description:
-// 		"플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운무 가능 타입비트 입니다.플레이보이 카티 타입비트 무료다운 가능 타입비트 입니다.",
-// 	albumImgSrc: "https://placehold.co/192x192",
-// 	price: 15000,
-// 	genres: ["C# minor", "BPM 120", "Boom bap", "Old School"],
-// 	tags: ["G-funk", "Trippy", "Flower"],
-// };
 
 interface ProductDetailPageProps {
 	trackId: number;
@@ -69,6 +30,10 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 	const { data: product } = useQuery({
 		...getProductQueryOption(trackId),
 	});
+
+	const setAudioData = useAudioStore((state) => state.setAudioData);
+	const updateIsLiked = useAudioStore((state) => state.updateIsLiked);
+
 	const { toast } = useToast();
 	const likeProductMutation = useLikeProductMutation();
 	const unlikeProductMutation = useUnlikeProductMutation();
@@ -78,6 +43,21 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 	const isSubscribed = useMemo(() => {
 		return !!user?.subscribedAt;
 	}, [user?.subscribedAt]);
+
+	const onPlay = useCallback(() => {
+		if (!product) return;
+
+		const { id, productName, seller, isLiked, audioFile, coverImage } = product;
+
+		setAudioData({
+			id,
+			productName,
+			seller,
+			isLiked,
+			audioFile,
+			coverImage,
+		});
+	}, [product, setAudioData]);
 
 	const onLikeClick = () => {
 		if (!user) {
@@ -94,6 +74,13 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 		// 현재 좋아요 상태에 따라 적절한 mutation 실행
 		if (product.isLiked) {
 			unlikeProductMutation.mutate(product.id, {
+				onSuccess: () => {
+					// 현재 재생 중인 트랙과 같은 ID일 때만 좋아요 상태 업데이트
+					const currentAudioState = useAudioStore.getState();
+					if (currentAudioState.id === product.id) {
+						updateIsLiked(false);
+					}
+				},
 				onError: () => {
 					toast({
 						description: "좋아요 취소에 실패했습니다.",
@@ -103,6 +90,13 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 			});
 		} else {
 			likeProductMutation.mutate(product.id, {
+				onSuccess: () => {
+					// 현재 재생 중인 트랙과 같은 ID일 때만 좋아요 상태 업데이트
+					const currentAudioState = useAudioStore.getState();
+					if (currentAudioState.id === product.id) {
+						updateIsLiked(true);
+					}
+				},
 				onError: () => {
 					toast({
 						description: "좋아요에 실패했습니다.",
@@ -165,6 +159,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 							<button
 								className="cursor-pointer"
 								aria-label="재생하기"
+								onClick={onPlay}
 							>
 								<RedPlayCircle />
 							</button>
