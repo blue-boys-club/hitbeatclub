@@ -5,6 +5,8 @@ import {
 	UserLikeProductListRequest,
 	UserUpdatePayload,
 	UserUpdatePayloadSchema,
+	UserProfileUpdatePayload,
+	UserPasswordResetPayload,
 } from "@hitbeatclub/shared-types/user";
 import axiosInstance from "@/apis/api.client";
 import { z } from "zod";
@@ -31,8 +33,12 @@ export const getUserMe = async (): Promise<CommonResponse<UserFindMeResponse>> =
 /**
  * 회원 탈퇴
  */
-export const leaveMe = async (userId: number): Promise<CommonResponseId> => {
-	const response = await axiosInstance.delete<CommonResponseId>(`/users/${userId}`);
+export const leaveMe = async (userId: number, deleteReason: string): Promise<CommonResponseId> => {
+	const response = await axiosInstance.delete<CommonResponseId>(`/users/${userId}`, {
+		data: {
+			deleteReason,
+		},
+	});
 	return response.data;
 };
 
@@ -45,20 +51,6 @@ export const leaveMe = async (userId: number): Promise<CommonResponseId> => {
 // 	return response.data;
 // };
 
-// /**
-//  * 유저 정보 수정
-//  * @param userId 유저 아이디
-//  * @param data 유저 정보
-//  * @returns 유저 정보
-//  */
-// export const updateUser = async (
-// 	userId: number,
-// 	data: UserUpdatePayload,
-// ): Promise<CommonResponse<UserFindMeResponse>> => {
-// 	const response = await axiosInstance.patch<CommonResponse<UserFindMeResponse>>(`/users/${userId}`, data);
-// 	return response.data;
-// };
-
 /**
  * social join
  * @param userId 유저 아이디
@@ -68,6 +60,28 @@ export const leaveMe = async (userId: number): Promise<CommonResponseId> => {
 export const socialJoinUser = async (userId: number, data: UserUpdatePayload): Promise<CommonResponseId> => {
 	const parsed = UserUpdatePayloadSchema.parse(data);
 	const response = await axiosInstance.patch<CommonResponseId>(`/users/${userId}/social-join`, parsed);
+	return response.data;
+};
+
+/**
+ * 유저 프로필 수정
+ * @param userId 유저 아이디
+ * @param data 프로필 업데이트 데이터
+ * @returns 업데이트 결과
+ */
+export const updateUserProfile = async (userId: number, data: UserProfileUpdatePayload): Promise<CommonResponseId> => {
+	const response = await axiosInstance.patch<CommonResponseId>(`/users/${userId}`, data);
+	return response.data;
+};
+
+/**
+ * 유저 비밀번호 재설정
+ * @param userId 유저 아이디
+ * @param data 비밀번호 업데이트 데이터
+ * @returns 업데이트 결과
+ */
+export const updateUserPassword = async (userId: number, data: UserPasswordResetPayload): Promise<CommonResponseId> => {
+	const response = await axiosInstance.patch<CommonResponseId>(`/users/${userId}/password`, data);
 	return response.data;
 };
 

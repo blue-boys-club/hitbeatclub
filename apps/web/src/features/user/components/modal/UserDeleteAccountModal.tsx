@@ -1,4 +1,5 @@
 "use client";
+import { useDeleteUserMutation } from "@/apis/user/mutations/useDeleteUserMutation";
 import { cn } from "@/common/utils";
 import { PopupButton } from "@/components/ui";
 import { Popup, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
@@ -11,12 +12,14 @@ interface UserDeleteAccountModalProps {
 }
 const UserDeleteAccountModal = ({ isModalOpen, onClose, onOpen }: UserDeleteAccountModalProps) => {
 	const [isChecked, setIsChecked] = useState(false);
-
 	const [checkStates, setCheckStates] = useState({
 		profit: false,
 		product: false,
 		reregister: false,
 	});
+	const [deletedReason, setDeletedReason] = useState("");
+
+	const deleteUserMutation = useDeleteUserMutation();
 
 	const handleCheckChange = (key: keyof typeof checkStates) => (e: React.ChangeEvent<HTMLInputElement>) => {
 		const newCheckStates = { ...checkStates, [key]: e.target.checked };
@@ -24,10 +27,26 @@ const UserDeleteAccountModal = ({ isModalOpen, onClose, onOpen }: UserDeleteAcco
 		setIsChecked(Object.values(newCheckStates).every((state) => state));
 	};
 
-	const deleteAccount = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-		onClose();
-		onOpen();
+	const handleDeleteReasonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+		setDeletedReason(e.target.value);
 	};
+
+	const deleteUserAccount = () => {
+		try {
+			deleteUserMutation.mutate(
+				{ deletedReason },
+				{
+					onSuccess: () => {
+						onClose();
+						onOpen();
+					},
+				},
+			);
+		} catch (error) {
+			console.error(error);
+		}
+	};
+
 	return (
 		<Popup
 			open={isModalOpen}
@@ -81,14 +100,17 @@ const UserDeleteAccountModal = ({ isModalOpen, onClose, onOpen }: UserDeleteAcco
 						더 나은 서비스를 위해 의견을 듣고 싶어요!
 					</p>
 					<div className="flex pt-6">
-						<textarea className="w-full h-[100px] resize-none outline-none border-x-1 border-y-2 border-black rounded-md px-1" />
+						<textarea
+							className="w-full h-[100px] resize-none outline-none border-x-1 border-y-2 border-black rounded-md px-1"
+							onChange={handleDeleteReasonChange}
+						/>
 					</div>
 				</div>
 				<PopupFooter>
 					<PopupButton
 						className={cn("bg-[#FF1900]", !isChecked && "opacity-50")}
 						disabled={!isChecked}
-						onClick={deleteAccount}
+						onClick={deleteUserAccount}
 					>
 						탈퇴 진행
 					</PopupButton>
