@@ -9,6 +9,7 @@ import { MobileProductSection } from "@/features/mobile/product/components/Mobil
 import { useState } from "react";
 import { cn } from "@/common/utils";
 import { Footer } from "@/components/layout/Footer";
+import { MobileFullScreenPlayer } from "@/features/mobile/components";
 
 export default function MobileMainPage() {
 	const { data } = useQuery({

@@ -1,12 +1,16 @@
 interface HeartProps {
+	className?: string;
 	active?: boolean;
+	width?: string;
+	height?: string;
 }
 
-export const Heart = ({ active = false }: HeartProps) => {
+export const Heart = ({ className, active = false, width = "16", height = "15" }: HeartProps) => {
 	return (
 		<svg
-			width="16"
-			height="15"
+			className={className}
+			width={width}
+			height={height}
 			viewBox="0 0 16 15"
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
