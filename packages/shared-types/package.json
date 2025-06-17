@@ -85,6 +85,11 @@
 			"types": "./dist/notice/index.d.ts",
 			"import": "./dist/notice/index.mjs",
 			"require": "./dist/notice/index.js"
+		},
+		"./payment": {
+			"types": "./dist/payment/index.d.ts",
+			"import": "./dist/payment/index.mjs",
+			"require": "./dist/payment/index.js"
 		}
 	},
 	"files": [

@@ -1,0 +1,1 @@
+export const PAYMENT_PORTONE_API_KEY = process.env.PAYMENT_PORTONE_API_KEY;

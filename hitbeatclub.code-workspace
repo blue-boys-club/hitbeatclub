@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"name": "api",
+			"path": "./apps/api",
+		},
+		{
+			"name": "web",
+			"path": "./apps/web",
+		},
+		{
+			"name": "workspace",
+			"path": ".",
+		},
+	],
+}
