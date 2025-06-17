@@ -207,7 +207,7 @@ export class UserService {
 		options: {
 			page?: number;
 			limit?: number;
-			sort?: "RECENT" | "POPULAR";
+			sort?: "RECENT" | "POPULAR" | "NAME";
 			search?: string;
 		},
 	) {
@@ -240,6 +240,10 @@ export class UserService {
 				orderBy: {
 					_count: "desc",
 				},
+			};
+		} else if (sort === "NAME") {
+			orderBy.artist = {
+				stageName: "asc",
 			};
 		}
 

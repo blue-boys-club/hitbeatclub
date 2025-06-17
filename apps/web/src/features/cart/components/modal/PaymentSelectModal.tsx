@@ -213,7 +213,7 @@ export const PaymentSelectModal = ({
 			console.log("Payment completed:", completionResponse);
 
 			// 성공 콜백 호출
-			onPaymentComplete?.(orderResponse);
+			onPaymentComplete?.(orderResponse.data);
 		} catch (error) {
 			console.error("Payment error:", error);
 
