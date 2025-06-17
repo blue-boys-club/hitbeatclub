@@ -16,6 +16,7 @@ import { PrismaService } from "~/common/prisma/prisma.service";
 import { CartService } from "../cart/cart.service";
 import { PaymentOrderCreateRequestDto } from "./dto/request/payment.order.create.request.dto";
 import { PaymentCompleteRequestDto } from "./dto/request/payment.complete.request.dto";
+import { PaymentOrderCreateResponseDto } from "./dto/response/payment.order-create.response.dto";
 import { PaymentOrderResponseDto } from "./dto/response/payment.order.response.dto";
 import { PaymentCompletionResponseDto } from "./dto/response/payment.completion.response.dto";
 import {
@@ -30,6 +31,10 @@ import {
 // @ts-ignore -- vscode doesn't recognize this is a dual package even though it is and can be compiled
 import { PortOneClient, Payment } from "@portone/server-sdk";
 import { PAYMENT_PORTONE_API_KEY } from "./payment.constant";
+import z from "zod";
+import { type OrderStatus } from "@hitbeatclub/shared-types/payment";
+import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types";
+import { FileService } from "~/modules/file/file.service";
 
 // CartService.findAll()이 실제로 반환하는 타입 정의
 interface CartItemWithProduct {
@@ -84,6 +89,7 @@ export class PaymentService {
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly cartService: CartService,
+		private readonly fileService: FileService,
 	) {
 		this.portone = PortOneClient({
 			secret: PAYMENT_PORTONE_API_KEY,
@@ -94,7 +100,7 @@ export class PaymentService {
 	 * 결제 주문을 생성합니다.
 	 * 카트에서 아이템들을 가져와서 주문을 생성하고 결제를 위한 정보를 반환합니다.
 	 */
-	async createPaymentOrder(userId: number, dto: PaymentOrderCreateRequestDto): Promise<PaymentOrderResponseDto> {
+	async createPaymentOrder(userId: number, dto: PaymentOrderCreateRequestDto): Promise<PaymentOrderCreateResponseDto> {
 		try {
 			// 사용자의 카트 아이템들 조회
 			const cartItems = (await this.cartService.findAll(userId)) as unknown as CartItemWithProduct[];
@@ -141,11 +147,6 @@ export class PaymentService {
 					status: "PENDING",
 					paymentId: dto.paymentId,
 				},
-				select: {
-					id: true,
-					uuid: true,
-					orderNumber: true,
-				},
 			});
 
 			// 주문 아이템들 생성 (개별 상품 정보)
@@ -160,20 +161,12 @@ export class PaymentService {
 			});
 
 			return {
-				orderId: Number(order.id),
+				orderNumber: order.orderNumber,
 				orderUuid: order.uuid,
-				orderNumber: orderNumber,
-				paymentId: dto.paymentId,
-				orderName,
-				totalAmount,
-				items: selectedItems.map((item) => ({
-					id: Number(item.id),
-					productId: Number(item.product.id),
-					productName: item.product.productName,
-					price: item.selectedLicense.price,
-					licenseType: item.selectedLicense.type,
-					imageUrl: item.product.coverImage?.url,
-				})),
+				paymentId: order.paymentId,
+				orderName: order.orderName,
+				totalAmount: order.totalAmount,
+				createdAt: order.createdAt,
 			};
 		} catch (error) {
 			this.logger.error(error, "결제 주문 생성 실패");
@@ -203,15 +196,17 @@ export class PaymentService {
 			}
 
 			// 데이터베이스에서 주문 정보 조회
-			const order = await this.prisma.order.findFirst({
-				where: {
-					buyerId: BigInt(userId),
-					paymentId: dto.paymentId,
-				},
-				include: {
-					orderItems: true,
-				},
-			});
+			const order = await this.prisma.order
+				.findFirst({
+					where: {
+						buyerId: BigInt(userId),
+						paymentId: dto.paymentId,
+					},
+					include: {
+						orderItems: true,
+					},
+				})
+				.then((order) => this.prisma.serializeBigIntTyped(order));
 
 			if (!order) {
 				throw new NotFoundException({
@@ -335,10 +330,12 @@ export class PaymentService {
 			}
 
 			// 데이터베이스에서 주문 정보 조회
-			const order = await this.prisma.order.findFirst({
-				where: { paymentId },
-				include: { orderItems: true },
-			});
+			const order = await this.prisma.order
+				.findFirst({
+					where: { paymentId },
+					include: { orderItems: true },
+				})
+				.then((order) => this.prisma.serializeBigIntTyped(order));
 
 			if (!order) {
 				this.logger.warn(`웹훅에서 주문 정보를 찾을 수 없음: paymentId=${paymentId}`);
@@ -385,18 +382,20 @@ export class PaymentService {
 	 */
 	private async clearCartAfterPayment(userId: number, orderItems: any[]) {
 		try {
-			const cartItems = await this.prisma.cart.findMany({
-				where: {
-					userId: BigInt(userId),
-					deletedAt: null,
-					productId: {
-						in: orderItems.map((item) => item.productId),
+			const cartItems = await this.prisma.cart
+				.findMany({
+					where: {
+						userId: BigInt(userId),
+						deletedAt: null,
+						productId: {
+							in: orderItems.map((item) => item.productId),
+						},
+						licenseId: {
+							in: orderItems.map((item) => item.licenseId),
+						},
 					},
-					licenseId: {
-						in: orderItems.map((item) => item.licenseId),
-					},
-				},
-			});
+				})
+				.then((cartItems) => this.prisma.serializeBigIntTyped(cartItems));
 
 			if (cartItems.length > 0) {
 				await this.prisma.cart.updateMany({
@@ -419,37 +418,39 @@ export class PaymentService {
 	}
 
 	/**
-	 * 주문 조회 (UUID 기반)
+	 * 주문 조회 (orderNumber 기반)
 	 */
-	async getOrder(userId: number, orderUuid: string) {
-		const order = await this.prisma.order.findFirst({
-			where: {
-				uuid: orderUuid,
-				buyerId: BigInt(userId),
-			},
-			include: {
-				orderItems: {
-					include: {
-						product: {
-							select: {
-								id: true,
-								productName: true,
-								artistSellerIdToArtist: {
-									select: {
-										stageName: true,
+	async getOrder(userId: number, orderNumber: string) {
+		const order = await this.prisma.order
+			.findFirst({
+				where: {
+					orderNumber: orderNumber,
+					buyerId: BigInt(userId),
+				},
+				include: {
+					orderItems: {
+						include: {
+							product: {
+								select: {
+									id: true,
+									productName: true,
+									artistSellerIdToArtist: {
+										select: {
+											stageName: true,
+										},
 									},
 								},
 							},
-						},
-						license: {
-							select: {
-								type: true,
+							license: {
+								select: {
+									type: true,
+								},
 							},
 						},
 					},
 				},
-			},
-		});
+			})
+			.then((order) => this.prisma.serializeBigIntTyped(order));
 
 		if (!order) {
 			throw new NotFoundException({
@@ -479,65 +480,161 @@ export class PaymentService {
 	/**
 	 * 사용자의 주문 목록 조회
 	 */
-	async getUserOrders(userId: number, page: number = 1, limit: number = 10) {
+	async getUserOrders(
+		userId: number,
+		page: number = 1,
+		limit: number = 10,
+	): Promise<{
+		data: PaymentOrderResponseDto[];
+		_pagination: {
+			page: number;
+			limit: number;
+			totalPage: number;
+			total: number;
+		};
+	}> {
 		const skip = (page - 1) * limit;
 
 		const [orders, total] = await Promise.all([
-			this.prisma.order.findMany({
-				where: { buyerId: BigInt(userId) },
-				include: {
-					orderItems: {
-						include: {
-							product: {
-								select: {
-									id: true,
-									productName: true,
-									artistSellerIdToArtist: {
-										select: {
-											stageName: true,
+			this.prisma.order
+				.findMany({
+					where: {
+						buyerId: BigInt(userId),
+						// only completed orders
+						status: {
+							not: "INITIATE",
+						},
+					},
+					include: {
+						orderItems: {
+							include: {
+								product: {
+									include: {
+										artistSellerIdToArtist: {
+											omit: {
+												userId: true,
+											},
+										},
+										productLicense: {
+											select: {
+												license: {
+													select: {
+														id: true,
+														type: true,
+													},
+												},
+											},
+										},
+										productGenre: {
+											select: {
+												genre: {
+													select: {
+														id: true,
+														name: true,
+													},
+												},
+											},
+										},
+										productTag: {
+											select: {
+												tag: {
+													select: {
+														id: true,
+														name: true,
+													},
+												},
+											},
+										},
+										productLike: {
+											where: { userId: BigInt(userId), deletedAt: null },
 										},
 									},
 								},
-							},
-							license: {
-								select: {
-									type: true,
+								license: {
+									select: {
+										type: true,
+									},
 								},
 							},
 						},
 					},
-				},
-				orderBy: { createdAt: "desc" },
-				skip,
-				take: limit,
-			}),
-			this.prisma.order.count({
-				where: { buyerId: BigInt(userId) },
-			}),
+					orderBy: { createdAt: "desc" },
+					skip,
+					take: limit,
+				})
+				.then((orders) => this.prisma.serializeBigIntTyped(orders)),
+			this.prisma.order
+				.count({
+					where: { buyerId: BigInt(userId) },
+				})
+				.then((total) => this.prisma.serializeBigIntTyped(total)),
 		]);
 
-		return {
-			orders: orders.map((order) => ({
-				...order,
-				id: Number(order.id),
-				buyerId: Number(order.buyerId),
-				orderItems: order.orderItems.map((item) => ({
-					...item,
-					id: Number(item.id),
-					orderId: Number(item.orderId),
-					productId: Number(item.productId),
-					licenseId: Number(item.licenseId),
-					product: {
-						...item.product,
-						id: Number(item.product.id),
-					},
+		const productTrim = (p) => {
+			const isLiked = p.productLike.length > 0 ? true : false;
+			const newProduct = {
+				...p,
+				artistSellerIdToArtist: {
+					...p.artistSellerIdToArtist,
+					etcAccounts: p.artistSellerIdToArtist.etcAccounts as string[],
+				},
+				licenses: p.productLicense.map((l) => ({
+					id: l.license.id,
+					type: l.license.type,
+					price: l.price,
 				})),
+				genres: p.productGenre.map((pg) => ({
+					id: pg.genre.id,
+					name: pg.genre.name,
+				})),
+				tags: p.productTag.map((pt) => ({
+					id: pt.tag.id,
+					name: pt.tag.name,
+				})),
+				isLiked: isLiked,
+			};
+
+			delete newProduct.artistSellerIdToArtist;
+			delete newProduct.productLicense;
+			delete newProduct.productGenre;
+			delete newProduct.productTag;
+			delete newProduct.productLike;
+
+			return newProduct;
+		};
+
+		return {
+			data: orders.map((order) => ({
+				// id: Number(order.id),
+				buyerId: Number(order.buyerId),
+				// orderId: Number(order.id),
+				paymentId: order.paymentId,
+				orderNumber: order.orderNumber,
+				orderName: order.orderName,
+				totalAmount: order.totalAmount,
+				items: order.orderItems.map((item) => ({
+					// id: Number(item.id),
+					// productId: Number(item.productId),
+					// productName: item.product.productName,
+					price: item.price,
+					licenseType: item.license.type,
+					product: productTrim(item.product),
+					// artist: {
+					// 	...item.product.artistSellerIdToArtist,
+					// 	id: Number(item.product.artistSellerIdToArtist.id),
+					// 	etcAccounts: item.product.artistSellerIdToArtist.etcAccounts as string[],
+					// 	profileImage: artistProfileImages[Number(item.product.artistSellerIdToArtist.id)],
+					// },
+				})),
+				status: order.status as OrderStatus,
+				createdAt: order.createdAt,
+				// orderUuid: order.uuid,
 			})),
-			pagination: {
-				currentPage: page,
-				totalPages: Math.ceil(total / limit),
-				totalItems: total,
-				itemsPerPage: limit,
+			_pagination: {
+				page,
+				limit,
+				totalPage: Math.ceil(total / limit),
+				total,
 			},
 		};
 	}

@@ -98,11 +98,11 @@ model Order {
   id               BigInt        @id @default(autoincrement())
   uuid             String        @unique @default(uuid()) @db.VarChar(36)
   buyerId          BigInt        @map("buyer_id")
-  orderNumber      String?       @map("order_number") @db.VarChar(100)
+  orderNumber      String?       @unique @map("order_number") @db.VarChar(100)
   orderName        String?       @map("order_name") @db.VarChar(255)
   totalPrice       Int?          @map("total_price")
   totalAmount      Int?          @map("total_amount")
-  status           String?       @db.VarChar(20)
+  status           OrderStatus   @default(INITIATE)
   paymentId        String?       @map("payment_id") @db.VarChar(255)
   paymentMethod    String?       @map("payment_method") @db.VarChar(50)
   pgTransactionId  String?       @map("pg_transaction_id") @db.VarChar(255)
@@ -119,6 +119,7 @@ model Order {
   @@index([buyerId], map: "FK_user_TO_order_1")
   @@index([paymentId], map: "idx_order_payment_id")
   @@index([uuid], map: "idx_order_uuid")
+  @@index([orderNumber], map: "idx_order_number")
   @@map("order")
 }
 
@@ -399,6 +400,14 @@ enum ProductType {
   MEMBERSHIP
 }
 
+enum OrderStatus {
+  INITIATE
+  PENDING
+  COMPLETED
+  WAITING_FOR_DEPOSIT
+  CANCELLED
+}
+
 model AccountToken {
   id          BigInt   @id @default(autoincrement())
   token       String   @db.Char(64) @unique      // SHA-256 → 64byte 등
@@ -421,6 +430,7 @@ model AccountToken {
 }
 
 model UserArtistFollow {
+  id        BigInt       @id @default(autoincrement())
   userId    BigInt       @map("user_id")
   artistId  BigInt       @map("artist_id")
   createdAt DateTime     @default(now()) @map("created_at") @db.Timestamp(0)
@@ -430,7 +440,7 @@ model UserArtistFollow {
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "fk_uaf_user")
   artist    Artist       @relation(fields: [artistId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "fk_uaf_artist")
 
-  @@id([userId, artistId])
+  @@unique([userId, artistId, deletedAt], map: "ux_user_artist_follow__user_artist")
   @@index([userId], map: "idx_uaf_user")
   @@index([artistId], map: "idx_uaf_artist")
   @@map("user_artist_follow")

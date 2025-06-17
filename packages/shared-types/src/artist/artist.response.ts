@@ -37,5 +37,27 @@ export const ArtistListResponseSchema = z.object({
 	profileImageUrl: z.string().nullable().describe("프로필 이미지 URL").default("https://example.com/profile.jpg"),
 });
 
+export const ArtistPublicResponseSchema = ArtistResponseSchema.pick({
+	id: true,
+	stageName: true,
+	slug: true,
+	profileImageUrl: true,
+	profileImage: true,
+	description: true,
+	country: true,
+	city: true,
+	instagramAccount: true,
+	youtubeAccount: true,
+	tiktokAccount: true,
+	soundcloudAccount: true,
+	etcAccounts: true,
+	kakaoAccount: true,
+	lineAccount: true,
+	discordAccount: true,
+	createdAt: true,
+	updatedAt: true,
+});
+
 export type ArtistResponse = z.infer<typeof ArtistResponseSchema>;
+export type ArtistPublicResponse = z.infer<typeof ArtistPublicResponseSchema>;
 export type ArtistListResponse = z.infer<typeof ArtistListResponseSchema>;

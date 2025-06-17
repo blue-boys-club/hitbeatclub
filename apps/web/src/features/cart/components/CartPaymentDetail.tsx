@@ -231,19 +231,13 @@ export const CartPaymentDetail = ({ checkoutItems, subtotal, serviceFee = 0, tot
 				/>
 			</div>
 
-			<PaymentSuccessModal
-				isOpen={successModalOpen}
-				onClose={() => setSuccessModalOpen(false)}
-				paymentResult={
-					paymentResult || {
-						paymentId: "SAMPLE-PAYMENT-ID",
-						orderId: 0,
-						orderName: "샘플 주문",
-						totalAmount: total,
-						items: [],
-					}
-				}
-			/>
+			{paymentResult && (
+				<PaymentSuccessModal
+					isOpen={successModalOpen}
+					onClose={() => setSuccessModalOpen(false)}
+					paymentResult={paymentResult || null}
+				/>
+			)}
 
 			<PaymentFailureModal
 				isOpen={failureModalOpen}

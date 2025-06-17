@@ -3,17 +3,16 @@
 import { cn } from "@/common/utils";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
-import { OrderUserInfo } from "./OrderUserInfo";
 import { OrderProductInfo } from "./OrderProductInfo";
 import { OrderPaymentSummary } from "./OrderPaymentSummary";
 import { OrderProductItem } from "./OrderProductItem";
-import type { Order, ArtistInfo, Product } from "../types";
+import type { PaymentOrderResponse, PaymentOrderItem } from "@hitbeatclub/shared-types/payment";
 
 // --- Type Definitions ---
 
-// Define props based on the Order type
+// Define props based on the PaymentOrderResponse type
 type OrderItemProps = {
-	order: Order; // Accept the entire Order object
+	order: PaymentOrderResponse;
 };
 
 // Simple SVG Arrow Icon for Collapsible Trigger
@@ -34,26 +33,22 @@ const ArrowDownIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 /**
  * 주문 내역 상세의 개별 항목을 표시하는 컴포넌트입니다. (접기/펴기 가능)
- * 아티스트별로 상품을 그룹화하여 표시합니다.
- * @param {OrderItemProps} props - 주문 항목 데이터 (이제 'order' 객체 전체를 받음).
+ * PaymentOrderResponse 타입 기반으로 주문 정보를 표시합니다.
+ * @param {OrderItemProps} props - 주문 항목 데이터 (PaymentOrderResponse 객체).
  */
 export const OrderItem = ({ order }: OrderItemProps) => {
 	// Destructure required fields from the order prop
-	const { orderDate, orderTime, userInfo, productsByArtist, subtotal, serviceFee, total } = order;
+	const { orderNumber, createdAt, items, totalAmount, status } = order;
 
 	const [isOpen, setIsOpen] = useState(false); // State for collapsible
 
-	// Need to find the artist info for each product in the collapsed view
-	// Create a map for quick lookup: productId -> artistInfo
-	const productArtistMap = new Map<string, ArtistInfo>();
-	Object.values(productsByArtist).forEach(({ artistInfo, products }) => {
-		products.forEach((product) => {
-			productArtistMap.set(product.id, artistInfo);
-		});
+	// Format date and time from createdAt
+	const orderDate = new Date(createdAt).toLocaleDateString("ko-KR").replace(/\. /g, "/").replace(".", "");
+	const orderTime = new Date(createdAt).toLocaleTimeString("ko-KR", {
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: true,
 	});
-
-	// Flatten products for the collapsed view
-	const allProducts = Object.values(productsByArtist).flatMap((group) => group.products);
 
 	// TODO: Replace placeholder icons/images with actual ones or SVG components from asset library
 	// TODO: Implement actual functionality for buttons (Download, License View)
@@ -70,7 +65,7 @@ export const OrderItem = ({ order }: OrderItemProps) => {
 			{/* Order Header - Acts as trigger */}
 			<Collapsible.Trigger asChild>
 				<div className={cn("self-stretch inline-flex justify-between items-center cursor-pointer")}>
-					{/* Display Order Date/Time from props */}
+					{/* Display Order Date/Time from createdAt */}
 					<div className={cn("flex justify-start items-center gap-5px")}>
 						<div className={cn("text-hbc-gray-400 text-12px font-semibold font-suit leading-none tracking-tight")}>
 							주문날짜 :
@@ -93,30 +88,20 @@ export const OrderItem = ({ order }: OrderItemProps) => {
 				)}
 				aria-hidden={isOpen}
 			>
-				{/* Map through flattened products for the collapsed summary */}
-				{allProducts.map((product) => {
-					const artistInfo = productArtistMap.get(product.id);
-					// Handle cases where artistInfo might be missing (though unlikely with current structure)
-					if (!artistInfo) {
-						console.warn(`Artist info not found for product ID: ${product.id}`);
-						return null; // Skip rendering if artist info is missing
-					}
-					return (
-						<div
-							key={`${product.id}-summary`} // Ensure unique key for summary view
-							className="w-full outline outline-hbc-black rounded-10px px-8px py-12px"
-						>
-							{/* Pass the correct artistInfo looked up from the map */}
-							<OrderProductItem
-								className="border-none"
-								product={product}
-								artistInfo={artistInfo}
-							/>
-						</div>
-					);
-				})}
-				{/* Fallback if there are no products */}
-				{allProducts.length === 0 && <div className="text-sm text-center text-hbc-gray-400">상품 정보가 없습니다.</div>}
+				{/* Map through items for the collapsed summary */}
+				{items.map((item: PaymentOrderItem) => (
+					<div
+						key={`${item.product.id}-summary`} // Ensure unique key for summary view
+						className="w-full outline outline-hbc-black rounded-10px px-8px py-12px"
+					>
+						<OrderProductItem
+							className="border-none"
+							item={item}
+						/>
+					</div>
+				))}
+				{/* Fallback if there are no items */}
+				{items.length === 0 && <div className="text-sm text-center text-hbc-gray-400">상품 정보가 없습니다.</div>}
 			</div>
 
 			{/* Collapsible Content */}
@@ -126,12 +111,11 @@ export const OrderItem = ({ order }: OrderItemProps) => {
 				)}
 			>
 				{/* Pass data from the order prop to Sub-components */}
-				<OrderUserInfo userInfo={userInfo} />
-				<OrderProductInfo productsByArtist={productsByArtist} />
+				<OrderProductInfo items={items} />
 				<OrderPaymentSummary
-					subtotal={subtotal}
-					serviceFee={serviceFee}
-					total={total}
+					total={totalAmount}
+					status={status}
+					orderNumber={orderNumber}
 				/>
 			</Collapsible.Content>
 		</Collapsible.Root>

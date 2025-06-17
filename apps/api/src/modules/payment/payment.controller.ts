@@ -20,10 +20,13 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from "@nestjs/swagg
 import { AuthJwtAccessProtected } from "~/modules/auth/decorators/auth.jwt.decorator";
 import { WEBHOOK_VERIFICATION_ERROR } from "./payment.error";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
+import { IResponse, IResponsePaging } from "~/common/response/interfaces/response.interface";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore -- vscode doesn't recognize this is a dual package even though it is and can be compiled
 import { Webhook } from "@portone/server-sdk";
+import { PaymentPaginationRequestDto } from "./dto/request/payment.pagination.request.dto";
+import { PaymentOrderCreateResponseDto } from "./dto/response/payment.order-create.response.dto";
 
 @ApiTags("Payment")
 @Controller("payment")
@@ -59,10 +62,15 @@ export class PaymentController {
 	async createPaymentOrder(
 		@Request() req: AuthenticatedRequest,
 		@Body() createPaymentOrderDto: PaymentOrderCreateRequestDto,
-	): Promise<PaymentOrderResponseDto> {
+	): Promise<IResponse<PaymentOrderCreateResponseDto>> {
 		const userId = req.user.id;
 		this.logger.log(`createPaymentOrder: ${userId}`);
-		return this.paymentService.createPaymentOrder(userId, createPaymentOrderDto);
+		const result = await this.paymentService.createPaymentOrder(userId, createPaymentOrderDto);
+		return {
+			statusCode: 200,
+			message: "결제 주문이 성공적으로 생성되었습니다.",
+			data: result,
+		};
 	}
 
 	/**
@@ -96,9 +104,14 @@ export class PaymentController {
 	async completePayment(
 		@Request() req: AuthenticatedRequest,
 		@Body() completePaymentDto: PaymentCompleteRequestDto,
-	): Promise<PaymentCompletionResponseDto> {
+	): Promise<IResponse<PaymentCompletionResponseDto>> {
 		const userId = req.user.id;
-		return this.paymentService.completePayment(userId, completePaymentDto);
+		const result = await this.paymentService.completePayment(userId, completePaymentDto);
+		return {
+			statusCode: 200,
+			message: "결제가 성공적으로 완료되었습니다.",
+			data: result,
+		};
 	}
 
 	/**
@@ -151,12 +164,12 @@ export class PaymentController {
 	/**
 	 * 주문 상세 정보를 조회합니다.
 	 */
-	@Get("order/:orderUuid")
+	@Get("order/:orderNumber")
 	@AuthJwtAccessProtected()
 	@ApiBearerAuth()
 	@ApiOperation({
 		summary: "주문 상세 조회",
-		description: "주문 UUID로 주문 상세 정보를 조회합니다.",
+		description: "주문번호로 주문 상세 정보를 조회합니다.",
 	})
 	@ApiResponse({
 		status: 200,
@@ -170,9 +183,9 @@ export class PaymentController {
 		status: 404,
 		description: "주문을 찾을 수 없습니다.",
 	})
-	async getOrder(@Request() req: AuthenticatedRequest, @Param("orderUuid") orderUuid: string) {
+	async getOrder(@Request() req: AuthenticatedRequest, @Param("orderNumber") orderNumber: string) {
 		const userId = req.user.id;
-		return this.paymentService.getOrder(userId, orderUuid);
+		return this.paymentService.getOrder(userId, orderNumber);
 	}
 
 	/**
@@ -195,10 +208,14 @@ export class PaymentController {
 	})
 	async getUserOrders(
 		@Request() req: AuthenticatedRequest,
-		@Query("page") page: number = 1,
-		@Query("limit") limit: number = 10,
-	) {
+		@Query() query: PaymentPaginationRequestDto,
+	): Promise<IResponsePaging<PaymentOrderResponseDto>> {
 		const userId = req.user.id;
-		return this.paymentService.getUserOrders(userId, page, limit);
+		const result = await this.paymentService.getUserOrders(userId, query.page, query.limit);
+		return {
+			statusCode: 200,
+			message: "주문 목록이 성공적으로 조회되었습니다.",
+			...result,
+		};
 	}
 }
