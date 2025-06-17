@@ -1,10 +1,11 @@
 "use client";
-import React, { memo, useMemo, useState, useEffect } from "react";
+import React, { memo, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useRouter } from "next/navigation";
 
 import { Dropdown, Input } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
@@ -34,8 +35,34 @@ const userAccountFormSchema = z.object({
 
 type UserAccountFormData = z.infer<typeof userAccountFormSchema>;
 
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
+	label: `${(i + 1).toString().padStart(2, "0")}월`,
+	value: `${(i + 1).toString().padStart(2, "0")}`,
+}));
+
+const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => ({
+	label: `${(i + 1).toString().padStart(2, "0")}일`,
+	value: `${(i + 1).toString().padStart(2, "0")}`,
+}));
+
+const GENDER_OPTIONS = [
+	{ label: "남자", value: "M" },
+	{ label: "여자", value: "F" },
+];
+
+const generateYearOptions = () => {
+	const currentYear = new Date().getFullYear();
+	const years = [];
+	for (let i = currentYear; i >= currentYear - 100; i--) {
+		years.push({ label: `${i.toString()}년`, value: i.toString() });
+	}
+	return years;
+};
+
 const UserAccountForm = memo(() => {
+	const router = useRouter();
 	const { data: user, isLoading } = useQuery(getUserMeQueryOption());
+
 	const isMembership = useMemo(() => {
 		return !!user?.subscribedAt;
 	}, [user?.subscribedAt]);
@@ -114,33 +141,10 @@ const UserAccountForm = memo(() => {
 	}, [selectedYear, selectedMonth, selectedDay, setValue, user]);
 
 	// 생년월일 옵션 생성
-	const yearOptions = useMemo(() => {
-		const currentYear = new Date().getFullYear();
-		const years = [];
-		for (let i = currentYear; i >= currentYear - 100; i--) {
-			years.push({ label: `${i.toString()}년`, value: i.toString() });
-		}
-		return years;
-	}, []);
-
-	const monthOptions = useMemo(() => {
-		return Array.from({ length: 12 }, (_, i) => ({
-			label: `${(i + 1).toString().padStart(2, "0")}월`,
-			value: `${(i + 1).toString().padStart(2, "0")}`,
-		}));
-	}, []);
-
-	const dayOptions = useMemo(() => {
-		return Array.from({ length: 31 }, (_, i) => ({
-			label: `${(i + 1).toString().padStart(2, "0")}일`,
-			value: `${(i + 1).toString().padStart(2, "0")}`,
-		}));
-	}, []);
-
-	const genderOptions = [
-		{ label: "남자", value: "M" },
-		{ label: "여자", value: "F" },
-	];
+	const yearOptions = useMemo(() => generateYearOptions(), []);
+	const monthOptions = useMemo(() => MONTH_OPTIONS, []);
+	const dayOptions = useMemo(() => DAY_OPTIONS, []);
+	const genderOptions = useMemo(() => GENDER_OPTIONS, []);
 
 	const country = watch("country");
 
@@ -172,6 +176,7 @@ const UserAccountForm = memo(() => {
 
 	const deleteCompleteModalClose = () => {
 		setIsDeleteCompleteModalOpen(false);
+		router.push("/auth/login");
 	};
 
 	const openCancelMembershipModal = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -449,19 +454,23 @@ const UserAccountForm = memo(() => {
 				</div>
 			</section>
 
+			{/* 멤버십 해지 모달 */}
 			<UserCancelMembershipModal
 				isModalOpen={isCancelMembershipModalOpen}
 				onClose={cancelMembershipModalClose}
 			/>
+			{/* 비밀번호 변경 모달 */}
 			<UserChangePasswordModal
 				isModalOpen={isChangePasswordModalOpen}
 				onClose={changePasswordModalClose}
 			/>
+			{/* 회원 탈퇴 모달 */}
 			<UserDeleteAccountModal
 				isModalOpen={isDeleteAccountModalOpen}
 				onClose={deleteAccountModalClose}
 				onOpen={openDeleteCompleteModal}
 			/>
+			{/* 회원 탈퇴 완료 모달 */}
 			<UserDeleteCompleteModal
 				isModalOpen={isDeleteCompleteModalOpen}
 				onClose={deleteCompleteModalClose}
