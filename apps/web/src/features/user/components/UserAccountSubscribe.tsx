@@ -4,9 +4,11 @@ import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { Button } from "@/components/ui/Button";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useMemo } from "react";
 
 const UserAccountSubscribe = () => {
+	const router = useRouter();
 	const { data: user } = useQuery(getUserMeQueryOption());
 
 	const isMembership = useMemo(() => {
@@ -26,6 +28,15 @@ const UserAccountSubscribe = () => {
 		});
 	}, [user?.subscribedAt]);
 
+	const onClickCheckSubscription = () => {
+		if (!user?.id) return;
+		router.push(`/artist-studio/${user.id}/setting?tab=membership`);
+	};
+
+	const onClickSubscribe = () => {
+		router.push("/subscribe");
+	};
+
 	return (
 		<section className="flex items-start justify-between px-8 pt-4">
 			{isMembership ? (
@@ -40,6 +51,7 @@ const UserAccountSubscribe = () => {
 						rounded={"full"}
 						fontWeight={"extraBold"}
 						className="border-3"
+						onClick={onClickCheckSubscription}
 					>
 						구독 중인 상품 확인
 					</Button>
@@ -56,6 +68,7 @@ const UserAccountSubscribe = () => {
 							rounded={"full"}
 							fontWeight={"extraBold"}
 							className="border-3 bg-[#FF1900] hover:bg-[#FF1900]/80"
+							onClick={onClickSubscribe}
 						>
 							요금제 구독하기
 						</Button>

@@ -18,6 +18,7 @@ import UserDeleteAccountModal from "./modal/UserDeleteAccountModal";
 import UserDeleteCompleteModal from "./modal/UserDeleteCompleteModal";
 import UserCancelMembershipModal from "./modal/UserCancelMembershipModal";
 import { COUNTRY_OPTIONS, CountryCode, getRegionOptionsByCountry } from "@hitbeatclub/country-options";
+import { GENDER_OPTIONS } from "@/features/auth/auth.constants";
 
 // 폼 스키마 정의 (이메일 제외)
 const userAccountFormSchema = z.object({
@@ -44,11 +45,6 @@ const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => ({
 	label: `${(i + 1).toString().padStart(2, "0")}일`,
 	value: `${(i + 1).toString().padStart(2, "0")}`,
 }));
-
-const GENDER_OPTIONS = [
-	{ label: "남자", value: "M" },
-	{ label: "여자", value: "F" },
-];
 
 const generateYearOptions = () => {
 	const currentYear = new Date().getFullYear();
@@ -266,13 +262,10 @@ const UserAccountForm = memo(() => {
 							<div className="flex flex-col">
 								<label className="text-black font-semibold text-xs leading-[150%] tracking-[0.12px]">이름</label>
 								<Input
+									{...register("name")}
 									className="placeholder:text-xs py-0 px-0 text-xs"
 									placeholder="이름"
 									variant="square"
-									value={watch("name")}
-									onChange={(e) => {
-										setValue("name", e.target.value, { shouldValidate: true });
-									}}
 								/>
 								{errors.name && <span className="text-xs text-red-500 mt-1">{errors.name.message}</span>}
 							</div>
@@ -458,6 +451,7 @@ const UserAccountForm = memo(() => {
 			<UserCancelMembershipModal
 				isModalOpen={isCancelMembershipModalOpen}
 				onClose={cancelMembershipModalClose}
+				userId={user?.id || 0}
 			/>
 			{/* 비밀번호 변경 모달 */}
 			<UserChangePasswordModal
