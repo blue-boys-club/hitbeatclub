@@ -1,11 +1,19 @@
+"use client";
+
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { Button } from "@/components/ui/Button";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import React from "react";
 
 const UserAccountSubscribe = () => {
+	const { data: user } = useQuery(getUserMeQueryOption());
+
+	const isSubscribed = user?.subscribe !== null;
+
 	return (
 		<section className="flex items-start justify-between px-8 pt-4">
-			{true ? (
+			{isSubscribed ? (
 				<>
 					<div className="text-[16px] leading-[160%] tracking-[-0.32px] font-extrabold text-black">
 						HITBEATCLUB 님은, PREMIUM 이용자입니다. <br />

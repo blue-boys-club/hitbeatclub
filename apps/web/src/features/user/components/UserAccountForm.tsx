@@ -1,35 +1,159 @@
 "use client";
-import { Dropdown, Input, Toggle } from "@/components/ui";
-import { Button } from "@/components/ui/Button";
+import React, { memo, useMemo, useState, useEffect } from "react";
 import Link from "next/link";
-import React, { memo, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+import { Dropdown, Input } from "@/components/ui";
+import { Button } from "@/components/ui/Button";
+import { useToast } from "@/hooks/use-toast";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { UserProfileUpdatePayload } from "@hitbeatclub/shared-types/user";
+import { useUpdateUserProfileMutation } from "@/apis/user/mutations/useUpdateUserProfileMutation";
 import UserChangePasswordModal from "./modal/UserChangePasswordModal";
 import UserDeleteAccountModal from "./modal/UserDeleteAccountModal";
 import UserDeleteCompleteModal from "./modal/UserDeleteCompleteModal";
-import { useToast } from "@/hooks/use-toast";
 import UserCancelMembershipModal from "./modal/UserCancelMembershipModal";
-import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
-import { useQuery } from "@tanstack/react-query";
+import { COUNTRY_OPTIONS, CountryCode, getRegionOptionsByCountry } from "@hitbeatclub/country-options";
+
+// 폼 스키마 정의 (이메일 제외)
+const userAccountFormSchema = z.object({
+	name: z.string().min(1, "이름을 입력해주세요"),
+	phoneNumber: z
+		.string()
+		.min(1, "휴대전화를 입력해주세요")
+		.regex(/^010\d{8}$/, "올바른 휴대전화 번호를 입력해주세요"),
+	birthDate: z.string().min(1, "생년월일을 입력해주세요"),
+	gender: z.enum(["M", "F"]),
+	country: z.string().min(1, "국가를 선택해주세요"),
+	region: z.string().min(1, "지역을 선택해주세요"),
+	stageName: z.string().optional(),
+});
+
+type UserAccountFormData = z.infer<typeof userAccountFormSchema>;
 
 const UserAccountForm = memo(() => {
-	const { data: user } = useQuery(getUserMeQueryOption());
+	const { data: user, isLoading } = useQuery(getUserMeQueryOption());
 	const isMembership = useMemo(() => {
 		return !!user?.subscribedAt;
 	}, [user?.subscribedAt]);
+
 	const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
 	const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
 	const [isDeleteCompleteModalOpen, setIsDeleteCompleteModalOpen] = useState(false);
 	const [isCancelMembershipModalOpen, setIsCancelMembershipModalOpen] = useState(false);
 	const { toast } = useToast();
 
-	const toggleDarkMode = () => {};
+	const [selectedYear, setSelectedYear] = useState<string>("");
+	const [selectedMonth, setSelectedMonth] = useState<string>("");
+	const [selectedDay, setSelectedDay] = useState<string>("");
+
+	const updateUserProfileMutation = useUpdateUserProfileMutation();
+
+	const {
+		register,
+		handleSubmit,
+		formState: { errors, isSubmitting, isDirty, isValid },
+		reset,
+		setValue,
+		watch,
+	} = useForm<UserAccountFormData>({
+		resolver: zodResolver(userAccountFormSchema),
+		defaultValues: {
+			name: "",
+			phoneNumber: "",
+			birthDate: "",
+			gender: "M",
+			country: "KR",
+			region: "",
+			stageName: "",
+		},
+	});
+
+	//폼 초기화
+	useEffect(() => {
+		if (user) {
+			const birthDate = user.birthDate ? new Date(user.birthDate) : null;
+			const birthYear = birthDate ? birthDate.getUTCFullYear().toString() : "";
+			const birthMonth = birthDate ? (birthDate.getUTCMonth() + 1).toString().padStart(2, "0") : "";
+			const birthDay = birthDate ? birthDate.getUTCDate().toString().padStart(2, "0") : "";
+
+			setSelectedYear(birthYear);
+			setSelectedMonth(birthMonth);
+			setSelectedDay(birthDay);
+
+			reset({
+				name: user.name || "",
+				phoneNumber: user.phoneNumber || "",
+				birthDate: user.birthDate || "",
+				gender: user.gender || "M",
+				country: user.country || "KR",
+				region: user.region || "",
+				stageName: (user as any).stageName || "",
+			});
+		}
+	}, [user, reset]);
+
+	//생년월일 선택 시 폼 값 변경
+	useEffect(() => {
+		if (user && selectedYear && selectedMonth && selectedDay) {
+			const year = parseInt(selectedYear, 10);
+			const month = parseInt(selectedMonth, 10) - 1;
+			const day = parseInt(selectedDay, 10);
+			const newBirthDate = new Date(Date.UTC(year, month, day)).toISOString();
+
+			// 초기 로드 시 불필요한 dirty 상태 변경을 막기 위해 기존 값과 비교
+			if (newBirthDate !== user.birthDate) {
+				setValue("birthDate", newBirthDate, { shouldDirty: true });
+			} else {
+				setValue("birthDate", newBirthDate, { shouldDirty: false });
+			}
+		}
+	}, [selectedYear, selectedMonth, selectedDay, setValue, user]);
+
+	// 생년월일 옵션 생성
+	const yearOptions = useMemo(() => {
+		const currentYear = new Date().getFullYear();
+		const years = [];
+		for (let i = currentYear; i >= currentYear - 100; i--) {
+			years.push({ label: `${i.toString()}년`, value: i.toString() });
+		}
+		return years;
+	}, []);
+
+	const monthOptions = useMemo(() => {
+		return Array.from({ length: 12 }, (_, i) => ({
+			label: `${(i + 1).toString().padStart(2, "0")}월`,
+			value: `${(i + 1).toString().padStart(2, "0")}`,
+		}));
+	}, []);
+
+	const dayOptions = useMemo(() => {
+		return Array.from({ length: 31 }, (_, i) => ({
+			label: `${(i + 1).toString().padStart(2, "0")}일`,
+			value: `${(i + 1).toString().padStart(2, "0")}`,
+		}));
+	}, []);
+
+	const genderOptions = [
+		{ label: "남자", value: "M" },
+		{ label: "여자", value: "F" },
+	];
+
+	const country = watch("country");
+
+	const regionOptions = useMemo(() => {
+		return country ? getRegionOptionsByCountry(country as CountryCode) : [];
+	}, [country]);
 
 	const openChangePasswordModal = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
 		e.preventDefault();
 		setIsChangePasswordModalOpen(true);
 	};
 
-	const changePasswordMoadlClose = () => {
+	const changePasswordModalClose = () => {
 		setIsChangePasswordModalOpen(false);
 	};
 
@@ -37,17 +161,17 @@ const UserAccountForm = memo(() => {
 		e.preventDefault();
 		setIsDeleteAccountModalOpen(true);
 	};
+
 	const deleteAccountModalClose = () => {
 		setIsDeleteAccountModalOpen(false);
 	};
+
 	const openDeleteCompleteModal = () => {
 		setIsDeleteCompleteModalOpen(true);
 	};
+
 	const deleteCompleteModalClose = () => {
 		setIsDeleteCompleteModalOpen(false);
-	};
-	const saveChanges = () => {
-		toast({ description: "변경사항이 저장되었습니다." });
 	};
 
 	const openCancelMembershipModal = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -59,6 +183,39 @@ const UserAccountForm = memo(() => {
 		setIsCancelMembershipModalOpen(false);
 	};
 
+	// 폼 제출 핸들러
+	const onSubmit = async (data: UserAccountFormData) => {
+		try {
+			const profileData = {
+				name: data.name,
+				phoneNumber: data.phoneNumber,
+				birthDate: data.birthDate,
+				gender: data.gender,
+				country: data.country,
+				region: data.region,
+				stageName: data.stageName || undefined,
+			} as UserProfileUpdatePayload;
+
+			await updateUserProfileMutation.mutateAsync(profileData);
+
+			toast({
+				description: "변경사항이 저장되었습니다.",
+				duration: 3000,
+			});
+		} catch (error) {
+			console.error("Profile update error:", error);
+			toast({
+				description: "변경사항 저장에 실패했습니다.",
+				variant: "destructive",
+				duration: 3000,
+			});
+		}
+	};
+
+	if (isLoading) {
+		return <div>로딩 중...</div>;
+	}
+
 	return (
 		<>
 			<section className="pt-10 px-[106px] pb-5">
@@ -66,106 +223,146 @@ const UserAccountForm = memo(() => {
 					<div className="text-black font-extrabold text-base leading-[160%] tracking-[-0.32px]">
 						기본정보 General Information
 					</div>
-					<form className="flex flex-col gap-4">
+					<form
+						onSubmit={handleSubmit(onSubmit)}
+						className="flex flex-col gap-4"
+					>
 						<div className="flex flex-col">
 							<label className="text-black font-semibold text-xs leading-[150%] tracking-[0.12px]">이메일</label>
 							<Input
-								className="placeholder:text-xs py-0 px-0 text-xs"
-								placeholder="hitbeatclub@gmail.com"
+								className="placeholder:text-xs py-0 px-0 text-xs bg-gray-100"
+								value={user?.email || ""}
 								variant="square"
+								disabled
+								readOnly
 							/>
+							<span className="text-xs text-gray-500 mt-1">이메일은 변경할 수 없습니다.</span>
 						</div>
+
 						<div className="flex flex-col">
 							<label className="text-black font-semibold text-xs leading-[150%] tracking-[0.12px]">휴대전화</label>
 							<Input
 								className="placeholder:text-xs py-0 px-0 text-xs"
-								placeholder="010-1234-5678"
+								placeholder="휴대전화"
 								variant="square"
+								type="tel"
+								maxLength={11}
+								value={watch("phoneNumber")}
+								onChange={(e) => {
+									// 숫자만 허용
+									const value = e.target.value.replace(/[^0-9]/g, "");
+									setValue("phoneNumber", value, { shouldValidate: true });
+								}}
 							/>
+							{errors.phoneNumber && <span className="text-xs text-red-500 mt-1">{errors.phoneNumber.message}</span>}
 						</div>
+
 						<div className="grid grid-cols-2 gap-x-5">
 							<div className="flex flex-col">
 								<label className="text-black font-semibold text-xs leading-[150%] tracking-[0.12px]">이름</label>
 								<Input
 									className="placeholder:text-xs py-0 px-0 text-xs"
-									placeholder="김일상"
+									placeholder="이름"
 									variant="square"
+									value={watch("name")}
+									onChange={(e) => {
+										setValue("name", e.target.value, { shouldValidate: true });
+									}}
 								/>
+								{errors.name && <span className="text-xs text-red-500 mt-1">{errors.name.message}</span>}
 							</div>
 							<div className="flex flex-col">
 								<label className="text-black font-semibold text-xs leading-[150%] tracking-[0.12px]">활동명</label>
 								<Input
+									{...register("stageName")}
 									className="placeholder:text-xs py-0 px-0 text-xs"
-									placeholder="HITBEATCLUB"
+									placeholder="활동명"
 									variant="square"
 								/>
+								{errors.stageName && <span className="text-xs text-red-500 mt-1">{errors.stageName.message}</span>}
 							</div>
 						</div>
+
 						<div className="flex flex-col gap-1">
 							<label className="text-black font-semibold text-xs leading-[150%] tracking-[0.12px]">생년월일</label>
 							<div className="grid grid-cols-3 gap-x-5">
 								<Dropdown
+									size="sm"
 									className="w-full"
 									optionsClassName="justify-start overflow-y-auto max-h-[200px]"
-									options={[]}
-									placeholder="1994"
-									size="sm"
+									options={yearOptions}
+									placeholder="연도"
+									value={selectedYear}
+									onChange={(value: string) => setSelectedYear(value)}
 								/>
 								<Dropdown
+									size="sm"
 									className="w-full"
 									optionsClassName="justify-start overflow-y-auto max-h-[200px]"
-									options={[]}
-									placeholder="05월"
-									size="sm"
+									options={monthOptions}
+									placeholder="월"
+									value={selectedMonth}
+									onChange={(value: string) => setSelectedMonth(value)}
 								/>
 								<Dropdown
+									size="sm"
 									className="w-full"
 									optionsClassName="justify-start overflow-y-auto max-h-[200px]"
-									options={[]}
-									placeholder="30일"
-									size="sm"
+									options={dayOptions}
+									placeholder="일"
+									value={selectedDay}
+									onChange={(value: string) => setSelectedDay(value)}
 								/>
 							</div>
+							{errors.birthDate && <span className="text-xs text-red-500 mt-1">{errors.birthDate.message}</span>}
 						</div>
+
 						<div className="grid grid-cols-3 gap-x-5">
 							<div className="flex flex-col gap-1">
 								<label className="text-black font-semibold text-xs leading-[150%] tracking-[0.12px]">성별</label>
 								<Dropdown
+									size="sm"
 									className="w-full"
 									optionsClassName="justify-start overflow-y-auto max-h-[200px]"
-									options={[
-										{ label: "남자", value: "male" },
-										{ label: "여자", value: "female" },
-									]}
-									placeholder="남자"
-									size="sm"
+									options={genderOptions}
+									placeholder="성별"
+									value={watch("gender")}
+									onChange={(value: string) => setValue("gender", value as "M" | "F")}
 								/>
+								{errors.gender && <span className="text-xs text-red-500 mt-1">{errors.gender.message}</span>}
 							</div>
 							<div className="flex flex-col gap-1">
 								<label className="text-black font-semibold text-xs leading-[150%] tracking-[0.12px]">국가</label>
 								<Dropdown
 									className="w-full"
 									optionsClassName="justify-start overflow-y-auto max-h-[200px]"
-									options={[]}
-									placeholder="Korea, Republic of"
+									options={COUNTRY_OPTIONS}
+									placeholder="국가"
 									size="sm"
+									value={watch("country")}
+									onChange={(value: string) => setValue("country", value)}
 								/>
+								{errors.country && <span className="text-xs text-red-500 mt-1">{errors.country.message}</span>}
 							</div>
 							<div className="flex flex-col gap-1">
 								<label className="text-black font-semibold text-xs leading-[150%] tracking-[0.12px]">지역</label>
 								<Dropdown
 									className="w-full"
 									optionsClassName="justify-start overflow-y-auto max-h-[200px]"
-									options={[]}
-									placeholder="서울시"
+									options={regionOptions}
+									placeholder="지역"
 									size="sm"
+									value={watch("region")}
+									onChange={(value: string) => setValue("region", value)}
 								/>
+								{errors.region && <span className="text-xs text-red-500 mt-1">{errors.region.message}</span>}
 							</div>
 						</div>
 
 						<div className="flex justify-between pb-4 border-b-1 border-black">
 							<label className="text-black font-semibold text-xs leading-[150%] tracking-[0.12px]">비밀번호 변경</label>
 							<button
+								type="button"
 								onClick={openChangePasswordModal}
 								className="text-[#001EFF] font-[600] text-[12px] leading-[12px] tracking-[0.12px] font-['SUIT Variable'] cursor-pointer"
 							>
@@ -173,7 +370,7 @@ const UserAccountForm = memo(() => {
 							</button>
 						</div>
 
-						<div className="flex flex-col gap-3 pb-4 border-b-1 border-black">
+						{/* <div className="flex flex-col gap-3 pb-4 border-b-1 border-black">
 							<div className="flex gap-1">
 								<span className="text-black font-extrabold text-base leading-[160%] tracking-[-0.32px] font-[SUIT]">
 									디스플레이
@@ -188,7 +385,8 @@ const UserAccountForm = memo(() => {
 								</div>
 								<Toggle onChange={toggleDarkMode} />
 							</div>
-						</div>
+						</div> */}
+
 						<div className="flex flex-col gap-3 pb-4 border-b-1 border-black">
 							<div className="flex gap-1">
 								<span className="text-black font-extrabold text-base leading-[160%] tracking-[-0.32px] font-[SUIT]">
@@ -225,34 +423,39 @@ const UserAccountForm = memo(() => {
 								</div>
 							</div>
 						</div>
+
 						<div className="flex justify-end">
 							<button
+								type="button"
 								onClick={isMembership ? openCancelMembershipModal : openDeleteAccountModal}
-								className="text-[#87878A] font-semibold text-[12px] leading-[100%] tracking-[0.12px] font-['SUIT_Variable'] pb-[3px] border-b-1 border-[#87878A]] cursor-pointer"
+								className="text-[#87878A] font-semibold text-[12px] leading-[100%] tracking-[0.12px] font-['SUIT_Variable'] pb-[3px] border-b-1 border-[#87878A] cursor-pointer"
 							>
 								회원 탈퇴하기
 							</button>
 						</div>
+
 						<div className="pt-[30px] flex justify-center">
 							<Button
-								onClick={saveChanges}
+								type="submit"
+								disabled={isSubmitting || !isDirty || !isValid || updateUserProfileMutation.isPending}
 								size={"sm"}
 								rounded={"full"}
-								className="text-white font-black text-[12px] leading-[100%] tracking-[0.12px] font-['SUIT_Variable']"
+								className="text-white font-black text-[12px] leading-[100%] tracking-[0.12px] font-['SUIT_Variable'] disabled:opacity-50"
 							>
-								변경사항 저장
+								{isSubmitting || updateUserProfileMutation.isPending ? "저장 중..." : "변경사항 저장"}
 							</Button>
 						</div>
 					</form>
 				</div>
 			</section>
+
 			<UserCancelMembershipModal
 				isModalOpen={isCancelMembershipModalOpen}
 				onClose={cancelMembershipModalClose}
 			/>
 			<UserChangePasswordModal
 				isModalOpen={isChangePasswordModalOpen}
-				onClose={changePasswordMoadlClose}
+				onClose={changePasswordModalClose}
 			/>
 			<UserDeleteAccountModal
 				isModalOpen={isDeleteAccountModalOpen}

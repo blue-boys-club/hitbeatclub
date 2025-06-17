@@ -5,6 +5,8 @@ import {
 	UserLikeProductListRequest,
 	UserUpdatePayload,
 	UserUpdatePayloadSchema,
+	UserProfileUpdatePayload,
+	UserProfileUpdatePayloadSchema,
 } from "@hitbeatclub/shared-types/user";
 import axiosInstance from "@/apis/api.client";
 import { z } from "zod";
@@ -68,6 +70,17 @@ export const leaveMe = async (userId: number): Promise<CommonResponseId> => {
 export const socialJoinUser = async (userId: number, data: UserUpdatePayload): Promise<CommonResponseId> => {
 	const parsed = UserUpdatePayloadSchema.parse(data);
 	const response = await axiosInstance.patch<CommonResponseId>(`/users/${userId}/social-join`, parsed);
+	return response.data;
+};
+
+/**
+ * 유저 프로필 업데이트
+ * @param userId 유저 아이디
+ * @param data 프로필 업데이트 데이터
+ * @returns 업데이트 결과
+ */
+export const updateUserProfile = async (userId: number, data: UserProfileUpdatePayload): Promise<CommonResponseId> => {
+	const response = await axiosInstance.patch<CommonResponseId>(`/users/${userId}`, data);
 	return response.data;
 };
 
