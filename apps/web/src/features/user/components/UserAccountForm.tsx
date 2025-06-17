@@ -25,7 +25,7 @@ const userAccountFormSchema = z.object({
 	name: z.string().min(1, "이름을 입력해주세요"),
 	phoneNumber: z
 		.string()
-		.min(1, "휴대전화를 입력해주세요")
+		.min(1, "휴대전화 번호를 입력해주세요")
 		.regex(/^010\d{8}$/, "올바른 휴대전화 번호를 입력해주세요"),
 	birthDate: z.string().min(1, "생년월일을 입력해주세요"),
 	gender: z.enum(["M", "F"]),
