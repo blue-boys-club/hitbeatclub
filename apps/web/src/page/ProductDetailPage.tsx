@@ -20,6 +20,7 @@ import { useLikeProductMutation } from "@/apis/product/mutations/useLikeProductM
 import { useUnlikeProductMutation } from "@/apis/product/mutations/useUnLikeProductMutation";
 import UserProfileImage from "@/assets/images/user-profile.png";
 import { cn } from "@/common/utils";
+import Link from "next/link";
 
 // interface TrackInfo {
 // 	title: string;
@@ -170,14 +171,17 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 						</header>
 
 						<div className="flex justify-between items-center">
-							<div className="flex items-center gap-2">
+							<Link
+								href={`/artists/${product?.seller?.id}`}
+								className="flex items-center gap-2"
+							>
 								<UserAvatar
 									src={artistProfileUrl}
 									className={cn("w-[51px] h-[51px] bg-black", artistProfileUrl === UserProfileImage && "bg-white")}
 									size="large"
 								/>
 								<span className="text-16px font-bold">{product?.seller?.stageName}</span>
-							</div>
+							</Link>
 
 							<button
 								className="cursor-pointer w-8 h-8 flex justify-center items-center hover:opacity-80 transition-opacity"
@@ -198,17 +202,38 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 						</div>
 
 						<div className="flex justify-between">
-							<nav
-								className="flex flex-wrap gap-2"
-								aria-label="장르 목록"
-							>
-								{/* {product?.genres?.map((genre) => (
+							<div className="flex flex-col gap-9px">
+								<nav
+									className="flex flex-wrap gap-9px"
+									aria-label="음계 및 BPM 정보"
+								>
 									<GenreButton
-										key={genre}
-										name={genre}
+										name={`${product?.musicKey || ""} ${(product?.scaleType || "").toLowerCase()}`}
+										showDeleteButton={false}
 									/>
-								))} */}
-							</nav>
+									<GenreButton
+										name={
+											product?.minBpm === product?.maxBpm
+												? `BPM ${product?.minBpm || 0}`
+												: `BPM ${product?.minBpm || 0} - ${product?.maxBpm || 0}`
+										}
+										showDeleteButton={false}
+									/>
+								</nav>
+
+								<nav
+									className="flex flex-wrap gap-9px"
+									aria-label="장르 목록"
+								>
+									{product?.genres?.map((genre) => (
+										<GenreButton
+											key={genre.name}
+											name={genre.name}
+											showDeleteButton={false}
+										/>
+									))}
+								</nav>
+							</div>
 
 							<div className="flex flex-col gap-0.5">
 								{!!product?.isFreeDownload && (
@@ -233,13 +258,13 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 							className="flex flex-wrap gap-2"
 							aria-label="태그 목록"
 						>
-							{/* {product?.genres?.map((genre) => (
+							{product?.tags?.map((tag) => (
 								<TagButton
-									key={genre}
-									name={genre}
+									key={tag.name}
+									name={tag.name}
 									isClickable={false}
 								/>
-							))} */}
+							))}
 						</nav>
 					</section>
 				</article>
