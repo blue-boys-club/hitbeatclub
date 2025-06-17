@@ -4,15 +4,19 @@ import * as Popup from "@/components/ui/Popup";
 import { useState } from "react";
 import { cn } from "@/common/utils";
 import { useQuery } from "@tanstack/react-query";
-import { getProductQueryOption } from "../../../../apis/product/query/product.query-option";
-import { LICENSE_MAP_TEMPLATE } from "@/apis/product/product.dummy";
+import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 
 interface LicenseChangeModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	currentLicenseType: "MASTER" | "EXCLUSIVE";
-	currentItemId: number;
-	onChangeLicense: (id: number, licenseType: "MASTER" | "EXCLUSIVE") => void;
+	productId: number;
+	currentLicenseId: number;
+	availableLicenses: Array<{
+		id: number;
+		type: "MASTER" | "EXCLUSIVE";
+		price: number;
+	}>;
+	onChangeLicense: (licenseId: number) => void;
 }
 
 export type LicenseOption = {
@@ -26,49 +30,78 @@ export type LicenseOption = {
 
 type LicenseType = "MASTER" | "EXCLUSIVE";
 
+// 라이센스 타입별 템플릿 (기존 LICENSE_MAP_TEMPLATE을 간소화)
+const LICENSE_TEMPLATE = {
+	MASTER: {
+		name: "마스터",
+		description: "상업적 이용 가능",
+		notes: ["상업적 이용 가능", "무제한 배포", "저작권 표기 필수"],
+	},
+	EXCLUSIVE: {
+		name: "익스클루시브",
+		description: "독점 사용 가능",
+		notes: ["독점 사용 가능", "무제한 배포", "상업적 이용 가능", "저작권 표기 선택"],
+	},
+};
+
 export const LicenseChangeModal = ({
 	isOpen,
 	onClose,
-	currentLicenseType,
-	currentItemId,
+	productId,
+	currentLicenseId,
+	availableLicenses,
 	onChangeLicense,
 }: LicenseChangeModalProps) => {
-	const [selectedLicenseType, setSelectedLicenseType] = useState<LicenseType>(currentLicenseType);
+	const [selectedLicenseId, setSelectedLicenseId] = useState<number>(currentLicenseId);
 
-	const queryOptions = getProductQueryOption(currentItemId);
-	const {
-		data: productLicenses,
-		isLoading,
-		isError,
-		error,
-	} = useQuery({
-		...queryOptions,
-		select: (product) => {
-			if (!product?.data?.licenseInfo) return [];
-
-			return product.data.licenseInfo.map((licenseInfo: any) => ({
-				id: licenseInfo.id,
-				type: licenseInfo.type,
-				name: LICENSE_MAP_TEMPLATE[licenseInfo.type as LicenseType]?.name || licenseInfo.type,
-				description: LICENSE_MAP_TEMPLATE[licenseInfo.type as LicenseType]?.description || "",
-				price: licenseInfo.price,
-				notes: LICENSE_MAP_TEMPLATE[licenseInfo.type as LicenseType]?.notes || [],
-			})) as LicenseOption[];
-		},
-		enabled: isOpen && !!currentItemId,
-		staleTime: 5 * 60 * 1000,
+	// 제품 상세 정보 조회 (더 많은 라이센스 정보를 위해)
+	const { data: productDetail, isLoading } = useQuery({
+		...getProductQueryOption(productId),
+		enabled: isOpen,
+		select: (response) => response.data,
 	});
 
+	// 최종 라이센스 옵션 결정: productDetail에서 가져온 라이센스 정보를 우선적으로 사용
+	const finalLicenseOptions: LicenseOption[] = (() => {
+		if (productDetail?.licenseInfo && productDetail.licenseInfo.length > 0) {
+			// 제품 상세에서 라이센스 정보가 있는 경우 사용
+			return productDetail.licenseInfo.map((license: any) => {
+				const template = LICENSE_TEMPLATE[license.type as LicenseType];
+				return {
+					id: license.id,
+					type: license.type,
+					name: template.name,
+					description: template.description,
+					price: license.price,
+					notes: template.notes,
+				};
+			});
+		} else {
+			// 없는 경우 availableLicenses 사용
+			return availableLicenses.map((license) => {
+				const template = LICENSE_TEMPLATE[license.type];
+				return {
+					id: license.id,
+					type: license.type,
+					name: template.name,
+					description: template.description,
+					price: license.price,
+					notes: template.notes,
+				};
+			});
+		}
+	})();
+
 	const handleChangeLicense = () => {
-		if (selectedLicenseType === currentLicenseType) {
+		if (selectedLicenseId === currentLicenseId) {
 			onClose();
 			return;
 		}
-		onChangeLicense(currentItemId, selectedLicenseType);
+		onChangeLicense(selectedLicenseId);
 		onClose();
 	};
 
-	const selectedOptionDetails = productLicenses?.find((option) => option.type === selectedLicenseType);
+	const selectedOptionDetails = finalLicenseOptions.find((option) => option.id === selectedLicenseId);
 
 	return (
 		<Popup.Popup
@@ -79,27 +112,26 @@ export const LicenseChangeModal = ({
 				<Popup.PopupHeader>
 					<Popup.PopupTitle className="font-bold">라이센스 변경</Popup.PopupTitle>
 				</Popup.PopupHeader>
-				{isLoading && <div className="p-4 text-center">라이센스 정보를 불러오는 중...</div>}
-				{isError && <div className="p-4 text-center text-red-500">라이센스 정보 로드 중 오류가 발생했습니다.</div>}
-				{!isLoading && !isError && productLicenses && productLicenses.length > 0 && (
+
+				{isLoading ? (
+					<div className="p-4 text-center">라이센스 정보를 불러오는 중...</div>
+				) : finalLicenseOptions.length > 0 ? (
 					<>
 						<div className="flex flex-col items-center justify-start w-full gap-25px">
 							<div className="flex items-start justify-start gap-4">
-								{productLicenses.map((option) => (
+								{finalLicenseOptions.map((option) => (
 									<div
-										key={option.type}
+										key={option.id}
 										className={cn(
 											"p-12px rounded-lg outline-2 outline-offset-[-2px] outline-black flex flex-col justify-start items-center gap-[5px] cursor-pointer h-fit",
-											selectedLicenseType === option.type ? "bg-black" : "bg-white",
+											selectedLicenseId === option.id ? "bg-black" : "bg-white",
 										)}
-										onClick={() => setSelectedLicenseType(option.type as LicenseType)}
+										onClick={() => setSelectedLicenseId(option.id)}
 									>
 										<div
 											className={cn(
 												"text-18px font-medium leading-160% tracking-018px",
-												selectedLicenseType === option.type
-													? "text-white font-suisse"
-													: "text-black font-bold font-suit",
+												selectedLicenseId === option.id ? "text-white font-suisse" : "text-black font-bold font-suit",
 											)}
 										>
 											{option.name}
@@ -107,7 +139,7 @@ export const LicenseChangeModal = ({
 										<div
 											className={cn(
 												"text-18px font-medium font-suisse leading-160% tracking-018px",
-												selectedLicenseType === option.type ? "text-white" : "text-black",
+												selectedLicenseId === option.id ? "text-white" : "text-black",
 											)}
 										>
 											{option.price.toLocaleString()} KRW
@@ -115,7 +147,7 @@ export const LicenseChangeModal = ({
 										<div
 											className={cn(
 												"text-12px font-medium font-suisse leading-150% tracking-012px",
-												selectedLicenseType === option.type ? "text-white" : "text-black",
+												selectedLicenseId === option.id ? "text-white" : "text-black",
 											)}
 										>
 											{option.description}
@@ -157,15 +189,14 @@ export const LicenseChangeModal = ({
 						<Popup.PopupFooter>
 							<Popup.PopupButton
 								onClick={handleChangeLicense}
-								disabled={!productLicenses || productLicenses.length === 0}
+								disabled={isLoading || finalLicenseOptions.length === 0}
 							>
 								변경하기
 							</Popup.PopupButton>
 						</Popup.PopupFooter>
 					</>
-				)}
-				{!isLoading && !isError && productLicenses && productLicenses.length === 0 && (
-					<div className="p-4 text-center text-gray-500">No licenses available for this product.</div>
+				) : (
+					<div className="p-4 text-center text-gray-500">사용 가능한 라이센스가 없습니다.</div>
 				)}
 			</Popup.PopupContent>
 		</Popup.Popup>

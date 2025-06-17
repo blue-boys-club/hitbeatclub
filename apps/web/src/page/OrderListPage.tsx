@@ -1,17 +1,24 @@
 "use client";
 
-import { getOrderHistoryQueryOptions } from "../features/order/hooks/useOrderHistory";
+import { getUserOrdersInfiniteQueryOptions } from "../apis/payment/query/payment.query-options";
 import { OrderItem } from "../features/order/components/OrderItem";
-import type { Order } from "../features/order/types"; // Import Order type if needed elsewhere, though OrderItem handles it
 import { OrderListHeader } from "../features/order/components/OrderListHeader";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+import type { PaymentOrderResponse } from "@hitbeatclub/shared-types/payment";
 
 // TODO: Add proper loading and error states components
 // TODO: Style the "no orders" message more appropriately
 // TODO: Implement better error handling UI
 
 const OrderListPage = () => {
-	const { data: orders, isLoading, error } = useQuery(getOrderHistoryQueryOptions());
+	const { data, isLoading, error } = useInfiniteQuery(getUserOrdersInfiniteQueryOptions());
+
+	// Flatten all pages into a single orders array
+	const orders = useMemo(() => {
+		if (!data?.pages) return [];
+		return data.pages.flat();
+	}, [data?.pages]);
 
 	return (
 		// Main container using flex column layout to fill height
@@ -42,9 +49,9 @@ const OrderListPage = () => {
 				{!isLoading && !error && orders && orders.length > 0 && (
 					<div className="flex flex-col gap-16px">
 						{/* TODO: Add a page title if needed, e.g., <h1 className="mb-4 text-2xl font-bold">Purchase History</h1> */}
-						{orders.map((order: Order) => (
+						{orders.map((order: PaymentOrderResponse) => (
 							<OrderItem
-								key={order.id}
+								key={order.orderNumber}
 								order={order}
 							/>
 						))}

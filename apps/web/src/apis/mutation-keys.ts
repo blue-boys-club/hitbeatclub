@@ -32,4 +32,15 @@ export const MUTATION_KEYS = {
 		update: ["artist", "update"],
 		uploadProfile: ["artist", "uploadProfile"],
 	},
+	cart: {
+		create: ["cart", "create"],
+		delete: ["cart", "delete"],
+		update: ["cart", "update"],
+	},
+	payment: {
+		createOrder: ["payment", "createOrder"],
+		completePayment: ["payment", "completePayment"],
+		getOrder: ["payment", "getOrder"],
+		getUserOrders: ["payment", "getUserOrders"],
+	},
 };

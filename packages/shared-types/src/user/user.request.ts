@@ -83,3 +83,34 @@ export const UserUnfollowArtistRequestSchema = z.object({
 });
 
 export type UserUnfollowArtistRequest = z.infer<typeof UserUnfollowArtistRequestSchema>;
+
+export const UserProfileUpdatePayloadSchema = z.object({
+	name: z.string().min(1).max(100).describe("사용자 이름").optional().default("John Doe"),
+	stageName: z.string().min(1).max(30).describe("활동명").optional().default("DJ Cool"),
+	phoneNumber: z.string().max(11).describe("전화번호").optional().default("01012345678"),
+	birthDate: z.string().datetime().describe("생년월일").optional().default("1990-01-01T00:00:00Z"),
+	gender: z.enum(["M", "F"]).describe("성별 (M/F)").optional().default("M"),
+	country: z.string().max(4).describe("국가 코드").optional().default("KR"),
+	region: z.string().max(100).describe("지역").optional().default("Seoul"),
+});
+
+export type UserProfileUpdatePayload = z.infer<typeof UserProfileUpdatePayloadSchema>;
+
+export const UserDeletePayloadSchema = z.object({
+	deletedReason: z.string().min(1).max(255).describe("탈퇴 사유").default("개인정보 보호"),
+});
+
+export type UserDeletePayload = z.infer<typeof UserDeletePayloadSchema>;
+
+export const UserPasswordResetPayloadSchema = z
+	.object({
+		currentPassword: z.string().min(8).max(255).describe("현재 비밀번호"),
+		newPassword: z.string().min(8).max(255).describe("새 비밀번호"),
+		confirmPassword: z.string().min(8).max(255).describe("비밀번호 확인"),
+	})
+	.refine((data) => data.newPassword === data.confirmPassword, {
+		message: "새 비밀번호와 비밀번호 확인이 일치하지 않습니다",
+		path: ["confirmPassword"],
+	});
+
+export type UserPasswordResetPayload = z.infer<typeof UserPasswordResetPayloadSchema>;

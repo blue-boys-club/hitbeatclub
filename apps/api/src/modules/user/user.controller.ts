@@ -1,4 +1,16 @@
-import { Controller, Get, Patch, Delete, Param, Body, Req, Post, NotFoundException, Query } from "@nestjs/common";
+import {
+	Controller,
+	Get,
+	Patch,
+	Delete,
+	Param,
+	Body,
+	Req,
+	Post,
+	NotFoundException,
+	Query,
+	BadRequestException,
+} from "@nestjs/common";
 import { UserService } from "./user.service";
 import { ApiOperation, ApiTags, ApiBody, ApiQuery } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
@@ -20,6 +32,11 @@ import { CartCreateRequestDto } from "../cart/dto/request/cart.create.request.dt
 import { UserFollowArtistListResponseDto } from "./dto/response/user.follow-artist-list.response.dto";
 import { UserFollowArtistListRequestDto } from "./dto/request/user.follow-artist-list.request.dto";
 import { UserFollowArtistResponseDto } from "./dto/response/user.follow-artist.response.dto";
+import { CartUpdateRequestDto } from "../cart/dto/request/cart.update.request.dto";
+import { UserProfileUpdateDto } from "./dto/request/user.profile-update.request.dto";
+import { UserDeleteDto } from "./dto/request/user.delete.request.dto";
+import { UserPasswordResetDto } from "./dto/request/user.password-reset.request.dto";
+import { USER_RESET_PASSWORD_ID_MISMATCH_ERROR } from "./user.error";
 
 @Controller("users")
 @ApiTags("user")
@@ -88,15 +105,39 @@ export class UserController {
 		dto: DatabaseIdResponseDto,
 	})
 	@Delete(":id")
-	async softDelete(@Param("id") id: number): Promise<DatabaseIdResponseDto> {
-		await this.userService.softDelete(id);
+	async softDelete(@Param("id") id: number, @Body() userDeletePayload: UserDeleteDto): Promise<DatabaseIdResponseDto> {
+		const user = await this.userService.softDelete(id, userDeletePayload);
 
 		return {
 			statusCode: 200,
 			message: userMessage.delete.success,
 			data: {
-				id,
+				id: user.id,
 			},
+		};
+	}
+
+	@Patch(":id/password")
+	@ApiOperation({ summary: "비밀번호 재설정" })
+	@AuthenticationDoc()
+	@DocResponse<DatabaseIdResponseDto>(userMessage.resetPassword.success, {
+		dto: DatabaseIdResponseDto,
+	})
+	async resetPassword(
+		@Req() req: AuthenticatedRequest,
+		@Param("id") id: number,
+		@Body() userPasswordResetDto: UserPasswordResetDto,
+	): Promise<DatabaseIdResponseDto> {
+		if (Number(id) !== req.user.id) {
+			throw new BadRequestException(USER_RESET_PASSWORD_ID_MISMATCH_ERROR);
+		}
+
+		const user = await this.userService.resetPassword(id, userPasswordResetDto);
+
+		return {
+			statusCode: 200,
+			message: userMessage.resetPassword.success,
+			data: { id: user.id },
 		};
 	}
 
@@ -175,6 +216,26 @@ export class UserController {
 		};
 	}
 
+	@Patch(":userId/cart/:cartId")
+	@ApiOperation({ summary: "장바구니 수정" })
+	@AuthenticationDoc()
+	@DocResponse<DatabaseIdResponseDto>(cartMessage.update.success, {
+		dto: DatabaseIdResponseDto,
+	})
+	async updateCart(
+		@Param("userId") userId: number,
+		@Param("cartId") cartId: number,
+		@Body() cartUpdateRequestDto: CartUpdateRequestDto,
+	): Promise<DatabaseIdResponseDto> {
+		const result = await this.cartService.update(userId, cartId, cartUpdateRequestDto);
+
+		return {
+			statusCode: 200,
+			message: cartMessage.update.success,
+			data: { id: result.id },
+		};
+	}
+
 	@Get(":userId/followed-artists")
 	@ApiOperation({ summary: "팔로우한 아티스트 목록 조회" })
 	@AuthenticationDoc()
@@ -246,6 +307,27 @@ export class UserController {
 			statusCode: 200,
 			message: userMessage.unfollowArtist.success,
 			data: result,
+		};
+	}
+
+	@Patch(":id")
+	@ApiOperation({ summary: "사용자 프로필 수정" })
+	@AuthenticationDoc()
+	@DocResponse<DatabaseIdResponseDto>(userMessage.updateProfile.success, {
+		dto: DatabaseIdResponseDto,
+	})
+	async updateProfile(
+		@Param("id") id: number,
+		@Body() userProfileUpdateDto: UserProfileUpdateDto,
+	): Promise<DatabaseIdResponseDto> {
+		const user = await this.userService.updateProfile(id, userProfileUpdateDto);
+
+		return {
+			statusCode: 200,
+			message: userMessage.updateProfile.success,
+			data: {
+				id: user.id,
+			},
 		};
 	}
 }

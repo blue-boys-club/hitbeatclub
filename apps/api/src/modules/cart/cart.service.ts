@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from "@nestjs/comm
 import { PrismaService } from "~/common/prisma/prisma.service";
 import { FileService } from "../file/file.service";
 import { CartCreateRequestDto } from "./dto/request/cart.create.request.dto";
+import { CartUpdateRequestDto } from "./dto/request/cart.update.request.dto";
 import { CartListResponseDto } from "./dto/response/cart.list.response.dto";
 import { ENUM_PRODUCT_FILE_TYPE } from "../product/product.enum";
 import {
@@ -9,7 +10,7 @@ import {
 	CART_REMOVE_ERROR,
 	CART_FIND_ERROR,
 	CART_ITEM_NOT_FOUND_ERROR,
-	CART_ITEM_ALREADY_EXISTS_ERROR,
+	CART_UPDATE_ERROR,
 } from "./cart.error";
 
 @Injectable()
@@ -33,9 +34,19 @@ export class CartService {
 				.then((data) => this.prisma.serializeBigInt(data));
 
 			if (existingItem) {
-				throw new BadRequestException(CART_ITEM_ALREADY_EXISTS_ERROR);
+				// 기존 항목이 있으면 라이센스만 업데이트 (silent update)
+				return await this.prisma.cart
+					.update({
+						where: { id: existingItem.id },
+						data: {
+							licenseId: cartCreateDto.licenseId,
+							updatedAt: new Date(),
+						},
+					})
+					.then((data) => this.prisma.serializeBigInt(data));
 			}
 
+			// 새로운 항목 생성
 			return await this.prisma.cart
 				.create({
 					data: {
@@ -136,6 +147,44 @@ export class CartService {
 		} catch (e: any) {
 			throw new BadRequestException({
 				...CART_FIND_ERROR,
+				detail: e.message,
+			});
+		}
+	}
+
+	async update(userId: number, cartId: number, cartUpdateDto: CartUpdateRequestDto) {
+		try {
+			// 기존 장바구니 아이템 확인
+			const cartItem = await this.prisma.cart
+				.findFirst({
+					where: {
+						id: cartId,
+						userId,
+						deletedAt: null,
+					},
+				})
+				.then((data) => this.prisma.serializeBigInt(data));
+
+			if (!cartItem) {
+				throw new NotFoundException(CART_ITEM_NOT_FOUND_ERROR);
+			}
+
+			// 라이센스 업데이트
+			return await this.prisma.cart
+				.update({
+					where: { id: cartId },
+					data: {
+						licenseId: cartUpdateDto.licenseId,
+						updatedAt: new Date(),
+					},
+				})
+				.then((data) => this.prisma.serializeBigInt(data));
+		} catch (e: any) {
+			if (e?.response) {
+				throw new BadRequestException(e.response);
+			}
+			throw new BadRequestException({
+				...CART_UPDATE_ERROR,
 				detail: e.message,
 			});
 		}

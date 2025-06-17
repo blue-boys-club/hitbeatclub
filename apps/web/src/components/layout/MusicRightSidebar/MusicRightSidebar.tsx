@@ -7,11 +7,9 @@ import { cn } from "@/common/utils";
 
 import { Acapella, ArrowLeftMosaic, ArrowRightMosaic, Beat, Like } from "@/assets/svgs";
 import { FreeDownloadButton } from "@/components/ui/FreeDownloadButton";
-import { PurchaseButton } from "@/components/ui/PurchaseButton";
 import { useShallow } from "zustand/react/shallow";
 import { useLayoutStore } from "@/stores/layout";
 import { useRouter } from "next/navigation";
-import { PurchaseModal } from "./PurchaseModal";
 import { useQuery } from "@tanstack/react-query";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
@@ -19,6 +17,7 @@ import { useLikeProductMutation } from "@/apis/product/mutations/useLikeProductM
 import { useUnlikeProductMutation } from "@/apis/product/mutations/useUnLikeProductMutation";
 import { useToast } from "@/hooks/use-toast";
 import { useAudioStore } from "@/stores/audio";
+import { PurchaseWithCartTrigger } from "@/features/product/components";
 
 /**
  * 음악 상세 정보를 보여주는 우측 사이드바 컴포넌트
@@ -63,15 +62,9 @@ export const MusicRightSidebar = memo(() => {
 
 	const isLiked = audioStoreId === Number(currentTrackId) ? audioStoreIsLiked : currentTrack?.isLiked;
 
-	// TODO: 라이센스 가격 조회 로직 추가
-	// const cheapestLicensePrice = currentTrack?.licenses.reduce((min, license) => Math.min(min, license.price), Infinity);
-	const cheapestLicensePrice = 10000;
-
 	const handleToggleOpen = () => {
 		setRightSidebar(!isOpen);
 	};
-
-	const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
 	const onLikeClick = () => {
 		if (!user) {
@@ -211,13 +204,7 @@ export const MusicRightSidebar = memo(() => {
 								</FreeDownloadButton>
 							)}
 
-							<PurchaseButton
-								iconColor="white"
-								className="outline-4 outline-hbc-black"
-								onClick={() => setIsPaymentModalOpen(true)}
-							>
-								{cheapestLicensePrice?.toLocaleString()} KRW
-							</PurchaseButton>
+							{currentTrackId && <PurchaseWithCartTrigger productId={Number(currentTrackId)} />}
 						</div>
 
 						<div
@@ -238,11 +225,6 @@ export const MusicRightSidebar = memo(() => {
 					</div>
 				</div>
 			</div>
-			<PurchaseModal
-				isOpen={isPaymentModalOpen}
-				onClose={() => setIsPaymentModalOpen(false)}
-				productId={Number(currentTrackId)}
-			/>
 		</div>
 	);
 });

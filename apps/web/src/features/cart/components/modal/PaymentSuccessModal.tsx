@@ -2,16 +2,12 @@
 
 import * as Popup from "@/components/ui/Popup";
 import { useEffect } from "react";
+import type { PaymentOrderResponse } from "@hitbeatclub/shared-types/payment";
 
 interface PaymentSuccessModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	paymentResult: {
-		amount: number;
-		orderId: string;
-		method: string;
-		approvedAt: string;
-	};
+	paymentResult: PaymentOrderResponse;
 }
 
 export const PaymentSuccessModal = ({ isOpen, onClose, paymentResult }: PaymentSuccessModalProps) => {
@@ -32,6 +28,10 @@ export const PaymentSuccessModal = ({ isOpen, onClose, paymentResult }: PaymentS
 			<Popup.PopupContent className="w-412px">
 				<Popup.PopupHeader>
 					<Popup.PopupTitle className="font-bold text-center">구매 완료</Popup.PopupTitle>
+					<div className="text-center mb-4">
+						<span className="text-sm text-gray-600">주문번호: </span>
+						<span className="font-mono font-bold text-black">{paymentResult.orderNumber}</span>
+					</div>
 					<Popup.PopupDescription className="font-bold leading-normal text-left whitespace-pre-line font-suit text-12px text-hbc-gray-400 tracking-012px">
 						🎉 구매가 완료되었습니다!
 						<br /> 결제도 잘 되었고, 지금 바로 음원을 확인하실 수 있어요.
@@ -44,10 +44,10 @@ export const PaymentSuccessModal = ({ isOpen, onClose, paymentResult }: PaymentS
 					</Popup.PopupDescription>
 				</Popup.PopupHeader>
 
-				<Popup.PopupFooter className="mt-6">
+				<Popup.PopupFooter className="mt-6 flex justify-center">
 					<Popup.PopupButton
 						onClick={onClose}
-						className="w-full"
+						className=""
 					>
 						확인
 					</Popup.PopupButton>

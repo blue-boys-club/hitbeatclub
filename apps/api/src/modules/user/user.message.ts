@@ -11,6 +11,12 @@ const userMessage = {
 	update: {
 		success: "success user update",
 	},
+	updateProfile: {
+		success: "success user profile update",
+	},
+	resetPassword: {
+		success: "success password reset",
+	},
 	delete: {
 		success: "success user delete",
 	},

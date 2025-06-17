@@ -11,6 +11,7 @@ import { ArtistUploadProfileRequest } from "./artist.type";
 import { FileUploadResponse } from "@hitbeatclub/shared-types/file";
 import { SettlementCreateRequest, SettlementUpdateRequest } from "@hitbeatclub/shared-types/settlement";
 import { ProductListPagingResponse } from "@hitbeatclub/shared-types/product";
+import { deepRemoveDefaults } from "@/lib/schema.utils";
 
 /**
  * 아티스트 내 정보 조회
@@ -95,7 +96,7 @@ export const updateArtistSettlement = async (id: number, payload: SettlementUpda
  */
 export const getArtistContentList = async (id: number, payload: ArtistProductListQueryRequest) => {
 	try {
-		const parsed = ArtistProductListQuerySchema.parse(payload);
+		const parsed = deepRemoveDefaults(ArtistProductListQuerySchema).parse(payload);
 		const response = await axiosInstance.get<ProductListPagingResponse>(`/artists/${id}/products`, {
 			params: parsed,
 			// paramsSerializer: { indexes: null },

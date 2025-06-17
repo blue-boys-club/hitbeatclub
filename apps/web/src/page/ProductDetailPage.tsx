@@ -3,10 +3,11 @@
 import { memo, useMemo, useState, useCallback } from "react";
 import Image from "next/image";
 import { Acapella, Beat, Like, RedPlayCircle } from "@/assets/svgs";
-import { AlbumAvatar, FreeDownloadButton, PurchaseButton, UserAvatar } from "@/components/ui";
-import { LicenseNote, ProductDetailLicense } from "../features/product/components/ProductDetailLicense";
-import { ProductDetailLicenseModal } from "../features/product/components/modal/ProductDetailLicenseModal";
-import { LicenseType } from "../features/product/product.constants";
+import { AlbumAvatar, FreeDownloadButton, UserAvatar } from "@/components/ui";
+import { GenreButton } from "@/components/ui/GenreButton";
+import { TagButton } from "@/components/ui/TagButton";
+import { LicenseNote, ProductDetailLicense, PurchaseWithCartTrigger } from "../features/product/components";
+import { LicenseColor, LicenseType } from "../features/product/product.constants";
 import { LICENSE_MAP_TEMPLATE } from "@/apis/product/product.dummy";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -18,6 +19,7 @@ import { useUnlikeProductMutation } from "@/apis/product/mutations/useUnLikeProd
 import UserProfileImage from "@/assets/images/user-profile.png";
 import { cn } from "@/common/utils";
 import { useAudioStore } from "@/stores/audio";
+import Link from "next/link";
 
 interface ProductDetailPageProps {
 	trackId: number;
@@ -36,8 +38,8 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 	const likeProductMutation = useLikeProductMutation();
 	const unlikeProductMutation = useUnlikeProductMutation();
 
-	const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
 	const { data: user } = useQuery(getUserMeQueryOption());
+
 	const isSubscribed = useMemo(() => {
 		return !!user?.subscribedAt;
 	}, [user?.subscribedAt]);
@@ -105,10 +107,6 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 		}
 	};
 
-	const onClickPurchase = () => {
-		setIsLicenseModalOpen(true);
-	};
-
 	const onClickFreeDownload = () => {
 		if (!isSubscribed) {
 			router.push("/subscribe");
@@ -117,7 +115,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 		}
 	};
 
-	// 라이센스 정보 처리 (모달과 동일한 로직)
+	// 라이센스 정보 처리 (라이센스 표시용)
 	const licenses = useMemo(() => {
 		if (!product?.licenseInfo) return [];
 
@@ -128,11 +126,6 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 			...LICENSE_MAP_TEMPLATE[licenseInfo.type as keyof typeof LICENSE_MAP_TEMPLATE],
 		}));
 	}, [product?.licenseInfo]);
-
-	const cheapestLicensePrice = useMemo(() => {
-		if (licenses.length === 0) return 10000;
-		return Math.min(...licenses.map((license) => license.price));
-	}, [licenses]);
 
 	const artistProfileUrl = useMemo(() => {
 		if (!product?.seller?.profileImageUrl || product?.seller?.profileImageUrl === "") {
@@ -173,14 +166,17 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 						</header>
 
 						<div className="flex justify-between items-center">
-							<div className="flex items-center gap-2">
+							<Link
+								href={`/artists/${product?.seller?.id}`}
+								className="flex items-center gap-2"
+							>
 								<UserAvatar
 									src={artistProfileUrl}
 									className={cn("w-[51px] h-[51px] bg-black", artistProfileUrl === UserProfileImage && "bg-white")}
 									size="large"
 								/>
 								<span className="text-16px font-bold">{product?.seller?.stageName}</span>
-							</div>
+							</Link>
 
 							<button
 								className="cursor-pointer w-8 h-8 flex justify-center items-center hover:opacity-80 transition-opacity"
@@ -201,17 +197,38 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 						</div>
 
 						<div className="flex justify-between">
-							<nav
-								className="flex flex-wrap gap-2"
-								aria-label="장르 목록"
-							>
-								{/* {product?.genres?.map((genre) => (
+							<div className="flex flex-col gap-9px">
+								<nav
+									className="flex flex-wrap gap-9px"
+									aria-label="음계 및 BPM 정보"
+								>
 									<GenreButton
-										key={genre}
-										name={genre}
+										name={`${product?.musicKey || ""} ${(product?.scaleType || "").toLowerCase()}`}
+										showDeleteButton={false}
 									/>
-								))} */}
-							</nav>
+									<GenreButton
+										name={
+											product?.minBpm === product?.maxBpm
+												? `BPM ${product?.minBpm || 0}`
+												: `BPM ${product?.minBpm || 0} - ${product?.maxBpm || 0}`
+										}
+										showDeleteButton={false}
+									/>
+								</nav>
+
+								<nav
+									className="flex flex-wrap gap-9px"
+									aria-label="장르 목록"
+								>
+									{product?.genres?.map((genre) => (
+										<GenreButton
+											key={genre.name}
+											name={genre.name}
+											showDeleteButton={false}
+										/>
+									))}
+								</nav>
+							</div>
 
 							<div className="flex flex-col gap-0.5">
 								{!!product?.isFreeDownload && (
@@ -223,13 +240,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 										Free Download
 									</FreeDownloadButton>
 								)}
-								<PurchaseButton
-									iconColor="var(--hbc-white)"
-									className="outline-4 outline-hbc-black font-suisse"
-									onClick={onClickPurchase}
-								>
-									{cheapestLicensePrice?.toLocaleString()} KRW
-								</PurchaseButton>
+								{product && <PurchaseWithCartTrigger productId={product.id} />}
 							</div>
 						</div>
 
@@ -242,13 +253,13 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 							className="flex flex-wrap gap-2"
 							aria-label="태그 목록"
 						>
-							{/* {product?.genres?.map((genre) => (
+							{product?.tags?.map((tag) => (
 								<TagButton
-									key={genre}
-									name={genre}
+									key={tag.name}
+									name={tag.name}
 									isClickable={false}
 								/>
-							))} */}
+							))}
 						</nav>
 					</section>
 				</article>
@@ -275,14 +286,6 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 					</div>
 				</section>
 			</main>
-
-			{product && (
-				<ProductDetailLicenseModal
-					productId={product.id}
-					isOpen={isLicenseModalOpen}
-					onClose={() => setIsLicenseModalOpen(false)}
-				/>
-			)}
 		</>
 	);
 });

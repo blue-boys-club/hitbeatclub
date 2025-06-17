@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { UserUpdatePayloadSchema } from "./user.request";
+import { SubscribeResponseSchema } from "../subscribe/subscribe.response";
 
 export const UserUpdateResponseSchema = z.object({
 	id: z.number().describe("사용자 ID").default(1),
@@ -17,6 +18,7 @@ export const UserFindMeResponseSchema = UserUpdatePayloadSchema.omit({
 	agreedPrivacyPolicyAt: z.date().describe("개인정보처리방침 동의 일시"),
 	agreedEmailAt: z.date().describe("이메일 수신 동의 일시"),
 	subscribedAt: z.date().describe("구독 시작 일시").nullable().default(new Date("2025-05-27T00:00:00.000Z")),
+	subscribe: SubscribeResponseSchema.describe("구독 정보").nullable(),
 });
 
 export type UserFindMeResponse = z.infer<typeof UserFindMeResponseSchema>;

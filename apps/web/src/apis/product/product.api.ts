@@ -12,6 +12,7 @@ import { z } from "zod";
 import type { CommonResponse, CommonResponseId } from "@/apis/api.type";
 import { FileUploadResponse } from "@hitbeatclub/shared-types/file";
 import { PRODUCT_FILE_TYPE } from "./product.type";
+import { deepRemoveDefaults } from "@/lib/schema.utils";
 
 /**
  * 상품 목록 조회
@@ -40,7 +41,7 @@ export const getProduct = async (productId: number) => {
  * @returns 생성된 상품 정보
  */
 export const createProduct = async (product: z.infer<typeof ProductCreateSchema>) => {
-	const parsed = ProductCreateSchema.parse(product);
+	const parsed = deepRemoveDefaults(ProductCreateSchema).parse(product);
 	const response = await client.post<CommonResponseId>("/products", parsed);
 	return response.data;
 };
@@ -52,7 +53,7 @@ export const createProduct = async (product: z.infer<typeof ProductCreateSchema>
  * @returns 수정된 상품 정보
  */
 export const updateProduct = async (productId: number, product: z.infer<typeof ProductUpdateSchema>) => {
-	const parsed = ProductUpdateSchema.parse(product);
+	const parsed = deepRemoveDefaults(ProductUpdateSchema).parse(product);
 	const response = await client.patch<CommonResponseId>(`/products/${productId}`, parsed);
 	return response.data;
 };

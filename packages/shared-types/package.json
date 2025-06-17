@@ -75,6 +75,21 @@
 			"types": "./dist/cart/index.d.ts",
 			"import": "./dist/cart/index.mjs",
 			"require": "./dist/cart/index.js"
+		},
+		"./coupon": {
+			"types": "./dist/coupon/index.d.ts",
+			"import": "./dist/coupon/index.mjs",
+			"require": "./dist/coupon/index.js"
+		},
+		"./notice": {
+			"types": "./dist/notice/index.d.ts",
+			"import": "./dist/notice/index.mjs",
+			"require": "./dist/notice/index.js"
+		},
+		"./payment": {
+			"types": "./dist/payment/index.d.ts",
+			"import": "./dist/payment/index.mjs",
+			"require": "./dist/payment/index.js"
 		}
 	},
 	"files": [

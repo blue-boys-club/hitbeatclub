@@ -1,12 +1,25 @@
-import { UserCreatePayload, UserFindMeResponse, UserUpdatePayload } from "@hitbeatclub/shared-types/user";
+import {
+	UserCreatePayload,
+	UserDeletePayload,
+	UserUpdatePayload,
+	UserPasswordResetPayload,
+} from "@hitbeatclub/shared-types/user";
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "~/common/prisma/prisma.service";
 import { User, Prisma } from "@prisma/client";
 import { UserFindMeResponseDto } from "./dto/response/user.find-me.response.dto";
 import { HelperHashService } from "~/common/helper/services/helper.hash.service";
 import { ARTIST_NOT_FOUND_ERROR } from "../artist/artist.error";
-import { ALREADY_FOLLOWING_ARTIST_ERROR, NOT_FOLLOWING_ARTIST_ERROR } from "./user.error";
+import {
+	ALREADY_FOLLOWING_ARTIST_ERROR,
+	NOT_FOLLOWING_ARTIST_ERROR,
+	USER_CURRENT_PASSWORD_INVALID_ERROR,
+	USER_NOT_FOUND_ERROR,
+	USER_PROFILE_UPDATE_ERROR,
+	USER_RESET_PASSWORD_ERROR,
+} from "./user.error";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
+import { UserProfileUpdatePayload } from "@hitbeatclub/shared-types/user";
 
 @Injectable()
 export class UserService {
@@ -52,8 +65,8 @@ export class UserService {
 			.then((data) => this.prisma.serializeBigInt(data));
 	}
 
-	async findMe(id: number): Promise<UserFindMeResponseDto> {
-		return await this.prisma.user
+	async findMe(id: number) {
+		const user = await this.prisma.user
 			.findUnique({
 				where: { id, deletedAt: null },
 				select: {
@@ -69,10 +82,20 @@ export class UserService {
 					agreedTermsAt: true,
 					agreedPrivacyPolicyAt: true,
 					agreedEmailAt: true,
-					subscribedAt: true,
+					subscribe: {
+						where: {
+							deletedAt: null,
+						},
+					},
 				},
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
+
+		return {
+			...user,
+			subscribedAt: user.subscribe[0]?.createdAt || null,
+			subscribe: user.subscribe[0] || null,
+		};
 	}
 
 	async update(
@@ -98,15 +121,16 @@ export class UserService {
 		}
 	}
 
-	async softDelete(id: number): Promise<User> {
+	async softDelete(id: number, userDeletePayload: UserDeletePayload) {
 		return this.prisma.user
 			.update({
-				where: { id: id },
+				where: { id },
 				data: {
 					deletedAt: new Date(),
+					deletedReason: userDeletePayload.deletedReason,
 				},
 			})
-			.then((data) => this.prisma.serializeBigInt(data) as User);
+			.then((data) => this.prisma.serializeBigInt(data));
 	}
 
 	async findById(id: number): Promise<User | null> {
@@ -313,12 +337,11 @@ export class UserService {
 			throw new BadRequestException(NOT_FOLLOWING_ARTIST_ERROR);
 		}
 
-		const follow = await this.prisma.userArtistFollow.update({
+		const follow = await this.prisma.userArtistFollow.updateMany({
 			where: {
-				userId_artistId: {
-					userId: userId,
-					artistId: artistId,
-				},
+				userId: userId,
+				artistId: artistId,
+				deletedAt: null,
 			},
 			data: {
 				deletedAt: new Date(),
@@ -326,5 +349,69 @@ export class UserService {
 		});
 
 		return this.prisma.serializeBigInt(follow);
+	}
+
+	async updateProfile(id: number, updateData: UserProfileUpdatePayload) {
+		try {
+			return this.prisma.user
+				.update({
+					where: { id },
+					data: {
+						...updateData,
+					},
+				})
+				.then((data) => this.prisma.serializeBigInt(data));
+		} catch (e: any) {
+			throw new BadRequestException({
+				...USER_PROFILE_UPDATE_ERROR,
+				detail: e.message,
+			});
+		}
+	}
+
+	// 비밀번호 재설정
+	async resetPassword(id: number, resetData: UserPasswordResetPayload) {
+		try {
+			// 현재 사용자 조회
+			const user = await this.prisma.user.findFirst({
+				where: { id: id, deletedAt: null },
+			});
+
+			if (!user) {
+				throw new BadRequestException(USER_NOT_FOUND_ERROR);
+			}
+
+			// 현재 비밀번호 확인
+			const isCurrentPasswordValid = this.helperHashService.comparePassword(
+				resetData.currentPassword,
+				user.password || "",
+			);
+
+			if (!isCurrentPasswordValid) {
+				throw new BadRequestException(USER_CURRENT_PASSWORD_INVALID_ERROR);
+			}
+
+			// 새 비밀번호 해시화
+			const hashedNewPassword = this.helperHashService.hashPassword(resetData.newPassword);
+
+			// 비밀번호 업데이트
+			return this.prisma.user
+				.update({
+					where: { id },
+					data: {
+						password: hashedNewPassword,
+						updatedAt: new Date(),
+					},
+				})
+				.then((data) => this.prisma.serializeBigInt(data));
+		} catch (e: any) {
+			if (e?.response) {
+				throw new BadRequestException(e.response);
+			}
+			throw new BadRequestException({
+				...USER_RESET_PASSWORD_ERROR,
+				detail: e.message,
+			});
+		}
 	}
 }

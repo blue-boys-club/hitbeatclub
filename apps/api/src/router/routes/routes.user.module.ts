@@ -10,6 +10,8 @@ import { SettlementModule } from "~/modules/settlement/settlement.module";
 import { TagModule } from "~/modules/tag/tag.module";
 import { GenreModule } from "~/modules/genre/genre.module";
 import { AccountTokenModule } from "~/modules/account-token/account-token.module";
+import { CouponModule } from "~/modules/coupon/coupon.module";
+import { PaymentModule } from "~/modules/payment/payment.module";
 
 @Module({
 	controllers: [],
@@ -18,6 +20,7 @@ import { AccountTokenModule } from "~/modules/account-token/account-token.module
 	imports: [
 		AuthModule.forRoot(),
 		UserModule,
+		PaymentModule,
 		AwsModule,
 		AccountTokenModule,
 		FileModule,
@@ -27,6 +30,7 @@ import { AccountTokenModule } from "~/modules/account-token/account-token.module
 		SettlementModule,
 		TagModule,
 		GenreModule,
+		CouponModule,
 	],
 })
 export class RoutesUserModule {}
