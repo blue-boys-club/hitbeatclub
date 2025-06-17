@@ -1,21 +1,22 @@
 "use client";
 
 import * as Popup from "@/components/ui/Popup";
-import { type PaymentError } from "@portone/browser-sdk/v2";
 import { cn } from "@/common/utils";
 
 interface PaymentFailureModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	error: PaymentError;
+	error: {
+		message: string;
+		code: string;
+	};
 }
 
 export const PaymentFailureModal = ({ isOpen, onClose, error }: PaymentFailureModalProps) => {
-	const getErrorMessage = (error: PaymentError) => {
+	const getErrorMessage = (error: { message: string; code: string }) => {
 		if (!error) return "알 수 없는 오류가 발생했습니다.";
 		if (typeof error === "string") return error;
 		if (error.message) return error.message;
-		if (error.pgMessage) return error.pgMessage;
 
 		return "결제 중 오류가 발생했습니다. 다시 시도해주세요.";
 	};

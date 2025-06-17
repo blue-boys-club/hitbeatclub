@@ -7,6 +7,19 @@ import { cn } from "@/common/utils";
 import { type PaymentError, type PaymentResponse } from "@portone/browser-sdk/v2";
 import { PORTONE_STORE_ID } from "@/lib/payment.constant";
 import { PORTONE_CHANNEL_KEY } from "@/lib/payment.constant";
+import type { PaymentOrderResponse } from "@hitbeatclub/shared-types/payment";
+import { useCreatePaymentOrderMutation } from "@/apis/payment/mutations/useCreatePaymentOrderMutation";
+import { useCompletePaymentOrderMutation } from "@/apis/payment/mutations/useCompletePaymentOrderMutation";
+import { AxiosError } from "axios";
+import { useQuery } from "@tanstack/react-query";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+
+export type CheckoutItem = {
+	id: number; // cart item ID (not product ID)
+	imageUrl: string;
+	title: string;
+	price: number;
+};
 
 /**
  * 결제 수단 선택 모달 컴포넌트 Props
@@ -18,14 +31,16 @@ interface PaymentSelectModalProps {
 	total: number;
 	/** 주문명 */
 	orderName: string;
+	/** 체크아웃 아이템 목록 */
+	checkoutItems: CheckoutItem[];
 	/** 모달 열림 상태 (제어 컴포넌트로 사용 시) */
 	open?: boolean;
 	/** 모달 열림/닫힘 상태 변경 콜백 */
 	onOpenChange?: (open: boolean) => void;
 	/** 결제 완료 콜백 */
-	onPaymentComplete?: (result: PaymentResponse | PaymentError) => void;
-	/** 결제 실패 콜백 (에러 타입 확장) */
-	onPaymentError?: (error: Error | { message: string; code: string }) => void;
+	onPaymentComplete?: (result: PaymentOrderResponse) => void;
+	/** 결제 실패 콜백 */
+	onPaymentError?: (error: { message: string; code: string }) => void;
 }
 
 type PaymentMethod = {
@@ -57,12 +72,6 @@ const paymentMethods: PaymentMethod[] = [
 	// 	method: "VIRTUAL_ACCOUNT",
 	// 	icon: "🏦",
 	// },
-	// {
-	// 	id: "easy-pay",
-	// 	name: "간편결제",
-	// 	method: "EASY_PAY",
-	// 	icon: "📱",
-	// },
 	{
 		id: "transfer",
 		name: "계좌이체",
@@ -89,80 +98,13 @@ const paymentMethods: PaymentMethod[] = [
 	},
 ];
 
-// NICE Payments에서 지원하는 간편결제 목록
-const easyPayProviders: EasyPayProvider[] = [
-	{
-		id: "PAYCO",
-		name: "페이코",
-		bgColor: "#FF0000",
-		icon: "🎨",
-		availablePayMethods: ["TRANSFER"], // SSG페이는 계좌 결제만 다이렉트 호출 가능
-	},
-	// {
-	// 	id: "SSGPAY",
-	// 	name: "SSG페이",
-	// 	bgColor: "#FFD400",
-	// 	icon: "🎨",
-	// 	availablePayMethods: ["TRANSFER"], // SSG페이는 계좌 결제만 다이렉트 호출 가능
-	// },
-	{
-		id: "KAKAOPAY",
-		name: "카카오페이",
-		bgColor: "#FFEB00",
-		icon: "🎨",
-		availablePayMethods: ["CARD", "CHARGE"], // 네이버페이는 카드 결제, 포인트 결제 가능
-	},
-	{
-		id: "NAVERPAY",
-		name: "네이버페이",
-		bgColor: "#03C75A",
-		icon: "🎨",
-		availablePayMethods: ["CARD", "CHARGE"], // 네이버페이는 카드 결제, 포인트 결제 가능
-	},
-	{
-		id: "SAMSUNGPAY",
-		name: "삼성페이",
-		bgColor: "#1428A0",
-		icon: "🎨",
-		availablePayMethods: [],
-	},
-	{
-		id: "APPLEPAY",
-		name: "애플페이",
-		bgColor: "#000000",
-		icon: "🎨",
-		availablePayMethods: [],
-		checkIsAvailable: () => typeof window !== "undefined" && "ApplePaySession" in window,
-	},
-	{
-		id: "LPAY",
-		name: "L페이",
-		bgColor: "#FF3300",
-		icon: "🎨",
-		availablePayMethods: [],
-	},
-	// {
-	// 	id: "TOSSPAY",
-	// 	name: "토스페이",
-	// 	bgColor: "#0064FF",
-	// 	icon: "🎨",
-	// 	availablePayMethods: [],
-	// },
-	{
-		id: "SKPAY",
-		name: "SK페이(11페이)",
-		bgColor: "#F03C3C",
-		icon: "🎨",
-		availablePayMethods: [],
-	},
-];
-
 /**
  * 결제 수단 선택 및 결제 요청을 처리하는 모달 컴포넌트입니다.
  *
  * @param trigger 모달을 열기 위한 트리거 요소
  * @param total 총 결제 금액
  * @param orderName 주문명
+ * @param checkoutItems 체크아웃 아이템 목록
  * @param open 모달 열림 상태 (제어 컴포넌트로 사용 시)
  * @param onOpenChange 모달 열림/닫힘 상태 변경 콜백
  * @param onPaymentComplete 결제 완료 콜백
@@ -172,6 +114,7 @@ export const PaymentSelectModal = ({
 	trigger,
 	total,
 	orderName,
+	checkoutItems,
 	open = false,
 	onOpenChange,
 	onPaymentComplete,
@@ -180,320 +123,187 @@ export const PaymentSelectModal = ({
 	const [isOpen, setIsOpen] = useState(open);
 	const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
 	const [selectedEasyPayProvider, setSelectedEasyPayProvider] = useState<EasyPayProvider | null>(null);
-	const [easyPayAvailableMethod, setEasyPayAvailableMethod] = useState<string | null>(null);
-	const [isPaypalPopupOpen, setIsPaypalPopupOpen] = useState(false);
-	const [isPaypalLoaded, setIsPaypalLoaded] = useState(false);
+	const [isProcessing, setIsProcessing] = useState(false);
 
+	const { mutateAsync: createPaymentOrder } = useCreatePaymentOrderMutation();
+	const { mutateAsync: completePayment } = useCompletePaymentOrderMutation();
 	useEffect(() => {
 		setIsOpen(open);
 	}, [open]);
 
-	const onHandleOpenChange = (open: boolean) => {
-		console.log("open", open);
-		setIsOpen(open);
-		onOpenChange?.(open);
-	};
+	const onHandleOpenChange = useCallback(
+		(open: boolean) => {
+			console.log("open", open);
+			setIsOpen(open);
+			onOpenChange?.(open);
+		},
+		[onOpenChange],
+	);
 
+	const { data: userMe } = useQuery(getUserMeQueryOption());
+
+	/**
+	 * 결제 요청을 처리합니다.
+	 * 1. 백엔드에 주문 생성 요청
+	 * 2. 포트원 결제 요청
+	 * 3. 백엔드에 결제 완료 처리 요청
+	 */
 	const handlePaymentRequest = useCallback(async () => {
 		if (!selectedMethod) {
 			alert("결제 수단을 선택해주세요.");
 			return;
 		}
 
-		if (selectedMethod.method === "EASY_PAY" && !selectedEasyPayProvider) {
-			alert("간편결제 수단을 선택해주세요.");
-			return;
-		}
-
-		if (selectedMethod.method === "PAYPAL") {
-			setIsPaypalPopupOpen(true);
-			setIsOpen(false);
-			return;
-		}
+		setIsProcessing(true);
 
 		try {
-			const paymentId = crypto.randomUUID();
-			const paymentConfig: PortOne.PaymentRequest = {
-				storeId: PORTONE_STORE_ID,
+			// 1. 백엔드에 주문 생성 요청
+			const paymentId = `payment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+			const cartItemIds = checkoutItems.map((item) => item.id);
+
+			console.log("Creating payment order:", { paymentId, cartItemIds });
+
+			const orderResponse = await createPaymentOrder({
 				paymentId,
-				orderName,
+				cartItemIds,
+			});
+
+			console.log("Order created:", orderResponse);
+
+			// 2. 포트원 결제 요청
+			const paymentResponse = await PortOne.requestPayment({
+				storeId: PORTONE_STORE_ID,
+				channelKey: PORTONE_CHANNEL_KEY.PAYMENT,
+				paymentId: paymentId,
+				orderName: orderName,
 				totalAmount: total,
 				currency: PortOne.Entity.Currency.KRW,
-				channelKey: PORTONE_CHANNEL_KEY.PAYMENT,
-				payMethod: selectedMethod.method as PortOne.Entity.PayMethod,
+				payMethod:
+					selectedMethod.method === "CARD"
+						? "CARD"
+						: selectedMethod.method === "TRANSFER"
+							? "TRANSFER"
+							: selectedMethod.method === "PAYPAL"
+								? "PAYPAL"
+								: "CARD",
 				customer: {
-					fullName: "고객명",
-					phoneNumber: "010-0000-0000",
-					email: "customer@example.com",
+					fullName: userMe?.name,
+					phoneNumber: userMe?.phoneNumber,
+					email: userMe?.email,
+					customerId: `hitbeatclub-${userMe?.id}`,
 				},
-			};
+				redirectUrl: `${window.location.origin}/payment/complete`,
+				noticeUrls: [`${process.env.NEXT_PUBLIC_API_URL}/payment/webhook`],
+			});
 
-			// 상품권 결제인 경우 추가 설정
-			if (selectedMethod.method === "GIFT_CERTIFICATE") {
-				// @ts-expect-error - SDK 타입 문제로 인해 무시
-				paymentConfig.giftCertificate = {
-					certificateType: "CULTURELAND", // 나이스페이먼츠는 컬쳐랜드만 지원
-				};
-				// bypass는 타입 에러 없음
-				paymentConfig.bypass = {
-					nice_v2: {
-						MallUserID: "customer-id", // 필수 파라미터
-					},
-				};
+			console.log("Payment response:", paymentResponse);
+
+			if (paymentResponse?.code && paymentResponse.code.startsWith("FAILURE")) {
+				// 결제 실패
+				throw new Error(paymentResponse.message || "결제가 실패했습니다.");
 			}
 
-			// 간편결제 설정 (주석 해제 및 타입 에러 무시)
-			if (selectedMethod.method === "EASY_PAY" && selectedEasyPayProvider) {
-				// @ts-expect-error - SDK 타입 문제로 인해 무시
-				paymentConfig.easyPayProvider = selectedEasyPayProvider.id;
-				if (selectedEasyPayProvider.id === "NAVERPAY" || selectedEasyPayProvider.id === "SSGPAY") {
-					if (easyPayAvailableMethod) {
-						// @ts-expect-error - SDK 타입 문제로 인해 무시
-						paymentConfig.availablePayMethods = [easyPayAvailableMethod];
-					}
-				}
-			}
+			// 3. 백엔드에 결제 완료 처리 요청
+			console.log("Completing payment:", { paymentId });
 
-			try {
-				const result = await PortOne.requestPayment(paymentConfig);
+			const completionResponse = await completePayment({
+				paymentId,
+			});
 
-				if (
-					result &&
-					typeof result === "object" &&
-					"code" in result &&
-					typeof result.code === "string" &&
-					result.code.startsWith("FAILURE")
-				) {
-					// PaymentError 처리 (타입 단언 제거)
-					const error = {
-						message:
-							"message" in result && typeof result.message === "string" ? result.message : "결제가 실패했습니다.",
-						code: result.code,
-						...result,
-					};
-					// PaymentError 타입과 일치하지 않을 수 있음 (타입 에러 없으므로 주석 불필요)
-					onPaymentError?.(error);
-				} else if (result) {
-					onPaymentComplete?.(result as PortOne.PaymentResponse);
-				} else {
-					// FAILURE_NO_RESULT 에러 처리 (PaymentError 단언 제거)
-					onPaymentError?.({ message: "결제 결과를 받지 못했습니다.", code: "FAILURE_NO_RESULT" });
-				}
-			} catch (error) {
-				onPaymentError?.(error instanceof Error ? error : new Error(String(error)));
-				console.error("Payment error:", error);
-			}
+			console.log("Payment completed:", completionResponse);
+
+			// 성공 콜백 호출
+			onPaymentComplete?.(orderResponse);
 		} catch (error) {
-			onPaymentError?.(error instanceof Error ? error : new Error(String(error)));
 			console.error("Payment error:", error);
+
+			const errorMessage =
+				error instanceof AxiosError
+					? error.response?.data.detail
+					: error instanceof Error
+						? error.message
+						: "결제 중 오류가 발생했습니다.";
+
+			onPaymentError?.({
+				message: errorMessage,
+				code: "PAYMENT_ERROR",
+			});
+		} finally {
+			setIsProcessing(false);
 		}
-	}, [
-		selectedMethod,
-		selectedEasyPayProvider,
-		easyPayAvailableMethod,
-		orderName,
-		total,
-		onPaymentComplete,
-		onPaymentError,
-		setIsPaypalPopupOpen,
-		setIsOpen,
-	]);
+	}, [selectedMethod, checkoutItems, orderName, total, onPaymentComplete, onPaymentError]);
 
 	const handleMethodSelect = useCallback((method: PaymentMethod) => {
 		setSelectedMethod(method);
-		if (method.method !== "EASY_PAY") {
-			setSelectedEasyPayProvider(null);
-			setEasyPayAvailableMethod(null);
-		}
 	}, []);
 
 	const resetPaymentState = useCallback(() => {
 		setSelectedMethod(null);
 		setSelectedEasyPayProvider(null);
-		setEasyPayAvailableMethod(null);
 	}, []);
 
-	const loadPaypal = useCallback(async () => {
-		if (typeof window !== "undefined" && !isPaypalLoaded) {
-			try {
-				const response = await PortOne.loadPaymentUI(
-					{
-						uiType: "PAYPAL_SPB",
-						storeId: PORTONE_STORE_ID,
-						paymentId: crypto.randomUUID(),
-						orderName,
-						totalAmount: total / 10,
-						currency: PortOne.Entity.Currency.USD,
-						channelKey: PORTONE_CHANNEL_KEY.PAYPAL,
-					},
-					{
-						onPaymentSuccess: (response) => {
-							console.log("Payment success:", response);
-						},
-						onPaymentFail: (error) => {
-							console.error("Payment error:", error);
-						},
-					},
-				).then(() => {
-					setIsPaypalLoaded(true);
-				});
-				console.log("Payment UI loaded:", response);
-			} catch (error) {
-				console.error("Payment error:", error);
-			}
-		}
-	}, [orderName, total]);
-
-	useEffect(() => {
-		if (!isOpen) {
-			resetPaymentState();
-		}
-	}, [isOpen, resetPaymentState, isPaypalLoaded]);
-
-	useEffect(() => {
-		if (!isPaypalPopupOpen) {
-			setIsPaypalLoaded(false);
-		} else {
-			loadPaypal();
-		}
-	}, [isPaypalPopupOpen, loadPaypal]);
-
 	return (
-		<>
-			<Popup.Popup
-				open={isOpen}
-				onOpenChange={onHandleOpenChange}
-			>
-				{trigger && <Popup.PopupTrigger asChild>{trigger}</Popup.PopupTrigger>}
-				<Popup.PopupContent className="w-[520px] max-h-[90vh]">
-					<div className="max-h-[90vh] overflow-y-auto">
-						<Popup.PopupHeader>
-							<Popup.PopupTitle className="font-bold">결제 수단 선택</Popup.PopupTitle>
-							<Popup.PopupDescription>
-								{`결제하실 총 금액은 ${total.toLocaleString()}원입니다.\n결제 수단을 선택해주세요.`}
-							</Popup.PopupDescription>
-						</Popup.PopupHeader>
+		<Popup.Popup
+			open={isOpen}
+			onOpenChange={onHandleOpenChange}
+		>
+			{trigger && <Popup.PopupTrigger asChild>{trigger}</Popup.PopupTrigger>}
+			<Popup.PopupContent className="w-[520px] max-h-[90vh]">
+				<div className="max-h-[90vh] overflow-y-auto">
+					<Popup.PopupHeader>
+						<Popup.PopupTitle className="font-bold">결제 수단 선택</Popup.PopupTitle>
+						<Popup.PopupDescription>
+							{`결제하실 총 금액은 ${total.toLocaleString()}원입니다.\n결제 수단을 선택해주세요.`}
+						</Popup.PopupDescription>
+					</Popup.PopupHeader>
 
-						<div
+					<div
+						className={cn(
+							"grid gap-3 mt-4",
+							paymentMethods.length > 4 || paymentMethods.length === 3 ? "grid-cols-3" : "grid-cols-2",
+						)}
+					>
+						{paymentMethods.map((method) => (
+							<button
+								key={method.id}
+								className={cn(
+									"flex flex-col items-center justify-center p-4 border-2 rounded-[5px] cursor-pointer transition-all h-[100px]",
+									selectedMethod?.id === method.id
+										? "border-black bg-gray-100"
+										: "border-gray-300 hover:border-gray-500",
+								)}
+								onClick={() => handleMethodSelect(method)}
+							>
+								<span className="mb-2 text-3xl">{method.icon}</span>
+								<span className="font-bold text-[14px] font-suisse text-center">{method.name}</span>
+							</button>
+						))}
+					</div>
+
+					<Popup.PopupFooter className="mt-6">
+						<Popup.PopupButton
+							className="text-black bg-white border-2 border-black"
+							onClick={() => onHandleOpenChange(false)}
+						>
+							취소
+						</Popup.PopupButton>
+						<Popup.PopupButton
+							onClick={handlePaymentRequest}
+							disabled={
+								!selectedMethod || (selectedMethod.method === "EASY_PAY" && !selectedEasyPayProvider) || isProcessing
+							}
 							className={cn(
-								"grid gap-3 mt-4",
-								paymentMethods.length > 4 || paymentMethods.length === 3 ? "grid-cols-3" : "grid-cols-2",
+								(!selectedMethod ||
+									(selectedMethod.method === "EASY_PAY" && !selectedEasyPayProvider) ||
+									isProcessing) &&
+									"opacity-50 cursor-not-allowed",
 							)}
 						>
-							{paymentMethods.map((method) => (
-								<button
-									key={method.id}
-									className={cn(
-										"flex flex-col items-center justify-center p-4 border-2 rounded-[5px] cursor-pointer transition-all h-[100px]",
-										selectedMethod?.id === method.id
-											? "border-black bg-gray-100"
-											: "border-gray-300 hover:border-gray-500",
-									)}
-									onClick={() => handleMethodSelect(method)}
-								>
-									<span className="mb-2 text-3xl">{method.icon}</span>
-									<span className="font-bold text-[14px] font-suisse text-center">{method.name}</span>
-								</button>
-							))}
-						</div>
-
-						{selectedMethod?.method === "EASY_PAY" && (
-							<div className="mt-5">
-								<div className="text-[16px] font-semibold mb-3">간편결제 수단 선택</div>
-								<div className="grid grid-cols-3 gap-3">
-									{easyPayProviders
-										.filter((provider) => provider.checkIsAvailable?.() ?? true)
-										.map((provider) => (
-											<button
-												key={provider.id}
-												className={cn(
-													"flex flex-col items-center justify-center p-3 border-2 rounded-[5px] cursor-pointer transition-all h-[80px]",
-													selectedEasyPayProvider?.id === provider.id
-														? "border-black bg-gray-100"
-														: "border-gray-300 hover:border-gray-500",
-												)}
-												style={{
-													backgroundColor:
-														selectedEasyPayProvider?.id === provider.id ? "#f3f4f6" : provider.bgColor + "20",
-												}}
-												onClick={() => {
-													setSelectedEasyPayProvider(provider);
-													const methods = provider.availablePayMethods || [];
-													setEasyPayAvailableMethod(methods.length > 0 ? methods[0] || null : null);
-												}}
-											>
-												<span className="mb-1 text-xl">{provider.icon}</span>
-												<span className="font-bold text-[13px] font-suisse text-center">{provider.name}</span>
-											</button>
-										))}
-								</div>
-
-								{selectedEasyPayProvider?.availablePayMethods &&
-									selectedEasyPayProvider.availablePayMethods.length > 1 && (
-										<div className="mt-4">
-											<div className="text-[14px] font-semibold mb-2">결제 방식 선택</div>
-											<div className="flex flex-wrap gap-2">
-												{selectedEasyPayProvider.availablePayMethods.map((method) => (
-													<button
-														key={method}
-														className={cn(
-															"flex items-center justify-center py-2 px-4 border-2 rounded-[5px] cursor-pointer transition-all text-[14px]",
-															easyPayAvailableMethod === method
-																? "border-black bg-gray-100"
-																: "border-gray-300 hover:border-gray-500",
-														)}
-														onClick={() => setEasyPayAvailableMethod(method)}
-													>
-														{method === "CARD" ? "카드 결제" : method === "CHARGE" ? "포인트 결제" : "계좌 결제"}
-													</button>
-												))}
-											</div>
-										</div>
-									)}
-							</div>
-						)}
-
-						{/* {selectedMethod?.method === "PAYPAL" && (
-						<div className="mt-5">
-							<div className="text-[16px] font-semibold mb-3">페이팔 결제 선택</div>
-						</div>
-					)} */}
-
-						<Popup.PopupFooter className="mt-6">
-							<Popup.PopupButton className="text-black bg-white border-2 border-black">취소</Popup.PopupButton>
-							<Popup.PopupButton
-								onClick={handlePaymentRequest}
-								disabled={!selectedMethod || (selectedMethod.method === "EASY_PAY" && !selectedEasyPayProvider)}
-								className={cn(
-									(!selectedMethod || (selectedMethod.method === "EASY_PAY" && !selectedEasyPayProvider)) &&
-										"opacity-50 cursor-not-allowed",
-								)}
-							>
-								결제하기
-							</Popup.PopupButton>
-						</Popup.PopupFooter>
-					</div>
-				</Popup.PopupContent>
-			</Popup.Popup>
-
-			<Popup.Popup
-				open={isPaypalPopupOpen}
-				onOpenChange={setIsPaypalPopupOpen}
-			>
-				<Popup.PopupContent>
-					<Popup.PopupHeader>
-						<Popup.PopupTitle>페이팔 결제</Popup.PopupTitle>
-						<Popup.PopupDescription>{`결제하실 총 금액은 ${total.toLocaleString()}원입니다`}</Popup.PopupDescription>
-					</Popup.PopupHeader>
-					<div className="portone-ui-container">
-						<div className="flex flex-col items-center justify-center gap-4">
-							<div className="w-full h-8 p-4 rounded-md bg-hbc-gray-100 animate-pulse"></div>
-							<div className="w-full h-8 p-4 rounded-md bg-hbc-gray-100 animate-pulse"></div>
-							<div className="h-4 p-4 rounded-md w-100px bg-hbc-gray-100 animate-pulse"></div>
-						</div>
-					</div>
-				</Popup.PopupContent>
-			</Popup.Popup>
-		</>
+							{isProcessing ? "결제 처리 중..." : "결제하기"}
+						</Popup.PopupButton>
+					</Popup.PopupFooter>
+				</div>
+			</Popup.PopupContent>
+		</Popup.Popup>
 	);
 };

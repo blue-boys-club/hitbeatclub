@@ -9,11 +9,12 @@ import { PaymentSelectModal } from "./modal/PaymentSelectModal";
 import { PaymentSuccessModal } from "./modal/PaymentSuccessModal";
 import { PaymentFailureModal } from "./modal/PaymentFailureModal";
 import { useCartStore } from "@/stores/cart";
-import { PRODUCTS_MAP } from "@/apis/product/product.dummy";
 import Link from "next/link";
+import { createPaymentOrder } from "@/apis/payment/payment.api";
+import type { PaymentOrderResponse } from "@hitbeatclub/shared-types/payment";
 
 export type CheckoutItem = {
-	id: number;
+	id: number; // cart item ID (not product ID)
 	imageUrl: string;
 	title: string;
 	price: number;
@@ -31,8 +32,9 @@ export const CartPaymentDetail = ({ checkoutItems, subtotal, serviceFee = 0, tot
 	const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 	const [successModalOpen, setSuccessModalOpen] = useState(false);
 	const [failureModalOpen, setFailureModalOpen] = useState(false);
-	const [paymentResult, setPaymentResult] = useState<any>(null);
-	const [paymentError, setPaymentError] = useState<any>(null);
+	const [paymentResult, setPaymentResult] = useState<PaymentOrderResponse | null>(null);
+	const [paymentError, setPaymentError] = useState<{ message: string; code: string } | null>(null);
+	const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 	const clearCart = useCartStore((state) => state.clearCart);
 
 	const handlePaymentClick = () => {
@@ -49,25 +51,10 @@ export const CartPaymentDetail = ({ checkoutItems, subtotal, serviceFee = 0, tot
 		setPaymentModalOpen(true);
 	};
 
-	const handlePaymentComplete = (result: any) => {
+	const handlePaymentComplete = (result: PaymentOrderResponse) => {
 		console.log("Payment completed:", result);
 
-		if (result && result.code && typeof result.code === "string" && result.code.startsWith("FAILURE")) {
-			handlePaymentError({
-				message: result.message || "결제가 실패했습니다.",
-				code: result.code,
-				...result,
-			});
-			return;
-		}
-
-		setPaymentResult({
-			amount: total,
-			orderId: result.paymentId || crypto.randomUUID(),
-			method: result.payMethod || "CARD",
-			approvedAt: new Date().toISOString(),
-			...result,
-		});
+		setPaymentResult(result);
 		setPaymentModalOpen(false);
 		setSuccessModalOpen(true);
 		clearCart();
@@ -227,16 +214,17 @@ export const CartPaymentDetail = ({ checkoutItems, subtotal, serviceFee = 0, tot
 				<PaymentSelectModal
 					total={total}
 					orderName={getOrderName()}
+					checkoutItems={checkoutItems}
 					onPaymentComplete={handlePaymentComplete}
 					onPaymentError={handlePaymentError}
 					trigger={
 						<button
 							onClick={handlePaymentClick}
-							disabled={!checkoutItems.length || !checkPayment}
+							disabled={!checkoutItems.length || !checkPayment || isCreatingOrder}
 							className="flex justify-center items-center h-10 bg-black rounded-[5px] outline-1 outline-offset-[-1px] outline-black self-stretch cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
 						>
 							<div className="font-bold leading-none tracking-tight text-white uppercase text-16px font-suisse">
-								결제하러 가기
+								{isCreatingOrder ? "주문 생성 중..." : "결제하러 가기"}
 							</div>
 						</button>
 					}
@@ -248,10 +236,11 @@ export const CartPaymentDetail = ({ checkoutItems, subtotal, serviceFee = 0, tot
 				onClose={() => setSuccessModalOpen(false)}
 				paymentResult={
 					paymentResult || {
-						amount: total,
-						orderId: "SAMPLE-ORDER-ID",
-						method: "CARD",
-						approvedAt: new Date().toISOString(),
+						paymentId: "SAMPLE-PAYMENT-ID",
+						orderId: 0,
+						orderName: "샘플 주문",
+						totalAmount: total,
+						items: [],
 					}
 				}
 			/>
