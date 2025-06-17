@@ -52,18 +52,37 @@ export const OrderProductItem = ({ item, className }: OrderProductItemProps) => 
 	const isAcappella = item.product.category === "ACAPELA";
 	const isBeat = item.product.category === "BEAT";
 
-	// Create artist contact links from product seller data
-	// 현재 ProductDetailResponse의 seller에는 연락처 정보가 없으므로 빈 배열 반환
-	const artistLinks: ContactLink[] = [];
-
-	// TODO: 판매자 연락처 정보가 필요하다면 다음과 같은 필드들이 seller에 추가되어야 함:
-	// - instagramAccount, youtubeAccount, kakaoAccount, discordAccount 등
-	// 그러면 다음과 같이 변환할 수 있음:
-	// const artistLinks: ContactLink[] = [
-	//   { type: "instagram", value: item.product.seller.instagramAccount },
-	//   { type: "youtube", value: item.product.seller.youtubeAccount },
-	//   // ... 기타 연락처
-	// ].filter(link => link.value); // 빈 값 제거
+	// Create artist contact links from ArtistPublicResponse
+	const artistLinks: ContactLink[] = [
+		item.product.seller.instagramAccount && {
+			type: "instagram",
+			value: item.product.seller.instagramAccount,
+		},
+		item.product.seller.youtubeAccount && {
+			type: "youtube",
+			value: item.product.seller.youtubeAccount,
+		},
+		item.product.seller.kakaoAccount && {
+			type: "kakaotalk",
+			value: item.product.seller.kakaoAccount,
+		},
+		item.product.seller.discordAccount && {
+			type: "discord",
+			value: item.product.seller.discordAccount,
+		},
+		item.product.seller.lineAccount && {
+			type: "line",
+			value: item.product.seller.lineAccount,
+		},
+		item.product.seller.soundcloudAccount && {
+			type: "soundcloud",
+			value: item.product.seller.soundcloudAccount,
+		},
+		...(item.product.seller.etcAccounts || []).map((account) => ({
+			type: "website" as const,
+			value: account,
+		})),
+	].filter(Boolean) as ContactLink[];
 
 	return (
 		<>
@@ -116,9 +135,14 @@ export const OrderProductItem = ({ item, className }: OrderProductItemProps) => 
 											"absolute left-[388px] top-61px text-hbc-gray-400 text-12px font-medium font-suisse leading-none tracking-tight",
 										)}
 									>
-										{item.product.minBpm && item.product.maxBpm && `${item.product.minBpm}-${item.product.maxBpm}BPM`}
+										{item.product.minBpm &&
+											item.product.maxBpm &&
+											(item.product.minBpm === item.product.maxBpm
+												? `${item.product.minBpm}BPM`
+												: `${item.product.minBpm}-${item.product.maxBpm}BPM`)}
 										{item.product.minBpm && item.product.maxBpm && item.product.musicKey && " / "}
-										{item.product.musicKey && `${item.product.musicKey} ${item.product.scaleType || ""}`}
+										{item.product.musicKey &&
+											`${item.product.musicKey} ${(item.product.scaleType || "").toLowerCase()}`}
 									</div>
 								)}
 							</div>

@@ -10,10 +10,9 @@ import { assetImageLoader } from "@/common/utils/image-loader";
 import { useLikeProductMutation, useUnlikeProductMutation } from "@/apis/product/mutations";
 import { useShallow } from "zustand/react/shallow";
 import { useAudioStore } from "@/stores/audio";
+import { PurchaseWithCartTrigger } from "@/features/product/components/PurchaseWithCartTrigger";
 
 export const FooterPlayer = () => {
-	const [cart, setCart] = useState(false);
-
 	const { id, productName, seller, isLiked, audioFile, coverImage, updateIsLiked } = useAudioStore(
 		useShallow((state) => ({
 			id: state.id,
@@ -48,10 +47,6 @@ export const FooterPlayer = () => {
 				},
 			});
 		}
-	};
-
-	const onClickCart = () => {
-		setCart(!cart);
 	};
 
 	// URL이 변경될 때마다 자동 재생
@@ -110,12 +105,10 @@ export const FooterPlayer = () => {
 								<Like />
 							)}
 						</div>
-						<div
-							onClick={onClickCart}
-							className="cursor-pointer"
-						>
-							<ShoppingBag color={cart ? "#3884FF" : "white"} />
-						</div>
+
+						<PurchaseWithCartTrigger productId={id ?? 0}>
+							{({ isOnCart }) => <ShoppingBag color={isOnCart ? "#3884FF" : "white"} />}
+						</PurchaseWithCartTrigger>
 					</div>
 				</div>
 
