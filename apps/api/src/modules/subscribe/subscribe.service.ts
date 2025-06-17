@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { UserService } from "../user/user.service";
 import { ArtistService } from "../artist/artist.service";
+import { CouponService } from "../coupon/coupon.service";
 import { USER_NOT_FOUND_ERROR, USER_ALREADY_SUBSCRIBED_ERROR } from "./subscribe.error";
 import { ArtistCreateDto } from "../artist/dto/request/artist.create.request.dto";
 import { PrismaService } from "~/common/prisma/prisma.service";
@@ -16,6 +17,7 @@ export class SubscribeService {
 	constructor(
 		private readonly userService: UserService,
 		private readonly artistService: ArtistService,
+		private readonly couponService: CouponService,
 		private readonly prisma: PrismaService,
 	) {}
 
@@ -44,16 +46,33 @@ export class SubscribeService {
 			throw new BadRequestException("해당 구독 상품을 찾을 수 없습니다.");
 		}
 
+		const finalPrice = subscribeProduct.discountPrice || subscribeProduct.price;
+		let couponId: number | null = null;
+
+		// 쿠폰 코드가 있는 경우 쿠폰 검증 및 할인 적용
+		if (subscribeData?.hitcode) {
+			const validatedCoupon = await this.couponService.validateCoupon(subscribeData.hitcode, userId);
+			// TODO: 쿠폰 할인 적용
+			// finalPrice = this.couponService.calculateDiscountedPrice(finalPrice, validatedCoupon);
+			couponId = Number(validatedCoupon.id);
+		}
+
 		// Subscribe 테이블에 구독 정보 생성
 		const subscribeRecord = await this.prisma.subscribe.create({
 			data: {
 				userId: userId,
 				subscriptionPlan: subscribeData.subscriptionPlan,
 				productType: "MEMBERSHIP",
-				price: subscribeProduct.discountPrice || subscribeProduct.price,
+				price: finalPrice,
+				couponId: couponId,
 				nextPaymentDate: this.calculateNextPaymentDate(subscribeData.subscriptionPlan),
 			},
 		});
+
+		// 쿠폰 사용 처리 (사용 횟수 증가)
+		if (couponId) {
+			await this.couponService.useCoupon(BigInt(couponId));
+		}
 
 		// 아티스트 생성 (없는 경우에만 새로 생성)
 		let artist = await this.artistService.findByUserId(userId);

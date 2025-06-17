@@ -206,7 +206,7 @@ const CartPage = () => {
 		console.log("CartPage - artistsArray:", artistsArray);
 
 		const preparedCheckoutItems: CheckoutItem[] = detailedCartItems.map((item) => ({
-			id: item.productId,
+			id: item.cartId,
 			imageUrl: item.imageUrl,
 			title: item.title,
 			price: item.price,

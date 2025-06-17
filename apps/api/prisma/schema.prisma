@@ -95,19 +95,31 @@ model Cart {
 }
 
 model Order {
-  id          BigInt        @id @default(autoincrement())
-  buyerId     BigInt        @map("buyer_id")
-  orderNumber String?       @map("order_number") @db.VarChar(100)
-  totalPrice  Int?          @map("total_price")
-  status      String?       @db.VarChar(20)
-  createdAt   DateTime?     @default(now()) @map("created_at") @db.Timestamp(0)
-  updatedAt   DateTime?     @default(now()) @map("updated_at") @db.Timestamp(0)
-  deletedAt   DateTime?     @map("deleted_at") @db.Timestamp(0)
-  user        User          @relation(fields: [buyerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_TO_order_1")
-  orderDetail OrderDetail[]
-  payments    Payments[]
+  id               BigInt        @id @default(autoincrement())
+  uuid             String        @unique @default(uuid()) @db.VarChar(36)
+  buyerId          BigInt        @map("buyer_id")
+  orderNumber      String?       @unique @map("order_number") @db.VarChar(100)
+  orderName        String?       @map("order_name") @db.VarChar(255)
+  totalPrice       Int?          @map("total_price")
+  totalAmount      Int?          @map("total_amount")
+  status           OrderStatus   @default(INITIATE)
+  paymentId        String?       @map("payment_id") @db.VarChar(255)
+  paymentMethod    String?       @map("payment_method") @db.VarChar(50)
+  pgTransactionId  String?       @map("pg_transaction_id") @db.VarChar(255)
+  paidAt           DateTime?     @map("paid_at") @db.Timestamp(0)
+  cancelledAt      DateTime?     @map("cancelled_at") @db.Timestamp(0)
+  createdAt        DateTime?     @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt        DateTime?     @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt        DateTime?     @map("deleted_at") @db.Timestamp(0)
+  user             User          @relation(fields: [buyerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_TO_order_1")
+  orderDetail      OrderDetail[]
+  orderItems       OrderItem[]
+  payments         Payments[]
 
   @@index([buyerId], map: "FK_user_TO_order_1")
+  @@index([paymentId], map: "idx_order_payment_id")
+  @@index([uuid], map: "idx_order_uuid")
+  @@index([orderNumber], map: "idx_order_number")
   @@map("order")
 }
 
@@ -123,6 +135,26 @@ model OrderDetail {
 
   @@index([orderId], map: "FK_order_TO_order_detail_1")
   @@map("order_detail")
+}
+
+model OrderItem {
+  id          BigInt    @id @default(autoincrement())
+  orderId     BigInt    @map("order_id")
+  productId   BigInt    @map("product_id")
+  licenseId   BigInt    @map("license_id")
+  productName String    @map("product_name") @db.VarChar(255)
+  price       Int
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamp(0)
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_order_TO_order_item_1")
+  product     Product   @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_product_TO_order_item_1")
+  license     License   @relation(fields: [licenseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_license_TO_order_item_1")
+
+  @@index([orderId], map: "FK_order_TO_order_item_1")
+  @@index([productId], map: "FK_product_TO_order_item_1")
+  @@index([licenseId], map: "FK_license_TO_order_item_1")
+  @@map("order_item")
 }
 
 model Payments {
@@ -169,6 +201,7 @@ model Product {
   productGenre              ProductGenre[]
   productTag                ProductTag[]
   productLike               ProductLike[]
+  orderItems                OrderItem[]
 
   @@index([sellerId], map: "FK_artist_TO_product_1")
   @@map("product")
@@ -224,6 +257,7 @@ model License {
   deletedAt      DateTime?        @map("deleted_at") @db.Timestamp(0)
   productLicense ProductLicense[]
   cart           Cart[]
+  orderItems     OrderItem[]
   
   @@map("license")
 }
@@ -366,6 +400,14 @@ enum ProductType {
   MEMBERSHIP
 }
 
+enum OrderStatus {
+  INITIATE
+  PENDING
+  COMPLETED
+  WAITING_FOR_DEPOSIT
+  CANCELLED
+}
+
 model AccountToken {
   id          BigInt   @id @default(autoincrement())
   token       String   @db.Char(64) @unique      // SHA-256 → 64byte 등
@@ -388,6 +430,7 @@ model AccountToken {
 }
 
 model UserArtistFollow {
+  id        BigInt       @id @default(autoincrement())
   userId    BigInt       @map("user_id")
   artistId  BigInt       @map("artist_id")
   createdAt DateTime     @default(now()) @map("created_at") @db.Timestamp(0)
@@ -397,7 +440,7 @@ model UserArtistFollow {
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "fk_uaf_user")
   artist    Artist       @relation(fields: [artistId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "fk_uaf_artist")
 
-  @@id([userId, artistId])
+  @@unique([userId, artistId, deletedAt], map: "ux_user_artist_follow__user_artist_deleted")
   @@index([userId], map: "idx_uaf_user")
   @@index([artistId], map: "idx_uaf_artist")
   @@map("user_artist_follow")
@@ -406,6 +449,7 @@ model UserArtistFollow {
 model Subscribe {
   id               BigInt          @id @default(autoincrement())
   userId           BigInt          @map("user_id")
+  couponId         BigInt?         @map("coupon_id")
   subscriptionPlan SubscriptionPlan @map("subscription_plan")
   productType      ProductType     @map("product_type")
   price           Int             @db.Int
@@ -415,8 +459,10 @@ model Subscribe {
   deletedAt        DateTime?       @map("deleted_at") @db.Timestamp(0)
   
   user             User            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_user_TO_subscribe_1")
+  coupon           Coupon?         @relation(fields: [couponId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_coupon_TO_subscribe_1")
 
   @@index([userId], map: "FK_user_TO_subscribe_1")
+  @@index([couponId], map: "FK_coupon_TO_subscribe_1")
   @@map("subscribe")
 }
 
@@ -431,4 +477,35 @@ model SubscribeProduct {
   deletedAt     DateTime?       @map("deleted_at") @db.Timestamp(0)
 
   @@map("subscribe_product")
+}
+
+model Coupon {
+  id            BigInt             @id @default(autoincrement())
+  code          String             @unique @db.VarChar(50)
+  name          String             @db.VarChar(100)
+  discountPrice Int?               @map("discount_price") @db.Int // 할인 금액
+  freeMonth Int?               @map("free_month") @db.Int // 무료 개월 수
+  validFromAt   DateTime           @map("valid_from_at") @db.Timestamp(0) // 유효 시작일
+  validUntilAt  DateTime           @map("valid_until_at") @db.Timestamp(0) // 유효 종료일
+  usageLimit    Int?               @map("usage_limit") @db.Int // 사용 가능 횟수
+  usedCount     Int                @default(0) @map("used_count") @db.Int // 사용 횟수
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt     DateTime           @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt     DateTime?          @map("deleted_at") @db.Timestamp(0)
+  
+  subscribe     Subscribe[]
+
+  @@map("coupon")
+}
+
+model Notice {
+  id          BigInt    @id @default(autoincrement())
+  title       String    @db.VarChar(255)
+  content     String    @db.Text
+  viewCount   Int       @default(0) @map("view_count")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamp(0)
+
+  @@map("notice")
 }

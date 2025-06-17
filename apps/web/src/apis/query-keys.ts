@@ -1,4 +1,5 @@
 import { ArtistProductListQueryRequest } from "@hitbeatclub/shared-types/artist";
+import { PaginationRequest } from "@hitbeatclub/shared-types/common";
 import { ProductListQueryRequest } from "@hitbeatclub/shared-types/product";
 import { UserLikeProductListRequest } from "@hitbeatclub/shared-types/user";
 import { UserFollowedArtistListPayload } from "./user/user.type";
@@ -27,6 +28,13 @@ const QUERY_KEYS = {
 			userId,
 			payload,
 		],
+
+		payment: {
+			_key: ["user", "payment"],
+			infiniteOrders: ["user", "payment", "orders", "infinite"],
+			orders: (payload: PaginationRequest): QueryKey => ["user", "payment", "orders", payload],
+			order: (orderNumber: number): QueryKey => ["user", "payment", "order", orderNumber],
+		},
 	},
 	products: {
 		_key: ["products"],

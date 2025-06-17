@@ -65,6 +65,7 @@ export type PromotionCodeRequest = z.infer<typeof PromotionCodeSchema>;
 // 간단한 구독 요청 스키마
 export const SubscribeRequestSchema = z.object({
 	subscriptionPlan: z.enum(["MONTH", "YEAR"]).describe("구독 플랜 (월간/연간)"),
+	hitcode: z.string().optional().describe("쿠폰 코드").default("HITCODE"),
 });
 
 export type SubscribeRequest = z.infer<typeof SubscribeRequestSchema>;

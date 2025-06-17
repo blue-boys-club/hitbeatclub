@@ -5,6 +5,48 @@
 	"main": "dist/index.js",
 	"module": "dist/index.mjs",
 	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.js"
+		},
+		"./types": {
+			"types": "./dist/types.d.ts",
+			"import": "./dist/types.mjs",
+			"require": "./dist/types.js"
+		},
+		"./country-options": {
+			"types": "./dist/country-options.d.ts",
+			"import": "./dist/country-options.mjs",
+			"require": "./dist/country-options.js"
+		},
+		"./region-options": {
+			"types": "./dist/region-options.d.ts",
+			"import": "./dist/region-options.mjs",
+			"require": "./dist/region-options.js"
+		},
+		"./country-names-ko": {
+			"types": "./dist/country-names-ko.d.ts",
+			"import": "./dist/country-names-ko.mjs",
+			"require": "./dist/country-names-ko.js"
+		},
+		"./country-names-en": {
+			"types": "./dist/country-names-en.d.ts",
+			"import": "./dist/country-names-en.mjs",
+			"require": "./dist/country-names-en.js"
+		},
+		"./region-utils": {
+			"types": "./dist/region-utils.d.ts",
+			"import": "./dist/region-utils.mjs",
+			"require": "./dist/region-utils.js"
+		},
+		"./country-utils": {
+			"types": "./dist/country-utils.d.ts",
+			"import": "./dist/country-utils.mjs",
+			"require": "./dist/country-utils.js"
+		}
+	},
 	"files": [
 		"dist"
 	],
@@ -21,7 +63,8 @@
 		"iso",
 		"dropdown",
 		"options",
-		"korean"
+		"korean",
+		"tree-shaking"
 	],
 	"author": "",
 	"license": "ISC",

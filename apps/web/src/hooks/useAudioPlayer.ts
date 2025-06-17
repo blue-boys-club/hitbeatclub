@@ -34,6 +34,21 @@ export const useAudioPlayer = () => {
 		playlist: [],
 	});
 
+	const stop = useCallback(() => {
+		if (playerRef.current) {
+			playerRef.current.seekTo(0);
+			setState((prev) => ({ ...prev, isPlaying: false, currentTime: 0 }));
+		}
+	}, []);
+
+	const autoPlay = useCallback(() => {
+		if (playerRef.current) {
+			stop(); // 이전 재생 정리
+			setState((prev) => ({ ...prev, isPlaying: true }));
+			playerRef.current.seekTo(0);
+		}
+	}, [stop]);
+
 	const togglePlay = () => {
 		setState((prev) => ({ ...prev, isPlaying: !prev.isPlaying }));
 	};
@@ -72,12 +87,12 @@ export const useAudioPlayer = () => {
 
 	// 현재 진행 중인 재생 시간
 	const onProgress = (playedSeconds: number) => {
-		setState((prev) => ({ ...prev, currentTime: playedSeconds }));
+		setState((prev) => ({ ...prev, currentTime: Math.floor(playedSeconds) }));
 	};
 
 	// 곡 길이
 	const onDuration = (duration: number) => {
-		setState((prev) => ({ ...prev, duration: duration }));
+		setState((prev) => ({ ...prev, duration: Math.floor(duration) }));
 	};
 
 	// 재생 종료 시 처리
@@ -161,5 +176,7 @@ export const useAudioPlayer = () => {
 		toggleRepeatMode,
 		toggleShuffle,
 		onSeek,
+		autoPlay,
+		stop,
 	};
 };

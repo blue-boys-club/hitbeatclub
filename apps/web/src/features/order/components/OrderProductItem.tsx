@@ -6,39 +6,41 @@ import { cn } from "@/common/utils";
 import { type ClassValue } from "clsx";
 import Image from "next/image";
 import { DownloadConfirmationModal } from "./modal/DownloadConfirmationModal";
-import { ArtistInfo, Product } from "../types";
+import type { PaymentOrderItem } from "@hitbeatclub/shared-types/payment";
+import type { ContactLink } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import UI from "@/components/ui";
 
 type OrderProductItemProps = {
-	product: Product;
-	artistInfo: ArtistInfo;
+	item: PaymentOrderItem;
 	className?: ClassValue;
 };
 
 /**
  * 개별 주문 상품 항목을 표시하는 컴포넌트입니다.
  */
-export const OrderProductItem = ({ product, artistInfo, className }: OrderProductItemProps) => {
+export const OrderProductItem = ({ item, className }: OrderProductItemProps) => {
 	const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 	const { toast } = useToast();
 
 	const handleDownload = () => {
-		// create a tag and download the file
-		window.open(product.downloadUrl, "_blank");
-
-		toast({
-			description: "파일이 다운로드 되었습니다.",
-		});
+		// Download the zip file
+		if (item.product.zipFile?.url) {
+			window.open(item.product.zipFile.url, "_blank");
+			toast({
+				description: "파일이 다운로드 되었습니다.",
+			});
+		} else {
+			toast({
+				description: "다운로드 파일을 찾을 수 없습니다.",
+				variant: "destructive",
+			});
+		}
 		setIsDownloadModalOpen(false);
 	};
 
 	const handleDownloadClick = () => {
-		if (product.downloadStatus === "available") {
-			setIsDownloadModalOpen(true);
-		} else if (product.downloadStatus === "downloaded") {
-			handleDownload();
-		}
+		setIsDownloadModalOpen(true);
 	};
 
 	const handleConfirmDownload = () => {
@@ -46,10 +48,46 @@ export const OrderProductItem = ({ product, artistInfo, className }: OrderProduc
 		setIsDownloadModalOpen(false);
 	};
 
+	// Determine product type from category (스키마에서 ACAPELA로 정의되어 있음)
+	const isAcappella = item.product.category === "ACAPELA";
+	const isBeat = item.product.category === "BEAT";
+
+	// Create artist contact links from ArtistPublicResponse
+	const artistLinks: ContactLink[] = [
+		item.product.seller.instagramAccount && {
+			type: "instagram",
+			value: item.product.seller.instagramAccount,
+		},
+		item.product.seller.youtubeAccount && {
+			type: "youtube",
+			value: item.product.seller.youtubeAccount,
+		},
+		item.product.seller.kakaoAccount && {
+			type: "kakaotalk",
+			value: item.product.seller.kakaoAccount,
+		},
+		item.product.seller.discordAccount && {
+			type: "discord",
+			value: item.product.seller.discordAccount,
+		},
+		item.product.seller.lineAccount && {
+			type: "line",
+			value: item.product.seller.lineAccount,
+		},
+		item.product.seller.soundcloudAccount && {
+			type: "soundcloud",
+			value: item.product.seller.soundcloudAccount,
+		},
+		...(item.product.seller.etcAccounts || []).map((account) => ({
+			type: "website" as const,
+			value: account,
+		})),
+	].filter(Boolean) as ContactLink[];
+
 	return (
 		<>
 			<div
-				key={product.id}
+				key={item.product.id}
 				className={cn(
 					"self-stretch py-3 bg-hbc-white border-t border-dashed border-hbc-black flex flex-col justify-start items-start gap-2.5",
 					className,
@@ -59,8 +97,8 @@ export const OrderProductItem = ({ product, artistInfo, className }: OrderProduc
 					<div className={cn("flex justify-start items-center gap-3")}>
 						<Image
 							className={cn("size-20 rounded-5px border border-hbc-black")}
-							src={product.imageUrl}
-							alt={product.title}
+							src={item.product.coverImage?.url || "https://placehold.co/79x79"}
+							alt={item.product.productName}
 							width={79}
 							height={79}
 						/>
@@ -71,16 +109,16 @@ export const OrderProductItem = ({ product, artistInfo, className }: OrderProduc
 										"max-w-80 text-hbc-black text-20px font-bold font-suit leading-120% tracking-02px truncate",
 									)}
 								>
-									{product.title}
+									{item.product.productName}
 								</span>
-								{product.type === "acapella" && <Acapella />}
-								{product.type === "beat" && <Beat />}
+								{isAcappella && <Acapella />}
+								{isBeat && <Beat />}
 							</div>
 							<div className={cn("h-4 py-5px inline-flex justify-start items-center gap-228px")}>
 								<UI.BodySmall
 									className={cn("text-hbc-gray-400 text-12px font-medium font-suisse leading-none tracking-tight")}
 								>
-									{product.licenseType}
+									{item.licenseType}
 								</UI.BodySmall>
 							</div>
 							<div className={cn("rounded-5px inline-flex justify-center items-center gap-2.5 overflow-hidden")}>
@@ -90,13 +128,21 @@ export const OrderProductItem = ({ product, artistInfo, className }: OrderProduc
 									라이센스 보기
 								</button>
 
-								{(product.bpm || product.key) && (
+								{/* BPM and key information */}
+								{(item.product.minBpm || item.product.maxBpm || item.product.musicKey) && (
 									<div
 										className={cn(
 											"absolute left-[388px] top-61px text-hbc-gray-400 text-12px font-medium font-suisse leading-none tracking-tight",
 										)}
 									>
-										{product.bpm && `${product.bpm}BPM`} {product.bpm && product.key && " / "} {product.key}
+										{item.product.minBpm &&
+											item.product.maxBpm &&
+											(item.product.minBpm === item.product.maxBpm
+												? `${item.product.minBpm}BPM`
+												: `${item.product.minBpm}-${item.product.maxBpm}BPM`)}
+										{item.product.minBpm && item.product.maxBpm && item.product.musicKey && " / "}
+										{item.product.musicKey &&
+											`${item.product.musicKey} ${(item.product.scaleType || "").toLowerCase()}`}
 									</div>
 								)}
 							</div>
@@ -105,7 +151,7 @@ export const OrderProductItem = ({ product, artistInfo, className }: OrderProduc
 					<div className={cn("w-28 h-20 py-1 inline-flex flex-col justify-between items-end")}>
 						<div className={cn("inline-flex justify-start items-center")}>
 							<div className={cn("text-hbc-black text-12px font-medium font-suisse leading-none tracking-tight")}>
-								{product.price.toLocaleString()}
+								{item.price.toLocaleString()}
 							</div>
 							<div className={cn("text-hbc-black text-12px font-bold font-suit leading-none tracking-tight")}>원</div>
 						</div>
@@ -113,22 +159,13 @@ export const OrderProductItem = ({ product, artistInfo, className }: OrderProduc
 							className={cn(
 								"w-28 h-10 px-2 py-1 rounded-5px outline-2 outline-offset-[-2px] inline-flex justify-center items-center gap-2.5 transition-opacity",
 								"bg-hbc-white outline-hbc-black text-hbc-black group hover:bg-[#3884FF] hover:outline-[#3884FF] hover:text-hbc-white cursor-pointer",
-								product.downloadStatus === "unavailable" && "opacity-50 cursor-not-allowed",
 							)}
-							disabled={product.downloadStatus === "unavailable"}
 							onClick={handleDownloadClick}
 						>
-							<div
-								className={cn(
-									"size-4 relative group-hover:[&_path]:fill-hbc-white",
-									product.downloadStatus === "downloaded" && "[&_path]:fill-gray-600",
-								)}
-							>
+							<div className={cn("size-4 relative group-hover:[&_path]:fill-hbc-white")}>
 								<Download />
 							</div>
-							<div className={cn("text-12px font-medium font-suisse leading-none tracking-tight")}>
-								{product.downloadStatus === "unavailable" ? "Unavailable" : "Download"}
-							</div>
+							<div className={cn("text-12px font-medium font-suisse leading-none tracking-tight")}>Download</div>
 						</button>
 					</div>
 				</div>
@@ -138,7 +175,7 @@ export const OrderProductItem = ({ product, artistInfo, className }: OrderProduc
 				isOpen={isDownloadModalOpen}
 				onClose={() => setIsDownloadModalOpen(false)}
 				onConfirmDownload={handleConfirmDownload}
-				links={artistInfo.links}
+				links={artistLinks}
 			/>
 		</>
 	);

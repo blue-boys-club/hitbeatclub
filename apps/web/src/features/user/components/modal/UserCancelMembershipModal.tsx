@@ -1,18 +1,21 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { Popup, PopupContent, PopupFooter, PopupTitle } from "@/components/ui/Popup";
 import { PopupButton } from "@/components/ui";
 import { useRouter } from "next/navigation";
 interface UserCancelMembershipModalProps {
 	isModalOpen: boolean;
 	onClose: () => void;
+	userId: number;
 }
 
-const UserCancelMembershipModal = ({ isModalOpen, onClose }: UserCancelMembershipModalProps) => {
+const UserCancelMembershipModal = ({ isModalOpen, onClose, userId }: UserCancelMembershipModalProps) => {
 	const router = useRouter();
-	const handleCancelMembership = () => {
-		router.push("/user/membership");
+
+	const handleCancelMembership = useCallback(() => {
+		if (!userId) return;
+		router.push(`/artist-studio/${userId}/setting?tab=membership`);
 		onClose();
-	};
+	}, [userId, onClose, router]);
 
 	return (
 		<Popup

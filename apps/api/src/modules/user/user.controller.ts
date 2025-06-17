@@ -242,7 +242,7 @@ export class UserController {
 	@ApiQuery({
 		name: "sort",
 		required: false,
-		enum: ["RECENT", "POPULAR"],
+		enum: ["RECENT", "POPULAR", "NAME"],
 		description: "정렬 방식 (기본값: RECENT)",
 		example: "RECENT",
 	})
