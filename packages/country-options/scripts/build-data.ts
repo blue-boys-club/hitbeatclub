@@ -93,7 +93,7 @@ function transformRegion(name: string, countryCode: string): DropdownOption {
 			return mapping;
 		}
 		// 매핑이 없는 경우 fallback
-		return { label: name, value: name.toLowerCase().replace(/[^a-z0-9]/g, "") };
+		return { label: name, value: name.replace(/[^a-zA-Z0-9]/g, "") };
 	}
 
 	// 다른 국가의 경우 label을 그대로 value로 사용
@@ -123,6 +123,20 @@ async function buildData() {
 
 	// 국가 코드 타입 생성
 	const countryCodes = filteredCountriesKo.map((country) => `"${country.alpha3.toUpperCase()}"`);
+
+	// ISO 3자리 코드를 국가 전체 이름으로 매핑 (한국어)
+	const countryCodeToNameMapKo: Record<string, string> = {};
+	filteredCountriesKo.forEach((country) => {
+		const alpha3Code = country.alpha3.toUpperCase();
+		countryCodeToNameMapKo[alpha3Code] = country.name;
+	});
+
+	// ISO 3자리 코드를 국가 전체 이름으로 매핑 (영어)
+	const countryCodeToNameMapEn: Record<string, string> = {};
+	filteredCountriesEn.forEach((country) => {
+		const alpha3Code = country.alpha3.toUpperCase();
+		countryCodeToNameMapEn[alpha3Code] = country.name;
+	});
 
 	// subdivision 데이터 처리
 	const regionsByCountry: Record<string, DropdownOption[]> = {};
@@ -167,27 +181,125 @@ export interface CountryRegion {
 	regions: DropdownOption[];
 }`;
 
-	// 생성된 데이터 파일 작성
-	const dataContent = `${linterDisable}
+	// Tree shaking을 위한 개별 파일 생성
+
+	// 1. 국가 옵션 데이터
+	const countryOptionsContent = `${linterDisable}
+// 이 파일은 자동 생성됩니다. 직접 수정하지 마세요.
+// Generated at: ${new Date().toISOString()}
+
+import type { DropdownOption } from './types';
+
+export const COUNTRY_OPTIONS: DropdownOption[] = ${JSON.stringify(countryOptions, null, 2)} as const;`;
+
+	// 2. 지역 옵션 데이터
+	const regionOptionsContent = `${linterDisable}
 // 이 파일은 자동 생성됩니다. 직접 수정하지 마세요.
 // Generated at: ${new Date().toISOString()}
 
 import type { DropdownOption, CountryCode } from './types';
 
-export const COUNTRY_OPTIONS: DropdownOption[] = ${JSON.stringify(countryOptions, null, 2)} as const;
+export const REGION_OPTIONS_BY_COUNTRY: Record<CountryCode, DropdownOption[]> = ${JSON.stringify(regionsByCountry, null, 2)} as any;`;
 
-export const REGION_OPTIONS_BY_COUNTRY: Record<CountryCode, DropdownOption[]> = ${JSON.stringify(regionsByCountry, null, 2)} as any;
+	// 3. 한국어 국가명 매핑
+	const countryNamesKoContent = `${linterDisable}
+// 이 파일은 자동 생성됩니다. 직접 수정하지 마세요.
+// Generated at: ${new Date().toISOString()}
+
+import type { CountryCode } from './types';
+
+export const COUNTRY_CODE_TO_NAME_MAP_KO: Record<CountryCode, string> = ${JSON.stringify(countryCodeToNameMapKo, null, 2)} as any;`;
+
+	// 4. 영어 국가명 매핑
+	const countryNamesEnContent = `${linterDisable}
+// 이 파일은 자동 생성됩니다. 직접 수정하지 마세요.
+// Generated at: ${new Date().toISOString()}
+
+import type { CountryCode } from './types';
+
+export const COUNTRY_CODE_TO_NAME_MAP_EN: Record<CountryCode, string> = ${JSON.stringify(countryCodeToNameMapEn, null, 2)} as any;`;
+
+	// 5. 지역 관련 유틸리티 함수
+	const regionUtilsContent = `${linterDisable}
+// 이 파일은 자동 생성됩니다. 직접 수정하지 마세요.
+// Generated at: ${new Date().toISOString()}
+
+import type { DropdownOption, CountryCode } from './types';
+import { REGION_OPTIONS_BY_COUNTRY } from './region-options';
 
 export const getRegionOptionsByCountry = (countryCode: CountryCode): DropdownOption[] => {
 	return REGION_OPTIONS_BY_COUNTRY[countryCode] || [];
+};`;
+
+	// 6. 국가명 관련 유틸리티 함수
+	const countryUtilsContent = `${linterDisable}
+// 이 파일은 자동 생성됩니다. 직접 수정하지 마세요.
+// Generated at: ${new Date().toISOString()}
+
+import type { CountryCode } from './types';
+import { COUNTRY_CODE_TO_NAME_MAP_KO } from './country-names-ko';
+import { COUNTRY_CODE_TO_NAME_MAP_EN } from './country-names-en';
+
+export const getCountryNameByCodeKo = (countryCode: CountryCode): string => {
+	return COUNTRY_CODE_TO_NAME_MAP_KO[countryCode] || countryCode;
 };
 
-export type { CountryCode, DropdownOption, CountryRegion } from './types';`;
+export const getCountryNameByCodeEn = (countryCode: CountryCode): string => {
+	return COUNTRY_CODE_TO_NAME_MAP_EN[countryCode] || countryCode;
+};
+
+export const getCountryNameByCodeWithLang = (countryCode: CountryCode, lang: 'ko' | 'en' = 'ko'): string => {
+	return lang === 'en' 
+		? getCountryNameByCodeEn(countryCode) 
+		: getCountryNameByCodeKo(countryCode);
+};
+
+// 기본값으로 한국어 사용 (하위 호환성)
+export const getCountryNameByCode = (countryCode: CountryCode): string => {
+	return getCountryNameByCodeKo(countryCode);
+};
+
+// 기본값으로 한국어 매핑 export (하위 호환성)
+export const COUNTRY_CODE_TO_NAME_MAP = COUNTRY_CODE_TO_NAME_MAP_KO;`;
+
+	// 7. 메인 index 파일 (re-exports)
+	const indexContent = `${linterDisable}
+// 이 파일은 자동 생성됩니다. 직접 수정하지 마세요.
+// Generated at: ${new Date().toISOString()}
+
+// Types
+export type { CountryCode, DropdownOption, CountryRegion } from './types';
+
+// Data exports - tree-shakable
+export { COUNTRY_OPTIONS } from './country-options';
+export { REGION_OPTIONS_BY_COUNTRY } from './region-options';
+export { COUNTRY_CODE_TO_NAME_MAP_KO } from './country-names-ko';
+export { COUNTRY_CODE_TO_NAME_MAP_EN } from './country-names-en';
+
+// Utility functions - tree-shakable
+export { getRegionOptionsByCountry } from './region-utils';
+export { 
+	getCountryNameByCodeKo,
+	getCountryNameByCodeEn, 
+	getCountryNameByCodeWithLang,
+	getCountryNameByCode,
+	COUNTRY_CODE_TO_NAME_MAP
+} from './country-utils';
+
+// Legacy re-exports for backward compatibility
+export { COUNTRY_CODE_TO_NAME_MAP_KO as COUNTRY_CODE_TO_NAME_MAP_LEGACY } from './country-names-ko';
+export { COUNTRY_CODE_TO_NAME_MAP_EN as COUNTRY_CODE_TO_NAME_MAP_EN_LEGACY } from './country-names-en';`;
 
 	// 파일 저장
 	const srcDir = join(process.cwd(), "src");
 	writeFileSync(join(srcDir, "types.ts"), typeContent);
-	writeFileSync(join(srcDir, "index.ts"), dataContent);
+	writeFileSync(join(srcDir, "country-options.ts"), countryOptionsContent);
+	writeFileSync(join(srcDir, "region-options.ts"), regionOptionsContent);
+	writeFileSync(join(srcDir, "country-names-ko.ts"), countryNamesKoContent);
+	writeFileSync(join(srcDir, "country-names-en.ts"), countryNamesEnContent);
+	writeFileSync(join(srcDir, "region-utils.ts"), regionUtilsContent);
+	writeFileSync(join(srcDir, "country-utils.ts"), countryUtilsContent);
+	writeFileSync(join(srcDir, "index.ts"), indexContent);
 
 	console.log("✅ Country data generated successfully!");
 	console.log(`📊 Generated ${countryOptions.length} countries`);

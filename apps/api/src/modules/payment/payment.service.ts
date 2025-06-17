@@ -514,6 +514,9 @@ export class PaymentService {
 											omit: {
 												userId: true,
 											},
+											include: {
+												// profileImageUrl: true,
+											},
 										},
 										productLicense: {
 											select: {
@@ -570,11 +573,25 @@ export class PaymentService {
 				.then((total) => this.prisma.serializeBigIntTyped(total)),
 		]);
 
+		const productIds = orders
+			.flatMap((order) => order.orderItems.flatMap((item) => item.productId))
+			.map((id) => Number(id));
+		const productsFiles = await this.fileService.findFilesByTargetIds({
+			targetIds: productIds,
+			targetTable: "product",
+			type: ENUM_FILE_TYPE.PRODUCT_COVER_IMAGE,
+		});
+		console.log(productsFiles);
+		const productsFilesMap = new Map(productsFiles.map((file) => [Number(file.targetId), file]));
+		console.log(productsFilesMap);
+
 		const productTrim = (p) => {
 			const isLiked = p.productLike.length > 0 ? true : false;
+			const coverImage = productsFilesMap.get(Number(p.id));
+
 			const newProduct = {
 				...p,
-				artistSellerIdToArtist: {
+				seller: {
 					...p.artistSellerIdToArtist,
 					etcAccounts: p.artistSellerIdToArtist.etcAccounts as string[],
 				},
@@ -592,6 +609,8 @@ export class PaymentService {
 					name: pt.tag.name,
 				})),
 				isLiked: isLiked,
+				imageUrl: coverImage?.url,
+				coverImage: coverImage,
 			};
 
 			delete newProduct.artistSellerIdToArtist;

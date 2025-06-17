@@ -46,7 +46,9 @@ export const PaymentOrderItemSchema = z.object({
 	licenseType: z.string().describe("라이선스 타입"),
 
 	// imageUrl: z.string().describe("이미지 URL").optional(),
-	product: ProductDetailResponseSchema.describe("상품 정보"),
+	product: ProductDetailResponseSchema.extend({
+		seller: ArtistPublicResponseSchema.describe("아티스트 정보"),
+	}).describe("상품 정보"),
 	// artist: ArtistPublicResponseSchema.describe("아티스트 정보"),
 });
 
