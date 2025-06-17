@@ -33,8 +33,12 @@ export const getUserMe = async (): Promise<CommonResponse<UserFindMeResponse>> =
 /**
  * 회원 탈퇴
  */
-export const leaveMe = async (userId: number): Promise<CommonResponseId> => {
-	const response = await axiosInstance.delete<CommonResponseId>(`/users/${userId}`);
+export const leaveMe = async (userId: number, deleteReason: string): Promise<CommonResponseId> => {
+	const response = await axiosInstance.delete<CommonResponseId>(`/users/${userId}`, {
+		data: {
+			deleteReason,
+		},
+	});
 	return response.data;
 };
 
