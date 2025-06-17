@@ -440,7 +440,7 @@ model UserArtistFollow {
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "fk_uaf_user")
   artist    Artist       @relation(fields: [artistId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "fk_uaf_artist")
 
-  @@unique([userId, artistId, deletedAt], map: "ux_user_artist_follow__user_artist")
+  @@unique([userId, artistId, deletedAt], map: "ux_user_artist_follow__user_artist_deleted")
   @@index([userId], map: "idx_uaf_user")
   @@index([artistId], map: "idx_uaf_artist")
   @@map("user_artist_follow")

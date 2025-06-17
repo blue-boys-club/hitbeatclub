@@ -337,12 +337,11 @@ export class UserService {
 			throw new BadRequestException(NOT_FOLLOWING_ARTIST_ERROR);
 		}
 
-		const follow = await this.prisma.userArtistFollow.update({
+		const follow = await this.prisma.userArtistFollow.updateMany({
 			where: {
-				userId_artistId: {
-					userId: userId,
-					artistId: artistId,
-				},
+				userId: userId,
+				artistId: artistId,
+				deletedAt: null,
 			},
 			data: {
 				deletedAt: new Date(),
