@@ -1,3 +1,5 @@
+"use client";
+
 import { memo, useRef, useState } from "react";
 import { Popup, PopupButton, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
 import { PopupButton as BasicPopupButton } from "@/components/ui/PopupButton";

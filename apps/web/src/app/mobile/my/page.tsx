@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 export default function MobileMyRoute() {
-	return <div>my</div>;
+	redirect("/mobile/my/cart");
 }

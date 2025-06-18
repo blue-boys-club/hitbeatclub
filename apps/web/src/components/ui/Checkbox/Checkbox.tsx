@@ -8,6 +8,7 @@ const checkboxVariants = cva("inline-flex items-center justify-center cursor-poi
 	variants: {
 		size: {
 			default: "w-3 h-3",
+			small: "w-2 h-2",
 		},
 		rounded: {
 			default: "rounded-[2px]",
@@ -28,6 +29,8 @@ export interface CheckboxProps
 
 export const Checkbox = memo(
 	forwardRef<HTMLInputElement, CheckboxProps>(({ className, wrapperClassName, size, rounded, ...props }, ref) => {
+		const iconSize = size === "small" ? "w-2 h-2" : "w-3 h-3";
+
 		return (
 			<div className={cn("relative inline-block", wrapperClassName)}>
 				<input
@@ -42,7 +45,10 @@ export const Checkbox = memo(
 					{...props}
 				/>
 				<svg
-					className="absolute top-0 left-0 w-3 h-3 pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity"
+					className={cn(
+						"absolute top-0 left-0 pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity",
+						iconSize,
+					)}
 					viewBox="0 0 12 12"
 					fill="none"
 					xmlns="http://www.w3.org/2000/svg"
