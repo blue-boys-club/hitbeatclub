@@ -6,6 +6,8 @@ import { PORTONE_STORE_ID, PORTONE_CHANNEL_KEY } from "../../../lib/payment.cons
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { useQuery } from "@tanstack/react-query";
 import { SubscribeFormValue } from "../schema";
+import { useCreateSubscriptionMutation } from "@/apis/subscribe/mutations/useCreateSubscriptionMutation";
+import { useValidateCouponMutation } from "@/apis/coupon/mutations/useValidateCouponMutation";
 
 /**
  * 사용 가능한 모달 유형
@@ -135,6 +137,9 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 		return !!user?.subscribedAt;
 	}, [user?.subscribedAt]);
 
+	const { mutate: createSubscription } = useCreateSubscriptionMutation();
+	const { mutateAsync: validateCoupon } = useValidateCouponMutation();
+
 	/**
 	 * 지정된 타입의 모달을 엽니다.
 	 * @param modalType - 열고자 하는 모달의 타입
@@ -164,11 +169,18 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 	 * @param code - 검사할 프로모션 코드
 	 * @returns 코드가 유효하면 true, 아니면 false
 	 */
-	const validatePromotionCode = useCallback(async (code: string): Promise<boolean> => {
-		console.log("Validating promotion code:", code);
-		await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
-		return code.toUpperCase() === "PROMO10";
-	}, []);
+	const validatePromotionCode = useCallback(
+		async (code: string): Promise<boolean> => {
+			try {
+				await validateCoupon({ code });
+				return true;
+			} catch (error) {
+				// 404면 유효하지 않은 쿠폰
+				return false;
+			}
+		},
+		[validateCoupon],
+	);
 
 	/**
 	 * PortOne을 통해 지정된 결제 게이트웨이의 빌링키 발급을 요청합니다.
@@ -254,12 +266,18 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 				console.log("Promotion code applied:", data.promotionCode);
 			}
 
-			// Simulate backend API call
 			try {
-				await new Promise((resolve) => setTimeout(resolve, 1500));
-				console.log("Subscription process complete for type:", data.paymentMethodType);
-				// setMembership(true); // Update membership status TODO: 멤버십 상태 업데이트 로직 추가
-				openModal("success"); // Show success modal
+				createSubscription(
+					{
+						subscriptionPlan: data.recurringPeriod === "monthly" ? "MONTH" : "YEAR",
+						hitcode: data.promotionCode || "",
+					},
+					{
+						onSuccess: () => {
+							openModal("success");
+						},
+					},
+				);
 			} catch (error: any) {
 				console.error("Subscription submission error:", error);
 				setPaymentError(error.message || "An unexpected error occurred during final submission.");
