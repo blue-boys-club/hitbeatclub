@@ -10,7 +10,6 @@ import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
  * 멤버십 가입 성공 모달 컴포넌트
  */
 export const SuccessModal = memo(() => {
-	const router = useRouter();
 	const { modals, closeModal } = useSubscription();
 
 	const { data: user } = useQuery(getUserMeQueryOption());
@@ -21,6 +20,16 @@ export const SuccessModal = memo(() => {
 		}
 	};
 
+	const formatDate = (dateString: Date) => {
+		const date = new Date(dateString);
+		date.setHours(date.getHours() + 9);
+
+		const year = date.getFullYear();
+		const month = String(date.getMonth() + 1).padStart(2, "0");
+		const day = String(date.getDate()).padStart(2, "0");
+		return `${year}.${month}.${day}`;
+	};
+
 	const subscriptionInfo = useMemo(() => {
 		if (!user) {
 			return null;
@@ -28,22 +37,13 @@ export const SuccessModal = memo(() => {
 
 		const { id, subscribe } = user;
 
-		const formatDate = (dateString: Date) => {
-			const date = new Date(dateString);
-			const year = date.getFullYear();
-			const month = String(date.getMonth() + 1).padStart(2, "0");
-			const day = String(date.getDate()).padStart(2, "0");
-			return `${year}.${month}.${day}`;
-		};
-
 		return {
 			userId: id,
 			createdAt: new Date(subscribe?.createdAt || "").toLocaleDateString("ko-KR"),
 			nextPaymentDate: subscribe?.nextPaymentDate ? formatDate(subscribe?.nextPaymentDate) : null,
 			subscriptionPlan: subscribe?.subscriptionPlan,
 			price: subscribe?.price,
-			// couponId: subscribe?.couponId,
-			couponId: 1,
+			couponId: (subscribe as any)?.couponId,
 		};
 	}, [user]);
 
@@ -71,23 +71,25 @@ export const SuccessModal = memo(() => {
 					<div className="flex flex-col items-start justify-start gap-5 w-415px">
 						<div className="self-stretch font-bold leading-loose tracking-016px text-16px text-hbc-black font-suit">
 							<div>📦 멤버십 정보</div>
-							<div className="flex items-start justify-start ">
+							<div className="flex">
 								<div className="w-[100px]">이용 플랜</div>
 								<div>
 									히트비트멤버십 <span>({subscriptionInfo?.subscriptionPlan === "MONTH" ? "월간" : "연간"})</span>
 								</div>
 							</div>
-							<div className="flex items-start justify-start ">
+							<div className="flex">
 								<div className="w-[100px]">결제 금액</div>
-								<div>₩18,900 / ₩189,900</div>
-								{/* {subscriptionInfo?.subscriptionPlan === "MONTH" && (
+								{subscriptionInfo?.subscriptionPlan === "MONTH" && (
 									<div>₩{subscriptionInfo?.price?.toLocaleString()}</div>
 								)}
 								{subscriptionInfo?.subscriptionPlan === "YEAR" && (
-									<div>₩{subscriptionInfo?.price?.toLocaleString()}</div>
-								)} */}
+									<div>
+										₩{((subscriptionInfo?.price ?? 0) / 12).toLocaleString()} / ₩
+										{subscriptionInfo?.price?.toLocaleString()}
+									</div>
+								)}
 							</div>
-							<div className="flex items-start justify-start ">
+							<div className="flex">
 								<div className="w-[100px]">다음 결제일</div>
 								<div>{subscriptionInfo?.nextPaymentDate}</div>
 							</div>
@@ -111,18 +113,13 @@ export const SuccessModal = memo(() => {
 				</div>
 				<PopupFooter>
 					<Link
-						href="/artist-studio"
+						href={`/artist-studio/${subscriptionInfo?.userId}`}
 						className="px-2.5 py-[5px] bg-red-600 rounded-[20px] inline-flex justify-center items-center gap-2.5"
 						onClick={() => {
 							closeModal("success");
 						}}
 					>
-						<div
-							className="font-bold leading-none text-center text-18px tracking-018px text-hbc-white font-suit"
-							onClick={() => {
-								router.push(`/artist-studio/${subscriptionInfo?.userId}`);
-							}}
-						>
+						<div className="font-bold leading-none text-center text-18px tracking-018px text-hbc-white font-suit">
 							아티스트 스튜디오로 이동
 						</div>
 					</Link>

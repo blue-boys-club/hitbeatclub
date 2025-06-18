@@ -7,7 +7,7 @@ import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { useQuery } from "@tanstack/react-query";
 import { SubscribeFormValue } from "../schema";
 import { useCreateSubscriptionMutation } from "@/apis/subscribe/mutations/useCreateSubscriptionMutation";
-import { SubscribeCreateResponse } from "@hitbeatclub/shared-types";
+import { useValidateCouponMutation } from "@/apis/coupon/mutations/useValidateCouponMutation";
 
 /**
  * 사용 가능한 모달 유형
@@ -138,6 +138,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 	}, [user?.subscribedAt]);
 
 	const { mutate: createSubscription } = useCreateSubscriptionMutation();
+	const { mutateAsync: validateCoupon } = useValidateCouponMutation();
 
 	/**
 	 * 지정된 타입의 모달을 엽니다.
@@ -168,11 +169,18 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 	 * @param code - 검사할 프로모션 코드
 	 * @returns 코드가 유효하면 true, 아니면 false
 	 */
-	const validatePromotionCode = useCallback(async (code: string): Promise<boolean> => {
-		console.log("Validating promotion code:", code);
-		await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
-		return code.toUpperCase() === "PROMO10";
-	}, []);
+	const validatePromotionCode = useCallback(
+		async (code: string): Promise<boolean> => {
+			try {
+				await validateCoupon({ code });
+				return true;
+			} catch (error) {
+				// 404면 유효하지 않은 쿠폰
+				return false;
+			}
+		},
+		[validateCoupon],
+	);
 
 	/**
 	 * PortOne을 통해 지정된 결제 게이트웨이의 빌링키 발급을 요청합니다.

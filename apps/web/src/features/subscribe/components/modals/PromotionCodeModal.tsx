@@ -56,6 +56,7 @@ export const PromotionCodeModal = memo(() => {
 							히트 코드가 적용 되었습니다.
 						</span>
 					),
+					duration: 3000,
 				});
 				closeModal("promotion");
 			} else {
