@@ -26,12 +26,14 @@ import { HBCGray } from "@/assets/svgs";
 import { SubscribeFormSchema, SubscribeFormValue } from "../schema";
 import { useQuery } from "@tanstack/react-query";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { useRouter } from "next/navigation";
 
 /**
  * 구독 폼의 주요 콘텐츠를 렌더링하고 구독 과정을 처리하는 컴포넌트입니다.
  * 사용자의 입력, 결제 수단 선택, PortOne 연동, 모달 관리를 담당합니다.
  */
 export const SubscribeFormContent = () => {
+	const router = useRouter();
 	const { data: userMe, isSuccess: isUserMeSuccess } = useQuery(getUserMeQueryOption());
 	const {
 		isMembership,
@@ -131,7 +133,13 @@ export const SubscribeFormContent = () => {
 	 * "멤버십 가입하기" 버튼 클릭 시 결제 수단 선택 모달을 엽니다.
 	 */
 	const handleSubscribeButtonClick = () => {
+		if (!userMe) {
+			router.push("/auth/login");
+			return;
+		}
+
 		if (isMembership) return;
+
 		setIsPaymentChoiceModalOpen(true);
 	};
 
