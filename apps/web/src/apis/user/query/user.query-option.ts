@@ -1,9 +1,10 @@
 import { QUERY_KEYS } from "@/apis/query-keys";
 import { useAuthStore } from "@/stores/auth";
 import { useShallow } from "zustand/react/shallow";
-import { getCartList, getLikedProducts, getUserMe } from "../user.api";
+import { getCartList, getFollowingArtists, getLikedProducts, getUserMe } from "../user.api";
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { UserLikeProductListRequest, UserLikeProductListRequestSchema } from "@hitbeatclub/shared-types/user";
+import { UserFollowedArtistListPayload } from "../user.type";
 
 /**
  * 유저 정보 조회
@@ -83,5 +84,43 @@ export const useCartListQueryOptions = (userId: number) => {
 		queryFn: () => getCartList(userId),
 		enabled: !!userId,
 		select: (data) => data.data,
+	});
+};
+
+export const useFollowedArtistsQueryOptions = (userId: number, payload: UserFollowedArtistListPayload) => {
+	return queryOptions({
+		queryKey: QUERY_KEYS.followedArtists.list(userId, payload),
+		queryFn: () => getFollowingArtists(userId, payload),
+		enabled: !!userId,
+	});
+};
+
+export const useFollowedArtistsInfiniteQueryOptions = (userId: number, payload: UserFollowedArtistListPayload) => {
+	return infiniteQueryOptions({
+		queryKey: QUERY_KEYS.followedArtists.infiniteList(userId, payload),
+		queryFn: ({ pageParam }) => getFollowingArtists(userId, pageParam),
+		select: (response) => {
+			return {
+				data: response.pages.flatMap((page) => page.data),
+				total: response.pages[0]._pagination.total,
+				pageParams: response.pageParams,
+			};
+		},
+
+		getNextPageParam: (lastPage) => {
+			const nextPage = lastPage._pagination.page + 1;
+			const totalPages = Math.ceil(lastPage._pagination.total / lastPage._pagination.limit);
+
+			if (nextPage > totalPages) {
+				return undefined;
+			}
+
+			return {
+				...payload,
+				page: nextPage,
+			};
+		},
+		initialPageParam: { ...payload, page: 1 },
+		enabled: !!userId,
 	});
 };

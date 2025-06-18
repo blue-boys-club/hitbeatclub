@@ -10,9 +10,9 @@ export interface ProductItem {
 
 // TODO: Use proper types
 export interface FollowItem {
-	id: number;
-	name: string;
-	imageUrl: string;
+	artistId: number;
+	stageName: string;
+	profileImageUrl: string;
 
 	isNotification: boolean;
 	isVerified: boolean;

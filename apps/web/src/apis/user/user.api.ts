@@ -10,7 +10,7 @@ import {
 } from "@hitbeatclub/shared-types/user";
 import axiosInstance from "@/apis/api.client";
 import { z } from "zod";
-import { UpdateCartItemPayload } from "./user.type";
+import { UpdateCartItemPayload, UserFollowedArtistListPayload } from "./user.type";
 
 /**
  * 내 정보 조회
@@ -140,5 +140,22 @@ export const deleteCartItem = async (userId: number, cartItemId: number) => {
  */
 export const updateCartItem = async (userId: number, { id, licenseId }: UpdateCartItemPayload) => {
 	const response = await axiosInstance.patch<CommonResponseId>(`/users/${userId}/cart/${id}`, { licenseId });
+	return response.data;
+};
+
+export const getFollowingArtists = async (userId: number, payload: UserFollowedArtistListPayload) => {
+	const response = await axiosInstance.get(`/users/${userId}/followed-artists`, {
+		params: payload,
+	});
+	return response.data;
+};
+
+export const updateFollowedArtist = async (userId: number, artistId: number) => {
+	const response = await axiosInstance.post(`/users/${userId}/followed-artists/${artistId}`);
+	return response.data;
+};
+
+export const deleteFollowedArtist = async (userId: number, artistId: number) => {
+	const response = await axiosInstance.delete(`/users/${userId}/followed-artists/${artistId}`);
 	return response.data;
 };
