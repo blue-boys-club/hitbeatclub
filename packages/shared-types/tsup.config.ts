@@ -19,6 +19,7 @@ export default defineConfig({
 		"coupon/index": "src/coupon/index.ts",
 		"notice/index": "src/notice/index.ts",
 		"payment/index": "src/payment/index.ts",
+		"search/index": "src/search/index.ts",
 	},
 	format: ["cjs", "esm"],
 	dts: true,
