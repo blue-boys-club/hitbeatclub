@@ -3,14 +3,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { keepPreviousData } from "@tanstack/react-query";
 import { ArtistAvatar } from "@/components/ui";
-import { useSearchQueryOptions } from "../hooks/useSearchQuery";
 import { Carousel, CarouselContent, CarouselItem, type CarouselPlugin } from "@/components/ui/Carousel/Carousel";
 import { useEffect, useState } from "react";
+import { useGetSearchQueryOptions } from "../hooks/useSearchQuery";
+
 export const SearchArtists = () => {
+	const searchQueryOptions = useGetSearchQueryOptions();
 	const { data, isLoading } = useQuery({
-		...useSearchQueryOptions(),
+		...searchQueryOptions,
 		placeholderData: keepPreviousData,
-		select: (data) => data.artists,
+		select: (response) => response?.data?.artists || [],
 	});
 
 	// Dynamic import for client-side only
@@ -71,13 +73,13 @@ export const SearchArtists = () => {
 						<div className="flex flex-col items-center gap-5px pb-3px">
 							<div className="p-1 transition-all duration-300 rounded-full">
 								<ArtistAvatar
-									src={artist.image}
-									alt={`${artist.name} avatar`}
+									src={artist.profileImageUrl || ""}
+									alt={`${artist.stageName} avatar`}
 									className="transition-opacity cursor-pointer hover:opacity-90"
 								/>
 							</div>
 							<div className="font-bold text-center text-20px leading-28px tracking-02px font-suit group-hover:underline group-hover:decoration-solid group-hover:decoration-2 group-hover:decoration-offset-4">
-								{artist.name}
+								{artist.stageName}
 							</div>
 						</div>
 					</CarouselItem>

@@ -1,14 +1,15 @@
 "use client";
 
 import { Replay } from "@/assets/svgs";
-import { useSearchQueryOptions } from "../hooks/useSearchQuery";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { cn } from "@/common/utils";
+import { useGetSearchQueryOptions } from "../hooks/useSearchQuery";
 
 export const SearchHeader = () => {
+	const searchQueryOptions = useGetSearchQueryOptions();
 	const { data, isLoading, isRefetching, refetch } = useQuery({
-		...useSearchQueryOptions(),
-		select: (data) => data.total,
+		...searchQueryOptions,
+		select: (response) => response?.data?.total || 0,
 		placeholderData: keepPreviousData,
 	});
 
