@@ -143,6 +143,12 @@ export const updateCartItem = async (userId: number, { id, licenseId }: UpdateCa
 	return response.data;
 };
 
+/**
+ * 팔로잉 아티스트 목록 조회
+ * @param userId 유저 아이디
+ * @param payload 팔로잉 아티스트 목록 조회 요청 데이터
+ * @returns 팔로잉 아티스트 목록
+ */
 export const getFollowingArtists = async (userId: number, payload: UserFollowedArtistListPayload) => {
 	const response = await axiosInstance.get(`/users/${userId}/followed-artists`, {
 		params: payload,
@@ -150,11 +156,23 @@ export const getFollowingArtists = async (userId: number, payload: UserFollowedA
 	return response.data;
 };
 
+/**
+ * 팔로우 추가
+ * @param userId 유저 아이디
+ * @param artistId 아티스트 아이디
+ * @returns 팔로우 추가 결과
+ */
 export const updateFollowedArtist = async (userId: number, artistId: number) => {
 	const response = await axiosInstance.post(`/users/${userId}/followed-artists/${artistId}`);
 	return response.data;
 };
 
+/**
+ * 팔로우 취소
+ * @param userId 유저 아이디
+ * @param artistId 아티스트 아이디
+ * @returns 팔로우 취소 결과
+ */
 export const deleteFollowedArtist = async (userId: number, artistId: number) => {
 	const response = await axiosInstance.delete(`/users/${userId}/followed-artists/${artistId}`);
 	return response.data;

@@ -5,6 +5,7 @@ import { Carousel, CarouselContent, CarouselItem, type CarouselPlugin } from "@/
 import { useEffect, useState } from "react";
 import { useSearchInfiniteQuery } from "../hooks/useSearchInfiniteQuery";
 import UserProfileImage from "@/assets/images/user-profile.png";
+import { DraggableArtistWrapper } from "@/features/dnd/componenets/DraggableArtistWrapper";
 
 export const SearchArtists = () => {
 	const { data, isLoading } = useSearchInfiniteQuery();
@@ -63,23 +64,29 @@ export const SearchArtists = () => {
 		>
 			<CarouselContent>
 				{artists?.map((artist) => (
-					<CarouselItem
+					<DraggableArtistWrapper
 						key={artist.id}
-						className="basis-auto pl-0 pr-6 min-w-[180px] group"
+						artistId={artist.id}
+						meta={artist}
 					>
-						<div className="flex flex-col items-center gap-5px pb-3px">
-							<div className="p-1 transition-all duration-300 rounded-full">
-								<ArtistAvatar
-									src={artist.profileImageUrl || UserProfileImage}
-									alt={`${artist.stageName} avatar`}
-									className="transition-opacity cursor-pointer hover:opacity-90"
-								/>
+						<CarouselItem
+							key={artist.id}
+							className="basis-auto pl-0 pr-6 min-w-[180px] group"
+						>
+							<div className="flex flex-col items-center gap-5px pb-3px">
+								<div className="p-1 transition-all duration-300 rounded-full">
+									<ArtistAvatar
+										src={artist.profileImageUrl || UserProfileImage}
+										alt={`${artist.stageName} avatar`}
+										className="transition-opacity cursor-pointer hover:opacity-90"
+									/>
+								</div>
+								<div className="font-bold text-center text-20px leading-28px tracking-02px font-suit group-hover:underline group-hover:decoration-solid group-hover:decoration-2 group-hover:decoration-offset-4">
+									{artist.stageName}
+								</div>
 							</div>
-							<div className="font-bold text-center text-20px leading-28px tracking-02px font-suit group-hover:underline group-hover:decoration-solid group-hover:decoration-2 group-hover:decoration-offset-4">
-								{artist.stageName}
-							</div>
-						</div>
-					</CarouselItem>
+						</CarouselItem>
+					</DraggableArtistWrapper>
 				))}
 			</CarouselContent>
 		</Carousel>
