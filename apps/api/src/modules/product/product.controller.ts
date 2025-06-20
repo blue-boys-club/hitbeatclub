@@ -14,6 +14,7 @@ import {
 	forwardRef,
 	Logger,
 	BadRequestException,
+	ForbiddenException,
 } from "@nestjs/common";
 import { ProductService } from "./product.service";
 import { ApiOperation, ApiTags, ApiConsumes } from "@nestjs/swagger";
@@ -39,7 +40,7 @@ import { FileUploadResponseDto } from "../file/dto/response/file.upload.response
 import { FileService } from "../file/file.service";
 import { ProductUpdateDto } from "./dto/request/product.update.dto";
 import { ProductDetailResponseDto } from "./dto/response/product.detail.response.dto";
-import { PRODUCT_NOT_FOUND_ERROR } from "./product.error";
+import { PRODUCT_FILE_FORBIDDEN_ERROR, PRODUCT_NOT_FOUND_ERROR } from "./product.error";
 import { ARTIST_NOT_FOUND_ERROR } from "../artist/artist.error";
 import { ProductListResponseDto } from "./dto/response/product.list.response.dto";
 import { ProductListQueryRequestDto } from "./dto/request/project.list.request.dto";
@@ -55,6 +56,8 @@ import { ProductListDashboardResponse } from "./dto/response/product.list-dashbo
 import { ProductLike } from "@prisma/client";
 import { FILE_NOT_SUPPORTED_MIME_TYPE_ERROR } from "../file/file.error";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types";
+import { FileUrlRequestDto } from "./dto/request/product.file-url.request.dto";
+import { PaymentService } from "../payment/payment.service";
 
 @Controller("products")
 @ApiTags("product")
@@ -68,6 +71,8 @@ export class ProductController {
 		private readonly genreService: GenreService,
 		@Inject(forwardRef(() => ArtistService))
 		private readonly artistService: ArtistService,
+		@Inject(forwardRef(() => PaymentService))
+		private readonly paymentService: PaymentService,
 	) {}
 
 	@Get()
@@ -477,6 +482,37 @@ export class ProductController {
 			statusCode: 200,
 			message: productMessage.unlike.success,
 			data: { id: product.id },
+		};
+	}
+
+	@Get(":id/file-url")
+	@ApiOperation({ summary: "상품 파일 다운로드 링크 조회" })
+	@AuthenticationDoc()
+	@AuthJwtAccessOptional()
+	@DocResponse<FileUploadResponseDto>(productMessage.find.success, {
+		dto: FileUploadResponseDto,
+	})
+	async findFile(
+		@Req() req: AuthenticatedRequest,
+		@Param("id") id: number,
+		@Query() fileUrlRequestDto: FileUrlRequestDto,
+	): Promise<IResponse<FileUploadResponseDto>> {
+		const userId = req?.user?.id;
+		if (fileUrlRequestDto.type === ENUM_FILE_TYPE.PRODUCT_ZIP_FILE) {
+			const orderedItems = await this.paymentService.getOrderedItemsByProductId(userId, id);
+			if (orderedItems.length === 0) {
+				throw new ForbiddenException(PRODUCT_FILE_FORBIDDEN_ERROR);
+			}
+		}
+
+		const file = await this.productService.findFile(id, fileUrlRequestDto.type);
+
+		// const url = await this.cloudFrontService.getSignedUrl(file.url);
+
+		return {
+			statusCode: 200,
+			message: productMessage.find.success,
+			data: { id: Number(file.id), url: file.url },
 		};
 	}
 }

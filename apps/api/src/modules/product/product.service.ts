@@ -1,6 +1,7 @@
-import { Injectable, BadRequestException } from "@nestjs/common";
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "~/common/prisma/prisma.service";
 import { Prisma, Product } from "@prisma/client";
+import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
 import { ENUM_PRODUCT_FILE_TYPE, ENUM_PRODUCT_SORT } from "./product.enum";
 import { ProductUpdateDto } from "./dto/request/product.update.dto";
 import { FileService } from "../file/file.service";
@@ -8,6 +9,8 @@ import { ProductCreateRequest, ProductListQueryRequest } from "@hitbeatclub/shar
 import {
 	PRODUCT_ALREADY_LIKED_ERROR,
 	PRODUCT_CREATE_ERROR,
+	PRODUCT_FILE_FORBIDDEN_ERROR,
+	PRODUCT_FILE_NOT_FOUND_ERROR,
 	PRODUCT_LICENSE_NOT_FOUND_ERROR,
 	PRODUCT_UPDATE_ERROR,
 	PRODUCT_UPDATE_LICENSE_ERROR,
@@ -1113,5 +1116,31 @@ export class ProductService {
 				totalPage: Math.ceil(total / limit),
 			},
 		};
+	}
+
+	/**
+	 * 상품 파일 조회
+	 * @param id
+	 * @param fileUrlRequestDto
+	 * @returns
+	 */
+	async findFile(
+		id: number,
+		type: ENUM_FILE_TYPE.PRODUCT_AUDIO_FILE | ENUM_FILE_TYPE.PRODUCT_COVER_IMAGE | ENUM_FILE_TYPE.PRODUCT_ZIP_FILE,
+	) {
+		const file = await this.prisma.file
+			.findUnique({
+				where: {
+					id: BigInt(id),
+					type: type,
+				},
+			})
+			.then((data) => this.prisma.serializeBigIntTyped(data));
+
+		if (!file) {
+			throw new NotFoundException(PRODUCT_FILE_NOT_FOUND_ERROR);
+		}
+
+		return file;
 	}
 }

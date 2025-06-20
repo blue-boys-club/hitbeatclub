@@ -17,6 +17,9 @@ export default registerAs(
 				process.env.AWS_CLOUDFRONT_DOMAIN ??
 				`https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_S3_REGION}.amazonaws.com`,
 			enabled: process.env.AWS_CLOUDFRONT_ENABLED === "true" || false,
+			distributionDomain: process.env.AWS_CLOUDFRONT_DISTRIBUTION_DOMAIN,
+			keyPairId: process.env.AWS_CLOUDFRONT_KEY_PAIR_ID,
+			privateKey: process.env.AWS_CLOUDFRONT_PRIVATE_KEY,
 		},
 		ses: {
 			credential: {

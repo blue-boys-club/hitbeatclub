@@ -657,4 +657,21 @@ export class PaymentService {
 			},
 		};
 	}
+
+	async getOrderedItemsByProductId(userId: number | bigint, productId: number | bigint) {
+		const order = await this.prisma.order
+			.findMany({
+				where: {
+					buyerId: BigInt(userId),
+					orderItems: {
+						some: {
+							productId: BigInt(productId),
+						},
+					},
+				},
+			})
+			.then((order) => this.prisma.serializeBigIntTyped(order));
+
+		return order;
+	}
 }
