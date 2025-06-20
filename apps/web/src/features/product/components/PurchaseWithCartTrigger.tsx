@@ -80,8 +80,8 @@ export const PurchaseWithCartTrigger = memo(
 		});
 
 		// 장바구니 mutations
-		const createCartItemMutation = useCreateCartItemMutation(user?.id ?? 0);
-		const deleteCartItemMutation = useDeleteCartItemMutation(user?.id ?? 0);
+		// const createCartItemMutation = useCreateCartItemMutation(user?.id ?? 0);
+		// const deleteCartItemMutation = useDeleteCartItemMutation(user?.id ?? 0);
 
 		// 현재 상품이 장바구니에 있는지 확인
 		const cartItem = useMemo(() => {
