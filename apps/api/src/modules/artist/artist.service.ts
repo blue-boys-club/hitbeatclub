@@ -11,6 +11,8 @@ import {
 	ARTIST_ALREADY_BLOCKED_ERROR,
 	ARTIST_NOT_BLOCKED_ERROR,
 	ARTIST_SELF_BLOCK_ERROR,
+	ARTIST_REPORT_FAILED_ERROR,
+	ARTIST_REPORT_NOT_FOUND_ERROR,
 } from "./artist.error";
 
 @Injectable()
@@ -380,6 +382,47 @@ export class ArtistService {
 			return !!block;
 		} catch (error) {
 			return false;
+		}
+	}
+
+	async reportArtist(
+		artistId: number,
+		reportData: {
+			reporterName: string;
+			reporterPhone: string;
+			reporterEmail: string;
+			content: string;
+			agreedPrivacyPolicy: boolean;
+		},
+	) {
+		try {
+			// 아티스트가 존재하는지 확인
+			const artist = await this.prisma.artist.findFirst({
+				where: { id: artistId, deletedAt: null },
+			});
+
+			if (!artist) {
+				throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
+			}
+
+			// 신고 레코드 생성
+			const report = await this.prisma.artistReport.create({
+				data: {
+					artistId,
+					reporterName: reportData.reporterName,
+					reporterPhone: reportData.reporterPhone,
+					reporterEmail: reportData.reporterEmail,
+					content: reportData.content,
+					agreedPrivacyPolicy: reportData.agreedPrivacyPolicy,
+				},
+			});
+
+			return this.prisma.serializeBigInt(report);
+		} catch (error) {
+			if (error instanceof NotFoundException) {
+				throw error;
+			}
+			throw new BadRequestException(ARTIST_REPORT_FAILED_ERROR);
 		}
 	}
 }

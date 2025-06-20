@@ -33,3 +33,19 @@ export const ArtistProductListQuerySchema = ProductListQuerySchema.extend({
 });
 
 export type ArtistProductListQueryRequest = z.infer<typeof ArtistProductListQuerySchema>;
+
+// 아티스트 신고 스키마
+export const ArtistReportRequestSchema = z.object({
+	reporterName: z.string().min(1).max(100).describe("신고자 이름"),
+	reporterPhone: z.string().min(1).max(20).describe("신고자 휴대폰 번호"),
+	reporterEmail: z.string().email().max(255).describe("신고자 이메일"),
+	content: z.string().min(1).max(5000).describe("신고 내용"),
+	agreedPrivacyPolicy: z
+		.boolean()
+		.describe("개인정보 수집 및 이용 동의")
+		.refine((val) => val === true, {
+			message: "개인정보 수집 및 이용에 동의해야 합니다.",
+		}),
+});
+
+export type ArtistReportRequest = z.infer<typeof ArtistReportRequestSchema>;

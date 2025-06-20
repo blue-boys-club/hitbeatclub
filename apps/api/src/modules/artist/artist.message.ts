@@ -20,4 +20,7 @@ export const artistMessage = {
 	unblock: {
 		success: "아티스트 차단 해제 성공",
 	},
+	report: {
+		success: "아티스트 신고 성공",
+	},
 };

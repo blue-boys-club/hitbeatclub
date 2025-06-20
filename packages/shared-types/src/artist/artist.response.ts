@@ -64,6 +64,29 @@ export const ArtistBlockResponseSchema = z.object({
 	isBlocked: z.boolean().describe("차단 상태").default(true),
 });
 
+// 아티스트 신고 응답 스키마
+export const ArtistReportResponseSchema = z.object({
+	id: z.number().describe("신고 ID").default(1),
+	artistId: z.number().describe("신고된 아티스트 ID").default(123),
+	message: z.string().describe("응답 메시지").default("신고가 성공적으로 접수되었습니다."),
+});
+
+export const ReportStatusEnum = z.enum(["PENDING", "REVIEWING", "RESOLVED", "REJECTED"]);
+
+export const ArtistReportListResponseSchema = z.object({
+	id: z.number().describe("신고 ID").default(1),
+	artistId: z.number().describe("신고된 아티스트 ID").default(123),
+	artistStageName: z.string().nullable().describe("아티스트 스테이지명").default("DJ Cool"),
+	reporterName: z.string().describe("신고자 이름").default("홍길동"),
+	reporterEmail: z.string().email().describe("신고자 이메일").default("reporter@example.com"),
+	content: z.string().describe("신고 내용").default("부적절한 콘텐츠입니다."),
+	status: ReportStatusEnum.describe("처리 상태").default("PENDING"),
+	createdAt: z.date().describe("신고일").default(new Date()),
+	processedAt: z.date().nullable().describe("처리일").default(null),
+});
+
+export type ArtistReportResponse = z.infer<typeof ArtistReportResponseSchema>;
+export type ArtistReportListResponse = z.infer<typeof ArtistReportListResponseSchema>;
 export type ArtistBlockResponse = z.infer<typeof ArtistBlockResponseSchema>;
 export type ArtistResponse = z.infer<typeof ArtistResponseSchema>;
 export type ArtistPublicResponse = z.infer<typeof ArtistPublicResponseSchema>;

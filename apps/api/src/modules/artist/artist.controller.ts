@@ -44,6 +44,9 @@ import { ProductService } from "../product/product.service";
 import { ArtistProductListQueryRequestDto } from "./dto/request/artist.product-list.request.dto";
 import { PrismaService } from "~/common/prisma/prisma.service";
 import { ArtistBlockResponseDto } from "./dto/response/artist.block.response.dto";
+import { ArtistReportRequestDto } from "./dto/request/artist.report.request.dto";
+import { ArtistReportResponseDto } from "./dto/response/artist.report.response.dto";
+
 @Controller("artists")
 @ApiTags("artist")
 @ApiBearerAuth()
@@ -374,6 +377,28 @@ export class ArtistController {
 				id: Number(unblock.id),
 				artistId: Number(unblock.artistId),
 				isBlocked: false,
+			},
+		};
+	}
+
+	@Post(":artistId/report")
+	@ApiOperation({ summary: "아티스트 신고" })
+	@DocResponse<ArtistReportResponseDto>(artistMessage.report.success, {
+		dto: ArtistReportResponseDto,
+	})
+	async reportArtist(
+		@Param("artistId", ParseIntPipe) artistId: number,
+		@Body() reportData: ArtistReportRequestDto,
+	): Promise<IResponse<ArtistReportResponseDto>> {
+		const report = await this.artistService.reportArtist(artistId, reportData);
+
+		return {
+			statusCode: 200,
+			message: artistMessage.report.success,
+			data: {
+				id: Number(report.id),
+				artistId: Number(report.artistId),
+				message: "신고가 성공적으로 접수되었습니다.",
 			},
 		};
 	}
