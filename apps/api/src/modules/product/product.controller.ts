@@ -499,6 +499,10 @@ export class ProductController {
 	): Promise<IResponse<FileUploadResponseDto>> {
 		const userId = req?.user?.id;
 		if (fileUrlRequestDto.type === ENUM_FILE_TYPE.PRODUCT_ZIP_FILE) {
+			if (!userId) {
+				throw new ForbiddenException(PRODUCT_FILE_FORBIDDEN_ERROR);
+			}
+
 			const orderedItems = await this.paymentService.getOrderedItemsByProductId(userId, id);
 			if (orderedItems.length === 0) {
 				throw new ForbiddenException(PRODUCT_FILE_FORBIDDEN_ERROR);
