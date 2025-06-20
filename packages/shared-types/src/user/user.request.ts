@@ -92,6 +92,8 @@ export const UserProfileUpdatePayloadSchema = z.object({
 	gender: z.enum(["M", "F"]).describe("성별 (M/F)").optional().default("M"),
 	country: z.string().max(4).describe("국가 코드").optional().default("KR"),
 	region: z.string().max(100).describe("지역").optional().default("Seoul"),
+
+	isAgreedEmail: z.coerce.boolean().describe("이메일 수신 동의 여부").optional().default(false),
 });
 
 export type UserProfileUpdatePayload = z.infer<typeof UserProfileUpdatePayloadSchema>;

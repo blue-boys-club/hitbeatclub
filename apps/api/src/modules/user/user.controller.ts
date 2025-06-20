@@ -320,7 +320,28 @@ export class UserController {
 		@Param("id") id: number,
 		@Body() userProfileUpdateDto: UserProfileUpdateDto,
 	): Promise<DatabaseIdResponseDto> {
-		const user = await this.userService.updateProfile(id, userProfileUpdateDto);
+		const { isAgreedEmail } = userProfileUpdateDto;
+		const oldUser = await this.userService.findMe(id);
+
+		let agreedEmailAt: Date | null;
+
+		if (isAgreedEmail === undefined) {
+			// undefined이면 기존값 유지
+			agreedEmailAt = oldUser.agreedEmailAt;
+		} else if (isAgreedEmail) {
+			// 동의(true)인 경우: 기존에 동의가 있으면 기존 시간 유지, 없으면 새로 생성
+			agreedEmailAt = oldUser.agreedEmailAt ? oldUser.agreedEmailAt : new Date();
+		} else {
+			// 동의 안함(false)인 경우: null 설정
+			agreedEmailAt = null;
+		}
+
+		delete userProfileUpdateDto.isAgreedEmail;
+
+		const user = await this.userService.updateProfile(id, {
+			...userProfileUpdateDto,
+			agreedEmailAt,
+		});
 
 		return {
 			statusCode: 200,

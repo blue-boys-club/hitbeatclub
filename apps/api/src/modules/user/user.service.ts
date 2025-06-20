@@ -376,13 +376,14 @@ export class UserService {
 		return this.prisma.serializeBigInt(follow);
 	}
 
-	async updateProfile(id: number, updateData: UserProfileUpdatePayload) {
+	async updateProfile(id: number, updateData: UserProfileUpdatePayload & { agreedEmailAt: Date | null }) {
 		try {
 			return this.prisma.user
 				.update({
 					where: { id },
 					data: {
 						...updateData,
+						agreedEmailAt: updateData.agreedEmailAt || null,
 					},
 				})
 				.then((data) => this.prisma.serializeBigInt(data));
