@@ -4,6 +4,7 @@ import { ArtistAvatar } from "@/components/ui";
 import { Carousel, CarouselContent, CarouselItem, type CarouselPlugin } from "@/components/ui/Carousel/Carousel";
 import { useEffect, useState } from "react";
 import { useSearchInfiniteQuery } from "../hooks/useSearchInfiniteQuery";
+import UserProfileImage from "@/assets/images/user-profile.png";
 
 export const SearchArtists = () => {
 	const { data, isLoading } = useSearchInfiniteQuery();
@@ -69,7 +70,7 @@ export const SearchArtists = () => {
 						<div className="flex flex-col items-center gap-5px pb-3px">
 							<div className="p-1 transition-all duration-300 rounded-full">
 								<ArtistAvatar
-									src={artist.profileImageUrl || ""}
+									src={artist.profileImageUrl || UserProfileImage}
 									alt={`${artist.stageName} avatar`}
 									className="transition-opacity cursor-pointer hover:opacity-90"
 								/>
