@@ -53,13 +53,10 @@ export const SearchTracks = () => {
 
 	return (
 		<div className="flex flex-col gap-2.5 mb-3">
-			{allProducts.map((product: any, index: number) => (
+			{allProducts.map((product, index) => (
 				<SearchTrackItem
 					key={`${product.id}-${index}` || index}
-					title={product.productName}
-					artist={product.seller?.stageName || product.seller?.name}
-					albumImgSrc={product.coverImage?.fileUrl}
-					tags={product.productTag?.map((tag: any) => tag.tag?.name).filter(Boolean) || []}
+					product={product}
 				/>
 			))}
 

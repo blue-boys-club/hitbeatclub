@@ -2,13 +2,14 @@
 import { cn } from "@/common/utils";
 import { ArtistAvatar } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Artist, ArtistCardProps, ViewType } from "../artist.types";
 import { useRouter } from "next/navigation";
 import { useDeleteFollowedArtistMutation } from "../../../apis/user/mutations/useDeleteFollowedArtistMutation";
 import { useQuery } from "@tanstack/react-query";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { useUpdateFollowedArtistMutation } from "../../../apis/user/mutations/useUpdateFollowedArtistMutation";
+import UserProfileImage from "@/assets/images/user-profile.png";
 
 const ArtistCardSection = ({
 	artists,
@@ -82,6 +83,7 @@ const ArtistCardSection = ({
 				{artists && artists.length > 0 ? (
 					artists.map((artist: Artist) => {
 						const isFollowing = followStates[artist.artistId];
+						const artistProfileImageUrl = artist.profileImageUrl || UserProfileImage;
 
 						return (
 							<li
@@ -100,12 +102,13 @@ const ArtistCardSection = ({
 								>
 									<div className="flex items-center justify-center pt-2">
 										<ArtistAvatar
-											src={artist.profileImageUrl}
+											src={artistProfileImageUrl}
 											alt={artist.stageName}
 											className={cn(
 												activeView === ViewType.GRID && "size-[174px]",
 												activeView === ViewType.LIST && "size-[59px]",
-												"bg-black",
+												"bg-hbc-black",
+												artistProfileImageUrl === UserProfileImage && "bg-hbc-white",
 											)}
 										/>
 									</div>

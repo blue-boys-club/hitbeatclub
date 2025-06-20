@@ -1,38 +1,11 @@
-"use client";
+import dynamic from "next/dynamic";
 
-import { DragOverlay, useDndContext } from "@dnd-kit/core";
-import { useEffect, useMemo } from "react";
-import { createPortal } from "react-dom";
-
-export const SimpleDragOverlay = () => {
-	const { active /*over*/ } = useDndContext();
-
-	// get is dragging and transform
-	// const isDragging = active?.data.current?.type === "PRODUCT";
-	const meta = active?.data.current?.meta;
-
-	const productName = useMemo(() => {
-		if (!meta) return "";
-		return meta.productName;
-	}, [meta]);
-	const sellerStageName = useMemo(() => {
-		if (!meta) return "";
-		return meta.seller?.stageName;
-	}, [meta]);
-
-	if (typeof window === "undefined") return null;
-
-	return createPortal(
-		<DragOverlay
-			style={{
-				width: "250px",
-			}}
-		>
-			<div className="w-[250px] h-[100px] bg-white rounded-md shadow-md p-4 absolute bottom-0 left-0">
-				<p className="text-sm font-medium">{productName}</p>
-				<p className="text-sm text-gray-500">{sellerStageName}</p>
-			</div>
-		</DragOverlay>,
-		document.body,
-	);
-};
+// Next.js 동적 임포트를 사용하여 SSR을 비활성화
+// 드래그 앤 드롭 컴포넌트는 브라우저 전용 API를 사용하므로 클라이언트에서만 렌더링
+export const SimpleDragOverlay = dynamic(
+	() => import("./SimpleDragOverlayClient").then((mod) => ({ default: mod.SimpleDragOverlay })),
+	{
+		ssr: false, // 서버 사이드 렌더링 비활성화
+		loading: () => null, // 로딩 컴포넌트 (선택사항)
+	},
+);

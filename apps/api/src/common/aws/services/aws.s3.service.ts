@@ -58,18 +58,18 @@ import { AwsS3MultipartDto, AwsS3MultipartPartsDto } from "~/common/aws/dtos/aws
 import { AWS_S3_MAX_PART_NUMBER } from "~/common/aws/constants/aws.constant";
 import { ENUM_S3_UPLOAD_TYPE } from "~/common/aws/constants/aws.enum.constant";
 import { ENUM_AWS_STATUS_CODE_ERROR } from "~/common/aws/constants/aws.status-code.constant";
+import { AwsCloudfrontService } from "~/common/aws/services/aws.cloudfront.service";
 
 @Injectable()
 export class AwsS3Service implements IAwsS3Service {
 	private readonly s3Client: S3Client;
 	private readonly bucket: string;
 	private readonly baseUrl: string;
-	private readonly cloudfrontBaseUrl: string;
-	private readonly cloudfrontEnabled: boolean;
 
 	constructor(
 		private readonly configService: ConfigService,
 		private readonly helperStringService: HelperStringService,
+		private readonly cloudfrontService: AwsCloudfrontService,
 	) {
 		this.s3Client = new S3Client({
 			credentials: {
@@ -81,8 +81,6 @@ export class AwsS3Service implements IAwsS3Service {
 
 		this.bucket = this.configService.get<string>("aws.s3.bucket");
 		this.baseUrl = this.configService.get<string>("aws.s3.baseUrl");
-		this.cloudfrontBaseUrl = this.configService.get<string>("aws.cloudfront.baseUrl");
-		this.cloudfrontEnabled = this.configService.get<boolean>("aws.cloudfront.enabled");
 	}
 
 	/**
@@ -90,7 +88,7 @@ export class AwsS3Service implements IAwsS3Service {
 	 * CloudFront가 활성화된 경우 CloudFront URL을 반환하고, 그렇지 않으면 S3 URL을 반환합니다
 	 */
 	private generateFileUrl(key: string): string {
-		return this.cloudfrontEnabled ? `${this.cloudfrontBaseUrl}/${key}` : `${this.baseUrl}/${key}`;
+		return this.cloudfrontService.generateFileUrl(key);
 	}
 
 	/**
@@ -99,13 +97,7 @@ export class AwsS3Service implements IAwsS3Service {
 	 * @returns CloudFront URL 또는 원본 URL (CloudFront가 비활성화된 경우)
 	 */
 	async convertS3UrlToCloudFrontUrl(s3Url: string): Promise<string> {
-		if (!this.cloudfrontEnabled) {
-			return s3Url;
-		}
-
-		// S3 URL에서 key 추출
-		const key = s3Url.replace(`${this.baseUrl}/`, "");
-		return this.generateFileUrl(key);
+		return this.cloudfrontService.convertS3UrlToCloudFrontUrl(s3Url);
 	}
 
 	/**
@@ -114,7 +106,7 @@ export class AwsS3Service implements IAwsS3Service {
 	 * @returns CloudFront URL 배열
 	 */
 	async convertMultipleS3UrlsToCloudFrontUrls(s3Urls: string[]): Promise<string[]> {
-		return Promise.all(s3Urls.map((url) => this.convertS3UrlToCloudFrontUrl(url)));
+		return this.cloudfrontService.convertMultipleS3UrlsToCloudFrontUrls(s3Urls);
 	}
 
 	async checkBucketExistence(): Promise<HeadBucketCommandOutput> {

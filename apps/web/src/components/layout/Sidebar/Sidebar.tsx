@@ -8,6 +8,7 @@ import { CartSection } from "./Cart";
 import SidebarTabs from "./SidebarTabs";
 import { useLayoutStore } from "@/stores/layout";
 import Link from "next/link";
+import { DropContentWrapper } from "@/features/dnd/componenets/DropContentWrapper";
 
 export const Sidebar = memo(() => {
 	const { isOpen, setLeftSidebar } = useLayoutStore(
@@ -53,9 +54,14 @@ export const Sidebar = memo(() => {
 					<CartSection />
 				</div>
 
-				<div className="flex flex-col flex-1 w-full h-full overflow-y-hidden">
-					<SidebarTabs />
-				</div>
+				<DropContentWrapper
+					asChild
+					id="like-follow"
+				>
+					<div className="flex flex-col flex-1 w-full h-full overflow-y-hidden">
+						<SidebarTabs />
+					</div>
+				</DropContentWrapper>
 			</aside>
 		</div>
 	);

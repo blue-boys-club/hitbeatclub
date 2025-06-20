@@ -16,7 +16,6 @@ interface ShopSectionProps {
 export const ProductSection = memo(({ sectionHeader, products }: ShopSectionProps) => {
 	// Dynamic import for client-side only
 	const [wheelPlugin, setWheelPlugin] = useState<CarouselPlugin | null>(null);
-	const { active } = useDndContext();
 
 	// Load the wheel plugin only on client side
 	useEffect(() => {

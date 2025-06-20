@@ -2,7 +2,7 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { getSearchInfiniteQueryOption } from "@/apis/search/query/product.query-option";
-import { useSearchParametersStates } from "./useSearchParameters";
+import { useSearchParametersStatesWithKeywordDebounced } from "./useSearchParameters";
 import type { ProductSearchQuery } from "@/apis/search/search.type";
 
 /**
@@ -10,7 +10,7 @@ import type { ProductSearchQuery } from "@/apis/search/search.type";
  * URL 파라미터를 자동으로 읽어서 검색 쿼리를 실행합니다
  */
 export const useSearchInfiniteQuery = () => {
-	const [searchParams] = useSearchParametersStates();
+	const [searchParams] = useSearchParametersStatesWithKeywordDebounced();
 
 	// ProductSearchQuery 타입에 맞게 변환
 	const queryPayload: Omit<ProductSearchQuery, "page" | "limit"> = {
