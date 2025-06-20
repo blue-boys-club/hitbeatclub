@@ -17,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCartListQueryOptions } from "@/apis/user/query/user.query-option";
 import { PurchaseWithCartTrigger } from "@/features/product/components/PurchaseWithCartTrigger";
 import { DraggableProductWrapper } from "@/features/dnd/componenets/DraggableProductWrapper";
+import Link from "next/link";
 
 interface TrackItemProps {
 	product: ProductResponse;
@@ -87,7 +88,10 @@ export const SearchTrackItem = memo(({ product, onPlay, onLike, onAddToCart }: T
 			productId={product.id}
 			meta={product}
 		>
-			<div className="flex justify-between items-center hover:bg-[#D9D9D9] rounded-lg cursor-pointer">
+			<Link
+				href={`/products/${product.id}`}
+				className="flex justify-between items-center hover:bg-[#D9D9D9] rounded-lg cursor-pointer"
+			>
 				<div className="flex items-center gap-5">
 					<div className="flex items-center">
 						<div
@@ -161,7 +165,7 @@ export const SearchTrackItem = memo(({ product, onPlay, onLike, onAddToCart }: T
 						{({ isOnCart }) => <ShoppingBag color={isOnCart ? "#3884FF" : "white"} />}
 					</PurchaseWithCartTrigger>
 				</div>
-			</div>
+			</Link>
 		</DraggableProductWrapper>
 	);
 });

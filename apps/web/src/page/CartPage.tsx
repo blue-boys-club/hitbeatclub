@@ -155,10 +155,10 @@ const CartPage = () => {
 			let licenseName = selectedLicense.type;
 			let licenseDescription = "";
 
-			if (selectedLicense.type === "MASTER") {
+			if (selectedLicense.type.toUpperCase() === "MASTER") {
 				licenseName = "MASTER";
 				licenseDescription = "상업적 이용 가능";
-			} else if (selectedLicense.type === "EXCLUSIVE") {
+			} else if (selectedLicense.type.toUpperCase() === "EXCLUSIVE") {
 				licenseName = "EXCLUSIVE";
 				licenseDescription = "독점 사용 가능";
 			}

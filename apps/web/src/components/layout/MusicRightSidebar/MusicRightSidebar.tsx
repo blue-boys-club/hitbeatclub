@@ -171,6 +171,24 @@ export const MusicRightSidebar = memo(() => {
 
 						<div className="flex flex-col gap-2">
 							<div className="flex flex-wrap gap-2">
+								{currentTrack?.musicKey && (
+									<GenreButton
+										name={`${currentTrack?.musicKey || ""} ${(currentTrack?.scaleType || "").toLowerCase()}`}
+										showDeleteButton={false}
+									/>
+								)}
+								{currentTrack?.minBpm && (
+									<GenreButton
+										name={
+											currentTrack?.minBpm === currentTrack?.maxBpm
+												? `BPM ${currentTrack?.minBpm || 0}`
+												: `BPM ${currentTrack?.minBpm || 0} - ${currentTrack?.maxBpm || 0}`
+										}
+										showDeleteButton={false}
+									/>
+								)}
+							</div>
+							<div className="flex flex-wrap gap-2">
 								{currentTrack?.genres?.map((genre) => (
 									<GenreButton
 										key={genre.id}
