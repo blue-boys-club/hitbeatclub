@@ -46,6 +46,17 @@ export class ProductService {
 								isVerified: true,
 							},
 						},
+						productLicense: {
+							select: {
+								licenseId: true,
+								price: true,
+								license: {
+									select: {
+										type: true,
+									},
+								},
+							},
+						},
 						...(genreIds
 							? {
 									productGenre: {
@@ -111,7 +122,14 @@ export class ProductService {
 				const audioFile = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
 				const coverImage = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
 
-				const selectedFields = {};
+				const selectedFields = {
+					licenseInfo: product.productLicense
+						.sort((a, b) => a.price - b.price)
+						.map((l) => ({
+							label: l.license.type,
+							price: l.price,
+						})),
+				};
 				if (select.length) {
 					for (const field of select) {
 						if (field === "seller") {
@@ -145,7 +163,6 @@ export class ProductService {
 						}
 					}
 				} else {
-					// select가 없는 경우 모든 필드 포함
 					Object.assign(selectedFields, {
 						id: product.id,
 						type: product.type,
@@ -961,7 +978,6 @@ export class ProductService {
 						select: {
 							id: true,
 							productName: true,
-							price: true,
 							category: true,
 							minBpm: true,
 							maxBpm: true,
@@ -992,6 +1008,17 @@ export class ProductService {
 										select: {
 											id: true,
 											name: true,
+										},
+									},
+								},
+							},
+							productLicense: {
+								select: {
+									licenseId: true,
+									price: true,
+									license: {
+										select: {
+											type: true,
 										},
 									},
 								},
@@ -1038,7 +1065,6 @@ export class ProductService {
 			result.push({
 				id: like.product.id,
 				productName: like.product.productName,
-				price: like.product.price,
 				category: like.product.category,
 				minBpm: like.product.minBpm,
 				maxBpm: like.product.maxBpm,
@@ -1049,6 +1075,12 @@ export class ProductService {
 				seller,
 				genres: like.product.productGenre.map((pg) => pg.genre.name),
 				tags: like.product.productTag.map((pt) => pt.tag.name),
+				licenseInfo: like.product.productLicense
+					.sort((a, b) => a.price - b.price)
+					.map((l) => ({
+						label: l.license.type,
+						price: l.price,
+					})),
 				audioFile: audioFile
 					? {
 							id: audioFile.id,

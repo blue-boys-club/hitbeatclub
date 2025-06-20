@@ -73,6 +73,7 @@ export class UserService {
 					id: true,
 					email: true,
 					name: true,
+					stageName: true,
 					phoneNumber: true,
 					gender: true,
 					birthDate: true,

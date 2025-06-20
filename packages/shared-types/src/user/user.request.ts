@@ -10,6 +10,7 @@ export type UserCreatePayload = z.infer<typeof UserCreatePayloadSchema>;
 
 export const UserUpdatePayloadSchema = z.object({
 	name: z.string().min(1).max(100).default("John Doe").describe("사용자 이름"),
+	stageName: z.string().min(1).max(30).default("DJ Cool").describe("활동명"),
 	email: z.string().email().describe("이메일").default("test@gmail.com"),
 	password: z.string().min(8).max(255).describe("비밀번호").optional(),
 	phoneNumber: z.string().max(11).describe("전화번호").default("01012345678"),

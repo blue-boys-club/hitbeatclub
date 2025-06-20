@@ -147,7 +147,7 @@ export class UserController {
 	@DocResponsePaging<ProductLikeResponseDto>(userMessage.likedProducts.success, {
 		dto: ProductLikeResponseDto,
 	})
-	async getLikedProducts(
+	async findLikedProducts(
 		@Param("userId") userId: number,
 		@Query() userLikeProductListRequestDto: UserLikeProductListRequestDto,
 	): Promise<IResponsePaging<any>> {
@@ -184,10 +184,10 @@ export class UserController {
 		dto: DatabaseIdResponseDto,
 	})
 	async createCart(
-		@Req() req: AuthenticatedRequest,
+		@Param("userId") userId: number,
 		@Body() cartCreateRequestDto: CartCreateRequestDto,
 	): Promise<DatabaseIdResponseDto> {
-		const result = await this.cartService.create(req.user.id, cartCreateRequestDto);
+		const result = await this.cartService.create(userId, cartCreateRequestDto);
 
 		return {
 			statusCode: 200,

@@ -53,9 +53,8 @@ export const ProductResponseSchema = z.object({
 	}),
 	licenseInfo: z.array(
 		z.object({
-			id: z.number().describe("라이센스 ID"),
-			type: z.enum(["MASTER", "EXCLUSIVE"]).describe("라이센스 타입"),
-			price: z.number().describe("라이센스 가격"),
+			label: z.string().describe("라이센스 타입").default("Master"),
+			price: z.number().describe("라이센스 가격").default(0),
 		}),
 	),
 	coverImage: z
@@ -80,7 +79,12 @@ export const ProductListResponseSchema = ProductResponseSchema.extend({
 export const ProductRowByDashboardSchema = z.object({
 	id: z.number().describe("상품 ID").default(13),
 	productName: z.string().describe("상품명").default("Baby, show you instrumental (Em bpm60)"),
-	price: z.number().describe("가격").default(10000),
+	licenseInfo: z.array(
+		z.object({
+			label: z.string().describe("라이센스 타입").default("Master"),
+			price: z.number().describe("라이센스 가격").default(0),
+		}),
+	),
 	coverImage: z.object({
 		id: z.number().describe("커버 이미지 ID").default(40),
 		url: z

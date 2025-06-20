@@ -112,7 +112,6 @@ export class CartService {
 							select: {
 								id: true,
 								productName: true,
-								price: true,
 								category: true,
 								artistSellerIdToArtist: {
 									select: {
@@ -125,17 +124,15 @@ export class CartService {
 								productLicense: {
 									select: {
 										licenseId: true,
-										price: true,
 										license: {
 											select: {
-												type: true,
+												label: true,
 											},
 										},
 									},
 								},
 							},
 						},
-						license: true,
 					},
 					orderBy: { createdAt: "desc" },
 				})
@@ -216,17 +213,16 @@ export class CartService {
 			selectedLicense: {
 				id: cartItem.license.id,
 				type: cartItem.license.type,
-				price: cartItem.product.productLicense.find((license) => license.licenseId === cartItem.license.id)?.price,
+				price: cartItem.license?.price ?? 0,
 			},
 			product: {
 				id: cartItem.product.id,
 				productName: cartItem.product.productName,
-				price: cartItem.product.price,
 				category: cartItem.product.category,
 				seller,
 				licenseInfo: cartItem.product.productLicense.map((license) => ({
 					id: license.licenseId,
-					type: license.license.type,
+					label: license.license.label,
 					price: license.price,
 				})),
 				coverImage: coverImage
