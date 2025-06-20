@@ -14,9 +14,9 @@ import {
 	ParseIntPipe,
 } from "@nestjs/common";
 import { ArtistService } from "./artist.service";
-import { ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiConsumes, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
-import { DocRequestFile, DocResponse, DocResponseList } from "~/common/doc/decorators/doc.decorator";
+import { DocRequestFile, DocResponse, DocResponseList, DocResponsePaging } from "~/common/doc/decorators/doc.decorator";
 import { IResponse, IResponsePaging } from "~/common/response/interfaces/response.interface";
 import { artistMessage } from "./artist.message";
 import { DatabaseIdResponseDto } from "~/common/response/dtos/response.dto";
@@ -46,6 +46,7 @@ import { PrismaService } from "~/common/prisma/prisma.service";
 import { ArtistBlockResponseDto } from "./dto/response/artist.block.response.dto";
 import { ArtistReportRequestDto } from "./dto/request/artist.report.request.dto";
 import { ArtistReportResponseDto } from "./dto/response/artist.report.response.dto";
+import { ProductFindQuery } from "../product/decorators/product.decorator";
 
 @Controller("artists")
 @ApiTags("artist")
@@ -270,27 +271,34 @@ export class ArtistController {
 		};
 	}
 
-	@Get(":id/products")
+	@Get("me/products")
 	@ApiOperation({ summary: "(자기 자신의) 아티스트 제품 목록 조회" })
+	@ApiQuery({
+		name: "isPublic",
+		type: Boolean,
+		required: false,
+		description: "공개 여부",
+		example: true,
+	})
+	@ProductFindQuery()
 	@AuthenticationDoc()
-	@DocResponseList<ProductListResponseDto>(productMessage.find.success, {
+	@DocResponsePaging<ProductListResponseDto>(productMessage.find.success, {
 		dto: ProductListResponseDto,
 	})
 	async findProducts(
 		@Req() req: AuthenticatedRequest,
-		@Param("id", ParseIntPipe) id: number,
 		@Query() artistProductListQueryRequestDto: ArtistProductListQueryRequestDto,
 	): Promise<IResponsePaging<ProductListResponseDto>> {
 		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds, isPublic } =
 			artistProductListQueryRequestDto;
 		const artistMe = await this.artistService.findMe(req.user.id);
 
-		if (artistMe.id !== id) {
+		if (!artistMe) {
 			throw new ForbiddenException(ARTIST_NOT_FOUND_ERROR);
 		}
 
 		const where = {
-			sellerId: id,
+			sellerId: artistMe.id,
 			...(isPublic !== undefined ? { isPublic: isPublic ? 1 : 0 } : {}),
 			...(category === "null" || category === undefined ? {} : { category }),
 			...(musicKey === "null" || musicKey === undefined ? {} : { musicKey }),
