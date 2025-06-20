@@ -49,3 +49,10 @@ export const FILE_UPDATE_FILE_ENABLED_AND_DELETE_ERROR = {
 	code: 1507,
 	status: 400,
 };
+
+export const FILE_NOT_SUPPORTED_MIME_TYPE_ERROR = {
+	title: "File not supported mime type",
+	code: 1508,
+	status: 415,
+	detail: "지원하지 않는 파일 형식입니다.",
+};

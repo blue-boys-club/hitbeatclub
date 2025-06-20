@@ -13,6 +13,7 @@ import {
 	Inject,
 	forwardRef,
 	Logger,
+	BadRequestException,
 } from "@nestjs/common";
 import { ProductService } from "./product.service";
 import { ApiOperation, ApiTags, ApiConsumes } from "@nestjs/swagger";
@@ -24,6 +25,7 @@ import { DatabaseIdResponseDto } from "~/common/response/dtos/response.dto";
 import { ProductCreateDto } from "./dto/request/product.create.request.dto";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
 import {
+	ENUM_FILE_MIME_ARCHIVE,
 	ENUM_FILE_MIME_AUDIO,
 	ENUM_FILE_MIME_DOCUMENT,
 	ENUM_FILE_MIME_VIDEO,
@@ -51,6 +53,8 @@ import { ArtistService } from "../artist/artist.service";
 import { ENUM_PRODUCT_CATEGORY, ENUM_PRODUCT_SORT } from "./product.enum";
 import { ProductListDashboardResponse } from "./dto/response/product.list-dashboard.response.dto";
 import { ProductLike } from "@prisma/client";
+import { FILE_NOT_SUPPORTED_MIME_TYPE_ERROR } from "../file/file.error";
+import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types";
 
 @Controller("products")
 @ApiTags("product")
@@ -403,15 +407,28 @@ export class ProductController {
 				ENUM_FILE_MIME_AUDIO.MPEG,
 				ENUM_FILE_MIME_AUDIO.MP3,
 				ENUM_FILE_MIME_AUDIO.WAV,
-				ENUM_FILE_MIME_AUDIO.ZIP,
+				ENUM_FILE_MIME_ARCHIVE.ZIP,
 				ENUM_FILE_MIME_VIDEO.M4A,
 				ENUM_FILE_MIME_VIDEO.MP4,
 			]),
 		)
 		file: Express.Multer.File,
 	): Promise<IResponse<FileUploadResponseDto>> {
+		const filePath = (() => {
+			switch (productUploadFileRequestDto.type) {
+				case ENUM_FILE_TYPE.PRODUCT_COVER_IMAGE:
+					return "product";
+				case ENUM_FILE_TYPE.PRODUCT_AUDIO_FILE:
+					return "product/audio";
+				case ENUM_FILE_TYPE.PRODUCT_ZIP_FILE:
+					return "product/archive";
+				default:
+					throw new BadRequestException(FILE_NOT_SUPPORTED_MIME_TYPE_ERROR);
+			}
+		})();
+
 		const s3Obj = await this.fileService.putItemInBucket(file, {
-			path: "product",
+			path: filePath,
 		});
 
 		const fileRow = await this.fileService.create({

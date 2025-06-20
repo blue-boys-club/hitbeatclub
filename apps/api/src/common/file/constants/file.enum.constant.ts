@@ -24,6 +24,9 @@ export enum ENUM_FILE_MIME_AUDIO {
 	MPEG = "audio/mpeg",
 	MP3 = "audio/mp3",
 	WAV = "audio/wav",
+}
+
+export enum ENUM_FILE_MIME_ARCHIVE {
 	ZIP = "application/zip",
 }
 
@@ -45,4 +48,5 @@ export type ENUM_FILE_MIME =
 	| ENUM_FILE_MIME_DOCUMENT
 	| ENUM_FILE_MIME_EXCEL
 	| ENUM_FILE_MIME_AUDIO
-	| ENUM_FILE_MIME_VIDEO;
+	| ENUM_FILE_MIME_VIDEO
+	| ENUM_FILE_MIME_ARCHIVE;
