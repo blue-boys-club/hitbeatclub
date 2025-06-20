@@ -1,23 +1,25 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { getSearchQueryOption as getSearchQueryOptionFromApi } from "@/apis/search/query/product.query-option";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { getSearchInfiniteQueryOption } from "@/apis/search/query/product.query-option";
 import { useSearchParametersStates } from "./useSearchParameters";
 import type { ProductSearchQuery } from "@/apis/search/search.type";
 
-export const useGetSearchQueryOptions = () => {
+/**
+ * 검색 결과를 위한 인피니트 쿼리 훅
+ * URL 파라미터를 자동으로 읽어서 검색 쿼리를 실행합니다
+ */
+export const useSearchInfiniteQuery = () => {
 	const [searchParams] = useSearchParametersStates();
 
 	// ProductSearchQuery 타입에 맞게 변환
-	const queryPayload: ProductSearchQuery = {
-		page: searchParams.page,
-		limit: searchParams.limit,
+	const queryPayload: Omit<ProductSearchQuery, "page" | "limit"> = {
 		keyword: searchParams.keyword || undefined,
 		category: (searchParams.category || undefined) as "BEAT" | "ACAPELA" | "null" | undefined,
 		sort: (searchParams.sort || undefined) as "RECENT" | "RECOMMEND" | "null" | undefined,
 		genreIds: (searchParams.genreIds.length > 0 ? searchParams.genreIds : undefined) as number[] | undefined,
 		tagIds: (searchParams.tagIds.length > 0 ? searchParams.tagIds : undefined) as number[] | undefined,
-		musicKey: searchParams.musicKey as
+		musicKey: (searchParams.musicKey || undefined) as
 			| "C"
 			| "Db"
 			| "D"
@@ -42,5 +44,5 @@ export const useGetSearchQueryOptions = () => {
 		maxBpm: searchParams.maxBpm || undefined,
 	};
 
-	return getSearchQueryOptionFromApi(queryPayload);
+	return useInfiniteQuery(getSearchInfiniteQueryOption(queryPayload));
 };

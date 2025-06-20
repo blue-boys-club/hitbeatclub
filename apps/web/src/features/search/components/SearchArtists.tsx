@@ -1,19 +1,15 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { keepPreviousData } from "@tanstack/react-query";
 import { ArtistAvatar } from "@/components/ui";
 import { Carousel, CarouselContent, CarouselItem, type CarouselPlugin } from "@/components/ui/Carousel/Carousel";
 import { useEffect, useState } from "react";
-import { useGetSearchQueryOptions } from "../hooks/useSearchQuery";
+import { useSearchInfiniteQuery } from "../hooks/useSearchInfiniteQuery";
 
 export const SearchArtists = () => {
-	const searchQueryOptions = useGetSearchQueryOptions();
-	const { data, isLoading } = useQuery({
-		...searchQueryOptions,
-		placeholderData: keepPreviousData,
-		select: (response) => response?.data?.artists || [],
-	});
+	const { data, isLoading } = useSearchInfiniteQuery();
+
+	// 첫 번째 페이지의 artists만 사용
+	const artists = data?.pages?.[0]?.artists || [];
 
 	// Dynamic import for client-side only
 	const [wheelPlugin, setWheelPlugin] = useState<CarouselPlugin | null>(null);
@@ -52,7 +48,7 @@ export const SearchArtists = () => {
 		);
 	}
 
-	if (!data?.length) return null;
+	if (!artists?.length) return null;
 
 	return (
 		<Carousel
@@ -65,7 +61,7 @@ export const SearchArtists = () => {
 			plugins={wheelPlugin ? [wheelPlugin] : undefined}
 		>
 			<CarouselContent>
-				{data?.map((artist) => (
+				{artists?.map((artist) => (
 					<CarouselItem
 						key={artist.id}
 						className="basis-auto pl-0 pr-6 min-w-[180px] group"

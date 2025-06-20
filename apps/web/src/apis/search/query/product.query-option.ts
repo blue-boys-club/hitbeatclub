@@ -11,10 +11,9 @@ export const getSearchQueryOption = (payload: ProductSearchQuery) => {
 	});
 };
 
-export const getSearchInfiniteQueryOption = (payload: ProductSearchQuery) => {
-	const { page: _p, limit: _l, ...queryPayload } = payload;
+export const getSearchInfiniteQueryOption = (payload: Omit<ProductSearchQuery, "page" | "limit">) => {
 	return infiniteQueryOptions({
-		queryKey: QUERY_KEYS.search.infiniteList(queryPayload as ProductSearchQuery),
+		queryKey: QUERY_KEYS.search.infiniteList(payload as ProductSearchQuery),
 		queryFn: ({ pageParam }) => getSearch(pageParam as ProductSearchQuery),
 		select: (response) => ({
 			pages: response.pages.map((page) => page.data),
@@ -31,11 +30,13 @@ export const getSearchInfiniteQueryOption = (payload: ProductSearchQuery) => {
 			return {
 				...payload,
 				page: nextPage,
+				limit: 10,
 			};
 		},
 		initialPageParam: {
 			...payload,
 			page: 1,
+			limit: 10,
 		},
 	});
 };
