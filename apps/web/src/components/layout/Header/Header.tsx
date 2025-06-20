@@ -11,9 +11,8 @@ import { UserProfile } from "@/assets/svgs";
 import { Bell } from "@/assets/svgs/Bell";
 import { ArrowLeftShort } from "@/assets/svgs/ArrowLeftShort";
 
-const Header = memo(() => {
-	const { isPC } = useDevice();
-	return isPC ? <PCHeader /> : <MobileHeader />;
+const Header = memo(({ mobile }: { mobile?: boolean }) => {
+	return mobile ? <MobileHeader /> : <PCHeader />;
 });
 
 Header.displayName = "Header";

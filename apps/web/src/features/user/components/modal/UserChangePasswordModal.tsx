@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import { useUpdateUserPasswordMutation } from "@/apis/user/mutations";
 import { Input } from "@/components/ui";
 import { Popup, PopupButton, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
-import { ToastViewport } from "@/components/ui/Toast/toast";
 import { useToast } from "@/hooks/use-toast";
 
 interface UserChangePasswordModalProps {
@@ -185,7 +184,6 @@ const UserChangePasswordModal = ({ isModalOpen, onClose }: UserChangePasswordMod
 								))}
 						</div>
 					</form>
-					<ToastViewport />
 					<PopupFooter>
 						<PopupButton
 							disabled={!isValidPassword || updateUserPasswordMutation.isPending}

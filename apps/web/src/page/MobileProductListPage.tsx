@@ -4,14 +4,26 @@ import { Plus } from "@/assets/svgs";
 import { MobileProductListFilter } from "@/features/mobile/product/components/MobileProductListFilter";
 import { MobileProductList } from "@/features/mobile/product/components/MobileProductList";
 import { memo, useState } from "react";
+import { getSearchQueryOption } from "@/apis/search/query/product.query-option";
+import { useQuery } from "@tanstack/react-query";
 
 interface MobileProductListPageProps {
 	title: string;
 	filter?: boolean;
+	category?: "ACAPELA" | "BEAT" | "null";
 }
 
-const MobileProductListPage = memo(({ title, filter }: MobileProductListPageProps) => {
+const MobileProductListPage = memo(({ title, filter, category }: MobileProductListPageProps) => {
 	const [isShowFilter, setIsShowFilter] = useState(false);
+
+	const { data } = useQuery({
+		...getSearchQueryOption({
+			category,
+			page: 1,
+			limit: 10,
+		}),
+	});
+
 	return (
 		<div className="px-4 pb-2 space-y-3">
 			<div className="flex justify-between items-center">
@@ -31,7 +43,10 @@ const MobileProductListPage = memo(({ title, filter }: MobileProductListPageProp
 				)}
 			</div>
 			<div className="w-full h-6px bg-black" />
-			<MobileProductList />
+			<MobileProductList
+				products={data?.products || []}
+				artists={data?.artists || []}
+			/>
 			{isShowFilter && <MobileProductListFilter onClose={() => setIsShowFilter(false)} />}
 		</div>
 	);
