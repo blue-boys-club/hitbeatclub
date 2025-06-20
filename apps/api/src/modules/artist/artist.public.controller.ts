@@ -25,8 +25,7 @@ export class ArtistPublicController {
 		@Param("artistId", ParseIntPipe) artistId: number,
 		@Query() artistProductListQueryRequestDto: ArtistProductListQueryRequestDto,
 	): Promise<IResponsePaging<ProductListResponseDto>> {
-		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds, isPublic } =
-			artistProductListQueryRequestDto;
+		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds } = artistProductListQueryRequestDto;
 
 		const where = {
 			sellerId: artistId,
