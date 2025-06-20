@@ -435,35 +435,29 @@ export class ProductService {
 			zipFileId: number;
 		};
 	}) {
-		if (fileIds?.audioFileFileId) {
-			await this.fileService.updateFileEnabledAndDelete({
-				uploaderId,
-				newFileId: fileIds.audioFileFileId,
-				targetTable: "product",
-				targetId: productId,
-				type: ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE,
-			});
-		}
+		await this.fileService.updateFileEnabledAndDelete({
+			uploaderId,
+			newFileIds: fileIds.audioFileFileId ? [fileIds.audioFileFileId] : [],
+			targetTable: "product",
+			targetId: productId,
+			type: ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE,
+		});
 
-		if (fileIds?.coverImageFileId) {
-			await this.fileService.updateFileEnabledAndDelete({
-				uploaderId,
-				newFileId: fileIds.coverImageFileId,
-				targetTable: "product",
-				targetId: productId,
-				type: ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE,
-			});
-		}
+		await this.fileService.updateFileEnabledAndDelete({
+			uploaderId,
+			newFileIds: fileIds.coverImageFileId ? [fileIds.coverImageFileId] : [],
+			targetTable: "product",
+			targetId: productId,
+			type: ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE,
+		});
 
-		if (fileIds?.zipFileId) {
-			await this.fileService.updateFileEnabledAndDelete({
-				uploaderId,
-				newFileId: fileIds.zipFileId,
-				targetTable: "product",
-				targetId: productId,
-				type: ENUM_PRODUCT_FILE_TYPE.PRODUCT_ZIP_FILE,
-			});
-		}
+		await this.fileService.updateFileEnabledAndDelete({
+			uploaderId,
+			newFileIds: fileIds.zipFileId ? [fileIds.zipFileId] : [],
+			targetTable: "product",
+			targetId: productId,
+			type: ENUM_PRODUCT_FILE_TYPE.PRODUCT_ZIP_FILE,
+		});
 	}
 
 	async findProductFiles(id: number) {

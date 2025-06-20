@@ -103,7 +103,7 @@ export class NoticeService {
 			});
 
 			const fileList = files.map((file) => ({
-				id: file.id.toString(),
+				id: file.id,
 				url: file.url,
 				originalName: file.originName,
 				type: file.type,
@@ -172,13 +172,11 @@ export class NoticeService {
 			// 파일 ID가 있는 경우 기존 파일 삭제 후 새 파일 연결
 			if (noticeFileIds !== undefined) {
 				// 새 파일 연결
-				if (noticeFileIds.length > 0) {
-					await this.uploadNoticeFiles({
-						uploaderId: userId,
-						noticeId: id,
-						fileIds: noticeFileIds,
-					});
-				}
+				await this.uploadNoticeFiles({
+					uploaderId: userId,
+					noticeId: id,
+					fileIds: noticeFileIds,
+				});
 			}
 
 			return this.prisma.serializeBigInt(notice);
@@ -250,15 +248,13 @@ export class NoticeService {
 	}) {
 		try {
 			// 파일 ID들을 notice와 연결
-			for (const fileId of fileIds) {
-				await this.fileService.updateFileEnabledAndDelete({
-					uploaderId,
-					newFileId: fileId,
-					targetId: noticeId,
-					targetTable: "notice",
-					type: ENUM_FILE_TYPE.NOTICE_FILE,
-				});
-			}
+			await this.fileService.updateFileEnabledAndDelete({
+				uploaderId,
+				newFileIds: fileIds,
+				targetId: noticeId,
+				targetTable: "notice",
+				type: ENUM_FILE_TYPE.NOTICE_FILE,
+			});
 		} catch (error) {
 			this.logger.error("공지사항 파일 연결 중 오류 발생", error);
 			throw error;

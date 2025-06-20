@@ -231,17 +231,15 @@ export class ArtistService {
 		profileImageFileId: number;
 		tx?: Prisma.TransactionClient;
 	}) {
-		if (profileImageFileId) {
-			await this.fileService.updateFileEnabledAndDelete(
-				{
-					uploaderId,
-					newFileId: profileImageFileId,
-					targetTable: "artist",
-					targetId: artistId,
-					type: ENUM_FILE_TYPE.ARTIST_PROFILE_IMAGE,
-				},
-				tx,
-			);
-		}
+		await this.fileService.updateFileEnabledAndDelete(
+			{
+				uploaderId,
+				newFileIds: profileImageFileId ? [profileImageFileId] : [],
+				targetTable: "artist",
+				targetId: artistId,
+				type: ENUM_FILE_TYPE.ARTIST_PROFILE_IMAGE,
+			},
+			tx,
+		);
 	}
 }
