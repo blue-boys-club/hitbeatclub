@@ -214,7 +214,7 @@ export class FileService {
 		targetTable,
 		type,
 	}: {
-		targetIds: number[];
+		targetIds: number[] | bigint[];
 		targetTable: string;
 		type?: string;
 	}) {

@@ -1,59 +1,92 @@
 "use client";
 
-import { useState, memo } from "react";
+import { useState, memo, useCallback, useMemo } from "react";
 import { Beat, Like, PauseCircle, PlayCircle, ShoppingBag, SmallEqualizer } from "@/assets/svgs";
 import { AlbumCoverCard } from "@/components/ui";
 import { TagButton } from "@/components/ui/TagButton";
 import { cn } from "@/common/utils";
 import Image from "next/image";
+import { ProductResponse } from "@hitbeatclub/shared-types/product";
+import blankCdImage from "@/assets/images/blank-cd.png";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { useLikeProductMutation } from "@/apis/product/mutations/useLikeProductMutation";
+import { useUnlikeProductMutation } from "@/apis/product/mutations/useUnLikeProductMutation";
+import { useToast } from "@/hooks/use-toast";
+import { useAudioStore } from "@/stores/audio";
+import { useQuery } from "@tanstack/react-query";
+import { useCartListQueryOptions } from "@/apis/user/query/user.query-option";
+import { PurchaseWithCartTrigger } from "@/features/product/components/PurchaseWithCartTrigger";
+import { DraggableProductWrapper } from "@/features/dnd/componenets/DraggableProductWrapper";
 
 interface TrackItemProps {
-	title?: string;
-	artist?: string;
-	albumImgSrc?: string;
-	tags?: string[];
+	product: ProductResponse;
 	onPlay?: () => void;
 	onLike?: () => void;
-	onAddToCart?: () => void;
+	onAddToCart?: (id: number) => void;
 }
 
 /**
- * 좋아요한 트랙 아이템 컴포넌트
+ * 검색 트랙 아이템 컴포넌트
  * - 트랙 재생/일시정지 기능
- * - 좋아요 토글 기능
+ * - 좋아요 토글 기능 (인증 및 API 연동)
  * - 장바구니 담기 기능
  * - 트랙 관련 태그 표시
  */
-export const SearchTrackItem = memo(
-	({
-		title = "La Vie En Rose",
-		artist = "Moon River",
-		albumImgSrc = "https://placehold.co/70x70.png",
-		tags = ["G-funk", "Trippy", "Flower"],
-		onPlay,
-		onLike,
-		onAddToCart,
-	}: TrackItemProps) => {
-		const [status, setStatus] = useState<"playing" | "paused" | "default">("paused");
-		const [isLiked, setIsLiked] = useState(false);
-		const [cart, setCart] = useState(false);
+export const SearchTrackItem = memo(({ product, onPlay, onLike, onAddToCart }: TrackItemProps) => {
+	const [status, setStatus] = useState<"playing" | "paused" | "default">("paused");
 
-		const onClickLike = () => {
-			setIsLiked(!isLiked);
-			onLike?.();
-		};
+	const { data: user } = useQuery(getUserMeQueryOption());
+	const { data: cart } = useQuery(useCartListQueryOptions(user?.id ?? 0));
+	const { toast } = useToast();
+	const likeProductMutation = useLikeProductMutation();
+	const unlikeProductMutation = useUnlikeProductMutation();
 
-		const onClickCart = () => {
-			setCart(!cart);
-			onAddToCart?.();
-		};
+	const onClickLike = useCallback(() => {
+		if (!user) {
+			toast({
+				description: "로그인 후 이용해주세요.",
+			});
+			return;
+		}
 
-		const togglePlay = () => {
-			setStatus(status === "playing" ? "paused" : "playing");
-			onPlay?.();
-		};
+		// 현재 좋아요 상태에 따라 적절한 mutation 실행
+		if (product.isLiked) {
+			unlikeProductMutation.mutate(product.id, {
+				onSuccess: () => {},
+				onError: () => {
+					toast({
+						description: "좋아요 취소에 실패했습니다.",
+						variant: "destructive",
+					});
+				},
+			});
+		} else {
+			likeProductMutation.mutate(product.id, {
+				onSuccess: () => {},
+				onError: () => {
+					toast({
+						description: "좋아요에 실패했습니다.",
+						variant: "destructive",
+					});
+				},
+			});
+		}
+	}, [product.isLiked, likeProductMutation, unlikeProductMutation, toast, onLike, user]);
 
-		return (
+	const hasCart = useMemo(() => {
+		return cart?.length && cart.length > 0 && cart.some((item) => item.product.id === product.id);
+	}, [cart]);
+
+	const togglePlay = useCallback(() => {
+		setStatus(status === "playing" ? "paused" : "playing");
+		onPlay?.();
+	}, [status, onPlay]);
+
+	return (
+		<DraggableProductWrapper
+			productId={product.id}
+			meta={product}
+		>
 			<div className="flex justify-between items-center hover:bg-[#D9D9D9] rounded-lg cursor-pointer">
 				<div className="flex items-center gap-5">
 					<div className="flex items-center">
@@ -71,7 +104,7 @@ export const SearchTrackItem = memo(
 							onClick={togglePlay}
 						>
 							<AlbumCoverCard
-								albumImgSrc={albumImgSrc}
+								albumImgSrc={product.coverImage?.url || blankCdImage}
 								size="lg"
 								border={false}
 								padding={false}
@@ -84,18 +117,18 @@ export const SearchTrackItem = memo(
 
 					<div className="flex flex-col">
 						<p className="flex items-center gap-2.5 text-16px font-bold">
-							{title}
+							{product.productName}
 							<Beat />
 						</p>
-						<p className="text-16px">{artist}</p>
+						<p className="text-16px">{product.seller?.stageName}</p>
 					</div>
 				</div>
 
 				<div className="flex gap-2">
-					{tags.map((tag) => (
+					{product.tags.map((tag) => (
 						<TagButton
-							key={tag}
-							name={tag}
+							key={tag.id}
+							name={tag.name}
 							isClickable={false}
 						/>
 					))}
@@ -106,7 +139,7 @@ export const SearchTrackItem = memo(
 						className="flex items-center justify-center w-8 h-8 cursor-pointer"
 						onClick={onClickLike}
 					>
-						{isLiked ? (
+						{product.isLiked ? (
 							<Image
 								className="w-5 h-5"
 								src="/assets/ActiveLike.png"
@@ -118,16 +151,19 @@ export const SearchTrackItem = memo(
 							<Like />
 						)}
 					</div>
-					<div
-						onClick={onClickCart}
-						className="cursor-pointer"
-					>
-						<ShoppingBag color={cart ? "#3884FF" : "white"} />
-					</div>
+					{/* <div
+					onClick={onClickCart}
+					className="cursor-pointer"
+				>
+					<ShoppingBag color={hasCart ? "#3884FF" : "white"} />
+				</div> */}
+					<PurchaseWithCartTrigger productId={product.id}>
+						{({ isOnCart }) => <ShoppingBag color={isOnCart ? "#3884FF" : "white"} />}
+					</PurchaseWithCartTrigger>
 				</div>
 			</div>
-		);
-	},
-);
+		</DraggableProductWrapper>
+	);
+});
 
 SearchTrackItem.displayName = "SearchTrackItem";

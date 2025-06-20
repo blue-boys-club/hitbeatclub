@@ -76,18 +76,8 @@ export class SearchController {
 			deletedAt: null,
 		};
 
-		const products = (await this.productService.findAll(productWhere, productSearchQueryRequestDto, [], userId)).map(
-			(product) => {
-				if (product.productLike) {
-					const isLiked = product.productLike.some((like: ProductLike) => BigInt(like.userId) === BigInt(userId));
-					product.isLiked = isLiked;
-					delete product.productLike;
-				} else {
-					product.isLiked = null;
-				}
-				return product;
-			},
-		);
+		const products = await this.productService.findAll(productWhere, productSearchQueryRequestDto, [], userId);
+		// this.logger.log({ products }, "products");
 
 		// 아티스트 검색 - keyword가 없으면 검색하지 않음 (no-findall)
 		// 아티스트는 keyword 기반으로만 검색하고, 전체 조회는 하지 않음
@@ -99,7 +89,7 @@ export class SearchController {
 				productSearchQueryRequestDto.keyword,
 			);
 			artists = artistsData;
-			artistTotal = total;
+			artistTotal += total;
 		}
 
 		// 아티스트 수 보정 로직 - 최대 10명으로 제한
@@ -128,6 +118,7 @@ export class SearchController {
 			const sellersToAdd = sellersArray.slice(0, neededCount);
 
 			// 아티스트 배열에 판매자 추가
+			artistTotal += sellersToAdd.length;
 			artists = [...artists, ...sellersToAdd];
 		}
 

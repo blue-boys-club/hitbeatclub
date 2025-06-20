@@ -136,7 +136,7 @@ const CartPage = () => {
 				// ProductResponseSchema에 licenseInfo가 있는 경우 사용
 				availableLicenses = product.licenseInfo.map((license: any) => ({
 					id: license.id,
-					type: license.type as "MASTER" | "EXCLUSIVE",
+					type: license?.type?.toUpperCase() as "MASTER" | "EXCLUSIVE",
 					price: license.price,
 				}));
 			} else {
@@ -145,7 +145,7 @@ const CartPage = () => {
 				availableLicenses = [
 					{
 						id: selectedLicense.id,
-						type: selectedLicense.type as "MASTER" | "EXCLUSIVE",
+						type: selectedLicense.type?.toUpperCase() as "MASTER" | "EXCLUSIVE",
 						price: selectedLicense.price,
 					},
 				];
@@ -156,10 +156,10 @@ const CartPage = () => {
 			let licenseDescription = "";
 
 			if (selectedLicense.type === "MASTER") {
-				licenseName = "마스터";
+				licenseName = "MASTER";
 				licenseDescription = "상업적 이용 가능";
 			} else if (selectedLicense.type === "EXCLUSIVE") {
-				licenseName = "익스클루시브";
+				licenseName = "EXCLUSIVE";
 				licenseDescription = "독점 사용 가능";
 			}
 

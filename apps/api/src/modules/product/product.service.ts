@@ -92,7 +92,7 @@ export class ProductService {
 					skip: (page - 1) * limit,
 					take: limit,
 				})
-				.then((data) => this.prisma.serializeBigInt(data))
+				.then((data) => this.prisma.serializeBigIntTyped(data))
 				.catch((error) => {
 					throw new BadRequestException(error);
 				});
@@ -121,6 +121,11 @@ export class ProductService {
 				const files = filesByProductId[product.id.toString()] ?? [];
 				const audioFile = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
 				const coverImage = files.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
+
+				let isLiked = null;
+				if (userId) {
+					isLiked = product.productLike?.some((like) => BigInt(like.userId) === BigInt(userId));
+				}
 
 				const selectedFields = {
 					licenseInfo: product.productLicense
@@ -192,6 +197,7 @@ export class ProductService {
 						audioFile: audioFile || null,
 						coverImage: coverImage || null,
 						isPublic: product.isPublic,
+						isLiked,
 					});
 				}
 
@@ -558,7 +564,7 @@ export class ProductService {
 			.then((data) => this.prisma.serializeBigInt(data));
 	}
 
-	async findProductGenresByIds(productId: number, genreIds: number[]) {
+	async findProductGenresByIds(productId: number | bigint, genreIds: number[] | bigint[]) {
 		const genres = await this.prisma.productGenre
 			.findMany({
 				where: { AND: [{ genreId: { in: genreIds } }, { deletedAt: null }, { productId }] },
@@ -571,13 +577,13 @@ export class ProductService {
 					},
 				},
 			})
-			.then((data) => this.prisma.serializeBigInt(data))
+			.then((data) => this.prisma.serializeBigIntTyped(data))
 			.then((data) => data.map((item) => item.genre));
 
 		return genres;
 	}
 
-	async findProductTagsByIds(productId: number, tagIds: number[]) {
+	async findProductTagsByIds(productId: number | bigint, tagIds: number[] | bigint[]) {
 		const tags = await this.prisma.productTag
 			.findMany({
 				where: { AND: [{ tagId: { in: tagIds } }, { deletedAt: null }, { productId }] },
@@ -698,62 +704,57 @@ export class ProductService {
 		{ productId, genreIds }: { productId: number; genreIds: number[] },
 		tx?: Prisma.TransactionClient,
 	) {
-		try {
-			const transaction = tx || this.prisma;
+		const transaction = tx || this.prisma;
 
-			// genreIds에 없는 것만 deletedAt 설정
-			await transaction.productGenre.updateMany({
+		// genreIds에 없는 것만 deletedAt 설정
+		await transaction.productGenre.updateMany({
+			where: {
+				productId,
+				genreId: {
+					notIn: genreIds,
+				},
+				deletedAt: null,
+			},
+			data: {
+				deletedAt: new Date(),
+			},
+		});
+
+		// 기존에 없는 것만 생성
+		const existingGenres = await transaction.productGenre
+			.findMany({
 				where: {
 					productId,
 					genreId: {
-						notIn: genreIds,
+						in: genreIds,
 					},
 					deletedAt: null,
 				},
-				data: {
-					deletedAt: new Date(),
+				select: {
+					genreId: true,
 				},
-			});
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
 
-			// 기존에 없는 것만 생성
-			const existingGenres = await transaction.productGenre
-				.findMany({
-					where: {
-						productId,
-						genreId: {
-							in: genreIds,
-						},
-						deletedAt: null,
-					},
-					select: {
-						genreId: true,
-					},
-				})
-				.then((data) => this.prisma.serializeBigInt(data));
+		const existingGenreIds = existingGenres.map((genre) => genre.genreId);
+		const newGenreIds = genreIds.filter((id) => !existingGenreIds.includes(id));
 
-			const existingGenreIds = existingGenres.map((genre) => genre.genreId);
-			const newGenreIds = genreIds.filter((id) => !existingGenreIds.includes(id));
-
-			for (const genreId of newGenreIds) {
-				await transaction.productGenre.upsert({
-					where: {
-						productId_genreId: {
-							productId,
-							genreId,
-						},
-					},
-					create: {
+		for (const genreId of newGenreIds) {
+			await transaction.productGenre.upsert({
+				where: {
+					productId_genreId: {
 						productId,
 						genreId,
 					},
-					update: {
-						deletedAt: null,
-					},
-				});
-			}
-		} catch (e: any) {
-			this.logger.error(e);
-			// throw new BadRequestException(e);
+				},
+				create: {
+					productId,
+					genreId,
+				},
+				update: {
+					deletedAt: null,
+				},
+			});
 		}
 	}
 

@@ -26,6 +26,9 @@ export const useLikeProductMutation = () => {
 			// infinite list -> just invalidate the infinite list
 			void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products._infiniteList });
 
+			// invalidate search
+			void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.search._list });
+
 			void queryClient.invalidateQueries({
 				queryKey: QUERY_KEYS.user._likedProducts,
 			});

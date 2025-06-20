@@ -86,6 +86,7 @@ const QUERY_KEYS = {
 	},
 	search: {
 		_key: ["search"],
+		_list: ["search", "list"],
 		list: (payload: ProductSearchQuery): QueryKey => ["search", "list", payload],
 		infiniteList: (payload: ProductSearchQuery): QueryKey => ["search", "list", "infinite", payload],
 	},
