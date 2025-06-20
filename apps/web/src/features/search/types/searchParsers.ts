@@ -1,19 +1,28 @@
-import { createSearchParamsCache, parseAsArrayOf, parseAsString, parseAsStringEnum } from "nuqs/server";
+import { createSearchParamsCache, parseAsArrayOf, parseAsInteger, parseAsString, parseAsStringEnum } from "nuqs/server";
 
 export enum SortEnum {
-	Recent = "Recent",
-	A_Z = "A-Z",
-	Popular = "Popular",
+	RECENT = "RECENT",
+	RECOMMEND = "RECOMMEND",
+	null = "null",
 }
 
 export const searchQueryParsers = {
-	search: parseAsString,
-	tags: parseAsArrayOf(parseAsString).withDefault([]),
+	// Page and limit for pagination
+	page: parseAsInteger.withDefault(1),
+	limit: parseAsInteger.withDefault(10),
+
+	// Search keyword
+	keyword: parseAsString.withDefault(""),
+
+	// Filters
 	category: parseAsString.withDefault(""),
-	genre: parseAsString.withDefault(""),
-	key: parseAsString.withDefault(""),
-	bpm: parseAsString.withDefault(""),
-	sort: parseAsStringEnum<SortEnum>(Object.values(SortEnum)).withDefault(SortEnum.Recent),
+	sort: parseAsStringEnum<SortEnum>(Object.values(SortEnum)),
+	genreIds: parseAsArrayOf(parseAsInteger).withDefault([]),
+	tagIds: parseAsArrayOf(parseAsInteger).withDefault([]),
+	musicKey: parseAsString,
+	scaleType: parseAsString,
+	minBpm: parseAsInteger,
+	maxBpm: parseAsInteger,
 };
 
 export const searchQueryCache = createSearchParamsCache(searchQueryParsers);

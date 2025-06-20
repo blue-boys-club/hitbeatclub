@@ -18,6 +18,8 @@ import { useUnlikeProductMutation } from "@/apis/product/mutations/useUnLikeProd
 import { useToast } from "@/hooks/use-toast";
 import { useAudioStore } from "@/stores/audio";
 import { PurchaseWithCartTrigger } from "@/features/product/components";
+import { GenreButton } from "@/components/ui/GenreButton";
+import { TagButton } from "@/components/ui/TagButton";
 
 /**
  * 음악 상세 정보를 보여주는 우측 사이드바 컴포넌트
@@ -167,13 +169,23 @@ export const MusicRightSidebar = memo(() => {
 							{currentTrack?.description}
 						</div>
 
-						<div className="flex flex-wrap gap-2">
-							{/* {currentTrack?.genres?.map((genre) => (
-								<GenreButton
-									key={genre}
-									name={genre}
-								/>
-							))} */}
+						<div className="flex flex-col gap-2">
+							<div className="flex flex-wrap gap-2">
+								{currentTrack?.genres?.map((genre) => (
+									<GenreButton
+										key={genre.id}
+										name={genre.name}
+									/>
+								))}
+							</div>
+							<div className="flex flex-wrap gap-2">
+								{currentTrack?.tags?.map((tag) => (
+									<TagButton
+										key={tag.id}
+										name={tag.name}
+									/>
+								))}
+							</div>
 						</div>
 					</ScrollArea.Viewport>
 					<ScrollArea.Scrollbar

@@ -1,17 +1,15 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { keepPreviousData } from "@tanstack/react-query";
 import { ArtistAvatar } from "@/components/ui";
-import { useSearchQueryOptions } from "../hooks/useSearchQuery";
 import { Carousel, CarouselContent, CarouselItem, type CarouselPlugin } from "@/components/ui/Carousel/Carousel";
 import { useEffect, useState } from "react";
+import { useSearchInfiniteQuery } from "../hooks/useSearchInfiniteQuery";
+
 export const SearchArtists = () => {
-	const { data, isLoading } = useQuery({
-		...useSearchQueryOptions(),
-		placeholderData: keepPreviousData,
-		select: (data) => data.artists,
-	});
+	const { data, isLoading } = useSearchInfiniteQuery();
+
+	// 첫 번째 페이지의 artists만 사용
+	const artists = data?.pages?.[0]?.artists || [];
 
 	// Dynamic import for client-side only
 	const [wheelPlugin, setWheelPlugin] = useState<CarouselPlugin | null>(null);
@@ -50,7 +48,7 @@ export const SearchArtists = () => {
 		);
 	}
 
-	if (!data?.length) return null;
+	if (!artists?.length) return null;
 
 	return (
 		<Carousel
@@ -63,7 +61,7 @@ export const SearchArtists = () => {
 			plugins={wheelPlugin ? [wheelPlugin] : undefined}
 		>
 			<CarouselContent>
-				{data?.map((artist) => (
+				{artists?.map((artist) => (
 					<CarouselItem
 						key={artist.id}
 						className="basis-auto pl-0 pr-6 min-w-[180px] group"
@@ -71,13 +69,13 @@ export const SearchArtists = () => {
 						<div className="flex flex-col items-center gap-5px pb-3px">
 							<div className="p-1 transition-all duration-300 rounded-full">
 								<ArtistAvatar
-									src={artist.image}
-									alt={`${artist.name} avatar`}
+									src={artist.profileImageUrl || ""}
+									alt={`${artist.stageName} avatar`}
 									className="transition-opacity cursor-pointer hover:opacity-90"
 								/>
 							</div>
 							<div className="font-bold text-center text-20px leading-28px tracking-02px font-suit group-hover:underline group-hover:decoration-solid group-hover:decoration-2 group-hover:decoration-offset-4">
-								{artist.name}
+								{artist.stageName}
 							</div>
 						</div>
 					</CarouselItem>

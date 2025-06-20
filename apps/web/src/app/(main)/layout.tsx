@@ -7,8 +7,10 @@ import { FooterPlayer } from "@/components/layout/Footer/Player/FooterPlayer";
 import Header from "@/components/layout/Header/Header";
 import { Sidebar } from "@/components/layout/Sidebar/Sidebar";
 import { Toaster } from "@/components/ui/Toast/toaster";
+import { ProductDndContext } from "@/features/dnd/componenets/ProductDndContext";
 import { useAuthStore } from "@/stores/auth";
 import { useLayoutStore } from "@/stores/layout";
+import { DndContext } from "@dnd-kit/core";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -42,26 +44,28 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
 	return (
 		<div className="h-screen overflow-hidden">
-			{/* Fixed Sidebar - 100vh - footer size */}
-			<div className={cn("fixed left-0 top-0 h-[calc(100vh-92px)]", isLeftSidebarOpen ? "w-305px" : "w-150px")}>
-				<Sidebar />
-			</div>
+			<ProductDndContext>
+				{/* Fixed Sidebar - 100vh - footer size */}
+				<div className={cn("fixed left-0 top-0 h-[calc(100vh-92px)]", isLeftSidebarOpen ? "w-305px" : "w-150px")}>
+					<Sidebar />
+				</div>
 
-			{/* Fixed Header */}
-			<Header />
+				{/* Fixed Header */}
+				<Header />
 
-			{/* Main Content */}
-			<main
-				className={cn(
-					"absolute top-[72px] right-0 pt-15px overflow-auto",
-					"transition-all duration-500",
-					"h-[calc(100vh-72px-92px)]", // 100vh - header size - footer
-					isLeftSidebarOpen ? "left-[305px] pl-11px" : "left-[150px] pl-83px",
-					isRightSidebarOpen ? "pr-[329px]" : "pr-[40px]",
-				)}
-			>
-				{children}
-			</main>
+				{/* Main Content */}
+				<main
+					className={cn(
+						"absolute top-[72px] right-0 pt-15px overflow-auto",
+						"transition-all duration-500",
+						"h-[calc(100vh-72px-92px)]", // 100vh - header size - footer
+						isLeftSidebarOpen ? "left-[305px] pl-11px" : "left-[150px] pl-83px",
+						isRightSidebarOpen ? "pr-[329px]" : "pr-[40px]",
+					)}
+				>
+					{children}
+				</main>
+			</ProductDndContext>
 
 			<div className="fixed right-0">
 				<MusicRightSidebar />

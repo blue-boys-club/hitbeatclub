@@ -3,6 +3,8 @@
 import useEmblaCarousel, { type UseEmblaCarouselType } from "embla-carousel-react";
 import * as React from "react";
 import { cn } from "@/common/utils";
+import { useDndContext } from "@dnd-kit/core";
+import { useEffect } from "react";
 
 type CarouselApi = UseEmblaCarouselType[1];
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>;
@@ -50,6 +52,8 @@ const Carousel = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivEl
 		);
 		const [canScrollPrevious, setCanScrollPrevious] = React.useState(false);
 		const [canScrollNext, setCanScrollNext] = React.useState(false);
+
+		const { active } = useDndContext();
 
 		const onSelect = React.useCallback((api: CarouselApi) => {
 			if (!api) {

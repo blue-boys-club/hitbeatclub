@@ -37,6 +37,52 @@ export class ArtistService {
 		}
 	}
 
+	async findAllBySearch(search: string) {
+		try {
+			const searchPattern = `%${search}%`;
+
+			// 아티스트 데이터 조회
+			const artists = await this.prisma.$queryRaw`
+				SELECT 
+					a.id,
+					a.stage_name as stageName,
+					a.slug as slug,
+					a.is_verified as isVerified,
+					f.url as profileImageUrl
+				FROM artist a
+				LEFT JOIN file f ON a.id = f.target_id 
+					AND f.target_table = 'artist'
+					AND f.type = ${ENUM_FILE_TYPE.ARTIST_PROFILE_IMAGE}
+					AND f.is_enabled = 1
+					AND f.deleted_at IS NULL
+				WHERE a.deleted_at IS NULL
+				AND a.stage_name LIKE ${searchPattern}
+				ORDER BY a.id DESC
+			`.then((data) => this.prisma.serializeBigInt(data));
+
+			// 총 개수 조회
+			const totalResult = await this.prisma.$queryRaw`
+				SELECT COUNT(*) as total
+				FROM artist a
+				WHERE a.deleted_at IS NULL
+				AND a.stage_name LIKE ${searchPattern}
+			`.then((data) => this.prisma.serializeBigInt(data));
+
+			const total = totalResult[0]?.total || 0;
+
+			return {
+				artists,
+				total,
+				pagination: {
+					total,
+					hasMore: false, // 페이징 로직에 따라 조정
+				},
+			};
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
 	async findMe(userId: number): Promise<ArtistDetailResponseDto> {
 		const artist = await this.prisma.artist
 			.findFirst({

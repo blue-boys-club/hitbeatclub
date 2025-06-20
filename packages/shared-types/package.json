@@ -90,6 +90,11 @@
 			"types": "./dist/payment/index.d.ts",
 			"import": "./dist/payment/index.mjs",
 			"require": "./dist/payment/index.js"
+		},
+		"./search": {
+			"types": "./dist/search/index.d.ts",
+			"import": "./dist/search/index.mjs",
+			"require": "./dist/search/index.js"
 		}
 	},
 	"files": [

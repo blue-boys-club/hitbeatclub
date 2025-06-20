@@ -25,7 +25,7 @@ export const SearchBarClient = () => {
 	const router = useRouter();
 	const pathname = usePathname();
 	const isSearch = pathname === "/search";
-	const [searchValue, setSearchValue] = useSearchParametersStateByKey("search");
+	const [searchValue, setSearchValue] = useSearchParametersStateByKey("keyword");
 	const [searchOptions, setSearchOptions] = useState<SearchOption[]>([]);
 
 	const navigateToSearch = useCallback(() => {

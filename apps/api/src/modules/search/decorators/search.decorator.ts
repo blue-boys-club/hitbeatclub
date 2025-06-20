@@ -1,6 +1,6 @@
 import { applyDecorators } from "@nestjs/common";
 import { ApiQuery } from "@nestjs/swagger";
-import { ENUM_PRODUCT_CATEGORY } from "../product.enum";
+import { ENUM_PRODUCT_CATEGORY } from "~/modules/product/product.enum";
 
 export const ProductFindQuery = () => {
 	return applyDecorators(
@@ -33,7 +33,7 @@ export const ProductFindQuery = () => {
 			type: String,
 			required: false,
 			description: "태그",
-			example: "1",
+			example: "2",
 			nullable: true,
 		}),
 		ApiQuery({
@@ -71,7 +71,7 @@ export const ProductFindQuery = () => {
 	);
 };
 
-export const ProductSearchQuery = () => {
+export const SearchQueryDecorator = () => {
 	return applyDecorators(
 		ApiQuery({
 			name: "keyword",

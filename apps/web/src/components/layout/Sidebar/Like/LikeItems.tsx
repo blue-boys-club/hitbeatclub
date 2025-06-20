@@ -7,6 +7,7 @@ import { getLikedProductsInfiniteListQueryOption, getUserMeQueryOption } from "@
 import { useAuthStore } from "@/stores/auth";
 import { useShallow } from "zustand/react/shallow";
 import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
+import { DropContentWrapper } from "@/features/dnd/componenets/DropContentWrapper";
 
 interface LikeItemsProps {
 	search?: string;
@@ -135,25 +136,27 @@ const LikeItems = memo(({ search, sort }: LikeItemsProps) => {
 	}
 
 	return (
-		<div className={containerClassName}>
-			{likedProducts.map((item) => (
-				<LikeItem
-					key={item.id}
-					track={item}
-				/>
-			))}
+		<DropContentWrapper id="like">
+			<div className={containerClassName}>
+				{likedProducts.map((item) => (
+					<LikeItem
+						key={item.id}
+						track={item}
+					/>
+				))}
 
-			{/* 무한스크롤 트리거 - react-intersection-observer 사용 */}
-			{hasNextPage && (
-				<div
-					ref={loadMoreRef}
-					className="h-4"
-				/>
-			)}
+				{/* 무한스크롤 트리거 - react-intersection-observer 사용 */}
+				{hasNextPage && (
+					<div
+						ref={loadMoreRef}
+						className="h-4"
+					/>
+				)}
 
-			{/* 더 불러오는 중일 때 로딩 스켈레톤 */}
-			{isFetchingNextPage && renderLoadMoreSkeleton}
-		</div>
+				{/* 더 불러오는 중일 때 로딩 스켈레톤 */}
+				{isFetchingNextPage && renderLoadMoreSkeleton}
+			</div>
+		</DropContentWrapper>
 	);
 });
 

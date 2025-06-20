@@ -12,6 +12,7 @@ import { GenreModule } from "~/modules/genre/genre.module";
 import { AccountTokenModule } from "~/modules/account-token/account-token.module";
 import { CouponModule } from "~/modules/coupon/coupon.module";
 import { PaymentModule } from "~/modules/payment/payment.module";
+import { SearchModule } from "~/modules/search/search.module";
 
 @Module({
 	controllers: [],
@@ -31,6 +32,7 @@ import { PaymentModule } from "~/modules/payment/payment.module";
 		TagModule,
 		GenreModule,
 		CouponModule,
+		SearchModule,
 	],
 })
 export class RoutesUserModule {}
