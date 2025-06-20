@@ -19,6 +19,14 @@ export const UserFindMeResponseSchema = UserUpdatePayloadSchema.omit({
 	agreedEmailAt: z.date().describe("이메일 수신 동의 일시"),
 	subscribedAt: z.date().describe("구독 시작 일시").nullable().default(new Date("2025-05-27T00:00:00.000Z")),
 	subscribe: SubscribeResponseSchema.describe("구독 정보").nullable(),
+	blockArtistList: z
+		.array(
+			z.object({
+				artistId: z.number().describe("차단된 아티스트 ID"),
+				stageName: z.string().describe("차단된 아티스트 스테이지명"),
+			}),
+		)
+		.describe("차단된 아티스트 목록"),
 });
 
 export type UserFindMeResponse = z.infer<typeof UserFindMeResponseSchema>;

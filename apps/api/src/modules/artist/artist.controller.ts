@@ -43,6 +43,7 @@ import { productMessage } from "../product/product.message";
 import { ProductService } from "../product/product.service";
 import { ArtistProductListQueryRequestDto } from "./dto/request/artist.product-list.request.dto";
 import { PrismaService } from "~/common/prisma/prisma.service";
+import { ArtistBlockResponseDto } from "./dto/response/artist.block.response.dto";
 @Controller("artists")
 @ApiTags("artist")
 @ApiBearerAuth()
@@ -279,7 +280,6 @@ export class ArtistController {
 	): Promise<IResponsePaging<ProductListResponseDto>> {
 		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds, isPublic } =
 			artistProductListQueryRequestDto;
-		console.log(artistProductListQueryRequestDto);
 		const artistMe = await this.artistService.findMe(req.user.id);
 
 		if (artistMe.id !== id) {
@@ -329,6 +329,52 @@ export class ArtistController {
 				total,
 			},
 			data: products,
+		};
+	}
+
+	@Post(":artistId/block")
+	@ApiOperation({ summary: "아티스트 차단" })
+	@AuthenticationDoc()
+	@DocResponse<ArtistBlockResponseDto>(artistMessage.block.success, {
+		dto: ArtistBlockResponseDto,
+	})
+	async blockArtist(
+		@Req() req: AuthenticatedRequest,
+		@Param("artistId", ParseIntPipe) artistId: number,
+	): Promise<IResponse<ArtistBlockResponseDto>> {
+		const block = await this.artistService.blockArtist(req.user.id, artistId);
+
+		return {
+			statusCode: 200,
+			message: artistMessage.block.success,
+			data: {
+				id: Number(block.id),
+				artistId: Number(block.artistId),
+				isBlocked: true,
+			},
+		};
+	}
+
+	@Delete(":artistId/block")
+	@ApiOperation({ summary: "아티스트 차단 해제" })
+	@AuthenticationDoc()
+	@DocResponse<ArtistBlockResponseDto>(artistMessage.unblock.success, {
+		dto: ArtistBlockResponseDto,
+	})
+	async unblockArtist(
+		@Req() req: AuthenticatedRequest,
+		@Param("artistId", ParseIntPipe) artistId: number,
+	): Promise<IResponse<ArtistBlockResponseDto>> {
+		const unblock = await this.artistService.unblockArtist(req.user.id, artistId);
+
+		return {
+			statusCode: 200,
+			message: artistMessage.unblock.success,
+			data: {
+				id: Number(unblock.id),
+				artistId: Number(unblock.artistId),
+				isBlocked: false,
+			},
 		};
 	}
 }

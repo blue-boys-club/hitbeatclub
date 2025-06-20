@@ -58,6 +58,13 @@ export const ArtistPublicResponseSchema = ArtistResponseSchema.pick({
 	updatedAt: true,
 });
 
+export const ArtistBlockResponseSchema = z.object({
+	id: z.number().describe("차단 기록 ID").default(1),
+	artistId: z.number().describe("차단된 아티스트 ID").default(123),
+	isBlocked: z.boolean().describe("차단 상태").default(true),
+});
+
+export type ArtistBlockResponse = z.infer<typeof ArtistBlockResponseSchema>;
 export type ArtistResponse = z.infer<typeof ArtistResponseSchema>;
 export type ArtistPublicResponse = z.infer<typeof ArtistPublicResponseSchema>;
 export type ArtistListResponse = z.infer<typeof ArtistListResponseSchema>;

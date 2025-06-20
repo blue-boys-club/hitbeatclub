@@ -6,6 +6,12 @@ import { ArtistUpdateDto } from "./dto/request/artist.update.dto";
 import { FileService } from "~/modules/file/file.service";
 import { ArtistListResponse, ENUM_FILE_TYPE } from "@hitbeatclub/shared-types";
 import { ArtistDetailResponseDto } from "./dto/response/artist.detail.response.dto";
+import {
+	ARTIST_NOT_FOUND_ERROR,
+	ARTIST_ALREADY_BLOCKED_ERROR,
+	ARTIST_NOT_BLOCKED_ERROR,
+	ARTIST_SELF_BLOCK_ERROR,
+} from "./artist.error";
 
 @Injectable()
 export class ArtistService {
@@ -241,5 +247,139 @@ export class ArtistService {
 			},
 			tx,
 		);
+	}
+
+	// 아티스트 차단 관련 메서드들
+	async blockArtist(userId: number, artistId: number) {
+		try {
+			if (userId === artistId) {
+				throw new BadRequestException(ARTIST_SELF_BLOCK_ERROR);
+			}
+
+			// 아티스트가 존재하는지 확인
+			const artist = await this.prisma.artist.findFirst({
+				where: { id: artistId, deletedAt: null },
+			});
+
+			if (!artist) {
+				throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
+			}
+
+			// 이미 차단되어 있는지 확인
+			const existingBlock = await this.prisma.userArtistBlock.findFirst({
+				where: {
+					userId,
+					artistId,
+					deletedAt: null,
+				},
+			});
+
+			if (existingBlock) {
+				throw new BadRequestException(ARTIST_ALREADY_BLOCKED_ERROR);
+			}
+
+			// 차단 레코드 생성
+			const block = await this.prisma.userArtistBlock.create({
+				data: {
+					userId,
+					artistId,
+				},
+			});
+
+			return this.prisma.serializeBigInt(block);
+		} catch (error) {
+			if (error instanceof BadRequestException || error instanceof NotFoundException) {
+				throw error;
+			}
+			throw new BadRequestException(error);
+		}
+	}
+
+	async unblockArtist(userId: number, artistId: number) {
+		try {
+			// 차단 레코드가 존재하는지 확인
+			const existingBlock = await this.prisma.userArtistBlock.findFirst({
+				where: {
+					userId,
+					artistId,
+					deletedAt: null,
+				},
+			});
+
+			if (!existingBlock) {
+				throw new BadRequestException(ARTIST_NOT_BLOCKED_ERROR);
+			}
+
+			// 소프트 삭제 (차단 해제)
+			const unblock = await this.prisma.userArtistBlock.update({
+				where: { id: existingBlock.id },
+				data: { deletedAt: new Date() },
+			});
+
+			return this.prisma.serializeBigInt(unblock);
+		} catch (error) {
+			if (error instanceof BadRequestException) {
+				throw error;
+			}
+			throw new BadRequestException(error);
+		}
+	}
+
+	async getBlockedArtists(userId: number) {
+		try {
+			const blockedArtists = await this.prisma.userArtistBlock.findMany({
+				where: {
+					userId,
+					deletedAt: null,
+				},
+				include: {
+					artist: {
+						select: {
+							id: true,
+							stageName: true,
+						},
+					},
+				},
+				orderBy: { createdAt: "desc" },
+			});
+
+			// 각 아티스트의 프로필 이미지 가져오기
+			const result = await Promise.all(
+				blockedArtists.map(async (block) => {
+					const profileImageFile = await this.fileService.findFilesByTargetId({
+						targetId: Number(block.artistId),
+						targetTable: "artist",
+					});
+
+					return {
+						id: Number(block.id),
+						artistId: Number(block.artistId),
+						stageName: block.artist.stageName,
+						profileImageUrl: profileImageFile[0]?.url || null,
+						createdAt: block.createdAt,
+					};
+				}),
+			);
+
+			return this.prisma.serializeBigInt(result);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	async isArtistBlocked(userId: number, artistId: number): Promise<boolean> {
+		try {
+			const block = await this.prisma.userArtistBlock.findFirst({
+				where: {
+					userId,
+					artistId,
+					deletedAt: null,
+				},
+			});
+
+			return !!block;
+		} catch (error) {
+			return false;
+		}
 	}
 }
