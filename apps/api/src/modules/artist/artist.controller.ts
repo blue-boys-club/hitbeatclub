@@ -14,9 +14,9 @@ import {
 	ParseIntPipe,
 } from "@nestjs/common";
 import { ArtistService } from "./artist.service";
-import { ApiConsumes, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiConsumes, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
 import { ApiBearerAuth } from "@nestjs/swagger";
-import { DocRequestFile, DocResponse, DocResponseList } from "~/common/doc/decorators/doc.decorator";
+import { DocRequestFile, DocResponse, DocResponseList, DocResponsePaging } from "~/common/doc/decorators/doc.decorator";
 import { IResponse, IResponsePaging } from "~/common/response/interfaces/response.interface";
 import { artistMessage } from "./artist.message";
 import { DatabaseIdResponseDto } from "~/common/response/dtos/response.dto";
@@ -43,6 +43,11 @@ import { productMessage } from "../product/product.message";
 import { ProductService } from "../product/product.service";
 import { ArtistProductListQueryRequestDto } from "./dto/request/artist.product-list.request.dto";
 import { PrismaService } from "~/common/prisma/prisma.service";
+import { ArtistBlockResponseDto } from "./dto/response/artist.block.response.dto";
+import { ArtistReportRequestDto } from "./dto/request/artist.report.request.dto";
+import { ArtistReportResponseDto } from "./dto/response/artist.report.response.dto";
+import { ProductFindQuery } from "../product/decorators/product.decorator";
+
 @Controller("artists")
 @ApiTags("artist")
 @ApiBearerAuth()
@@ -266,28 +271,34 @@ export class ArtistController {
 		};
 	}
 
-	@Get(":id/products")
+	@Get("me/products")
 	@ApiOperation({ summary: "(자기 자신의) 아티스트 제품 목록 조회" })
+	@ApiQuery({
+		name: "isPublic",
+		type: Boolean,
+		required: false,
+		description: "공개 여부",
+		example: true,
+	})
+	@ProductFindQuery()
 	@AuthenticationDoc()
-	@DocResponseList<ProductListResponseDto>(productMessage.find.success, {
+	@DocResponsePaging<ProductListResponseDto>(productMessage.find.success, {
 		dto: ProductListResponseDto,
 	})
 	async findProducts(
 		@Req() req: AuthenticatedRequest,
-		@Param("id", ParseIntPipe) id: number,
 		@Query() artistProductListQueryRequestDto: ArtistProductListQueryRequestDto,
 	): Promise<IResponsePaging<ProductListResponseDto>> {
 		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds, isPublic } =
 			artistProductListQueryRequestDto;
-		console.log(artistProductListQueryRequestDto);
 		const artistMe = await this.artistService.findMe(req.user.id);
 
-		if (artistMe.id !== id) {
+		if (!artistMe) {
 			throw new ForbiddenException(ARTIST_NOT_FOUND_ERROR);
 		}
 
 		const where = {
-			sellerId: id,
+			sellerId: artistMe.id,
 			...(isPublic !== undefined ? { isPublic: isPublic ? 1 : 0 } : {}),
 			...(category === "null" || category === undefined ? {} : { category }),
 			...(musicKey === "null" || musicKey === undefined ? {} : { musicKey }),
@@ -329,6 +340,74 @@ export class ArtistController {
 				total,
 			},
 			data: products,
+		};
+	}
+
+	@Post(":artistId/block")
+	@ApiOperation({ summary: "아티스트 차단" })
+	@AuthenticationDoc()
+	@DocResponse<ArtistBlockResponseDto>(artistMessage.block.success, {
+		dto: ArtistBlockResponseDto,
+	})
+	async blockArtist(
+		@Req() req: AuthenticatedRequest,
+		@Param("artistId", ParseIntPipe) artistId: number,
+	): Promise<IResponse<ArtistBlockResponseDto>> {
+		const block = await this.artistService.blockArtist(req.user.id, artistId);
+
+		return {
+			statusCode: 200,
+			message: artistMessage.block.success,
+			data: {
+				id: Number(block.id),
+				artistId: Number(block.artistId),
+				isBlocked: true,
+			},
+		};
+	}
+
+	@Delete(":artistId/block")
+	@ApiOperation({ summary: "아티스트 차단 해제" })
+	@AuthenticationDoc()
+	@DocResponse<ArtistBlockResponseDto>(artistMessage.unblock.success, {
+		dto: ArtistBlockResponseDto,
+	})
+	async unblockArtist(
+		@Req() req: AuthenticatedRequest,
+		@Param("artistId", ParseIntPipe) artistId: number,
+	): Promise<IResponse<ArtistBlockResponseDto>> {
+		const unblock = await this.artistService.unblockArtist(req.user.id, artistId);
+
+		return {
+			statusCode: 200,
+			message: artistMessage.unblock.success,
+			data: {
+				id: Number(unblock.id),
+				artistId: Number(unblock.artistId),
+				isBlocked: false,
+			},
+		};
+	}
+
+	@Post(":artistId/report")
+	@ApiOperation({ summary: "아티스트 신고" })
+	@DocResponse<ArtistReportResponseDto>(artistMessage.report.success, {
+		dto: ArtistReportResponseDto,
+	})
+	async reportArtist(
+		@Param("artistId", ParseIntPipe) artistId: number,
+		@Body() reportData: ArtistReportRequestDto,
+	): Promise<IResponse<ArtistReportResponseDto>> {
+		const report = await this.artistService.reportArtist(artistId, reportData);
+
+		return {
+			statusCode: 200,
+			message: artistMessage.report.success,
+			data: {
+				id: Number(report.id),
+				artistId: Number(report.artistId),
+				message: "신고가 성공적으로 접수되었습니다.",
+			},
 		};
 	}
 }

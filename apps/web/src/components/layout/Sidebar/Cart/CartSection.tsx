@@ -1,8 +1,12 @@
+"use client";
+
 import { CartShop } from "@/assets/svgs";
 import { cn } from "@/common/utils";
 import { memo } from "react";
 import CartItems from "./CartItems";
 import Link from "next/link";
+import { useDroppable } from "@dnd-kit/core";
+import { DropContentWrapper } from "@/features/dnd/componenets/DropContentWrapper";
 
 const CartSection = memo(() => {
 	return (
@@ -17,7 +21,9 @@ const CartSection = memo(() => {
 				<div className={cn("absolute h-full bg-hbc-black @200px/sidebar:w-142px w-full")} />
 			</div>
 
-			<CartItems />
+			<DropContentWrapper id="cart">
+				<CartItems />
+			</DropContentWrapper>
 
 			<div className="mr-4px">
 				<div className="w-full h-2px bg-hbc-black" />

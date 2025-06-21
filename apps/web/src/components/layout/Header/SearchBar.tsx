@@ -7,6 +7,7 @@ import { TagDropdown } from "@/components/ui";
 import { Input } from "@/components/ui/Input";
 import { usePathname, useRouter } from "next/navigation";
 import { useSearchParametersStateByKey } from "@/features/search/hooks/useSearchParameters";
+import { debounce } from "nuqs";
 
 interface SearchOption {
 	label: string;
@@ -25,7 +26,7 @@ export const SearchBarClient = () => {
 	const router = useRouter();
 	const pathname = usePathname();
 	const isSearch = pathname === "/search";
-	const [searchValue, setSearchValue] = useSearchParametersStateByKey("search");
+	const [searchValue, setSearchValue] = useSearchParametersStateByKey("keyword");
 	const [searchOptions, setSearchOptions] = useState<SearchOption[]>([]);
 
 	const navigateToSearch = useCallback(() => {
@@ -33,14 +34,16 @@ export const SearchBarClient = () => {
 
 		const url = new URL(window.location.href);
 		url.pathname = "/search";
-		url.searchParams.set("search", searchValue);
+		url.searchParams.set("keyword", searchValue);
 		router.push(url.toString());
 	}, [router, searchValue]);
 
 	const handleSearchChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
 			const value = e.target.value;
-			setSearchValue(value);
+			setSearchValue(value, {
+				limitUrlUpdates: e.target.value === "" ? undefined : debounce(500),
+			});
 			setSearchOptions(searchOptions.filter((option) => option.label.toLowerCase().includes(value.toLowerCase())));
 		},
 		[searchOptions, setSearchValue],
@@ -49,6 +52,7 @@ export const SearchBarClient = () => {
 	const handleSearchSubmit = useCallback(
 		(e: React.FormEvent<HTMLFormElement>) => {
 			e.preventDefault();
+			setSearchValue(e.currentTarget.querySelector("input")?.value ?? "");
 			if (!isSearch) {
 				navigateToSearch();
 			}

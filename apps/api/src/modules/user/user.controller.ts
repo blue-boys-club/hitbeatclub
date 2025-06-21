@@ -147,7 +147,7 @@ export class UserController {
 	@DocResponsePaging<ProductLikeResponseDto>(userMessage.likedProducts.success, {
 		dto: ProductLikeResponseDto,
 	})
-	async getLikedProducts(
+	async findLikedProducts(
 		@Param("userId") userId: number,
 		@Query() userLikeProductListRequestDto: UserLikeProductListRequestDto,
 	): Promise<IResponsePaging<any>> {
@@ -184,10 +184,10 @@ export class UserController {
 		dto: DatabaseIdResponseDto,
 	})
 	async createCart(
-		@Req() req: AuthenticatedRequest,
+		@Param("userId") userId: number,
 		@Body() cartCreateRequestDto: CartCreateRequestDto,
 	): Promise<DatabaseIdResponseDto> {
-		const result = await this.cartService.create(req.user.id, cartCreateRequestDto);
+		const result = await this.cartService.create(userId, cartCreateRequestDto);
 
 		return {
 			statusCode: 200,
@@ -320,7 +320,28 @@ export class UserController {
 		@Param("id") id: number,
 		@Body() userProfileUpdateDto: UserProfileUpdateDto,
 	): Promise<DatabaseIdResponseDto> {
-		const user = await this.userService.updateProfile(id, userProfileUpdateDto);
+		const { isAgreedEmail } = userProfileUpdateDto;
+		const oldUser = await this.userService.findMe(id);
+
+		let agreedEmailAt: Date | null;
+
+		if (isAgreedEmail === undefined) {
+			// undefined이면 기존값 유지
+			agreedEmailAt = oldUser.agreedEmailAt;
+		} else if (isAgreedEmail) {
+			// 동의(true)인 경우: 기존에 동의가 있으면 기존 시간 유지, 없으면 새로 생성
+			agreedEmailAt = oldUser.agreedEmailAt ? oldUser.agreedEmailAt : new Date();
+		} else {
+			// 동의 안함(false)인 경우: null 설정
+			agreedEmailAt = null;
+		}
+
+		delete userProfileUpdateDto.isAgreedEmail;
+
+		const user = await this.userService.updateProfile(id, {
+			...userProfileUpdateDto,
+			agreedEmailAt,
+		});
 
 		return {
 			statusCode: 200,

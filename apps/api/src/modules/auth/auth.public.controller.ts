@@ -23,11 +23,7 @@ import { AuthCheckEmailResponseDto } from "./dto/response/auth.check-email.respo
 import { AuthCheckEmailRequestDto } from "./dto/request/auth.check-email.request.dto";
 import { CreateAccessTokenDto } from "./dto/request/auth.create-token.dto.request";
 import { AccountTokenService } from "../account-token/account-token.service";
-import {
-	AuthVerifyTokenRequestDto,
-	AuthVerifyPasswordResetTokenRequestDto,
-	AuthVerifyEmailRequestDto,
-} from "./dto/request/auth.verify-token.request.dto";
+import { AuthVerifyEmailRequestDto } from "./dto/request/auth.verify-token.request.dto";
 import { TokenPurpose } from "@prisma/client";
 
 @ApiTags("auth.public")
@@ -280,6 +276,9 @@ export class AuthPublicController {
 		@Body() createAccessTokenDto: CreateAccessTokenDto,
 	): Promise<IResponse<{ id: number; accessToken: string; refreshToken: string }>> {
 		const user = await this.userService.findByEmail(createAccessTokenDto.email);
+		if (!user) {
+			throw new NotFoundException(USER_NOT_FOUND_ERROR);
+		}
 
 		const { accessToken, refreshToken } = this.authService.createToken({
 			email: user.email,

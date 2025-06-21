@@ -2,31 +2,32 @@
 import { SmallAuthBadge } from "@/assets/svgs";
 import { FollowItem as FollowItemType } from "../types";
 import { UserAvatar } from "@/components/ui";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useMemo } from "react";
+import UserProfileImage from "@/assets/images/user-profile.png";
+import { cn } from "@/common/utils";
 
 export interface FollowItemProps {
 	follow: FollowItemType;
 }
 
 export const FollowItem = ({ follow }: FollowItemProps) => {
-	const router = useRouter();
-
-	const onClickArtist = () => {
-		router.push(`/artists/${follow.artistId}`);
-	};
+	const artistProfileImageUrl = useMemo(() => {
+		return follow.profileImageUrl || UserProfileImage;
+	}, [follow.profileImageUrl]);
 
 	return (
-		<div
+		<Link
 			className="flex items-center justify-start gap-16px w-87px h-87px @200px/sidebar:w-280px @200px/sidebar:h-51px group/follow-item hover:cursor-pointer"
-			onClick={onClickArtist}
+			href={`/artists/${follow.artistId}`}
 		>
 			<div className="flex-shrink-0 w-87px @200px/sidebar:w-51px">
 				<UserAvatar
 					size="sidebar"
-					src={follow.profileImageUrl}
+					src={artistProfileImageUrl}
 					alt={follow.stageName ?? ""}
 					isNotification={follow.isNotification}
-					className="bg-black"
+					className={cn("bg-hbc-black", artistProfileImageUrl === UserProfileImage && "bg-hbc-white")}
 				/>
 			</div>
 			<div className="hidden @200px/sidebar:flex  flex-row w-full h-full gap-3px">
@@ -41,7 +42,7 @@ export const FollowItem = ({ follow }: FollowItemProps) => {
 					</div>
 				)}
 			</div>
-		</div>
+		</Link>
 	);
 };
 

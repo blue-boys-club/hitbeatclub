@@ -14,4 +14,13 @@ export const artistMessage = {
 	delete: {
 		success: "아티스트 삭제 성공",
 	},
+	block: {
+		success: "아티스트 차단 성공",
+	},
+	unblock: {
+		success: "아티스트 차단 해제 성공",
+	},
+	report: {
+		success: "아티스트 신고 성공",
+	},
 };

@@ -4,6 +4,7 @@ import { ProductListQueryRequest } from "@hitbeatclub/shared-types/product";
 import { UserLikeProductListRequest } from "@hitbeatclub/shared-types/user";
 import { UserFollowedArtistListPayload } from "./user/user.type";
 import { NoticePayload } from "./notice/notice.type";
+import { ProductSearchQuery } from "./search/search.type";
 
 type QueryKey = Array<
 	string | number | boolean | Record<string, string | number | boolean | Array<number | string | boolean>>
@@ -87,6 +88,12 @@ const QUERY_KEYS = {
 	notice: {
 		list: (payload: NoticePayload) => ["notice", "list", payload],
 		detail: (id: string) => ["notice", "detail", id],
+	},
+	search: {
+		_key: ["search"],
+		_list: ["search", "list"],
+		list: (payload: ProductSearchQuery): QueryKey => ["search", "list", payload],
+		infiniteList: (payload: ProductSearchQuery): QueryKey => ["search", "list", "infinite", payload],
 	},
 };
 

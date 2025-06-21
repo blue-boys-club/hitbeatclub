@@ -15,18 +15,18 @@ export enum SortEnum {
 }
 
 export const artistProductQueryParsers = {
-	status: parseAsStringEnum<FilterStatusEnum>(Object.values(FilterStatusEnum)).withDefault(FilterStatusEnum.ALL),
-	sort: parseAsStringEnum<SortEnum>(Object.values(SortEnum)).withDefault(SortEnum.RECENT),
-	search: parseAsString.withDefault(""),
+	status: parseAsStringEnum<FilterStatusEnum>(Object.values(FilterStatusEnum)),
+	sort: parseAsStringEnum<SortEnum>(Object.values(SortEnum)),
+	search: parseAsString,
 	// tags: parseAsArrayOf(parseAsString).withDefault([]),
 	tagIds: parseAsArrayOf(parseAsInteger).withDefault([]),
-	category: parseAsString.withDefault(""),
+	category: parseAsString,
 	// genreIds: parseAsString.withDefault(""),
 	genreIds: parseAsArrayOf(parseAsInteger).withDefault([]),
-	musicKey: parseAsString.withDefault(""),
-	scaleType: parseAsString.withDefault(""),
-	minBpm: parseAsInteger.withDefault(0),
-	maxBpm: parseAsInteger.withDefault(0),
+	musicKey: parseAsString,
+	scaleType: parseAsString,
+	minBpm: parseAsInteger,
+	maxBpm: parseAsInteger,
 	page: parseAsInteger.withDefault(1),
 	limit: parseAsInteger.withDefault(10),
 };

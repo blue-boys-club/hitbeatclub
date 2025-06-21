@@ -6,6 +6,7 @@ import { Carousel, CarouselContent, CarouselItem, type CarouselPlugin } from "@/
 import { memo, useEffect, useState } from "react";
 import { ProductTrackCarouselItem } from "./ProductTrackCarouselItem";
 import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
+import { useDndContext } from "@dnd-kit/core";
 
 interface ShopSectionProps {
 	sectionHeader: Omit<SectionHeaderProps, "size">;

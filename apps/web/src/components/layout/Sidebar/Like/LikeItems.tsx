@@ -7,6 +7,7 @@ import { getLikedProductsInfiniteListQueryOption, getUserMeQueryOption } from "@
 import { useAuthStore } from "@/stores/auth";
 import { useShallow } from "zustand/react/shallow";
 import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
+import { DropContentWrapper } from "@/features/dnd/componenets/DropContentWrapper";
 
 interface LikeItemsProps {
 	search?: string;

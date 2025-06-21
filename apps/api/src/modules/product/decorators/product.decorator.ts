@@ -25,7 +25,7 @@ export const ProductFindQuery = () => {
 			type: String,
 			required: false,
 			description: "장르",
-			example: "1,2",
+			example: "1",
 			nullable: true,
 		}),
 		ApiQuery({
@@ -33,7 +33,7 @@ export const ProductFindQuery = () => {
 			type: String,
 			required: false,
 			description: "태그",
-			example: "1,2",
+			example: "1",
 			nullable: true,
 		}),
 		ApiQuery({

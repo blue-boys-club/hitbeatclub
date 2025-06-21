@@ -73,6 +73,7 @@ export class UserService {
 					id: true,
 					email: true,
 					name: true,
+					stageName: true,
 					phoneNumber: true,
 					gender: true,
 					birthDate: true,
@@ -87,12 +88,33 @@ export class UserService {
 							deletedAt: null,
 						},
 					},
+					userArtistBlock: {
+						where: {
+							deletedAt: null,
+						},
+						select: {
+							artistId: true,
+							artist: {
+								select: {
+									stageName: true,
+								},
+							},
+						},
+					},
 				},
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
 
+		const blockArtistList = user.userArtistBlock.map((block) => {
+			return {
+				artistId: block.artistId,
+				stageName: block.artist.stageName,
+			};
+		});
+		delete user.userArtistBlock;
 		return {
 			...user,
+			blockArtistList,
 			subscribedAt: user.subscribe[0]?.createdAt || null,
 			subscribe: user.subscribe[0] || null,
 		};
@@ -355,13 +377,14 @@ export class UserService {
 		return this.prisma.serializeBigInt(follow);
 	}
 
-	async updateProfile(id: number, updateData: UserProfileUpdatePayload) {
+	async updateProfile(id: number, updateData: UserProfileUpdatePayload & { agreedEmailAt: Date | null }) {
 		try {
 			return this.prisma.user
 				.update({
 					where: { id },
 					data: {
 						...updateData,
+						agreedEmailAt: updateData.agreedEmailAt || null,
 					},
 				})
 				.then((data) => this.prisma.serializeBigInt(data));

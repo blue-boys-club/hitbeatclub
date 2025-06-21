@@ -11,6 +11,7 @@ import {
 	CART_FIND_ERROR,
 	CART_ITEM_NOT_FOUND_ERROR,
 	CART_UPDATE_ERROR,
+	CART_FORMAT_ERROR,
 } from "./cart.error";
 
 @Injectable()
@@ -112,7 +113,6 @@ export class CartService {
 							select: {
 								id: true,
 								productName: true,
-								price: true,
 								category: true,
 								artistSellerIdToArtist: {
 									select: {
@@ -128,14 +128,13 @@ export class CartService {
 										price: true,
 										license: {
 											select: {
-												type: true,
+												label: true,
 											},
 										},
 									},
 								},
 							},
 						},
-						license: true,
 					},
 					orderBy: { createdAt: "desc" },
 				})
@@ -191,68 +190,75 @@ export class CartService {
 	}
 
 	private async formatCartItem(cartItem: any) {
-		// 상품 이미지 파일 조회
-		const productFiles = await this.fileService.findFilesByTargetIds({
-			targetIds: [cartItem.product.id],
-			targetTable: "product",
-		});
+		try {
+			// 상품 이미지 파일 조회
+			const productFiles = await this.fileService.findFilesByTargetIds({
+				targetIds: [cartItem.productId],
+				targetTable: "product",
+			});
 
-		const coverImage = productFiles.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
-		const audioFile = productFiles.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
-		const zipFile = productFiles.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_ZIP_FILE);
+			const coverImage = productFiles.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_COVER_IMAGE);
+			const audioFile = productFiles.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_AUDIO_FILE);
+			const zipFile = productFiles.find((file) => file.type === ENUM_PRODUCT_FILE_TYPE.PRODUCT_ZIP_FILE);
 
-		const seller = cartItem.product.artistSellerIdToArtist
-			? {
-					id: cartItem.product.artistSellerIdToArtist.id,
-					stageName: cartItem.product.artistSellerIdToArtist.stageName,
-					profileImageUrl: cartItem.product.artistSellerIdToArtist.profileImageUrl,
-					isVerified: cartItem.product.artistSellerIdToArtist.isVerified,
-				}
-			: null;
+			const seller = cartItem.product.artistSellerIdToArtist
+				? {
+						id: cartItem.product.artistSellerIdToArtist.id,
+						stageName: cartItem.product.artistSellerIdToArtist.stageName,
+						profileImageUrl: cartItem.product.artistSellerIdToArtist.profileImageUrl,
+						isVerified: cartItem.product.artistSellerIdToArtist.isVerified,
+					}
+				: null;
 
-		return {
-			id: cartItem.id,
-			userId: cartItem.userId,
-			selectedLicense: {
-				id: cartItem.license.id,
-				type: cartItem.license.type,
-				price: cartItem.product.productLicense.find((license) => license.licenseId === cartItem.license.id)?.price,
-			},
-			product: {
-				id: cartItem.product.id,
-				productName: cartItem.product.productName,
-				price: cartItem.product.price,
-				category: cartItem.product.category,
-				seller,
-				licenseInfo: cartItem.product.productLicense.map((license) => ({
-					id: license.licenseId,
-					type: license.license.type,
-					price: license.price,
-				})),
-				coverImage: coverImage
-					? {
-							id: Number(coverImage.id),
-							url: coverImage.url,
-							originName: coverImage.originName,
-						}
-					: null,
-				audioFile: audioFile
-					? {
-							id: Number(audioFile.id),
-							url: audioFile.url,
-							originName: audioFile.originName,
-						}
-					: null,
-				zipFile: zipFile
-					? {
-							id: Number(zipFile.id),
-							url: zipFile.url,
-							originName: zipFile.originName,
-						}
-					: null,
-			},
-			createdAt: cartItem.createdAt,
-			updatedAt: cartItem.updatedAt,
-		};
+			return {
+				id: cartItem.id,
+				userId: cartItem.userId,
+				selectedLicense: {
+					id: cartItem.licenseId,
+					type: cartItem.product.productLicense.find((license) => license.licenseId === cartItem.licenseId)?.license
+						.label,
+					price: cartItem.product.productLicense.find((license) => license.licenseId === cartItem.licenseId)?.price,
+				},
+				product: {
+					id: cartItem.product.id,
+					productName: cartItem.product.productName,
+					category: cartItem.product.category,
+					seller,
+					licenseInfo: cartItem.product.productLicense.map((license) => ({
+						id: license.licenseId,
+						label: license.license.label,
+						price: license.price,
+					})),
+					coverImage: coverImage
+						? {
+								id: Number(coverImage.id),
+								url: coverImage.url,
+								originName: coverImage.originName,
+							}
+						: null,
+					audioFile: audioFile
+						? {
+								id: Number(audioFile.id),
+								url: audioFile.url,
+								originName: audioFile.originName,
+							}
+						: null,
+					zipFile: zipFile
+						? {
+								id: Number(zipFile.id),
+								url: zipFile.url,
+								originName: zipFile.originName,
+							}
+						: null,
+				},
+				createdAt: cartItem.createdAt,
+				updatedAt: cartItem.updatedAt,
+			};
+		} catch (e: any) {
+			throw new BadRequestException({
+				...CART_FORMAT_ERROR,
+				detail: e.message,
+			});
+		}
 	}
 }

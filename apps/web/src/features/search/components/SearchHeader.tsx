@@ -1,16 +1,14 @@
 "use client";
 
 import { Replay } from "@/assets/svgs";
-import { useSearchQueryOptions } from "../hooks/useSearchQuery";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { cn } from "@/common/utils";
+import { useSearchInfiniteQuery } from "../hooks/useSearchInfiniteQuery";
 
 export const SearchHeader = () => {
-	const { data, isLoading, isRefetching, refetch } = useQuery({
-		...useSearchQueryOptions(),
-		select: (data) => data.total,
-		placeholderData: keepPreviousData,
-	});
+	const { data, isLoading, isRefetching, refetch } = useSearchInfiniteQuery();
+
+	// 첫 번째 페이지의 total만 사용
+	const total = data?.pages?.[0]?.total || 0;
 
 	return (
 		<div className="self-stretch pl-9 pb-2px border-b-[6px] border-hbc-black inline-flex justify-start items-center gap-2.5">
@@ -19,7 +17,7 @@ export const SearchHeader = () => {
 					SEARCH
 				</div>
 				<div className="justify-start font-semibold text-black text-18px font-suisse leading-160% tracking-018px">
-					{data || 0} Results
+					{total} Results
 				</div>
 			</div>
 			<button

@@ -39,3 +39,9 @@ export const CART_UPDATE_ERROR = {
 	status: 400,
 	detail: "장바구니 업데이트에 실패했습니다.",
 };
+
+export const CART_FORMAT_ERROR = {
+	title: "Cart format error",
+	code: 1306,
+	status: 400,
+};

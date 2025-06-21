@@ -6,6 +6,14 @@ import { ArtistUpdateDto } from "./dto/request/artist.update.dto";
 import { FileService } from "~/modules/file/file.service";
 import { ArtistListResponse, ENUM_FILE_TYPE } from "@hitbeatclub/shared-types";
 import { ArtistDetailResponseDto } from "./dto/response/artist.detail.response.dto";
+import {
+	ARTIST_NOT_FOUND_ERROR,
+	ARTIST_ALREADY_BLOCKED_ERROR,
+	ARTIST_NOT_BLOCKED_ERROR,
+	ARTIST_SELF_BLOCK_ERROR,
+	ARTIST_REPORT_FAILED_ERROR,
+	ARTIST_REPORT_NOT_FOUND_ERROR,
+} from "./artist.error";
 
 @Injectable()
 export class ArtistService {
@@ -32,6 +40,52 @@ export class ArtistService {
 			`.then((data) => this.prisma.serializeBigInt(data));
 
 			return artists;
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	async findAllBySearch(search: string) {
+		try {
+			const searchPattern = `%${search}%`;
+
+			// 아티스트 데이터 조회
+			const artists = await this.prisma.$queryRaw`
+				SELECT 
+					a.id,
+					a.stage_name as stageName,
+					a.slug as slug,
+					a.is_verified as isVerified,
+					f.url as profileImageUrl
+				FROM artist a
+				LEFT JOIN file f ON a.id = f.target_id 
+					AND f.target_table = 'artist'
+					AND f.type = ${ENUM_FILE_TYPE.ARTIST_PROFILE_IMAGE}
+					AND f.is_enabled = 1
+					AND f.deleted_at IS NULL
+				WHERE a.deleted_at IS NULL
+				AND a.stage_name LIKE ${searchPattern}
+				ORDER BY a.id DESC
+			`.then((data) => this.prisma.serializeBigInt(data));
+
+			// 총 개수 조회
+			const totalResult = await this.prisma.$queryRaw`
+				SELECT COUNT(*) as total
+				FROM artist a
+				WHERE a.deleted_at IS NULL
+				AND a.stage_name LIKE ${searchPattern}
+			`.then((data) => this.prisma.serializeBigInt(data));
+
+			const total = totalResult[0]?.total || 0;
+
+			return {
+				artists,
+				total,
+				pagination: {
+					total,
+					hasMore: false, // 페이징 로직에 따라 조정
+				},
+			};
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -185,17 +239,190 @@ export class ArtistService {
 		profileImageFileId: number;
 		tx?: Prisma.TransactionClient;
 	}) {
-		if (profileImageFileId) {
-			await this.fileService.updateFileEnabledAndDelete(
-				{
-					uploaderId,
-					newFileId: profileImageFileId,
-					targetTable: "artist",
-					targetId: artistId,
-					type: ENUM_FILE_TYPE.ARTIST_PROFILE_IMAGE,
+		await this.fileService.updateFileEnabledAndDelete(
+			{
+				uploaderId,
+				newFileIds: profileImageFileId ? [profileImageFileId] : [],
+				targetTable: "artist",
+				targetId: artistId,
+				type: ENUM_FILE_TYPE.ARTIST_PROFILE_IMAGE,
+			},
+			tx,
+		);
+	}
+
+	// 아티스트 차단 관련 메서드들
+	async blockArtist(userId: number, artistId: number) {
+		try {
+			if (userId === artistId) {
+				throw new BadRequestException(ARTIST_SELF_BLOCK_ERROR);
+			}
+
+			// 아티스트가 존재하는지 확인
+			const artist = await this.prisma.artist.findFirst({
+				where: { id: artistId, deletedAt: null },
+			});
+
+			if (!artist) {
+				throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
+			}
+
+			// 이미 차단되어 있는지 확인
+			const existingBlock = await this.prisma.userArtistBlock.findFirst({
+				where: {
+					userId,
+					artistId,
+					deletedAt: null,
 				},
-				tx,
+			});
+
+			if (existingBlock) {
+				throw new BadRequestException(ARTIST_ALREADY_BLOCKED_ERROR);
+			}
+
+			// 차단 레코드 생성
+			const block = await this.prisma.userArtistBlock.create({
+				data: {
+					userId,
+					artistId,
+				},
+			});
+
+			return this.prisma.serializeBigInt(block);
+		} catch (error) {
+			if (error instanceof BadRequestException || error instanceof NotFoundException) {
+				throw error;
+			}
+			throw new BadRequestException(error);
+		}
+	}
+
+	async unblockArtist(userId: number, artistId: number) {
+		try {
+			// 차단 레코드가 존재하는지 확인
+			const existingBlock = await this.prisma.userArtistBlock.findFirst({
+				where: {
+					userId,
+					artistId,
+					deletedAt: null,
+				},
+			});
+
+			if (!existingBlock) {
+				throw new BadRequestException(ARTIST_NOT_BLOCKED_ERROR);
+			}
+
+			// 소프트 삭제 (차단 해제)
+			const unblock = await this.prisma.userArtistBlock.update({
+				where: { id: existingBlock.id },
+				data: { deletedAt: new Date() },
+			});
+
+			return this.prisma.serializeBigInt(unblock);
+		} catch (error) {
+			if (error instanceof BadRequestException) {
+				throw error;
+			}
+			throw new BadRequestException(error);
+		}
+	}
+
+	async getBlockedArtists(userId: number) {
+		try {
+			const blockedArtists = await this.prisma.userArtistBlock.findMany({
+				where: {
+					userId,
+					deletedAt: null,
+				},
+				include: {
+					artist: {
+						select: {
+							id: true,
+							stageName: true,
+						},
+					},
+				},
+				orderBy: { createdAt: "desc" },
+			});
+
+			// 각 아티스트의 프로필 이미지 가져오기
+			const result = await Promise.all(
+				blockedArtists.map(async (block) => {
+					const profileImageFile = await this.fileService.findFilesByTargetId({
+						targetId: Number(block.artistId),
+						targetTable: "artist",
+					});
+
+					return {
+						id: Number(block.id),
+						artistId: Number(block.artistId),
+						stageName: block.artist.stageName,
+						profileImageUrl: profileImageFile[0]?.url || null,
+						createdAt: block.createdAt,
+					};
+				}),
 			);
+
+			return this.prisma.serializeBigInt(result);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	async isArtistBlocked(userId: number, artistId: number): Promise<boolean> {
+		try {
+			const block = await this.prisma.userArtistBlock.findFirst({
+				where: {
+					userId,
+					artistId,
+					deletedAt: null,
+				},
+			});
+
+			return !!block;
+		} catch (error) {
+			return false;
+		}
+	}
+
+	async reportArtist(
+		artistId: number,
+		reportData: {
+			reporterName: string;
+			reporterPhone: string;
+			reporterEmail: string;
+			content: string;
+			agreedPrivacyPolicy: boolean;
+		},
+	) {
+		try {
+			// 아티스트가 존재하는지 확인
+			const artist = await this.prisma.artist.findFirst({
+				where: { id: artistId, deletedAt: null },
+			});
+
+			if (!artist) {
+				throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
+			}
+
+			// 신고 레코드 생성
+			const report = await this.prisma.artistReport.create({
+				data: {
+					artistId,
+					reporterName: reportData.reporterName,
+					reporterPhone: reportData.reporterPhone,
+					reporterEmail: reportData.reporterEmail,
+					content: reportData.content,
+					agreedPrivacyPolicy: reportData.agreedPrivacyPolicy,
+				},
+			});
+
+			return this.prisma.serializeBigInt(report);
+		} catch (error) {
+			if (error instanceof NotFoundException) {
+				throw error;
+			}
+			throw new BadRequestException(ARTIST_REPORT_FAILED_ERROR);
 		}
 	}
 }

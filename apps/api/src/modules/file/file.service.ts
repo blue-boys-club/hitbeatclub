@@ -98,27 +98,63 @@ export class FileService {
 	}
 
 	/**
+	 * 각 feature에서 등록, 수정 시 사용하는 함수 - 공용함수
 	 * 1. 기존 파일을 삭제하고
 	 * 2. 새로운 파일 활성화 한다.
 	 */
 	async updateFileEnabledAndDelete(
-		{ uploaderId, newFileId, targetId, targetTable, type },
+		{
+			uploaderId,
+			newFileIds,
+			targetId,
+			targetTable,
+			type,
+		}: {
+			uploaderId: number;
+			newFileIds: number[];
+			targetId: number;
+			targetTable: string;
+			type: string;
+		},
 		tx?: Prisma.TransactionClient,
 	) {
 		const prisma = tx ?? this.prisma;
 
 		try {
-			const files = await this.findFilesByTarget({
+			const files = await this.findDeleteFiles({
 				uploaderId,
 				targetTable,
 				targetId,
 				type,
+				newFileIds,
 			});
-			console.log("files > ", files);
+
 			for (const file of files) {
 				await this.softDeleteFile(file.id, tx);
 			}
 
+			if (!newFileIds.length) {
+				return;
+			}
+
+			return await prisma.file
+				.updateMany({
+					where: { id: { in: newFileIds } },
+					data: { isEnabled: 1, targetId: targetId, deletedAt: null },
+				})
+				.then((data) => this.prisma.serializeBigInt(data));
+		} catch (e) {
+			throw new BadRequestException({
+				...FILE_UPDATE_FILE_ENABLED_AND_DELETE_ERROR,
+				detail: e.message,
+			});
+		}
+	}
+
+	async updateFileEnabled({ uploaderId, newFileId, targetId, targetTable, type }, tx?: Prisma.TransactionClient) {
+		const prisma = tx ?? this.prisma;
+
+		try {
 			return await prisma.file
 				.update({
 					where: { id: newFileId },
@@ -133,24 +169,20 @@ export class FileService {
 		}
 	}
 
-	// 기존 파일을 찾는다.
-	async findFilesByTarget({
+	// 삭제할 파일을 찾는다.
+	async findDeleteFiles({
 		uploaderId,
 		targetTable,
 		targetId,
 		type,
+		newFileIds,
 	}: {
 		uploaderId: number;
 		targetTable: string;
 		targetId: number;
 		type: string;
+		newFileIds?: number[];
 	}) {
-		console.log({
-			uploaderId,
-			targetTable,
-			targetId,
-			type,
-		});
 		return this.prisma.file
 			.findMany({
 				where: {
@@ -158,6 +190,7 @@ export class FileService {
 					targetTable: targetTable,
 					type: type,
 					targetId: targetId,
+					id: { notIn: newFileIds },
 				},
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
@@ -181,7 +214,7 @@ export class FileService {
 		targetTable,
 		type,
 	}: {
-		targetIds: number[];
+		targetIds: number[] | bigint[];
 		targetTable: string;
 		type?: string;
 	}) {

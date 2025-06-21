@@ -36,3 +36,17 @@ export const PRODUCT_ALREADY_LIKED_ERROR = {
 	status: 400,
 	detail: "이미 좋아요를 눌렀습니다.",
 };
+
+export const PRODUCT_FILE_NOT_FOUND_ERROR = {
+	title: "Product file not found",
+	code: 1206,
+	status: 404,
+	detail: "파일을 찾을 수 없습니다.",
+};
+
+export const PRODUCT_FILE_FORBIDDEN_ERROR = {
+	title: "Product file forbidden",
+	code: 1207,
+	status: 403,
+	detail: "파일을 다운로드할 수 없습니다.",
+};

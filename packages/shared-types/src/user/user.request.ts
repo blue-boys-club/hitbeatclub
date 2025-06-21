@@ -10,6 +10,7 @@ export type UserCreatePayload = z.infer<typeof UserCreatePayloadSchema>;
 
 export const UserUpdatePayloadSchema = z.object({
 	name: z.string().min(1).max(100).default("John Doe").describe("사용자 이름"),
+	stageName: z.string().min(1).max(30).default("DJ Cool").describe("활동명"),
 	email: z.string().email().describe("이메일").default("test@gmail.com"),
 	password: z.string().min(8).max(255).describe("비밀번호").optional(),
 	phoneNumber: z.string().max(11).describe("전화번호").default("01012345678"),
@@ -92,6 +93,8 @@ export const UserProfileUpdatePayloadSchema = z.object({
 	gender: z.enum(["M", "F"]).describe("성별 (M/F)").optional().default("M"),
 	country: z.string().max(4).describe("국가 코드").optional().default("KR"),
 	region: z.string().max(100).describe("지역").optional().default("Seoul"),
+
+	isAgreedEmail: z.coerce.boolean().describe("이메일 수신 동의 여부").optional().default(false),
 });
 
 export type UserProfileUpdatePayload = z.infer<typeof UserProfileUpdatePayloadSchema>;
