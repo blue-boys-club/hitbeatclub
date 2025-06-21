@@ -43,6 +43,7 @@ model User {
   userArtistFollow       UserArtistFollow[]
   userArtistBlock        UserArtistBlock[]
   subscribe              Subscribe[]
+  playlist               Playlist[]
 
   @@map("user")
 }
@@ -204,6 +205,7 @@ model Product {
   productTag                ProductTag[]
   productLike               ProductLike[]
   orderItems                OrderItem[]
+  playlist                  Playlist[]
 
   @@index([sellerId], map: "FK_artist_TO_product_1")
   @@map("product")
@@ -547,4 +549,21 @@ model ArtistReport {
 
   @@index([artistId], map: "FK_artist_TO_report_1")
   @@map("artist_report")
+}
+
+model Playlist {
+  id           BigInt      @id @default(autoincrement())
+  userId       BigInt      @map("user_id")
+  productId    BigInt      @map("product_id")
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt    DateTime    @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt    DateTime?   @map("deleted_at") @db.Timestamp(0)
+  
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_user_TO_playlist_1")
+  product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_product_TO_playlist_1")
+
+  @@index([userId], map: "FK_user_TO_playlist_1")
+  @@index([productId], map: "FK_product_TO_playlist_1")
+  @@index([userId, createdAt], map: "idx_playlist_user_created")
+  @@map("playlist")
 }

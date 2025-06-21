@@ -20,6 +20,7 @@ export default defineConfig({
 		"notice/index": "src/notice/index.ts",
 		"payment/index": "src/payment/index.ts",
 		"search/index": "src/search/index.ts",
+		"player/index": "src/player/index.ts",
 	},
 	format: ["cjs", "esm"],
 	dts: true,

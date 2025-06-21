@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "~/common/prisma/prisma.service";
-import { Prisma, Product } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
 import { ENUM_PRODUCT_FILE_TYPE, ENUM_PRODUCT_SORT } from "./product.enum";
 import { ProductUpdateDto } from "./dto/request/product.update.dto";
@@ -9,7 +9,6 @@ import { ProductCreateRequest, ProductListQueryRequest } from "@hitbeatclub/shar
 import {
 	PRODUCT_ALREADY_LIKED_ERROR,
 	PRODUCT_CREATE_ERROR,
-	PRODUCT_FILE_FORBIDDEN_ERROR,
 	PRODUCT_FILE_NOT_FOUND_ERROR,
 	PRODUCT_LICENSE_NOT_FOUND_ERROR,
 	PRODUCT_UPDATE_ERROR,
@@ -137,25 +136,25 @@ export class ProductService {
 							label: l.license.type,
 							price: l.price,
 						})),
+					audioFile: audioFile
+						? {
+								id: audioFile?.id,
+								url: audioFile?.url,
+								originName: audioFile?.originName,
+							}
+						: null,
+					coverImage: coverImage
+						? {
+								id: coverImage?.id,
+								url: coverImage?.url,
+								originName: coverImage?.originName,
+							}
+						: null,
 				};
 				if (select.length) {
 					for (const field of select) {
 						if (field === "seller") {
 							selectedFields[field] = seller;
-						} else if (field === "audioFile") {
-							selectedFields[field] = audioFile
-								? {
-										id: audioFile?.id,
-										url: audioFile?.url,
-										originName: audioFile?.originName,
-									}
-								: null;
-						} else if (field === "coverImage") {
-							selectedFields[field] = {
-								id: coverImage?.id,
-								url: coverImage?.url,
-								originName: coverImage?.originName,
-							};
 						} else if (field === "genres" && product?.productGenre?.length) {
 							selectedFields[field] = await this.findProductGenresByIds(
 								product.id,
@@ -197,8 +196,6 @@ export class ProductService {
 								)
 							: [],
 						seller,
-						audioFile: audioFile || null,
-						coverImage: coverImage || null,
 						isPublic: product.isPublic,
 						isLiked,
 					});

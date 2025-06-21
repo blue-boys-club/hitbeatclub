@@ -28,7 +28,7 @@ import { Webhook } from "@portone/server-sdk";
 import { PaymentPaginationRequestDto } from "./dto/request/payment.pagination.request.dto";
 import { PaymentOrderCreateResponseDto } from "./dto/response/payment.order-create.response.dto";
 
-@ApiTags("Payment")
+@ApiTags("payment")
 @Controller("payment")
 export class PaymentController {
 	private readonly logger = new Logger(PaymentController.name);

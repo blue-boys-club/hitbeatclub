@@ -45,7 +45,7 @@ import { ARTIST_NOT_FOUND_ERROR } from "../artist/artist.error";
 import { ProductListResponseDto } from "./dto/response/product.list.response.dto";
 import { ProductListQueryRequestDto } from "./dto/request/project.list.request.dto";
 import { ProductUploadFileRequestDto } from "./dto/request/product.upload-file.request.dto";
-import { ProductFindQuery, ProductSearchQuery } from "./decorators/product.decorator";
+import { ProductFindQuery } from "./decorators/product.decorator";
 import { AuthJwtAccessOptional } from "../auth/decorators/auth.jwt.decorator";
 import { ProductSearchInfoResponseDto } from "./dto/response/product.search-info.response.dto";
 import { TagService } from "../tag/tag.service";
