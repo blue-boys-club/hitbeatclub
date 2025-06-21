@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 import { useForm } from "react-hook-form";
 
-import { useUpdateUserPasswordMutation } from "@/apis/user/mutations/useUpdateUserPasswordMutation";
+import { useUpdateUserPasswordMutation } from "@/apis/user/mutations";
 import { Input } from "@/components/ui";
 import { Popup, PopupButton, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
 import { ToastViewport } from "@/components/ui/Toast/toast";

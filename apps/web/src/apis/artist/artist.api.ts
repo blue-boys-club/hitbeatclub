@@ -107,3 +107,23 @@ export const getArtistContentList = async (id: number, payload: ArtistProductLis
 		throw error;
 	}
 };
+
+/**
+ * 아티스트 차단
+ * @param id 아티스트 아이디
+ * @returns 아티스트 차단 결과
+ */
+export const blockArtist = async (id: number) => {
+	const response = await axiosInstance.post<CommonResponseId>(`/artists/${id}/block`);
+	return response.data;
+};
+
+/**
+ * 아티스트 차단 해제
+ * @param id 아티스트 아이디
+ * @returns 아티스트 차단 해제 결과
+ */
+export const unblockArtist = async (id: number) => {
+	const response = await axiosInstance.delete<CommonResponseId>(`/artists/${id}/block`);
+	return response.data;
+};
