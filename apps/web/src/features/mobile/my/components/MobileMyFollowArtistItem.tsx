@@ -1,20 +1,30 @@
 import Image from "next/image";
 
-export const MobileMyFollowArtistItem = () => {
+interface MobileMyFollowArtistItemProps {
+	stageName: string | null;
+	profileImageUrl: string | null;
+	followerCount: number;
+}
+
+export const MobileMyFollowArtistItem = ({
+	stageName,
+	profileImageUrl,
+	followerCount,
+}: MobileMyFollowArtistItemProps) => {
 	return (
 		<div className="flex flex-col gap-3">
 			<div className="relative overflow-hidden aspect-square border-4px border-black rounded-full bg-black">
 				<Image
-					alt=""
-					src="https://street-h.com/wp-content/uploads/2023/03/hanroro.jpg"
+					alt={stageName || ""}
+					src={profileImageUrl || "https://placehold.co/150x150/000000/FFFFFF?text=NO+IMAGE"}
 					fill
 					className="object-cover"
 				/>
 			</div>
 			<div className="flex flex-col items-center gap-2">
 				<div className="flex flex-col items-center">
-					<span className="text-18px leading-28px font-semibold">Not Jake</span>
-					<span className="text-12px leading-150%">1,105 Followers</span>
+					<span className="text-18px leading-28px font-semibold">{stageName}</span>
+					<span className="text-12px leading-150%">{followerCount.toLocaleString()} Followers</span>
 				</div>
 				<button className="rounded-30px h-21px px-10px bg-black text-12px leading-160% text-white font-semibold">
 					Following
