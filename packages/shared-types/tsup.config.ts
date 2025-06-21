@@ -21,6 +21,7 @@ export default defineConfig({
 		"payment/index": "src/payment/index.ts",
 		"search/index": "src/search/index.ts",
 		"player/index": "src/player/index.ts",
+		"question/index": "src/question/index.ts",
 	},
 	format: ["cjs", "esm"],
 	dts: true,
