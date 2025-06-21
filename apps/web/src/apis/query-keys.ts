@@ -3,6 +3,7 @@ import { PaginationRequest } from "@hitbeatclub/shared-types/common";
 import { ProductListQueryRequest } from "@hitbeatclub/shared-types/product";
 import { UserLikeProductListRequest } from "@hitbeatclub/shared-types/user";
 import { UserFollowedArtistListPayload } from "./user/user.type";
+import { NoticePayload } from "./notice/notice.type";
 
 type QueryKey = Array<
 	string | number | boolean | Record<string, string | number | boolean | Array<number | string | boolean>>
@@ -82,6 +83,10 @@ const QUERY_KEYS = {
 			userId,
 			payload,
 		],
+	},
+	notice: {
+		list: (payload: NoticePayload) => ["notice", "list", payload],
+		detail: (id: string) => ["notice", "detail", id],
 	},
 };
 

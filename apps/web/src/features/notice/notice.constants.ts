@@ -7,4 +7,7 @@ const ENUM_USER_ROLE = {
 	ARTIST_ADMIN_USER: "artist_admin_user",
 };
 
-export const noticeDropdownOptions = [{ label: "제목", value: "title" }];
+export const noticeDropdownOptions = [
+	{ label: "제목", value: "TITLE" },
+	{ label: "내용", value: "CONTENT" },
+];
