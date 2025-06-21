@@ -1,5 +1,5 @@
 "use client";
-import { useDeleteUserMutation } from "@/apis/user/mutations/useDeleteUserMutation";
+import { useDeleteUserMutation } from "@/apis/user/mutations";
 import { cn } from "@/common/utils";
 import { PopupButton } from "@/components/ui";
 import { Popup, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";

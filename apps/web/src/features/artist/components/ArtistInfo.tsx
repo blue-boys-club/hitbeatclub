@@ -16,10 +16,10 @@ import { Button } from "@/components/ui/Button";
 import { ArtistDropdown } from "./ArtistDropdown";
 import { ArtistReportModal } from "./ArtistReportModal";
 import { useToast } from "@/hooks/use-toast";
-
-interface ArtistInfoProps {
-	onPlay?: () => void;
-}
+import { useBlockArtistMutation, useUnblockArtistMutation } from "@/apis/artist/mutation";
+import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 
 interface DropdownOption {
 	label: string;
@@ -36,13 +36,29 @@ interface DropdownOption {
  * - 트랙 수, 방문자 수 표시
  * - 아티스트 소개
  */
-export const ArtistInfo = memo(({ onPlay }: ArtistInfoProps) => {
+export const ArtistInfo = memo(() => {
 	const [isShuffleOn, setIsShuffleOn] = useState(false);
 	const [isOpenDropdown, setIsOpenDropdown] = useState(false);
 	const [isOpenReportModal, setIsOpenReportModal] = useState(false);
 	const { toast } = useToast();
 
+	const params = useParams();
+	const artistId = Number(params.artistId);
+
+	const { data: userMe } = useQuery({ ...getUserMeQueryOption() });
+	const { mutateAsync: blockArtist } = useBlockArtistMutation();
+	const { mutateAsync: unblockArtist } = useUnblockArtistMutation();
+
+	const isBlockedArtist = userMe?.blockArtistList.some((artist) => artist.artistId === artistId);
+
+	const onPlay = () => {
+		if (isBlockedArtist) return;
+		// TODO: 플레이 기능 구현
+		console.log("play");
+	};
+
 	const onShuffle = () => {
+		if (isBlockedArtist) return;
 		setIsShuffleOn((prev) => !prev);
 	};
 
@@ -74,12 +90,19 @@ export const ArtistInfo = memo(({ onPlay }: ArtistInfoProps) => {
 			},
 		},
 		{
-			label: "차단하기",
+			label: isBlockedArtist ? "차단 해제" : "차단하기",
 			value: "block",
-			onClick: () => {
+			onClick: async () => {
+				if (!artistId) return;
+				if (isBlockedArtist) {
+					unblockArtist({ artistId });
+				} else {
+					blockArtist({ artistId });
+				}
+
 				setIsOpenDropdown(false);
 				toast({
-					description: "아티스트가 차단되었습니다.",
+					description: isBlockedArtist ? "아티스트가 차단 해제되었습니다." : "아티스트가 차단되었습니다.",
 				});
 			},
 		},
