@@ -6,23 +6,33 @@ import { MobileProductList } from "@/features/mobile/product/components/MobilePr
 import { memo, useState } from "react";
 import { getSearchQueryOption } from "@/apis/search/query/product.query-option";
 import { useQuery } from "@tanstack/react-query";
+import { ProductSearchQuery } from "@/apis/search/search.type";
 
 interface MobileProductListPageProps {
 	title: string;
 	filter?: boolean;
-	category?: "ACAPELA" | "BEAT" | "null";
+	category: "ACAPELA" | "BEAT" | "null";
+	sort: "RECENT" | "RECOMMEND" | "null";
 }
 
-const MobileProductListPage = memo(({ title, filter, category }: MobileProductListPageProps) => {
+const MobileProductListPage = memo(({ title, filter, category, sort }: MobileProductListPageProps) => {
 	const [isShowFilter, setIsShowFilter] = useState(false);
+	const [appliedFilters, setAppliedFilters] = useState<Partial<ProductSearchQuery>>({});
 
 	const { data } = useQuery({
 		...getSearchQueryOption({
 			category,
 			page: 1,
 			limit: 10,
+			sort,
+			...appliedFilters,
 		}),
 	});
+
+	const handleApplyFilter = (filters: Partial<ProductSearchQuery>) => {
+		setAppliedFilters(filters);
+		// useQuery는 queryKey 변경을 감지하여 자동으로 재실행되므로 refetch() 불필요
+	};
 
 	return (
 		<div className="px-4 pb-2 space-y-3">
@@ -47,7 +57,13 @@ const MobileProductListPage = memo(({ title, filter, category }: MobileProductLi
 				products={data?.products || []}
 				artists={data?.artists || []}
 			/>
-			{isShowFilter && <MobileProductListFilter onClose={() => setIsShowFilter(false)} />}
+			{isShowFilter && (
+				<MobileProductListFilter
+					onClose={() => setIsShowFilter(false)}
+					onApplyFilter={handleApplyFilter}
+					initialFilters={appliedFilters}
+				/>
+			)}
 		</div>
 	);
 });

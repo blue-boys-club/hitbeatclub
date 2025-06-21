@@ -5,6 +5,8 @@ const MobileBeatPage = () => {
 		<MobileProductListPage
 			title="Beat"
 			filter
+			category="BEAT"
+			sort="null"
 		/>
 	);
 };

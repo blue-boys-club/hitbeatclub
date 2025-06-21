@@ -24,21 +24,28 @@ export default function MobileMainPage() {
 			<>
 				<MobileProductSection
 					type="carousel"
-					title="ALL"
+					title="Recent"
+					description="최근 업로드된 음악"
+					href="/mobile/home/products/recent"
+					products={data?.recent || []}
+				/>
+				<MobileProductSection
+					type="carousel"
+					title="Recommended"
 					description="당신을 위한 오늘의 추천곡"
-					href="#"
-					products={data?.all || []}
+					href="/mobile/home/products/recommended"
+					products={data?.recommended || []}
 				/>
 				<MobileProductSection
 					type="carousel"
 					title="Beat"
-					href="#"
+					href="/mobile/home/products/beat"
 					products={data?.beat || []}
 				/>
 				<MobileProductSection
 					type="carousel"
 					title="Acappella"
-					href="#"
+					href="/mobile/home/products/acapella"
 					products={data?.acappella || []}
 				/>
 			</>
@@ -62,46 +69,48 @@ export default function MobileMainPage() {
 	};
 
 	return (
-		<div className="flex flex-col">
-			<div className="w-full h-90px relative">
-				<Image
-					src={bannerBackground}
-					alt="banner background"
-					fill
-					className="absolute inset-0 object-cover object-top"
-				/>
-				<div className="absolute top-5px right-6px font-suisse text-base font-regular">Music of the Year 2025</div>
-			</div>
-			<div className="p-4 space-y-4">
-				<div className="flex gap-2px">
-					<Button
-						size={"sm"}
-						variant={"outline"}
-						className={cn("rounded-none border-4 px-2", currentTab === "ALL" && "bg-black text-white")}
-						onClick={() => setCurrentTab("ALL")}
-					>
-						ALL
-					</Button>
-					<Button
-						size={"sm"}
-						variant={"outline"}
-						rounded={"full"}
-						className={cn("border-4 px-2", currentTab === "BEAT" && "bg-black text-white")}
-						onClick={() => setCurrentTab("BEAT")}
-					>
-						BEAT
-					</Button>
-					<Button
-						size={"sm"}
-						variant={"outline"}
-						rounded={"full"}
-						className={cn("border-4 px-2", currentTab === "ACAPELLA" && "bg-black text-white")}
-						onClick={() => setCurrentTab("ACAPELLA")}
-					>
-						ACAPELLA
-					</Button>
+		<div className="flex flex-col justify-between h-[calc(100vh-204px)] overflow-y-auto">
+			<div>
+				<div className="w-full h-90px relative">
+					<Image
+						src={bannerBackground}
+						alt="banner background"
+						fill
+						className="absolute inset-0 object-cover object-top"
+					/>
+					<div className="absolute top-5px right-6px font-suisse text-base font-regular">Music of the Year 2025</div>
 				</div>
-				{tabContent[currentTab]}
+				<div className="p-4 space-y-4">
+					<div className="flex gap-2px">
+						<Button
+							size={"sm"}
+							variant={"outline"}
+							className={cn("rounded-none border-4 px-2", currentTab === "ALL" && "bg-black text-white")}
+							onClick={() => setCurrentTab("ALL")}
+						>
+							ALL
+						</Button>
+						<Button
+							size={"sm"}
+							variant={"outline"}
+							rounded={"full"}
+							className={cn("border-4 px-2", currentTab === "BEAT" && "bg-black text-white")}
+							onClick={() => setCurrentTab("BEAT")}
+						>
+							BEAT
+						</Button>
+						<Button
+							size={"sm"}
+							variant={"outline"}
+							rounded={"full"}
+							className={cn("border-4 px-2", currentTab === "ACAPELLA" && "bg-black text-white")}
+							onClick={() => setCurrentTab("ACAPELLA")}
+						>
+							ACAPELLA
+						</Button>
+					</div>
+					{tabContent[currentTab]}
+				</div>
 			</div>
 			<Footer />
 		</div>

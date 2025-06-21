@@ -17,7 +17,6 @@ export const MobileProductList = memo(
 						<MobileProductItem
 							key={product.id}
 							product={product}
-							artist={artists?.[0]}
 						/>
 					);
 				})}

@@ -6,6 +6,7 @@ const MobileAcapellaPage = () => {
 			title="Acapella"
 			category="ACAPELA"
 			filter
+			sort="null"
 		/>
 	);
 };
