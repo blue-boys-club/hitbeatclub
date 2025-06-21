@@ -1,5 +1,18 @@
 import { z } from "zod";
 
+export const licenseInfo = [
+	{
+		id: 1,
+		type: "MASTER",
+		label: "Master",
+	},
+	{
+		id: 2,
+		type: "EXCLUSIVE",
+		label: "Exclusive",
+	},
+];
+
 export const licenseTypeEnum = z.enum(["MASTER", "EXCLUSIVE"]);
 export const productSortEnum = z.enum(["RECENT", "RECOMMEND", "null"]);
 export const productCategoryEnum = z.enum(["BEAT", "ACAPELA", "null"]);
