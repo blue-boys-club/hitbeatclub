@@ -1,4 +1,4 @@
 import { createZodDto } from "nestjs-zod";
-import { ProductRowByDashboardSchema } from "@hitbeatclub/shared-types/product";
+import { ProductLikeResponseSchema } from "@hitbeatclub/shared-types";
 
-export class ProductLikeResponseDto extends createZodDto(ProductRowByDashboardSchema) {}
+export class ProductLikeResponseDto extends createZodDto(ProductLikeResponseSchema) {}
