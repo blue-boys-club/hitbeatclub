@@ -578,3 +578,17 @@ model Question {
 
   @@map("question")
 }
+
+model Inquiry {
+  id          BigInt    @id @default(autoincrement())
+  name        String    @db.VarChar(100)
+  email       String    @db.VarChar(255)
+  phoneNumber String?   @map("phone_number") @db.VarChar(20)
+  content     String    @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime  @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamp(0)
+
+  @@index([createdAt], map: "idx_inquiry_created")
+  @@map("inquiry")
+}

@@ -6,11 +6,20 @@ import { AccountTokenModule } from "~/modules/account-token/account-token.module
 import { EmailModule } from "~/modules/email/email.module";
 import { NoticeModule } from "~/modules/notice/notice.module";
 import { QuestionModule } from "~/modules/question/question.module";
+import { InquiryModule } from "~/modules/inquiry/inquiry.module";
 
 @Module({
 	controllers: [AuthPublicController],
 	providers: [],
 	exports: [],
-	imports: [UserModule, AuthModule.forRoot(), AccountTokenModule, EmailModule, NoticeModule, QuestionModule],
+	imports: [
+		AuthModule.forRoot(),
+		UserModule,
+		AccountTokenModule,
+		EmailModule,
+		NoticeModule,
+		QuestionModule,
+		InquiryModule,
+	],
 })
 export class RoutesPublicModule {}

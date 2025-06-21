@@ -22,6 +22,7 @@ export default defineConfig({
 		"search/index": "src/search/index.ts",
 		"player/index": "src/player/index.ts",
 		"question/index": "src/question/index.ts",
+		"inquiry/index": "src/inquiry/index.ts",
 	},
 	format: ["cjs", "esm"],
 	dts: true,
