@@ -228,3 +228,4 @@ export type ProductDetailResponse = z.infer<typeof ProductDetailResponseSchema>;
 export type ProductSearchInfoResponse = z.infer<typeof ProductSearchInfoResponseSchema>;
 export type ProductListDashboardResponse = z.infer<typeof ProductListDashboardResponseSchema>;
 export type ProductRowByDashboardResponse = z.infer<typeof ProductRowByDashboardSchema>;
+export type ProductLikeResponse = z.infer<typeof ProductLikeResponseSchema>;
