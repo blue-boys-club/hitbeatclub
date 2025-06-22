@@ -3,7 +3,7 @@ import { cn } from "@/common/utils/tailwind";
 import Link from "next/link";
 import { AlbumCoverCard } from "@/components/ui";
 import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
-import { DraggableProductWrapper } from "@/features/dnd/componenets/DraggableProductWrapper";
+import { DraggableProductWrapper } from "@/features/dnd/components/DraggableProductWrapper";
 
 interface ProductTrackCarouselItemProps {
 	track: ProductRowByDashboardResponse;

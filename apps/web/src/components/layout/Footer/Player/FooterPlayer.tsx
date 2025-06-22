@@ -11,8 +11,10 @@ import { useLikeProductMutation, useUnlikeProductMutation } from "@/apis/product
 import { useShallow } from "zustand/react/shallow";
 import { useAudioStore } from "@/stores/audio";
 import { PurchaseWithCartTrigger } from "@/features/product/components/PurchaseWithCartTrigger";
+import { useDroppable } from "@dnd-kit/core";
 
 export const FooterPlayer = () => {
+	const { setNodeRef } = useDroppable({ id: "player" });
 	const { id, productName, seller, isLiked, audioFile, coverImage, updateIsLiked } = useAudioStore(
 		useShallow((state) => ({
 			id: state.id,
@@ -63,7 +65,10 @@ export const FooterPlayer = () => {
 	}, [audioFile?.url]);
 
 	return (
-		<div className="relative w-full h-20 bg-white border-t-8 border-black">
+		<div
+			ref={setNodeRef}
+			className="w-full h-20 bg-white border-t-8 border-black"
+		>
 			<div className="flex items-center justify-between w-full p-2">
 				{/* 트랙 정보 및 좋아요/장바구니 */}
 				<div className="flex items-center gap-2 w-96">

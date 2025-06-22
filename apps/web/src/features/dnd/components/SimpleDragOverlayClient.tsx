@@ -2,19 +2,23 @@
 
 import { DragOverlay, useDndContext } from "@dnd-kit/core";
 import { createPortal } from "react-dom";
+import { useEffect } from "react";
 
 export const SimpleDragOverlay = () => {
-	const { active /*over*/ } = useDndContext();
+	const { active, over, activeNode } = useDndContext();
 
 	// get is dragging and transform
 	// const isDragging = active?.data.current?.type === "PRODUCT";
 	const type = active?.data.current?.type;
 	const meta = active?.data.current?.meta;
+	const overId = over?.id;
 
 	return createPortal(
 		<DragOverlay
 			style={{
 				width: "250px",
+				cursor: !!overId ? "copy" : "grabbing",
+				zIndex: 1000,
 			}}
 		>
 			{type === "PRODUCT" && (

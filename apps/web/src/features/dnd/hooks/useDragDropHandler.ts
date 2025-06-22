@@ -5,6 +5,7 @@ import { useUpdateFollowedArtistMutation } from "@/apis/user/mutations";
 import { useQuery } from "@tanstack/react-query";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { useToast } from "@/hooks/use-toast";
+import { useStartPlayerMutation } from "@/apis/player/mutations";
 
 /**
  * 드래그 앤 드롭 핸들러를 관리하는 커스텀 훅
@@ -15,6 +16,7 @@ export const useDragDropHandler = () => {
 	const { data: user } = useQuery(getUserMeQueryOption());
 	const { mutate: likeProduct } = useLikeProductMutation();
 	const { mutate: followArtist } = useUpdateFollowedArtistMutation(user?.id ?? 0);
+	const { mutate: startPlayer } = useStartPlayerMutation();
 	// const { mutate: followArtist } = useFollowArtistMutation();
 	// const { mutate: addToCart } = useAddToCartMutation();
 
@@ -24,6 +26,7 @@ export const useDragDropHandler = () => {
 
 	const handleDragStart = useCallback((event: DragStartEvent) => {
 		console.log("DragStart", event);
+		console.log(event.active?.data.current);
 		const { active } = event;
 		if (active?.data.current?.type === "PRODUCT") {
 			const { productName, sellerStageName } = active.data.current.meta;
@@ -45,14 +48,17 @@ export const useDragDropHandler = () => {
 				if (event.over?.id === "like-follow") {
 					likeProduct(event.active?.data.current?.productId);
 				} else if (event.over?.id === "cart") {
-					// 로그인 체크
-
 					// 라이센스 모달 열기
 					const productId = event.active?.data.current?.productId;
 					if (productId) {
 						setSelectedProductId(productId);
 						setIsLicenseModalOpen(true);
 					}
+				} else if (event.over?.id === "player") {
+					startPlayer({
+						userId: user.id,
+						productId: event.active?.data.current?.productId,
+					});
 				}
 			} else if (event?.active?.data.current?.type === "ARTIST") {
 				if (event.over?.id === "like-follow") {

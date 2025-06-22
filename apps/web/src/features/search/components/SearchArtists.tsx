@@ -5,7 +5,7 @@ import { Carousel, CarouselContent, CarouselItem, type CarouselPlugin } from "@/
 import { useEffect, useState } from "react";
 import { useSearchInfiniteQuery } from "../hooks/useSearchInfiniteQuery";
 import UserProfileImage from "@/assets/images/user-profile.png";
-import { DraggableArtistWrapper } from "@/features/dnd/componenets/DraggableArtistWrapper";
+import { DraggableArtistWrapper } from "@/features/dnd/components/DraggableArtistWrapper";
 
 export const SearchArtists = () => {
 	const { data, isLoading } = useSearchInfiniteQuery();
