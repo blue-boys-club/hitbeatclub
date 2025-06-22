@@ -55,11 +55,19 @@ const QUERY_KEYS = {
 	artist: {
 		_key: ["artist"],
 		detail: (id: number): QueryKey => ["artist", id],
+		detailBySlug: (slug: string): QueryKey => ["artist", "slug", slug],
 		me: ["artist", "me"],
 		rawProductList: (id: number): QueryKey => ["artist", id, "productList"],
 		productList: (id: number, payload: ArtistProductListQueryRequest): QueryKey => [
 			"artist",
 			id,
+			"productList",
+			payload,
+		],
+		productListBySlug: (slug: string, payload: ArtistProductListQueryRequest): QueryKey => [
+			"artist",
+			"slug",
+			slug,
 			"productList",
 			payload,
 		],
