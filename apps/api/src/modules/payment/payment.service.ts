@@ -35,6 +35,11 @@ import z from "zod";
 import { type OrderStatus } from "@hitbeatclub/shared-types/payment";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types";
 import { FileService } from "~/modules/file/file.service";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore -- vscode doesn't recognize this is a dual package even though it is and can be compiled
+import { Webhook } from "@portone/server-sdk";
+import { PortOneWebhook, isPaymentWebhook } from "./payment.utils";
+import { ConfigService } from "@nestjs/config";
 
 // CartService.findAll()이 실제로 반환하는 타입 정의
 interface CartItemWithProduct {
@@ -85,14 +90,19 @@ interface CartItemWithProduct {
 export class PaymentService {
 	private readonly logger = new Logger(PaymentService.name);
 	private portone: PortOneClient;
+	private portoneWebhookSecret: string;
 
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly cartService: CartService,
 		private readonly fileService: FileService,
+		private readonly configService: ConfigService,
 	) {
+		this.portoneWebhookSecret = this.configService.get<string>("payment.portone.webhook.secret");
+
+		const portoneApiKey = this.configService.get<string>("payment.portone.api.key");
 		this.portone = PortOneClient({
-			secret: PAYMENT_PORTONE_API_KEY,
+			secret: portoneApiKey,
 		});
 	}
 
@@ -104,7 +114,7 @@ export class PaymentService {
 		try {
 			// 사용자의 카트 아이템들 조회
 			const cartItems = (await this.cartService.findAll(userId)) as unknown as CartItemWithProduct[];
-			this.logger.log(cartItems, "cartItems");
+			this.logger.log({ cartItems, userId }, "카트 아이템 조회");
 
 			if (!cartItems || cartItems.length === 0) {
 				throw new BadRequestException(CART_EMPTY_ERROR);
@@ -169,7 +179,15 @@ export class PaymentService {
 				createdAt: order.createdAt,
 			};
 		} catch (error) {
-			this.logger.error(error, "결제 주문 생성 실패");
+			this.logger.error(
+				{
+					userId,
+					dto,
+					error: error.message,
+					stack: error.stack,
+				},
+				"결제 주문 생성 실패",
+			);
 			if (error instanceof BadRequestException || error instanceof NotFoundException) {
 				throw error;
 			}
@@ -223,8 +241,8 @@ export class PaymentService {
 					throw new BadRequestException(INVALID_PAYMENT_AMOUNT_ERROR);
 				}
 
-				// 주문 상태를 COMPLETED로 업데이트
-				await this.prisma.order.update({
+				// 결제 성공 처리
+				const updatedOrder = await this.prisma.order.update({
 					where: { id: order.id },
 					data: {
 						status: "COMPLETED",
@@ -232,20 +250,29 @@ export class PaymentService {
 						paymentMethod: (payment.method?.type as string) || "UNKNOWN",
 						pgTransactionId: payment.pgTxId,
 					},
+					include: { orderItems: true },
 				});
 
-				// 결제 완료 후 카트에서 아이템 제거
-				await this.clearCartAfterPayment(userId, order.orderItems);
+				// 카트에서 아이템 제거
+				await this.clearCartAfterPayment(userId, updatedOrder.orderItems);
 
-				this.logger.log(`결제 완료: orderId=${order.id}, paymentId=${dto.paymentId}, amount=${paymentAmount}`);
+				this.logger.log(
+					{
+						orderId: order.id,
+						paymentId: dto.paymentId,
+						amount: paymentAmount,
+						status: payment.status,
+					},
+					"결제 완료",
+				);
 
 				return {
 					orderId: Number(order.id),
-					paymentId: dto.paymentId,
-					status: "COMPLETED",
+					paymentId: order.paymentId,
+					status: updatedOrder.status as OrderStatus,
 					amount: paymentAmount,
-					paidAt: new Date(),
-					paymentMethod: (payment.method?.type as string) || "UNKNOWN",
+					paidAt: updatedOrder.paidAt,
+					paymentMethod: updatedOrder.paymentMethod,
 				};
 			} else if (payment.status === "VIRTUAL_ACCOUNT_ISSUED") {
 				// 가상계좌 발급 처리
@@ -282,29 +309,22 @@ export class PaymentService {
 				});
 			}
 		} catch (error) {
-			this.logger.error(error, "결제 완료 처리 실패");
-
-			if (error instanceof Payment.GetPaymentError) {
-				switch (error.data.type) {
-					case "FORBIDDEN": {
-						const newDetail = {
-							...PAYMENT_FORBIDDEN_ERROR,
-							detail: `${PAYMENT_FORBIDDEN_ERROR.detail}` + (error.data?.message ? ` - ${error.data.message}` : ""),
-						};
-						throw new ForbiddenException(newDetail);
-					}
-					case "INVALID_REQUEST":
-						throw new BadRequestException(PAYMENT_INVALID_REQUEST_ERROR);
-					case "PAYMENT_NOT_FOUND":
-						throw new NotFoundException(PAYMENT_NOT_FOUND_ERROR);
-					case "UNAUTHORIZED":
-						throw new UnauthorizedException(PAYMENT_UNAUTHORIZED_ERROR);
-					default:
-						throw new BadRequestException(PAYMENT_INVALID_REQUEST_ERROR);
-				}
-			}
-
-			if (error instanceof BadRequestException || error instanceof NotFoundException) {
+			this.logger.error(
+				{
+					userId,
+					dto,
+					error: error.message,
+					stack: error.stack,
+				},
+				"결제 완료 처리 실패",
+			);
+			if (
+				error instanceof Payment.GetPaymentError ||
+				error instanceof BadRequestException ||
+				error instanceof NotFoundException ||
+				error instanceof ForbiddenException ||
+				error instanceof UnauthorizedException
+			) {
 				throw error;
 			}
 			throw new BadRequestException({
@@ -317,18 +337,30 @@ export class PaymentService {
 	/**
 	 * 웹훅을 통한 결제 상태 동기화
 	 */
-	async syncPaymentFromWebhook(paymentId: string, webhookData: any) {
+	async syncPaymentFromWebhook(paymentId: string, baseWebhookData: PortOneWebhook) {
 		try {
-			this.logger.log(`웹훅 처리 시작: paymentId=${paymentId}`);
+			this.logger.log(
+				{
+					paymentId,
+					webhookType: baseWebhookData.type,
+					timestamp: baseWebhookData.timestamp,
+				},
+				"웹훅 처리 시작",
+			);
 
-			// 포트원에서 최신 결제 정보 조회
-			const payment = await this.portone.payment.getPayment({ paymentId });
-
-			if (!payment) {
-				this.logger.warn(`웹훅에서 결제 정보를 찾을 수 없음: paymentId=${paymentId}`);
+			// 결제 관련 웹훅이 아닌 경우 early return
+			if (!isPaymentWebhook(baseWebhookData)) {
+				this.logger.warn(
+					{
+						paymentId,
+						webhookType: baseWebhookData.type,
+					},
+					"결제 관련 웹훅이 아님",
+				);
 				return;
 			}
 
+			const webhookData = baseWebhookData as Webhook.Webhook;
 			// 데이터베이스에서 주문 정보 조회
 			const order = await this.prisma.order
 				.findFirst({
@@ -338,12 +370,33 @@ export class PaymentService {
 				.then((order) => this.prisma.serializeBigIntTyped(order));
 
 			if (!order) {
-				this.logger.warn(`웹훅에서 주문 정보를 찾을 수 없음: paymentId=${paymentId}`);
+				this.logger.warn({ paymentId }, "웹훅에서 주문 정보를 찾을 수 없음");
 				return;
 			}
 
-			// 결제 상태에 따른 처리
-			if (payment.status === "PAID" && order.status !== "COMPLETED") {
+			// 웹훅 타입에 따른 결제 상태 처리
+			if (webhookData.type === "Transaction.Paid" && order.status !== "COMPLETED") {
+				// 포트원에서 최신 결제 정보 조회하여 검증 (금액 등 중요 정보)
+				const payment = await this.portone.payment.getPayment({ paymentId });
+
+				if (!payment) {
+					this.logger.error({ paymentId }, "포트원에서 결제 정보를 찾을 수 없음");
+					return;
+				}
+
+				// 결제 완료 상태 확인
+				if (payment.status !== "PAID") {
+					this.logger.warn(
+						{
+							paymentId,
+							webhookStatus: "Transaction.Paid",
+							actualStatus: payment.status,
+						},
+						"웹훅과 실제 결제 상태 불일치",
+					);
+					return;
+				}
+
 				// 주문 완료 처리
 				await this.prisma.order.update({
 					where: { id: order.id },
@@ -351,15 +404,27 @@ export class PaymentService {
 						status: "COMPLETED",
 						paidAt: new Date(),
 						paymentMethod: (payment.method?.type as string) || "UNKNOWN",
-						pgTransactionId: payment.pgTxId,
+						pgTransactionId: payment.pgTxId || null,
 					},
 				});
 
 				// 카트에서 아이템 제거
 				await this.clearCartAfterPayment(Number(order.buyerId), order.orderItems);
 
-				this.logger.log(`웹훅으로 결제 완료 처리: orderId=${order.id}, paymentId=${paymentId}`);
-			} else if (payment.status === "CANCELLED" && order.status !== "CANCELLED") {
+				this.logger.log(
+					{
+						orderId: order.id,
+						paymentId,
+						webhookType: webhookData.type,
+						status: payment.status,
+						amount: payment.amount?.total,
+					},
+					"웹훅으로 결제 완료 처리",
+				);
+			} else if (
+				(webhookData.type === "Transaction.Cancelled" || webhookData.type === "Transaction.PartialCancelled") &&
+				order.status !== "CANCELLED"
+			) {
 				// 주문 취소 처리
 				await this.prisma.order.update({
 					where: { id: order.id },
@@ -369,11 +434,55 @@ export class PaymentService {
 					},
 				});
 
-				this.logger.log(`웹훅으로 결제 취소 처리: orderId=${order.id}, paymentId=${paymentId}`);
+				this.logger.log(
+					{
+						orderId: order.id,
+						paymentId,
+						webhookType: webhookData.type,
+						cancellationId: webhookData.data.cancellationId,
+					},
+					"웹훅으로 결제 취소 처리",
+				);
+			} else if (webhookData.type === "Transaction.VirtualAccountIssued") {
+				// 가상계좌 발급 상태 업데이트
+				await this.prisma.order.update({
+					where: { id: order.id },
+					data: {
+						status: "WAITING_FOR_DEPOSIT",
+					},
+				});
+
+				this.logger.log(
+					{
+						orderId: order.id,
+						paymentId,
+						webhookType: webhookData.type,
+					},
+					"웹훅으로 가상계좌 발급 처리",
+				);
+			} else {
+				this.logger.log(
+					{
+						orderId: order.id,
+						paymentId,
+						webhookType: webhookData.type,
+						currentStatus: order.status,
+					},
+					"처리하지 않는 웹훅 타입 또는 이미 처리된 상태",
+				);
 			}
 		} catch (error) {
-			this.logger.error(`웹훅 처리 실패: paymentId=${paymentId}`, error);
-			// 웹훅 처리 실패시에도 200을 반환해야 재시도를 방지할 수 있음
+			this.logger.error(
+				{
+					paymentId,
+					webhookType: baseWebhookData.type,
+					error: error.message,
+					stack: error.stack,
+				},
+				"웹훅 처리 실패",
+			);
+			// 웹훅 처리 실패시에도 예외를 던지지 않아야 재시도를 방지할 수 있음
+			throw error;
 		}
 	}
 
@@ -409,10 +518,25 @@ export class PaymentService {
 					},
 				});
 
-				this.logger.log(`카트에서 ${cartItems.length}개 아이템 제거 완료`);
+				this.logger.log(
+					{
+						userId,
+						cartItemCount: cartItems.length,
+						removedItemIds: cartItems.map((item) => item.id),
+					},
+					"카트에서 아이템 제거 완료",
+				);
 			}
 		} catch (error) {
-			this.logger.error("카트 아이템 제거 실패", error);
+			this.logger.error(
+				{
+					userId,
+					orderItems: orderItems.map((item) => ({ productId: item.productId, licenseId: item.licenseId })),
+					error: error.message,
+					stack: error.stack,
+				},
+				"카트 아이템 제거 실패",
+			);
 			// 카트 제거 실패는 결제 완료에 영향을 주지 않음
 		}
 	}
@@ -658,6 +782,12 @@ export class PaymentService {
 		};
 	}
 
+	/**
+	 * 사용자가 구매한 상품 목록 조회
+	 * @param userId 사용자 ID
+	 * @param productId 상품 ID
+	 * @returns
+	 */
 	async getOrderedItemsByProductId(userId: number | bigint, productId: number | bigint) {
 		const order = await this.prisma.order
 			.findMany({
@@ -673,5 +803,16 @@ export class PaymentService {
 			.then((order) => this.prisma.serializeBigIntTyped(order));
 
 		return order;
+	}
+
+	/**
+	 * 포트원 웹훅 검증
+	 * @param body
+	 * @param headers
+	 * @returns
+	 */
+	async verifyWebhook(body: string, headers: any) {
+		const verifiedWebhook = await Webhook.verify(this.portoneWebhookSecret, body, headers);
+		return verifiedWebhook;
 	}
 }

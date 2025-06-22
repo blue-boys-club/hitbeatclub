@@ -51,16 +51,34 @@ const QUERY_KEYS = {
 		one: (productId: number): QueryKey => ["products", productId],
 		searchInfo: ["products", "searchInfo"],
 		dashboard: ["products", "dashboard"],
+		fileDownloadLink: (productId: number, type: string): QueryKey => ["products", productId, "fileDownloadLink", type],
 	},
 	artist: {
 		_key: ["artist"],
 		detail: (id: number): QueryKey => ["artist", id],
+		detailBySlug: (slug: string): QueryKey => ["artist", "slug", slug],
 		me: ["artist", "me"],
 		rawProductList: (id: number): QueryKey => ["artist", id, "productList"],
 		productList: (id: number, payload: ArtistProductListQueryRequest): QueryKey => [
 			"artist",
 			id,
 			"productList",
+			payload,
+		],
+		productListBySlug: (slug: string, payload: ArtistProductListQueryRequest): QueryKey => [
+			"artist",
+			"slug",
+			slug,
+			"productList",
+			payload,
+		],
+		_infiniteProductListBySlug: ["artist", "slug", "productList", "infinite"],
+		infiniteProductListBySlug: (slug: string, payload: ArtistProductListQueryRequest): QueryKey => [
+			"artist",
+			"slug",
+			slug,
+			"productList",
+			"infinite",
 			payload,
 		],
 	},
@@ -89,6 +107,12 @@ const QUERY_KEYS = {
 		_list: ["search", "list"],
 		list: (payload: ProductSearchQuery): QueryKey => ["search", "list", payload],
 		infiniteList: (payload: ProductSearchQuery): QueryKey => ["search", "list", "infinite", payload],
+		autocomplete: (keyword: string): QueryKey => ["search", "autocomplete", keyword],
+	},
+	player: {
+		_key: ["player"],
+		infiniteList: ["player", "list", "infinite"],
+		list: (payload: PaginationRequest): QueryKey => ["player", "list", payload],
 	},
 };
 

@@ -24,12 +24,6 @@ const ProductLikeListPage = memo(() => {
 		...getUserMeQueryOption(),
 	});
 
-	const { updateIsLiked } = useAudioStore(
-		useShallow((state) => ({
-			updateIsLiked: state.updateIsLiked,
-		})),
-	);
-
 	// 필터 상태 관리
 	const [filters, setFilters] = useState<Omit<UserLikeProductListRequest, "page" | "limit">>({
 		sort: "RECENT",
@@ -97,9 +91,7 @@ const ProductLikeListPage = memo(() => {
 
 	const handleLike = useCallback((productId: number) => {
 		unlikeProduct(productId, {
-			onSuccess: () => {
-				updateIsLiked(false);
-			},
+			onSuccess: () => {},
 		});
 	}, []);
 

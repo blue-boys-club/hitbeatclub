@@ -16,7 +16,7 @@ import { useAudioStore } from "@/stores/audio";
 import { useQuery } from "@tanstack/react-query";
 import { useCartListQueryOptions } from "@/apis/user/query/user.query-option";
 import { PurchaseWithCartTrigger } from "@/features/product/components/PurchaseWithCartTrigger";
-import { DraggableProductWrapper } from "@/features/dnd/componenets/DraggableProductWrapper";
+import { DraggableProductWrapper } from "@/features/dnd/components/DraggableProductWrapper";
 import Link from "next/link";
 
 interface TrackItemProps {

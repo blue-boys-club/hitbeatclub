@@ -8,7 +8,7 @@ import { CartSection } from "./Cart";
 import SidebarTabs from "./SidebarTabs";
 import { useLayoutStore } from "@/stores/layout";
 import Link from "next/link";
-import { DropContentWrapper } from "@/features/dnd/componenets/DropContentWrapper";
+import { DropContentWrapper } from "@/features/dnd/components/DropContentWrapper";
 
 export const Sidebar = memo(() => {
 	const { isOpen, setLeftSidebar } = useLayoutStore(

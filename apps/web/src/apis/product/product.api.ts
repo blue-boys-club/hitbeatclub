@@ -10,7 +10,7 @@ import {
 import client from "@/apis/api.client";
 import { z } from "zod";
 import type { CommonResponse, CommonResponseId } from "@/apis/api.type";
-import { FileUploadResponse } from "@hitbeatclub/shared-types/file";
+import { ENUM_FILE_TYPE, FileUploadResponse } from "@hitbeatclub/shared-types/file";
 import { PRODUCT_FILE_TYPE } from "./product.type";
 import { deepRemoveDefaults } from "@/lib/schema.utils";
 
@@ -118,5 +118,18 @@ export const likeProduct = async (productId: number) => {
  */
 export const unlikeProduct = async (productId: number) => {
 	const response = await client.delete<CommonResponseId>(`/products/${productId}/un-like`);
+	return response.data;
+};
+
+/**
+ * 상품 파일 다운로드 링크 조회
+ * @param productId 상품 ID
+ * @param type 파일 타입
+ * @returns 파일 다운로드 링크
+ */
+export const getProductFileDownloadLink = async (productId: number, type: PRODUCT_FILE_TYPE) => {
+	const response = await client.get<CommonResponse<FileUploadResponse>>(`/products/${productId}/file-url`, {
+		params: { type: type as ENUM_FILE_TYPE },
+	});
 	return response.data;
 };

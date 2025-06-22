@@ -1,4 +1,4 @@
-import { getSearch } from "@/apis/search/search.api";
+import { getSearch, getAutocompleteSearch } from "@/apis/search/search.api";
 import { QUERY_KEYS } from "@/apis/query-keys";
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { ProductSearchQuery } from "../search.type";
@@ -38,5 +38,15 @@ export const getSearchInfiniteQueryOption = (payload: Omit<ProductSearchQuery, "
 			page: 1,
 			limit: 10,
 		},
+	});
+};
+
+export const getAutocompleteSearchQueryOption = (keyword: string) => {
+	return queryOptions({
+		queryKey: QUERY_KEYS.search.autocomplete(keyword),
+		queryFn: () => getAutocompleteSearch(keyword),
+		select: (response) => response.data,
+		enabled: !!keyword && keyword.trim().length > 0,
+		staleTime: 1000 * 60 * 5, // 5분간 캐시 유지
 	});
 };

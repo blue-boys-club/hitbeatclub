@@ -58,7 +58,7 @@ export const HeaderNav = memo(() => {
 	const signOut = useCallback(() => {
 		logout();
 		toast({
-			title: "로그아웃 되었습니다.",
+			description: "로그아웃 되었습니다.",
 		});
 	}, [logout, toast]);
 

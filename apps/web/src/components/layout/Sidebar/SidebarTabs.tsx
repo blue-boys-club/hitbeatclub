@@ -6,7 +6,7 @@ import { OpenInNew } from "@/assets/svgs";
 import { LikeSection } from "./Like";
 import { FollowSection } from "./Follow";
 import { useRouter } from "next/navigation";
-import { DropContentWrapper } from "@/features/dnd/componenets/DropContentWrapper";
+import { DropContentWrapper } from "@/features/dnd/components/DropContentWrapper";
 
 interface TabTriggerProps {
 	onClick: () => void;

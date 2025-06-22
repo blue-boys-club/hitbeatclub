@@ -220,6 +220,7 @@ export class ProductService {
 							select: {
 								id: true,
 								stageName: true,
+								slug: true,
 								profileImageUrl: true,
 								isVerified: true,
 							},
@@ -1126,9 +1127,11 @@ export class ProductService {
 		type: ENUM_FILE_TYPE.PRODUCT_AUDIO_FILE | ENUM_FILE_TYPE.PRODUCT_COVER_IMAGE | ENUM_FILE_TYPE.PRODUCT_ZIP_FILE,
 	) {
 		const file = await this.prisma.file
-			.findUnique({
+			.findFirst({
 				where: {
-					id: BigInt(id),
+					deletedAt: null,
+					targetTable: "product",
+					targetId: BigInt(id),
 					type: type,
 				},
 			})

@@ -1,12 +1,19 @@
 "use client";
 
 import { memo } from "react";
-import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import {
+	closestCorners,
+	DndContext as DndContextCore,
+	PointerSensor,
+	useSensor,
+	useSensors,
+	pointerWithin,
+} from "@dnd-kit/core";
 import { SimpleDragOverlay } from "./SimpleDragOverlay";
 import { useDragDropHandler } from "../hooks/useDragDropHandler";
 import { ProductDetailLicenseModal } from "@/features/product/components/modal/ProductDetailLicenseModal";
 
-export const ProductDndContext = memo(({ children }: { children: React.ReactNode }) => {
+export const DndContext = memo(({ children }: { children: React.ReactNode }) => {
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
 			activationConstraint: {
@@ -21,7 +28,8 @@ export const ProductDndContext = memo(({ children }: { children: React.ReactNode
 		useDragDropHandler();
 
 	return (
-		<DndContext
+		<DndContextCore
+			collisionDetection={pointerWithin}
 			sensors={sensors}
 			onDragStart={handleDragStart}
 			onDragEnd={handleDragEnd}
@@ -37,6 +45,6 @@ export const ProductDndContext = memo(({ children }: { children: React.ReactNode
 					onClose={handleCloseLicenseModal}
 				/>
 			)}
-		</DndContext>
+		</DndContextCore>
 	);
 });

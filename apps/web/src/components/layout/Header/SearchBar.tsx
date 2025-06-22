@@ -1,17 +1,20 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, Suspense } from "react";
+import React, { useState, useCallback, useEffect, Suspense, useMemo, useRef } from "react";
 import { Search } from "@/assets/svgs/Search";
 import { cn } from "@/common/utils";
 import { TagDropdown } from "@/components/ui";
 import { Input } from "@/components/ui/Input";
 import { usePathname, useRouter } from "next/navigation";
 import { useSearchParametersStateByKey } from "@/features/search/hooks/useSearchParameters";
-import { debounce } from "nuqs";
+import { useQuery } from "@tanstack/react-query";
+import { getAutocompleteSearchQueryOption } from "@/apis/search/query/product.query-option";
 
 interface SearchOption {
 	label: string;
 	value: string;
+	type?: "PRODUCT" | "ARTIST";
+	id?: number;
 }
 
 export const SearchBar = () => {
@@ -27,44 +30,90 @@ export const SearchBarClient = () => {
 	const pathname = usePathname();
 	const isSearch = pathname === "/search";
 	const [searchValue, setSearchValue] = useSearchParametersStateByKey("keyword");
-	const [searchOptions, setSearchOptions] = useState<SearchOption[]>([]);
+	const [debouncedSearchValue, setDebouncedSearchValue] = useState("");
 
-	const navigateToSearch = useCallback(() => {
-		if (!searchValue) return;
+	// 디바운스된 검색어로 자동완성 쿼리 실행
+	const { data: autocompleteData } = useQuery(getAutocompleteSearchQueryOption(debouncedSearchValue));
 
-		const url = new URL(window.location.href);
-		url.pathname = "/search";
-		url.searchParams.set("keyword", searchValue);
-		router.push(url.toString());
-	}, [router, searchValue]);
+	// 자동완성 데이터를 SearchOption 형태로 변환
+	const searchOptions: SearchOption[] = useMemo(() => {
+		if (!autocompleteData || !Array.isArray(autocompleteData)) return [];
+
+		return autocompleteData.map((item: any) => {
+			if (item.type === "PRODUCT") {
+				return {
+					label: item.productName || "",
+					value: item.productName || "",
+					type: "PRODUCT",
+					id: item.id,
+				};
+			} else {
+				return {
+					label: item.stageName || "",
+					value: item.stageName || "",
+					type: "ARTIST",
+					id: item.id,
+				};
+			}
+		});
+	}, [autocompleteData]);
+
+	// 디바운스를 위한 타이머 ref
+	const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+	// 디바운스된 검색어 업데이트 함수
+	const updateDebouncedSearch = useCallback((value: string) => {
+		if (debounceTimer.current) {
+			clearTimeout(debounceTimer.current);
+		}
+		debounceTimer.current = setTimeout(() => {
+			setDebouncedSearchValue(value);
+		}, 500);
+	}, []);
+
+	/**
+	 * 검색 페이지로 이동하면서 \`keyword\` 쿼리스트링을 전달합니다.
+	 * window.location을 참조하지 않고, 파라미터로 받은 값을 그대로 사용해
+	 * URL을 구성함으로써 상태 업데이트 지연으로 인한 이슈를 방지합니다.
+	 *
+	 * @param keyword 이동 시 사용할 검색어
+	 */
+	const navigateToSearch = useCallback(
+		(keyword: string) => {
+			if (!keyword) return;
+			router.push(`/search?keyword=${encodeURIComponent(keyword)}`);
+		},
+		[router],
+	);
 
 	const handleSearchChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
 			const value = e.target.value;
-			setSearchValue(value, {
-				limitUrlUpdates: e.target.value === "" ? undefined : debounce(500),
-			});
-			setSearchOptions(searchOptions.filter((option) => option.label.toLowerCase().includes(value.toLowerCase())));
+			setSearchValue(value);
+
+			// 자동완성을 위한 디바운스된 검색어 업데이트
+			updateDebouncedSearch(value);
 		},
-		[searchOptions, setSearchValue],
+		[setSearchValue, updateDebouncedSearch],
 	);
 
 	const handleSearchSubmit = useCallback(
 		(e: React.FormEvent<HTMLFormElement>) => {
 			e.preventDefault();
-			setSearchValue(e.currentTarget.querySelector("input")?.value ?? "");
+			const inputValue = e.currentTarget.querySelector("input")?.value ?? "";
+			setSearchValue(inputValue);
 			if (!isSearch) {
-				navigateToSearch();
+				navigateToSearch(inputValue);
 			}
 		},
-		[isSearch, navigateToSearch],
+		[isSearch, navigateToSearch, setSearchValue],
 	);
 
 	const handleSearchOptionSelect = useCallback(
 		(value: string) => {
 			setSearchValue(value);
 			if (!isSearch) {
-				navigateToSearch();
+				navigateToSearch(value);
 			}
 		},
 		[isSearch, navigateToSearch, setSearchValue],
@@ -88,7 +137,10 @@ export const SearchBarClient = () => {
 			showChevron={false}
 			options={searchOptions.map((option) => ({
 				...option,
-				className: "rounded-[5px] text-base font-bold leading-4",
+				className: cn(
+					"rounded-[5px] text-base font-bold leading-4",
+					option.type === "ARTIST" && "text-blue-600", // 아티스트는 파란색으로 구분
+				),
 			}))}
 			onSelect={handleSearchOptionSelect}
 		>
