@@ -23,6 +23,6 @@ export const getPlayerList = async (pagination: PaginationRequest): Promise<Pagi
  * 플레이어 상세 조회 API
  */
 export const startPlayer = async (data: PlayerStartRequest): Promise<CommonResponseId> => {
-	const response = await axiosInstance.post<CommonResponseId>(`/player/play`, data);
+	const response = await axiosInstance.post<CommonResponseId>(`/player/start`, data);
 	return response.data;
 };
