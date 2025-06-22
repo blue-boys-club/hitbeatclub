@@ -90,6 +90,11 @@ const QUERY_KEYS = {
 		list: (payload: ProductSearchQuery): QueryKey => ["search", "list", payload],
 		infiniteList: (payload: ProductSearchQuery): QueryKey => ["search", "list", "infinite", payload],
 	},
+	player: {
+		_key: ["player"],
+		infiniteList: ["player", "list", "infinite"],
+		list: (payload: PaginationRequest): QueryKey => ["player", "list", payload],
+	},
 };
 
 export { QUERY_KEYS };

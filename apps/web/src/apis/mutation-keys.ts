@@ -43,4 +43,7 @@ export const MUTATION_KEYS = {
 		getOrder: ["payment", "getOrder"],
 		getUserOrders: ["payment", "getUserOrders"],
 	},
+	player: {
+		startPlayer: ["player", "startPlayer"],
+	},
 };
