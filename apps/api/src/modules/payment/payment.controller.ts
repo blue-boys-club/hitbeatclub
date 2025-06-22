@@ -28,6 +28,7 @@ import { Webhook } from "@portone/server-sdk";
 import { PaymentPaginationRequestDto } from "./dto/request/payment.pagination.request.dto";
 import { PaymentOrderCreateResponseDto } from "./dto/response/payment.order-create.response.dto";
 import { isBillingKeyWebhook, isPaymentWebhook, PortOneWebhook } from "./payment.utils";
+import { ConfigService } from "@nestjs/config";
 
 @ApiTags("payment")
 @Controller("payment")
@@ -143,7 +144,7 @@ export class PaymentController {
 			// 웹훅 시그니처 검증
 			let webhook: PortOneWebhook;
 			try {
-				const verifiedWebhook = await Webhook.verify(process.env.PORTONE_V2_WEBHOOK_SECRET, body, headers);
+				const verifiedWebhook = await this.paymentService.verifyWebhook(body, headers);
 				webhook = verifiedWebhook as PortOneWebhook;
 			} catch (error) {
 				this.logger.error({ error }, "웹훅 검증 실패");
@@ -177,6 +178,7 @@ export class PaymentController {
 			else if (isBillingKeyWebhook(webhook)) {
 				const { billingKey } = webhook.data;
 
+				// TODO: 빌링키 웹훅 처리 - 구독 관련 로직 추가
 				this.logger.log(
 					{
 						webhookType: webhook.type,

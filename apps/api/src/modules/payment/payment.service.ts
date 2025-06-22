@@ -39,6 +39,7 @@ import { FileService } from "~/modules/file/file.service";
 // @ts-ignore -- vscode doesn't recognize this is a dual package even though it is and can be compiled
 import { Webhook } from "@portone/server-sdk";
 import { PortOneWebhook, isPaymentWebhook } from "./payment.utils";
+import { ConfigService } from "@nestjs/config";
 
 // CartService.findAll()이 실제로 반환하는 타입 정의
 interface CartItemWithProduct {
@@ -89,14 +90,19 @@ interface CartItemWithProduct {
 export class PaymentService {
 	private readonly logger = new Logger(PaymentService.name);
 	private portone: PortOneClient;
+	private portoneWebhookSecret: string;
 
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly cartService: CartService,
 		private readonly fileService: FileService,
+		private readonly configService: ConfigService,
 	) {
+		this.portoneWebhookSecret = this.configService.get<string>("payment.portone.webhook.secret");
+
+		const portoneApiKey = this.configService.get<string>("payment.portone.api.key");
 		this.portone = PortOneClient({
-			secret: PAYMENT_PORTONE_API_KEY,
+			secret: portoneApiKey,
 		});
 	}
 
@@ -776,6 +782,12 @@ export class PaymentService {
 		};
 	}
 
+	/**
+	 * 사용자가 구매한 상품 목록 조회
+	 * @param userId 사용자 ID
+	 * @param productId 상품 ID
+	 * @returns
+	 */
 	async getOrderedItemsByProductId(userId: number | bigint, productId: number | bigint) {
 		const order = await this.prisma.order
 			.findMany({
@@ -791,5 +803,16 @@ export class PaymentService {
 			.then((order) => this.prisma.serializeBigIntTyped(order));
 
 		return order;
+	}
+
+	/**
+	 * 포트원 웹훅 검증
+	 * @param body
+	 * @param headers
+	 * @returns
+	 */
+	async verifyWebhook(body: string, headers: any) {
+		const verifiedWebhook = await Webhook.verify(this.portoneWebhookSecret, body, headers);
+		return verifiedWebhook;
 	}
 }
