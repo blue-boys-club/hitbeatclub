@@ -119,14 +119,16 @@ export class ArtistController {
 		dto: ArtistDetailResponseDto,
 	})
 	async findBySlug(@Param("slug") slug: string) {
-		let artist = await this.artistService.findBySlug(slug);
+		let artist;
 
-		if (!artist && isNumber(slug)) {
-			artist = await this.artistService.findOne(Number(slug));
-		}
-
-		if (!artist) {
-			throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
+		try {
+			artist = await this.artistService.findBySlug(slug);
+		} catch (error) {
+			if (isNumber(slug)) {
+				artist = await this.artistService.findOne(Number(slug));
+			} else {
+				throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
+			}
 		}
 
 		return {
@@ -212,14 +214,16 @@ export class ArtistController {
 	): Promise<IResponsePaging<ProductListResponseDto>> {
 		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds } = artistProductListQueryRequestDto;
 
-		let artist = await this.artistService.findBySlug(slug);
+		let artist;
 
-		if (!artist && isNumber(slug)) {
-			artist = await this.artistService.findOne(Number(slug));
-		}
-
-		if (!artist) {
-			throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
+		try {
+			artist = await this.artistService.findBySlug(slug);
+		} catch (error) {
+			if (isNumber(slug)) {
+				artist = await this.artistService.findOne(Number(slug));
+			} else {
+				throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
+			}
 		}
 
 		const where = {

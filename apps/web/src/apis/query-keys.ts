@@ -72,6 +72,15 @@ const QUERY_KEYS = {
 			"productList",
 			payload,
 		],
+		_infiniteProductListBySlug: ["artist", "slug", "productList", "infinite"],
+		infiniteProductListBySlug: (slug: string, payload: ArtistProductListQueryRequest): QueryKey => [
+			"artist",
+			"slug",
+			slug,
+			"productList",
+			"infinite",
+			payload,
+		],
 	},
 	tag: {
 		_key: ["tag"],

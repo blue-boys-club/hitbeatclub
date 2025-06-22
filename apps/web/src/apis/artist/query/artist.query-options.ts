@@ -1,5 +1,5 @@
 import { QUERY_KEYS } from "@/apis/query-keys";
-import { queryOptions } from "@tanstack/react-query";
+import { queryOptions, infiniteQueryOptions } from "@tanstack/react-query";
 import {
 	getArtistContentList,
 	getArtistContentListBySlug,
@@ -46,5 +46,40 @@ export const getArtistProductListBySlugQueryOption = (slug: string, payload: Art
 		queryKey: QUERY_KEYS.artist.productListBySlug(slug, payload),
 		queryFn: () => getArtistContentListBySlug(slug, payload),
 		select: (response) => response,
+	});
+};
+
+export const getArtistProductListBySlugInfiniteQueryOption = (
+	slug: string,
+	payload: Omit<ArtistProductListQueryRequest, "page" | "limit">,
+) => {
+	return infiniteQueryOptions({
+		queryKey: QUERY_KEYS.artist.infiniteProductListBySlug(slug, payload as ArtistProductListQueryRequest),
+		queryFn: ({ pageParam }) => {
+			const param = pageParam as ArtistProductListQueryRequest;
+			const option = getArtistProductListBySlugQueryOption(slug, param);
+			return (option.queryFn as () => Promise<any>)();
+		},
+		select: (response) => ({
+			pages: response.pages.map((page) => page.data),
+			pageParams: response.pageParams,
+		}),
+		getNextPageParam: (lastPage) => {
+			const nextPage = lastPage._pagination.page + 1;
+			const totalPages = Math.ceil(lastPage._pagination.total / lastPage._pagination.limit);
+			if (nextPage > totalPages) {
+				return undefined;
+			}
+			return {
+				...payload,
+				page: nextPage,
+				limit: 10,
+			};
+		},
+		initialPageParam: {
+			...payload,
+			page: 1,
+			limit: 10,
+		},
 	});
 };

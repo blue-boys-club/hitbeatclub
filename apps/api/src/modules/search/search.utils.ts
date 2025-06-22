@@ -102,7 +102,8 @@ export const isNumber = (num: unknown): num is number => {
 		return num - num === 0;
 	}
 	if (typeof num === "string" && num.trim() !== "") {
-		return Number.isFinite ? Number.isFinite(+num) : isFinite(+num);
+		// return Number.isFinite ? Number.isFinite(+num) : isFinite(+num);
+		return Number.isFinite(+num);
 	}
 	return false;
 };

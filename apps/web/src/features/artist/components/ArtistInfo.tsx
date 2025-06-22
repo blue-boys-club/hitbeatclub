@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import {
 	FilledInstagram,
 	LargeAuthBadge,
@@ -20,6 +20,8 @@ import { useBlockArtistMutation, useUnblockArtistMutation } from "@/apis/artist/
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { getArtistDetailBySlugQueryOption } from "@/apis/artist/query/artist.query-options";
+import UserProfileImage from "@/assets/images/user-profile.png";
 
 interface DropdownOption {
 	label: string;
@@ -36,20 +38,26 @@ interface DropdownOption {
  * - 트랙 수, 방문자 수 표시
  * - 아티스트 소개
  */
-export const ArtistInfo = memo(() => {
+
+interface ArtistInfoProps {
+	slug: string;
+}
+
+export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 	const [isShuffleOn, setIsShuffleOn] = useState(false);
 	const [isOpenDropdown, setIsOpenDropdown] = useState(false);
 	const [isOpenReportModal, setIsOpenReportModal] = useState(false);
 	const { toast } = useToast();
 
-	const params = useParams();
-	const artistId = Number(params.artistId);
-
 	const { data: userMe } = useQuery({ ...getUserMeQueryOption() });
 	const { mutateAsync: blockArtist } = useBlockArtistMutation();
 	const { mutateAsync: unblockArtist } = useUnblockArtistMutation();
 
-	const isBlockedArtist = userMe?.blockArtistList.some((artist) => artist.artistId === artistId);
+	const { data: artist } = useQuery({
+		...getArtistDetailBySlugQueryOption(slug),
+	});
+
+	const isBlockedArtist = userMe?.blockArtistList.some((blockedArtist) => blockedArtist.artistId === artist?.id);
 
 	const onPlay = () => {
 		if (isBlockedArtist) return;
@@ -93,11 +101,11 @@ export const ArtistInfo = memo(() => {
 			label: isBlockedArtist ? "차단 해제" : "차단하기",
 			value: "block",
 			onClick: async () => {
-				if (!artistId) return;
+				if (!artist?.id) return;
 				if (isBlockedArtist) {
-					unblockArtist({ artistId });
+					unblockArtist({ artistId: artist.id });
 				} else {
-					blockArtist({ artistId });
+					blockArtist({ artistId: artist.id });
 				}
 
 				setIsOpenDropdown(false);
@@ -113,10 +121,14 @@ export const ArtistInfo = memo(() => {
 		},
 	];
 
+	const artistProfileImage = useMemo(() => {
+		return artist?.profileImage?.url || UserProfileImage;
+	}, [artist]);
+
 	return (
 		<div className="flex items-center gap-9 font-suisse px-8.5 py-10 border-b-2">
 			<ArtistAvatar
-				src="https://placehold.co/192x192.png"
+				src={artistProfileImage}
 				alt="artist avatar"
 				className="w-[192px] h-[192px] outline-4 bg-white"
 			/>
@@ -124,8 +136,8 @@ export const ArtistInfo = memo(() => {
 			<div className="w-[343px] flex flex-col gap-2">
 				<div className="flex items-center gap-6">
 					<div className="flex items-center gap-2">
-						<div className="text-[40px] font-bold leading-[40px] tracking-0.4px">Beenzino</div>
-						<LargeAuthBadge />
+						<div className="text-[40px] font-bold leading-[40px] tracking-0.4px">{artist?.stageName}</div>
+						{/* {artist?.isVerified && <LargeAuthBadge />} */}
 					</div>
 
 					<div className="flex items-center gap-3">
@@ -169,7 +181,7 @@ export const ArtistInfo = memo(() => {
 				</div>
 
 				<div className="flex items-center gap-2">
-					<div className="cursor-pointer">
+					{/* <div className="cursor-pointer">
 						<FilledInstagram />
 					</div>
 					<div className="cursor-pointer">
@@ -177,18 +189,52 @@ export const ArtistInfo = memo(() => {
 					</div>
 					<div className="cursor-pointer">
 						<SoundCloud />
-					</div>
+					</div> */}
+					{artist?.instagramAccount && (
+						<a
+							href={`https://www.instagram.com/${artist?.instagramAccount}`}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							<FilledInstagram />
+						</a>
+					)}
+					{artist?.youtubeAccount && (
+						<a
+							href={`https://www.youtube.com/${artist?.youtubeAccount}`}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							<Youtube />
+						</a>
+					)}
+					{artist?.soundcloudAccount && (
+						<a
+							href={`https://www.soundcloud.com/${artist?.soundcloudAccount}`}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							<SoundCloud />
+						</a>
+					)}
+					{artist?.tiktokAccount && (
+						<a
+							href={`https://www.tiktok.com/${artist?.tiktokAccount}`}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							{/* <TikTok /> */}
+						</a>
+					)}
 				</div>
 
 				<div className="text-[12px] text-[#777] font-medium leading-[16.8px]">
-					<div>28 Tracks</div>
-					<div>171 Visits</div>
+					{/* <div>{artist?.productCount} Tracks</div> */}
+					{/* <div>{artist?.visitCount} Visits</div> */}
 				</div>
 
 				<div className="text-[12px] text-[#1F1F21] font-semibold leading-[18px] tracking-0.12px">
-					어디에서 많은 고이 하늘에는 쪽으로 너, 척 비는 척 너도 행복했던 박명의 속의 꽃밭에 사뿐히 따라 있다 가네 내가
-					언제나 리가 날에, 프랑시스 오신다면 새겨지는 이름자 지나고 모두가 박명의 진달래꽃 흘리우리다. 슬프게 불러 나의
-					그 때 듯합니다.
+					{artist?.description}
 				</div>
 			</div>
 		</div>
