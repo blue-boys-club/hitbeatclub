@@ -10,6 +10,9 @@ import type { PaymentOrderItem } from "@hitbeatclub/shared-types/payment";
 import type { ContactLink } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import UI from "@/components/ui";
+import { useGetProductFileDownloadLinkMutation } from "@/apis/product/mutations/useGetProductFileDownloadLinkMutation";
+import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
+import { AxiosError } from "axios";
 
 type OrderProductItemProps = {
 	item: PaymentOrderItem;
@@ -22,20 +25,46 @@ type OrderProductItemProps = {
 export const OrderProductItem = ({ item, className }: OrderProductItemProps) => {
 	const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 	const { toast } = useToast();
+	const downloadFileMutation = useGetProductFileDownloadLinkMutation();
 
 	const handleDownload = () => {
-		// Download the zip file
-		if (item.product.zipFile?.url) {
-			window.open(item.product.zipFile.url, "_blank");
-			toast({
-				description: "파일이 다운로드 되었습니다.",
-			});
-		} else {
-			toast({
-				description: "다운로드 파일을 찾을 수 없습니다.",
-				variant: "destructive",
-			});
-		}
+		downloadFileMutation.mutate(
+			{
+				productId: item.product.id,
+				type: ENUM_FILE_TYPE.PRODUCT_ZIP_FILE,
+			},
+			{
+				onSuccess: (response) => {
+					if (response.data?.url) {
+						// a 태그를 동적으로 생성해서 다운로드
+						const link = document.createElement("a");
+						link.href = response.data.url;
+						link.download = `${item.product.productName}.zip`;
+						link.target = "_blank";
+						document.body.appendChild(link);
+						link.click();
+						document.body.removeChild(link);
+
+						toast({
+							description: "파일이 다운로드 되었습니다.",
+						});
+					} else {
+						toast({
+							description: "다운로드 파일을 찾을 수 없습니다.",
+							variant: "destructive",
+						});
+					}
+				},
+				onError: (error: Error) => {
+					const message =
+						error instanceof AxiosError ? error.response?.data.detail : "다운로드 중 오류가 발생했습니다.";
+					toast({
+						description: message,
+						variant: "destructive",
+					});
+				},
+			},
+		);
 		setIsDownloadModalOpen(false);
 	};
 
