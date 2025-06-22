@@ -1,12 +1,14 @@
 "use client";
 
 import { Mute, PlayList, Volume, VolumeThumb } from "@/assets/svgs";
+import { useAudioContext } from "@/contexts/AudioContext";
 import * as Slider from "@radix-ui/react-slider";
-import { VolumeControlProps } from "../types";
 import { SidebarType, useLayoutStore } from "@/stores/layout";
 import { useShallow } from "zustand/react/shallow";
 import { useCallback, useMemo } from "react";
-export const VolumeControl = ({ volume, isMuted, onVolumeChange, onMuteToggle }: VolumeControlProps) => {
+
+export const VolumeControl = () => {
+	const { volume, isMuted, onVolumeChange, onMuteToggle } = useAudioContext();
 	const {
 		isOpen,
 		currentType,
@@ -49,17 +51,17 @@ export const VolumeControl = ({ volume, isMuted, onVolumeChange, onMuteToggle }:
 					className="cursor-pointer"
 					onClick={onMuteToggle}
 				>
-					{isMuted || volume.currentVolume === 0 ? <Mute /> : <Volume />}
+					{isMuted || volume === 0 ? <Mute /> : <Volume />}
 				</div>
 
 				<Slider.Root
 					className="relative flex h-5 w-[200px] items-center cursor-pointer group"
 					defaultValue={[0.5]}
-					value={[volume.currentVolume]}
+					value={[volume]}
 					min={0}
 					max={1}
 					step={0.01}
-					onValueChange={onVolumeChange}
+					onValueChange={(value) => onVolumeChange(value[0] ?? 0)}
 				>
 					<Slider.Track className="relative h-[2px] grow bg-black">
 						<Slider.Range className="absolute h-[6px] top-1/2 -translate-y-1/2 bg-black" />

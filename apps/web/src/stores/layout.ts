@@ -15,7 +15,7 @@ export interface LayoutState {
 	rightSidebar: {
 		isOpen: boolean;
 		currentType: SidebarType;
-		trackId?: string | number | null; // TODO: backend 협의 후 수정
+		trackId?: number | null;
 	};
 }
 

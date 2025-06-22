@@ -13,28 +13,69 @@ import {
 	VolumeThumb,
 } from "@/assets/svgs";
 import { ReactPlayer } from "./ReactPlayer";
-import { type AudioPlayerProps } from "../types";
+import { useAudioContext } from "@/contexts/AudioContext";
 import * as Slider from "@radix-ui/react-slider";
+import { useCallback, useState, useEffect } from "react";
 
-export const AudioPlayer = ({
-	playerRef,
-	isPlaying,
-	volume,
-	repeatMode,
-	shuffle,
-	currentTime,
-	duration,
-	togglePlay,
-	onPrevious,
-	onNext,
-	onProgress,
-	onDuration,
-	onEnded,
-	toggleRepeatMode,
-	toggleShuffle,
-	onSeek,
-	url,
-}: AudioPlayerProps) => {
+interface AudioPlayerProps {
+	url: string;
+}
+
+export const AudioPlayer = ({ url }: AudioPlayerProps) => {
+	const {
+		playerRef,
+		isPlaying,
+		volume,
+		repeatMode,
+		shuffle,
+		currentTime,
+		duration,
+		isUserSeeking,
+		togglePlay,
+		onPrevious,
+		onNext,
+		onProgress,
+		onDuration,
+		onEnded,
+		toggleRepeatMode,
+		toggleShuffle,
+		onSeek,
+		onSeekStart,
+		onSeekEnd,
+	} = useAudioContext();
+
+	// 슬라이더 드래그 중 임시 값 저장
+	const [tempSeekValue, setTempSeekValue] = useState<number>(currentTime);
+
+	// 사용자가 시크바를 조작하지 않을 때만 currentTime과 동기화
+	useEffect(() => {
+		if (!isUserSeeking) {
+			setTempSeekValue(currentTime);
+		}
+	}, [currentTime, isUserSeeking]);
+
+	// 슬라이더 드래그 시작
+	const handleSeekStart = useCallback(() => {
+		onSeekStart();
+		setTempSeekValue(currentTime);
+	}, [currentTime, onSeekStart]);
+
+	// 슬라이더 값 변경 중 (드래그 중)
+	const handleSeekChange = useCallback((value: number[]) => {
+		const newTime = value[0] ?? 0;
+		setTempSeekValue(newTime);
+	}, []);
+
+	// 슬라이더 드래그 완료
+	const handleSeekEnd = useCallback(
+		(value: number[]) => {
+			const newTime = value[0] ?? 0;
+			onSeek(newTime);
+			setTempSeekValue(newTime);
+			onSeekEnd();
+		},
+		[onSeek, onSeekEnd],
+	);
 	const getRepeatIcon = () => {
 		switch (repeatMode) {
 			case "one":
@@ -100,7 +141,7 @@ export const AudioPlayer = ({
 				width="0"
 				height="0"
 				value={[currentTime]}
-				volume={volume.currentVolume}
+				volume={volume}
 				onEnded={onEnded}
 				onProgress={({ playedSeconds }) => onProgress(playedSeconds)}
 				onDuration={(duration) => onDuration(duration)}
@@ -111,11 +152,13 @@ export const AudioPlayer = ({
 				<div className="text-black text-base font-bold font-['suit'] leading-3">{formatTime(currentTime)}</div>
 				<Slider.Root
 					className="relative flex h-5 w-[500px] items-center cursor-pointer group"
-					value={[currentTime]}
+					value={[tempSeekValue]}
 					min={0}
 					max={duration}
 					step={1}
-					onValueChange={(value) => onSeek(value[0] ?? currentTime)}
+					onValueChange={handleSeekChange}
+					onValueCommit={handleSeekEnd}
+					onPointerDown={handleSeekStart}
 				>
 					<Slider.Track className="relative h-[2px] grow bg-black">
 						<Slider.Range className="absolute h-[6px] top-1/2 -translate-y-1/2 bg-black" />

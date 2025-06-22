@@ -13,6 +13,8 @@ import { useStartPlayerMutation } from "@/apis/player/mutations/useStartPlayerMu
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { useToast } from "@/hooks/use-toast";
 import { DropContentWrapper } from "@/features/dnd/components/DropContentWrapper";
+import blankCdImage from "@/assets/images/blank-cd.png";
+import { useAudioStore } from "@/stores/audio";
 
 const PlaylistRightSidebar = () => {
 	const { toast } = useToast();
@@ -20,33 +22,34 @@ const PlaylistRightSidebar = () => {
 	// 사용자 정보 조회
 	const { data: user } = useQuery(getUserMeQueryOption());
 
-	// 플레이어 시작 mutation
-	const startPlayerMutation = useStartPlayerMutation({
-		onSuccess: () => {
-			toast({
-				description: "플레이어가 시작되었습니다.",
-			});
-		},
-		onError: (error) => {
-			toast({
-				description: "플레이어 시작에 실패했습니다.",
-				variant: "destructive",
-			});
-			console.error("Player start error:", error);
-		},
-	});
+	const { setProductId, setIsPlaying } = useAudioStore();
 
-	const {
-		isOpen,
-		setRightSidebar,
-		currentTrackId = 0,
-	} = useLayoutStore(
+	// 플레이어 시작 mutation
+
+	const { isOpen, setRightSidebar, currentTrackId } = useLayoutStore(
 		useShallow((state) => ({
 			isOpen: state.rightSidebar.isOpen,
 			setRightSidebar: state.setRightSidebar,
 			currentTrackId: state.rightSidebar.trackId,
 		})),
 	);
+
+	const startPlayerMutation = useStartPlayerMutation({
+		onSuccess: () => {
+			// toast({
+			// 	description: "플레이어가 시작되었습니다.",
+			// });
+			setProductId(currentTrackId ?? null);
+			setIsPlaying(true);
+		},
+		// onError: (error) => {
+		// 	toast({
+		// 		description: "플레이어 시작에 실패했습니다.",
+		// 		variant: "destructive",
+		// 	});
+		// 	console.error("Player start error:", error);
+		// },
+	});
 
 	const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } = useInfiniteQuery(
 		getPlayerListInfiniteQueryOptions(),
@@ -111,8 +114,12 @@ const PlaylistRightSidebar = () => {
 
 	// 현재 선택된 플레이리스트 찾기 - useMemo로 최적화
 	const selectedPlaylist = useMemo(() => {
-		return allPlaylists.find((playlist) => playlist.id === currentTrackId);
+		return allPlaylists.find((playlist) => playlist.productId === currentTrackId);
 	}, [allPlaylists, currentTrackId]);
+
+	const albumImage = useMemo(() => {
+		return selectedPlaylist?.coverImage?.url || blankCdImage;
+	}, [selectedPlaylist]);
 
 	return (
 		<>
@@ -155,7 +162,7 @@ const PlaylistRightSidebar = () => {
 							{selectedPlaylist ? (
 								<div className="flex gap-4 mb-7">
 									<Image
-										src={selectedPlaylist.coverImage.url}
+										src={albumImage}
 										alt="앨범 표지"
 										width={54}
 										height={54}
@@ -193,7 +200,7 @@ const PlaylistRightSidebar = () => {
 											<PlaylistItem
 												key={playlist.id}
 												{...playlist}
-												isSelected={playlist.id === currentTrackId}
+												isSelected={playlist.productId === currentTrackId}
 												onClick={handlePlaylistItemClick}
 											/>
 										))}

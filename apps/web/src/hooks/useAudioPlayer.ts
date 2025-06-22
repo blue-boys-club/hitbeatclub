@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import ReactPlayer from "react-player";
 
 interface AudioPlayerState {
@@ -43,40 +43,49 @@ export const useAudioPlayer = () => {
 
 	const autoPlay = useCallback(() => {
 		if (playerRef.current) {
-			stop(); // 이전 재생 정리
+			// 이전 재생 정리
+			playerRef.current.seekTo(0);
+			setState((prev) => ({ ...prev, isPlaying: false, currentTime: 0 }));
+			// 새로운 재생 시작
 			setState((prev) => ({ ...prev, isPlaying: true }));
 			playerRef.current.seekTo(0);
 		}
-	}, [stop]);
+	}, []);
 
-	const togglePlay = () => {
+	const togglePlay = useCallback(() => {
 		setState((prev) => ({ ...prev, isPlaying: !prev.isPlaying }));
-	};
+	}, []);
 
-	const toggleRepeatMode = () => {
+	const toggleRepeatMode = useCallback(() => {
 		setState((prev) => ({
 			...prev,
 			repeatMode: prev.repeatMode === "none" ? "one" : prev.repeatMode === "one" ? "all" : "none",
 		}));
-	};
+	}, []);
 
-	const toggleShuffle = () => {
+	const toggleShuffle = useCallback(() => {
 		setState((prev) => ({ ...prev, shuffle: !prev.shuffle }));
-	};
+	}, []);
 
 	// 첫 곡이 아니면 이전 곡 이동
-	const onPrevious = () => {
-		if (state.currentIndex > 0) {
-			setState((prev) => ({ ...prev, currentIndex: prev.currentIndex - 1 }));
-		}
-	};
+	const onPrevious = useCallback(() => {
+		setState((prev) => {
+			if (prev.currentIndex > 0) {
+				return { ...prev, currentIndex: prev.currentIndex - 1 };
+			}
+			return prev;
+		});
+	}, []);
 
 	// 마지막 곡이 아니면 다음 곡 이동
-	const onNext = () => {
-		if (state.currentIndex < state.playlist.length - 1) {
-			setState((prev) => ({ ...prev, currentIndex: prev.currentIndex + 1 }));
-		}
-	};
+	const onNext = useCallback(() => {
+		setState((prev) => {
+			if (prev.currentIndex < prev.playlist.length - 1) {
+				return { ...prev, currentIndex: prev.currentIndex + 1 };
+			}
+			return prev;
+		});
+	}, []);
 
 	// 특정 시간으로 이동
 	const onSeek = useCallback((seconds: number) => {
@@ -86,32 +95,35 @@ export const useAudioPlayer = () => {
 	}, []);
 
 	// 현재 진행 중인 재생 시간
-	const onProgress = (playedSeconds: number) => {
+	const onProgress = useCallback((playedSeconds: number) => {
 		setState((prev) => ({ ...prev, currentTime: Math.floor(playedSeconds) }));
-	};
+	}, []);
 
 	// 곡 길이
-	const onDuration = (duration: number) => {
+	const onDuration = useCallback((duration: number) => {
 		setState((prev) => ({ ...prev, duration: Math.floor(duration) }));
-	};
+	}, []);
 
 	// 재생 종료 시 처리
-	const onEnded = () => {
+	const onEnded = useCallback(() => {
 		if (!playerRef.current) return;
 
-		if (state.repeatMode === "one") {
-			playerRef.current.seekTo(0);
-		} else if (state.repeatMode === "all") {
-			const nextIndex = (state.currentIndex + 1) % state.playlist.length;
-			setState((prev) => ({ ...prev, currentIndex: nextIndex }));
-		} else {
-			if (state.currentIndex < state.playlist.length - 1) {
-				setState((prev) => ({ ...prev, currentIndex: prev.currentIndex + 1 }));
+		setState((prev) => {
+			if (prev.repeatMode === "one") {
+				playerRef.current?.seekTo(0);
+				return prev;
+			} else if (prev.repeatMode === "all") {
+				const nextIndex = (prev.currentIndex + 1) % prev.playlist.length;
+				return { ...prev, currentIndex: nextIndex };
 			} else {
-				setState((prev) => ({ ...prev, isPlaying: false }));
+				if (prev.currentIndex < prev.playlist.length - 1) {
+					return { ...prev, currentIndex: prev.currentIndex + 1 };
+				} else {
+					return { ...prev, isPlaying: false };
+				}
 			}
-		}
-	};
+		});
+	}, []);
 
 	// 볼륨 변경
 	const onVolumeChange = useCallback((value: number[]) => {
@@ -162,21 +174,40 @@ export const useAudioPlayer = () => {
 		});
 	}, []);
 
-	return {
-		playerRef,
-		...state,
-		togglePlay,
-		onPrevious,
-		onNext,
-		onProgress,
-		onDuration,
-		onEnded,
-		onVolumeChange,
-		onMuteToggle,
-		toggleRepeatMode,
-		toggleShuffle,
-		onSeek,
-		autoPlay,
-		stop,
-	};
+	// useMemo를 사용하여 객체 참조 안정화
+	return useMemo(
+		() => ({
+			playerRef,
+			...state,
+			togglePlay,
+			onPrevious,
+			onNext,
+			onProgress,
+			onDuration,
+			onEnded,
+			onVolumeChange,
+			onMuteToggle,
+			toggleRepeatMode,
+			toggleShuffle,
+			onSeek,
+			autoPlay,
+			stop,
+		}),
+		[
+			state,
+			togglePlay,
+			onPrevious,
+			onNext,
+			onProgress,
+			onDuration,
+			onEnded,
+			onVolumeChange,
+			onMuteToggle,
+			toggleRepeatMode,
+			toggleShuffle,
+			onSeek,
+			autoPlay,
+			stop,
+		],
+	);
 };

@@ -8,6 +8,7 @@ import Header from "@/components/layout/Header/Header";
 import PlaylistRightSidebar from "@/components/layout/PlaylistRightSidebar/PlaylistRightSidebar";
 import { Sidebar } from "@/components/layout/Sidebar/Sidebar";
 import { Toaster } from "@/components/ui/Toast/toaster";
+import { AudioProvider } from "@/contexts/AudioContext";
 import { DndContext } from "@/features/dnd/components/DndContext";
 import { useAuthStore } from "@/stores/auth";
 import { SidebarType, useLayoutStore } from "@/stores/layout";
@@ -75,7 +76,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 				{/* Fixed Footer */}
 
 				<div className="fixed left-0 right-0 bottom-12px">
-					<FooterPlayer />
+					<AudioProvider>
+						<FooterPlayer />
+					</AudioProvider>
 				</div>
 
 				<Toaster viewportClassName="bottom-92px" />

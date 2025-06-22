@@ -98,6 +98,7 @@ const QUERY_KEYS = {
 		_list: ["search", "list"],
 		list: (payload: ProductSearchQuery): QueryKey => ["search", "list", payload],
 		infiniteList: (payload: ProductSearchQuery): QueryKey => ["search", "list", "infinite", payload],
+		autocomplete: (keyword: string): QueryKey => ["search", "autocomplete", keyword],
 	},
 	player: {
 		_key: ["player"],
