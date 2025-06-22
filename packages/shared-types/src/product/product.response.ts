@@ -257,3 +257,4 @@ export type ProductRowByDashboardResponse = z.infer<typeof ProductRowByDashboard
 export type ProductAutoCompleteArtistResponse = z.infer<typeof ProductAutoCompleteArtistResponseSchema>;
 export type ProductAutoCompleteProductResponse = z.infer<typeof ProductAutoCompleteProductResponseSchema>;
 export type ProductAutoCompleteResponse = z.infer<typeof ProductAutoCompleteResponseSchema>;
+export type ProductLikeResponse = z.infer<typeof ProductLikeResponseSchema>;
