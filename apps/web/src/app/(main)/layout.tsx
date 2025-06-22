@@ -5,11 +5,12 @@ import { cn } from "@/common/utils";
 import { MusicRightSidebar } from "@/components/layout";
 import { FooterPlayer } from "@/components/layout/Footer/Player/FooterPlayer";
 import Header from "@/components/layout/Header/Header";
+import PlaylistRightSidebar from "@/components/layout/PlaylistRightSidebar/PlaylistRightSidebar";
 import { Sidebar } from "@/components/layout/Sidebar/Sidebar";
 import { Toaster } from "@/components/ui/Toast/toaster";
 import { ProductDndContext } from "@/features/dnd/componenets/ProductDndContext";
 import { useAuthStore } from "@/stores/auth";
-import { useLayoutStore } from "@/stores/layout";
+import { SidebarType, useLayoutStore } from "@/stores/layout";
 import { DndContext } from "@dnd-kit/core";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -24,10 +25,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 	const { setPhoneNumber, userPhoneNumber } = useAuthStore(
 		useShallow((state) => ({ setPhoneNumber: state.setPhoneNumber, userPhoneNumber: state.user?.phoneNumber })),
 	);
-	const { isLeftSidebarOpen, isRightSidebarOpen } = useLayoutStore(
+	const { isLeftSidebarOpen, isRightSidebarOpen, rightSidebarType } = useLayoutStore(
 		useShallow((state) => ({
 			isLeftSidebarOpen: state.leftSidebar.isOpen,
 			isRightSidebarOpen: state.rightSidebar.isOpen,
+			rightSidebarType: state.rightSidebar.currentType,
 		})),
 	);
 
@@ -68,7 +70,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 			</ProductDndContext>
 
 			<div className="fixed right-0">
-				<MusicRightSidebar />
+				{rightSidebarType === SidebarType.TRACK && <MusicRightSidebar />}
+				{rightSidebarType === SidebarType.PLAYLIST && <PlaylistRightSidebar />}
 			</div>
 
 			{/* Fixed Footer */}

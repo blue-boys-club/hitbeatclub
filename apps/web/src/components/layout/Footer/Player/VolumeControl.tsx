@@ -3,12 +3,46 @@
 import { Mute, PlayList, Volume, VolumeThumb } from "@/assets/svgs";
 import * as Slider from "@radix-ui/react-slider";
 import { VolumeControlProps } from "../types";
+import { SidebarType, useLayoutStore } from "@/stores/layout";
+import { useShallow } from "zustand/react/shallow";
+import { useCallback, useMemo } from "react";
 export const VolumeControl = ({ volume, isMuted, onVolumeChange, onMuteToggle }: VolumeControlProps) => {
+	const {
+		isOpen,
+		currentType,
+		setRightSidebar,
+		// currentTrackId = 12,
+	} = useLayoutStore(
+		useShallow((state) => ({
+			isOpen: state.rightSidebar.isOpen,
+			currentType: state.rightSidebar.currentType,
+			setRightSidebar: state.setRightSidebar,
+		})),
+	);
+
+	const playlistColor = useMemo(() => {
+		// return isOpen ? "black" : "white";
+		return isOpen && currentType === SidebarType.PLAYLIST ? "var(--hbc-red)" : "var(--hbc-black)";
+	}, [currentType, isOpen]);
+
+	const toggleRightSidebar = useCallback(() => {
+		if (isOpen && currentType !== SidebarType.PLAYLIST) {
+			setRightSidebar(true, { currentType: SidebarType.PLAYLIST });
+		} else if (isOpen && currentType === SidebarType.PLAYLIST) {
+			setRightSidebar(false);
+		} else {
+			setRightSidebar(true, { currentType: SidebarType.PLAYLIST });
+		}
+	}, [isOpen, currentType, setRightSidebar]);
+
 	return (
 		<div className="inline-flex justify-center items-center gap-4 relative">
-			<div className="cursor-pointer">
-				<PlayList />
-			</div>
+			<button
+				className="cursor-pointer"
+				onClick={toggleRightSidebar}
+			>
+				<PlayList color={playlistColor} />
+			</button>
 
 			<div className="flex items-center gap-2">
 				<div
