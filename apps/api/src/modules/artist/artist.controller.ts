@@ -111,6 +111,154 @@ export class ArtistController {
 		};
 	}
 
+	@Get("slug/:slug")
+	@AuthenticationDoc()
+	@ApiOperation({ summary: "아티스트 slug로 상세 조회" })
+	@DocResponse<ArtistDetailResponseDto>(artistMessage.find.success, {
+		dto: ArtistDetailResponseDto,
+	})
+	async findBySlug(@Param("slug") slug: string) {
+		const artist = await this.artistService.findBySlug(slug);
+
+		if (!artist) {
+			throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
+		}
+
+		return {
+			statusCode: 200,
+			message: artistMessage.find.success,
+			data: artist,
+		};
+	}
+
+	@Get(":id/products")
+	@ApiOperation({ summary: "아티스트 제품 목록 조회 (ID 기준)" })
+	@ProductFindQuery()
+	@DocResponsePaging<ProductListResponseDto>(productMessage.find.success, {
+		dto: ProductListResponseDto,
+	})
+	async findProductsById(
+		@Param("id", ParseIntPipe) id: number,
+		@Query() artistProductListQueryRequestDto: ArtistProductListQueryRequestDto,
+	): Promise<IResponsePaging<ProductListResponseDto>> {
+		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds } = artistProductListQueryRequestDto;
+
+		const artist = await this.artistService.findOne(id);
+
+		if (!artist) {
+			throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
+		}
+
+		const where = {
+			sellerId: artist.id,
+			isPublic: 1, // 공개된 제품만 조회
+			...(category === "null" || category === undefined ? {} : { category }),
+			...(musicKey === "null" || musicKey === undefined ? {} : { musicKey }),
+			...(scaleType === "null" || scaleType === undefined ? {} : { scaleType }),
+			...(minBpm ? { minBpm: { lte: minBpm }, maxBpm: { gte: minBpm } } : {}),
+			...(maxBpm ? { minBpm: { lte: maxBpm }, maxBpm: { gte: maxBpm } } : {}),
+			...(genreIds && genreIds.length > 0
+				? {
+						productGenre: {
+							some: {
+								deletedAt: null,
+								genreId: { in: genreIds },
+							},
+						},
+					}
+				: {}),
+			...(tagIds && tagIds.length > 0
+				? {
+						productTag: {
+							some: {
+								deletedAt: null,
+								tagId: { in: tagIds },
+							},
+						},
+					}
+				: {}),
+		};
+
+		const products = await this.productService.findAll(where, artistProductListQueryRequestDto);
+		const total = await this.productService.getTotal(where);
+
+		return {
+			statusCode: 200,
+			message: productMessage.find.success,
+			_pagination: {
+				page: artistProductListQueryRequestDto.page,
+				limit: artistProductListQueryRequestDto.limit,
+				totalPage: Math.ceil(total / artistProductListQueryRequestDto.limit),
+				total,
+			},
+			data: products,
+		};
+	}
+
+	@Get("slug/:slug/products")
+	@ApiOperation({ summary: "아티스트 제품 목록 조회 (Slug 기준)" })
+	@ProductFindQuery()
+	@DocResponsePaging<ProductListResponseDto>(productMessage.find.success, {
+		dto: ProductListResponseDto,
+	})
+	async findProductsBySlug(
+		@Param("slug") slug: string,
+		@Query() artistProductListQueryRequestDto: ArtistProductListQueryRequestDto,
+	): Promise<IResponsePaging<ProductListResponseDto>> {
+		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds } = artistProductListQueryRequestDto;
+
+		const artist = await this.artistService.findBySlug(slug);
+
+		if (!artist) {
+			throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
+		}
+
+		const where = {
+			sellerId: artist.id,
+			isPublic: 1, // 공개된 제품만 조회
+			...(category === "null" || category === undefined ? {} : { category }),
+			...(musicKey === "null" || musicKey === undefined ? {} : { musicKey }),
+			...(scaleType === "null" || scaleType === undefined ? {} : { scaleType }),
+			...(minBpm ? { minBpm: { lte: minBpm }, maxBpm: { gte: minBpm } } : {}),
+			...(maxBpm ? { minBpm: { lte: maxBpm }, maxBpm: { gte: maxBpm } } : {}),
+			...(genreIds && genreIds.length > 0
+				? {
+						productGenre: {
+							some: {
+								deletedAt: null,
+								genreId: { in: genreIds },
+							},
+						},
+					}
+				: {}),
+			...(tagIds && tagIds.length > 0
+				? {
+						productTag: {
+							some: {
+								deletedAt: null,
+								tagId: { in: tagIds },
+							},
+						},
+					}
+				: {}),
+		};
+
+		const products = await this.productService.findAll(where, artistProductListQueryRequestDto);
+		const total = await this.productService.getTotal(where);
+
+		return {
+			statusCode: 200,
+			message: productMessage.find.success,
+			_pagination: {
+				page: artistProductListQueryRequestDto.page,
+				limit: artistProductListQueryRequestDto.limit,
+				totalPage: Math.ceil(total / artistProductListQueryRequestDto.limit),
+				total,
+			},
+			data: products,
+		};
+	}
+
 	@Post()
 	@ApiOperation({ summary: "아티스트 생성" })
 	@AuthenticationDoc()

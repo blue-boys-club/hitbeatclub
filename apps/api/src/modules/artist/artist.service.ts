@@ -173,6 +173,51 @@ export class ArtistService {
 		}
 	}
 
+	async findBySlug(slug: string) {
+		try {
+			const artist = await this.prisma.artist
+				.findFirst({
+					where: { slug, deletedAt: null },
+					include: {
+						user: {
+							select: {
+								id: true,
+								email: true,
+								name: true,
+							},
+						},
+						settlement: {
+							select: {
+								type: true,
+								accountHolder: true,
+								accountNumber: true,
+								accountBank: true,
+								paypalAccount: true,
+							},
+						},
+					},
+				})
+				.then((data) => this.prisma.serializeBigInt(data) as Artist);
+
+			if (!artist) {
+				throw new NotFoundException("Artist not found");
+			}
+			const profileImageFile = await this.fileService.findFilesByTargetId({
+				targetId: Number(artist.id),
+				targetTable: "artist",
+			});
+
+			return {
+				...artist,
+				id: Number(artist.id),
+				userId: Number(artist.userId),
+				profileImageUrl: profileImageFile[0]?.url || null,
+			};
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
 	async findByUserId(userId: number) {
 		try {
 			const artist = await this.prisma.artist
