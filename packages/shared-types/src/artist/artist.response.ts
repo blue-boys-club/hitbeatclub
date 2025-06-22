@@ -6,6 +6,7 @@ export const ArtistResponseSchema = z.object({
 	userId: z.number().describe("사용자 ID").default(1),
 	stageName: z.string().nullable().describe("스테이지명").default("DJ 스파이더"),
 	slug: z.string().nullable().describe("슬러그").default("dj-spider"),
+	isVerified: z.coerce.boolean().nullable().describe("인증 여부").default(false),
 	description: z.string().nullable().describe("아티스트 설명").default("한국의 유명 DJ이자 프로듀서"),
 	profileImageUrl: z.string().nullable().describe("프로필 이미지 URL").default("https://example.com/profile.jpg"),
 	instagramAccount: z.string().nullable().describe("인스타그램 계정").default("djspider"),

@@ -137,7 +137,7 @@ export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 				<div className="flex items-center gap-6">
 					<div className="flex items-center gap-2">
 						<div className="text-[40px] font-bold leading-[40px] tracking-0.4px">{artist?.stageName}</div>
-						{/* {artist?.isVerified && <LargeAuthBadge />} */}
+						{artist?.isVerified && <LargeAuthBadge />}
 					</div>
 
 					<div className="flex items-center gap-3">

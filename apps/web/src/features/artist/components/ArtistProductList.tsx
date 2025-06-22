@@ -6,6 +6,7 @@ import { useInView } from "react-intersection-observer";
 import { getArtistProductListBySlugInfiniteQueryOption } from "@/apis/artist/query/artist.query-options";
 import type { ArtistProductListQueryRequest } from "@hitbeatclub/shared-types/artist";
 import type { ProductListItem } from "@/features/product/product.types";
+import { useLikeProductMutation } from "@/apis/product/mutations";
 
 interface ArtistProductListProps {
 	slug: string;
@@ -22,6 +23,15 @@ export const ArtistProductList = memo(({ slug }: ArtistProductListProps) => {
 		sort: "RECENT",
 		isPublic: true,
 	});
+
+	const { mutate: likeProduct } = useLikeProductMutation();
+
+	const handleLike = useCallback(
+		(productId: number) => {
+			likeProduct(productId);
+		},
+		[likeProduct],
+	);
 
 	const handleFiltersChange = useCallback((newFilters: Omit<ArtistProductListQueryRequest, "page" | "limit">) => {
 		setFilters((prev) => ({ ...prev, ...newFilters }));
@@ -143,6 +153,8 @@ export const ArtistProductList = memo(({ slug }: ArtistProductListProps) => {
 							albumImgSrc={product.coverImage?.url}
 							tags={product.tags ? (product.tags as any).map((t: any) => (typeof t === "string" ? t : t.name)) : []}
 							type={product.category as any}
+							isLiked={!!product.isLiked}
+							onLike={() => handleLike(product.id)}
 						/>
 					))
 				)}

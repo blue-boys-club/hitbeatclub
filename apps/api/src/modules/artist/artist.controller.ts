@@ -48,6 +48,7 @@ import { ArtistReportRequestDto } from "./dto/request/artist.report.request.dto"
 import { ArtistReportResponseDto } from "./dto/response/artist.report.response.dto";
 import { ProductFindQuery } from "../product/decorators/product.decorator";
 import { isNumber } from "../search/search.utils";
+import { AuthJwtAccessOptional, AuthJwtAccessProtected } from "../auth/decorators/auth.jwt.decorator";
 
 @Controller("artists")
 @ApiTags("artist")
@@ -78,6 +79,7 @@ export class ArtistController {
 
 	@Get("me")
 	@ApiOperation({ summary: "내 아티스트 정보 조회" })
+	@AuthJwtAccessProtected()
 	@AuthenticationDoc()
 	@DocResponse<ArtistDetailResponseDto>(artistMessage.findMe.success, {
 		dto: ArtistDetailResponseDto,
@@ -94,6 +96,7 @@ export class ArtistController {
 
 	@Get(":id")
 	@AuthenticationDoc()
+	@AuthJwtAccessOptional()
 	@ApiOperation({ summary: "아티스트 상세 조회" })
 	@DocResponse<ArtistDetailResponseDto>(artistMessage.find.success, {
 		dto: ArtistDetailResponseDto,
@@ -114,6 +117,7 @@ export class ArtistController {
 
 	@Get("slug/:slug")
 	@AuthenticationDoc()
+	@AuthJwtAccessOptional()
 	@ApiOperation({ summary: "아티스트 slug로 상세 조회" })
 	@DocResponse<ArtistDetailResponseDto>(artistMessage.find.success, {
 		dto: ArtistDetailResponseDto,
@@ -140,11 +144,13 @@ export class ArtistController {
 
 	@Get(":id/products")
 	@ApiOperation({ summary: "아티스트 제품 목록 조회 (ID 기준)" })
+	@AuthJwtAccessOptional()
 	@ProductFindQuery()
 	@DocResponsePaging<ProductListResponseDto>(productMessage.find.success, {
 		dto: ProductListResponseDto,
 	})
 	async findProductsById(
+		@Req() req: AuthenticatedRequest,
 		@Param("id", ParseIntPipe) id: number,
 		@Query() artistProductListQueryRequestDto: ArtistProductListQueryRequestDto,
 	): Promise<IResponsePaging<ProductListResponseDto>> {
@@ -186,7 +192,12 @@ export class ArtistController {
 				: {}),
 		};
 
-		const products = await this.productService.findAll(where, artistProductListQueryRequestDto);
+		const products = await this.productService.findAll(
+			where,
+			artistProductListQueryRequestDto,
+			undefined,
+			req?.user?.id,
+		);
 		const total = await this.productService.getTotal(where);
 
 		return {
@@ -205,10 +216,12 @@ export class ArtistController {
 	@Get("slug/:slug/products")
 	@ApiOperation({ summary: "아티스트 제품 목록 조회 (Slug 기준)" })
 	@ProductFindQuery()
+	@AuthJwtAccessOptional()
 	@DocResponsePaging<ProductListResponseDto>(productMessage.find.success, {
 		dto: ProductListResponseDto,
 	})
 	async findProductsBySlug(
+		@Req() req: AuthenticatedRequest,
 		@Param("slug") slug: string,
 		@Query() artistProductListQueryRequestDto: ArtistProductListQueryRequestDto,
 	): Promise<IResponsePaging<ProductListResponseDto>> {
@@ -256,7 +269,12 @@ export class ArtistController {
 				: {}),
 		};
 
-		const products = await this.productService.findAll(where, artistProductListQueryRequestDto);
+		const products = await this.productService.findAll(
+			where,
+			artistProductListQueryRequestDto,
+			undefined,
+			req?.user?.id,
+		);
 		const total = await this.productService.getTotal(where);
 
 		return {

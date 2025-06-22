@@ -48,8 +48,9 @@ export const ProductResponseSchema = z.object({
 	seller: z.object({
 		id: z.number().describe("판매자 ID").default(1),
 		stageName: z.string().describe("판매자 닉네임").default("판매자"),
+		slug: z.string().nullable().describe("판매자 슬러그").default("notjake"),
 		profileImageUrl: z.string().url().describe("판매자 프로필 이미지 URL").default("https://example.com/profile.jpg"),
-		isVerified: z.number().describe("인증 여부").default(1),
+		isVerified: z.coerce.boolean().nullable().describe("인증 여부"),
 	}),
 	licenseInfo: z.array(
 		z.object({
@@ -101,6 +102,8 @@ export const ProductRowByDashboardSchema = z.object({
 	}),
 	seller: z.object({
 		id: z.number().describe("판매자 ID").default(21),
+		slug: z.string().nullable().describe("판매자 슬러그").default("notjake"),
+		isVerified: z.coerce.boolean().nullable().describe("인증 여부"),
 		stageName: z.string().describe("판매자 닉네임").default("NotJake"),
 		profileImageUrl: z.string().url().describe("판매자 프로필 이미지 URL").default("https://example.com/profile.jpg"),
 	}),
@@ -126,8 +129,9 @@ export const ProductDetailResponseSchema = z.object({
 	seller: z.object({
 		id: z.number().describe("판매자 ID").default(1),
 		stageName: z.string().describe("판매자 닉네임").default("판매자"),
+		slug: z.string().nullable().describe("판매자 슬러그").default("notjake"),
 		profileImageUrl: z.string().url().describe("판매자 프로필 이미지 URL").default("https://example.com/profile.jpg"),
-		isVerified: z.number().describe("인증 여부").default(1),
+		isVerified: z.coerce.boolean().nullable().describe("인증 여부"),
 	}),
 	audioFile: z.object({
 		id: z.number().describe("오디오 파일 ID").default(1),
@@ -189,6 +193,8 @@ export const ProductLikeResponseSchema = z.object({
 	seller: z.object({
 		id: z.number().describe("판매자 ID").default(21),
 		stageName: z.string().describe("판매자 닉네임").default("NotJake"),
+		slug: z.string().nullable().describe("판매자 슬러그").default("notjake"),
+		isVerified: z.coerce.boolean().nullable().describe("인증 여부"),
 		profileImageUrl: z.string().url().describe("판매자 프로필 이미지 URL").default("https://example.com/profile.jpg"),
 	}),
 	genres: z.array(z.string()).describe("장르 목록"),

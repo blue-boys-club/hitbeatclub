@@ -148,7 +148,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 
 						<div className="flex justify-between items-center">
 							<Link
-								href={`/artists/${product?.seller?.id}`}
+								href={`/artists/${product?.seller?.slug || product?.seller?.id}`}
 								className="flex items-center gap-2"
 							>
 								<UserAvatar

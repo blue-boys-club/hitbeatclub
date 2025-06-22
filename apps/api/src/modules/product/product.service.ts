@@ -220,6 +220,7 @@ export class ProductService {
 							select: {
 								id: true,
 								stageName: true,
+								slug: true,
 								profileImageUrl: true,
 								isVerified: true,
 							},
