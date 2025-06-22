@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Acapella, Beat, Download } from "@/assets/svgs";
 import { cn } from "@/common/utils";
 import { type ClassValue } from "clsx";
@@ -10,9 +10,10 @@ import type { PaymentOrderItem } from "@hitbeatclub/shared-types/payment";
 import type { ContactLink } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import UI from "@/components/ui";
-import { useGetProductFileDownloadLinkMutation } from "@/apis/product/mutations/useGetProductFileDownloadLinkMutation";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
 import { AxiosError } from "axios";
+import { getProductFileDownloadLinkQueryOption } from "@/apis/product/query/product.query-option";
+import { useQueryClient } from "@tanstack/react-query";
 
 type OrderProductItemProps = {
 	item: PaymentOrderItem;
@@ -24,48 +25,51 @@ type OrderProductItemProps = {
  */
 export const OrderProductItem = ({ item, className }: OrderProductItemProps) => {
 	const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+	const [isDownloading, setIsDownloading] = useState(false);
 	const { toast } = useToast();
-	const downloadFileMutation = useGetProductFileDownloadLinkMutation();
+	const queryClient = useQueryClient();
 
-	const handleDownload = () => {
-		downloadFileMutation.mutate(
-			{
-				productId: item.product.id,
-				type: ENUM_FILE_TYPE.PRODUCT_ZIP_FILE,
-			},
-			{
-				onSuccess: (response) => {
-					if (response.data?.url) {
-						// a 태그를 동적으로 생성해서 다운로드
-						const link = document.createElement("a");
-						link.href = response.data.url;
-						link.download = `${item.product.productName}.zip`;
-						link.target = "_blank";
-						document.body.appendChild(link);
-						link.click();
-						document.body.removeChild(link);
+	const handleDownload = async () => {
+		setIsDownloading(true);
 
-						toast({
-							description: "파일이 다운로드 되었습니다.",
-						});
-					} else {
-						toast({
-							description: "다운로드 파일을 찾을 수 없습니다.",
-							variant: "destructive",
-						});
-					}
-				},
-				onError: (error: Error) => {
-					const message =
-						error instanceof AxiosError ? error.response?.data.detail : "다운로드 중 오류가 발생했습니다.";
-					toast({
-						description: message,
-						variant: "destructive",
-					});
-				},
-			},
-		);
-		setIsDownloadModalOpen(false);
+		try {
+			// fetchQuery를 사용하여 사용자가 명시적으로 요청할 때만 다운로드 링크 조회
+			const response = await queryClient.fetchQuery(
+				getProductFileDownloadLinkQueryOption(item.product.id, ENUM_FILE_TYPE.PRODUCT_ZIP_FILE),
+			);
+
+			if (response?.data?.url) {
+				// a 태그를 동적으로 생성해서 다운로드
+				const link = document.createElement("a");
+				link.href = response.data.url;
+				link.download = `${item.product.productName}.zip`;
+				link.target = "_blank";
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+
+				toast({
+					description: "파일이 다운로드 되었습니다.",
+				});
+			} else {
+				toast({
+					description: "다운로드 파일을 찾을 수 없습니다.",
+					variant: "destructive",
+				});
+			}
+		} catch (error) {
+			const message =
+				error instanceof AxiosError
+					? error.response?.data.detail || "다운로드 중 오류가 발생했습니다."
+					: "다운로드 중 오류가 발생했습니다.";
+			toast({
+				description: message,
+				variant: "destructive",
+			});
+		} finally {
+			setIsDownloading(false);
+			setIsDownloadModalOpen(false);
+		}
 	};
 
 	const handleDownloadClick = () => {
@@ -74,7 +78,6 @@ export const OrderProductItem = ({ item, className }: OrderProductItemProps) => 
 
 	const handleConfirmDownload = () => {
 		handleDownload();
-		setIsDownloadModalOpen(false);
 	};
 
 	// Determine product type from category (스키마에서 ACAPELA로 정의되어 있음)
@@ -188,13 +191,17 @@ export const OrderProductItem = ({ item, className }: OrderProductItemProps) => 
 							className={cn(
 								"w-28 h-10 px-2 py-1 rounded-5px outline-2 outline-offset-[-2px] inline-flex justify-center items-center gap-2.5 transition-opacity",
 								"bg-hbc-white outline-hbc-black text-hbc-black group hover:bg-[#3884FF] hover:outline-[#3884FF] hover:text-hbc-white cursor-pointer",
+								isDownloading && "opacity-50 cursor-not-allowed",
 							)}
 							onClick={handleDownloadClick}
+							disabled={isDownloading}
 						>
 							<div className={cn("size-4 relative group-hover:[&_path]:fill-hbc-white")}>
 								<Download />
 							</div>
-							<div className={cn("text-12px font-medium font-suisse leading-none tracking-tight")}>Download</div>
+							<div className={cn("text-12px font-medium font-suisse leading-none tracking-tight")}>
+								{isDownloading ? "다운로드 중..." : "Download"}
+							</div>
 						</button>
 					</div>
 				</div>

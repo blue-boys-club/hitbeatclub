@@ -7,11 +7,7 @@ import { AudioPlayer } from "./AudioPlayer";
 import { VolumeControl } from "./VolumeControl";
 import Image from "next/image";
 import { assetImageLoader } from "@/common/utils/image-loader";
-import {
-	useLikeProductMutation,
-	useUnlikeProductMutation,
-	useGetProductFileDownloadLinkMutation,
-} from "@/apis/product/mutations";
+import { useLikeProductMutation, useUnlikeProductMutation } from "@/apis/product/mutations";
 import { useShallow } from "zustand/react/shallow";
 import { useAudioStore } from "@/stores/audio";
 import { PurchaseWithCartTrigger } from "@/features/product/components/PurchaseWithCartTrigger";
@@ -20,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
 import { useQuery } from "@tanstack/react-query";
 import { getPlayerListQueryOptions } from "@/apis/player/query/player.query-options";
+import { getProductFileDownloadLinkQueryOption } from "@/apis/product/query/product.query-option";
 
 /**
  * 푸터 플레이어 컴포넌트
@@ -46,7 +43,6 @@ export const FooterPlayer = () => {
 
 	const { mutate: likeMutation } = useLikeProductMutation();
 	const { mutate: unlikeProduct } = useUnlikeProductMutation();
-	const { mutate: getAudioFileDownloadLink } = useGetProductFileDownloadLinkMutation();
 
 	// Get player list for next track functionality
 	const { data: playerList } = useQuery(
@@ -92,34 +88,42 @@ export const FooterPlayer = () => {
 		}
 	};
 
+	// 오디오 파일 다운로드 링크 조회를 위한 상태
+	const [audioProductId, setAudioProductId] = useState<number | null>(null);
+
+	// 오디오 파일 다운로드 링크 조회
+	const { data: audioFileDownloadLink, error: audioFileError } = useQuery({
+		...getProductFileDownloadLinkQueryOption(audioProductId!, ENUM_FILE_TYPE.PRODUCT_AUDIO_FILE),
+		enabled: !!audioProductId,
+	});
+
+	// 오디오 파일 다운로드 링크가 변경될 때마다 재생
+	useEffect(() => {
+		if (audioFileDownloadLink?.url) {
+			setCurrentAudioUrl(audioFileDownloadLink.url);
+			audioPlayerState.stop();
+			const timer = setTimeout(() => {
+				audioPlayerState.autoPlay();
+			}, 200);
+			return () => clearTimeout(timer);
+		}
+	}, [audioFileDownloadLink]);
+
+	// 오디오 파일 다운로드 에러 처리
+	useEffect(() => {
+		if (audioFileError) {
+			toast({
+				title: "재생 실패",
+				description: "오디오 파일을 불러올 수 없습니다. 잠시 후 다시 시도해주세요.",
+				variant: "destructive",
+			});
+		}
+	}, [audioFileError, toast]);
+
 	// 오디오 파일 다운로드 링크 가져오기 및 재생
 	const playAudioFile = (productId: number) => {
 		if (!productId) return;
-
-		getAudioFileDownloadLink(
-			{
-				productId,
-				type: ENUM_FILE_TYPE.PRODUCT_AUDIO_FILE,
-			},
-			{
-				onSuccess: (response) => {
-					if (response.data?.url) {
-						setCurrentAudioUrl(response.data.url);
-						audioPlayerState.stop();
-						const timer = setTimeout(() => {
-							audioPlayerState.autoPlay();
-						}, 200);
-					}
-				},
-				onError: () => {
-					toast({
-						title: "Play Failed",
-						description: "playfialed",
-						variant: "destructive",
-					});
-				},
-			},
-		);
+		setAudioProductId(productId);
 	};
 
 	// ID가 변경될 때마다 오디오 파일 다운로드 링크 가져오기

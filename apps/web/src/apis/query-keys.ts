@@ -51,6 +51,7 @@ const QUERY_KEYS = {
 		one: (productId: number): QueryKey => ["products", productId],
 		searchInfo: ["products", "searchInfo"],
 		dashboard: ["products", "dashboard"],
+		fileDownloadLink: (productId: number, type: string): QueryKey => ["products", productId, "fileDownloadLink", type],
 	},
 	artist: {
 		_key: ["artist"],

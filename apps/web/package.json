@@ -8,6 +8,7 @@
 		"start": "next start",
 		"lint": "next lint",
 		"typecheck": "tsc --noEmit",
+		"type-check": "tsc --noEmit",
 		"test": "vitest run",
 		"test:watch": "vitest watch --ui",
 		"storybook": "storybook dev -p 6006",

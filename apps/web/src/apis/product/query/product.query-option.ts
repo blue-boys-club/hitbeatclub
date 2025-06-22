@@ -3,10 +3,12 @@ import {
 	getProductList,
 	getProductListForDashboard,
 	getProductSearchInfo,
+	getProductFileDownloadLink,
 } from "@/apis/product/product.api";
 import { QUERY_KEYS } from "@/apis/query-keys";
 import { ProductListQueryRequest } from "@hitbeatclub/shared-types/product";
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
+import { PRODUCT_FILE_TYPE } from "../product.type";
 
 export const getProductListQueryOption = (payload: ProductListQueryRequest) => {
 	return queryOptions({
@@ -65,6 +67,14 @@ export const getProductListForDashboardQueryOption = () => {
 	return queryOptions({
 		queryKey: QUERY_KEYS.products.dashboard,
 		queryFn: () => getProductListForDashboard(),
+		select: (response) => response.data,
+	});
+};
+
+export const getProductFileDownloadLinkQueryOption = (productId: number, type: PRODUCT_FILE_TYPE) => {
+	return queryOptions({
+		queryKey: QUERY_KEYS.products.fileDownloadLink(productId, type),
+		queryFn: () => getProductFileDownloadLink(productId, type),
 		select: (response) => response.data,
 	});
 };

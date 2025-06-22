@@ -4,4 +4,3 @@ export { useLikeProductMutation } from "./useLikeProductMutation";
 export { useUnlikeProductMutation } from "./useUnLikeProductMutation";
 export { useUploadProductFileMutation } from "./useUploadProductFileMutation";
 export { useDeleteProductMutation } from "./useDeleteProductMutation";
-export { useGetProductFileDownloadLinkMutation } from "./useGetProductFileDownloadLinkMutation";
