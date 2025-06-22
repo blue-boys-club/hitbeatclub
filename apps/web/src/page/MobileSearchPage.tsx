@@ -5,6 +5,9 @@ import { cn } from "@/common/utils";
 import { MobileProductItem, MobileProductListFilter } from "@/features/mobile/product/components";
 import { MobileBuyOrCartModal } from "@/features/mobile/search/modals";
 import { useState, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getSearchQueryOption } from "@/apis/search/query/product.query-option";
+import { ProductSearchQuery } from "@/apis/search/search.type";
 
 const MobileSearchPage = () => {
 	const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -14,6 +17,25 @@ const MobileSearchPage = () => {
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [isOpenBuyOrCartModal, setIsOpenBuyOrCartModal] = useState(false);
 	const [isShowFilter, setIsShowFilter] = useState(false);
+	const [searchFilters, setSearchFilters] = useState<Partial<ProductSearchQuery>>({});
+
+	// 검색 키워드와 필터를 기반으로 한 검색 쿼리 생성
+	const searchQueryParams: ProductSearchQuery = {
+		keyword: searchQuery.trim() || undefined,
+		page: 1,
+		limit: 20,
+		...searchFilters,
+	};
+
+	// 검색 결과 가져오기
+	const {
+		data: searchResults,
+		isLoading,
+		error,
+	} = useQuery({
+		...getSearchQueryOption(searchQueryParams),
+		enabled: !!searchQuery.trim(), // 검색어가 있을 때만 실행
+	});
 
 	// 임시 자동완성 데이터 (실제로는 API나 데이터베이스에서 가져와야 함)
 	const mockSuggestions = [
@@ -93,6 +115,11 @@ const MobileSearchPage = () => {
 		}
 	};
 
+	// 필터 적용 핸들러
+	const handleApplyFilter = (filters: Partial<ProductSearchQuery>) => {
+		setSearchFilters(filters);
+	};
+
 	// 선택된 인덱스가 변경될 때마다 스크롤 위치 조정
 	useEffect(() => {
 		if (selectedIndex >= 0) {
@@ -160,7 +187,7 @@ const MobileSearchPage = () => {
 				) : (
 					<div className="flex flex-col gap-3">
 						<div className="h-40px border-b-6px border-black flex justify-between">
-							<span className="font-bold text-22px leading-24px">Search Results</span>
+							<span className="font-bold text-22px leading-24px">Search Results ({searchResults?.total || 0})</span>
 							<button
 								className="h-24px rounded-40px bg-[#dadada] px-2 font-semibold text-14px leading-16px"
 								onClick={() => {
@@ -170,24 +197,35 @@ const MobileSearchPage = () => {
 								Filters <span className="text-18px">+</span>
 							</button>
 						</div>
-						<div
-							className="flex flex-col gap-2"
-							onClick={() => {
-								setIsOpenBuyOrCartModal(true);
-							}}
-						>
-							<MobileProductItem />
-							<MobileProductItem />
-							<MobileProductItem />
-							<MobileProductItem />
-							<MobileProductItem />
-							<MobileProductItem />
-							<MobileProductItem />
-							<MobileProductItem />
-							<MobileProductItem />
-							<MobileProductItem />
-							<MobileProductItem />
-						</div>
+
+						{isLoading ? (
+							<div className="flex justify-center py-8">
+								<span className="text-16px">검색 중...</span>
+							</div>
+						) : error ? (
+							<div className="flex justify-center py-8">
+								<span className="text-16px text-red-500">검색 중 오류가 발생했습니다.</span>
+							</div>
+						) : searchResults?.products.length === 0 ? (
+							<div className="flex justify-center py-8">
+								<span className="text-16px">검색 결과가 없습니다.</span>
+							</div>
+						) : (
+							<div
+								className="flex flex-col gap-2"
+								onClick={() => {
+									setIsOpenBuyOrCartModal(true);
+								}}
+							>
+								{searchResults?.products.map((product) => (
+									<MobileProductItem
+										key={product.id}
+										type="search"
+										product={product}
+									/>
+								))}
+							</div>
+						)}
 					</div>
 				)}
 			</div>
@@ -195,7 +233,13 @@ const MobileSearchPage = () => {
 				isOpen={isOpenBuyOrCartModal}
 				onClose={() => setIsOpenBuyOrCartModal(false)}
 			/>
-			{isShowFilter && <MobileProductListFilter onClose={() => setIsShowFilter(false)} />}
+			{isShowFilter && (
+				<MobileProductListFilter
+					onClose={() => setIsShowFilter(false)}
+					onApplyFilter={handleApplyFilter}
+					initialFilters={searchFilters}
+				/>
+			)}
 		</div>
 	);
 };

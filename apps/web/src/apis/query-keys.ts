@@ -1,5 +1,6 @@
 import { ArtistProductListQueryRequest } from "@hitbeatclub/shared-types/artist";
 import { PaginationRequest } from "@hitbeatclub/shared-types/common";
+import { NoticeListQueryRequest } from "@hitbeatclub/shared-types/notice";
 import { ProductListQueryRequest } from "@hitbeatclub/shared-types/product";
 import { UserLikeProductListRequest } from "@hitbeatclub/shared-types/user";
 import { UserFollowedArtistListPayload } from "./user/user.type";

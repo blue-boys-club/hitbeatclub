@@ -69,6 +69,7 @@ export const MobileSettingsPage = () => {
 				birthMonth: (new Date(userMe.birthDate).getMonth() + 1).toString(),
 				birthDay: new Date(userMe.birthDate).getDate().toString().slice(0, 2),
 				isAgreedEmail: !!userMe.agreedEmailAt,
+				stageName: userMe.stageName,
 			});
 		}
 	}, [userMe]);
@@ -115,7 +116,13 @@ export const MobileSettingsPage = () => {
 						<span>
 							{userMe?.name} 님은, {userMe?.subscribe?.productType} 이용자입니다.
 						</span>
-						<span>다음 결제일은 {userMe?.subscribe?.nextPaymentDate?.toLocaleDateString()}입니다.</span>
+						<span>
+							다음 결제일은{" "}
+							{userMe?.subscribe?.nextPaymentDate
+								? new Date(userMe.subscribe.nextPaymentDate).toLocaleDateString()
+								: "정보 없음"}
+							입니다.
+						</span>
 					</div>
 					<div className="flex gap-1">
 						<button className="flex-1 h-22px rounded-30px bg-hbc-gray-100 font-extrabold text-10px leading-100%">
