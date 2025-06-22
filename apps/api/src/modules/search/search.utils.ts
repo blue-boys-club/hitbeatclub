@@ -96,3 +96,13 @@ export const sortAndLimitAutocompleteResults = (products: any[], artists: any[],
  * @returns 빈 자동완성 결과 배열
  */
 export const getEmptyAutocompleteResult = () => [];
+
+export const isNumber = (num: unknown): num is number => {
+	if (typeof num === "number") {
+		return num - num === 0;
+	}
+	if (typeof num === "string" && num.trim() !== "") {
+		return Number.isFinite ? Number.isFinite(+num) : isFinite(+num);
+	}
+	return false;
+};

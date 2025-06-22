@@ -47,6 +47,7 @@ import { ArtistBlockResponseDto } from "./dto/response/artist.block.response.dto
 import { ArtistReportRequestDto } from "./dto/request/artist.report.request.dto";
 import { ArtistReportResponseDto } from "./dto/response/artist.report.response.dto";
 import { ProductFindQuery } from "../product/decorators/product.decorator";
+import { isNumber } from "../search/search.utils";
 
 @Controller("artists")
 @ApiTags("artist")
@@ -118,7 +119,11 @@ export class ArtistController {
 		dto: ArtistDetailResponseDto,
 	})
 	async findBySlug(@Param("slug") slug: string) {
-		const artist = await this.artistService.findBySlug(slug);
+		let artist = await this.artistService.findBySlug(slug);
+
+		if (!artist && isNumber(slug)) {
+			artist = await this.artistService.findOne(Number(slug));
+		}
 
 		if (!artist) {
 			throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
@@ -207,7 +212,11 @@ export class ArtistController {
 	): Promise<IResponsePaging<ProductListResponseDto>> {
 		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds } = artistProductListQueryRequestDto;
 
-		const artist = await this.artistService.findBySlug(slug);
+		let artist = await this.artistService.findBySlug(slug);
+
+		if (!artist && isNumber(slug)) {
+			artist = await this.artistService.findOne(Number(slug));
+		}
 
 		if (!artist) {
 			throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
