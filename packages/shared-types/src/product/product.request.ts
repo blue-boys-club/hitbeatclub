@@ -102,7 +102,12 @@ export const ProductSearchQuerySchema = ProductListQuerySchema.extend({
 	keyword: z.string().optional().describe("검색어"),
 });
 
+export const ProductAutocompleteSearchQuerySchema = z.object({
+	keyword: z.string().optional().describe("검색어"),
+});
+
 export type ProductCreateRequest = z.infer<typeof ProductCreateSchema>;
 export type ProductUpdateRequest = z.infer<typeof ProductUpdateSchema>;
 export type ProductListQueryRequest = z.infer<typeof ProductListQuerySchema>;
 export type ProductSearchQueryRequest = z.infer<typeof ProductSearchQuerySchema>;
+export type ProductAutocompleteSearchQueryRequest = z.infer<typeof ProductAutocompleteSearchQuerySchema>;

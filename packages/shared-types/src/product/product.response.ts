@@ -222,9 +222,32 @@ export const ProductLikeResponseSchema = z.object({
 	}),
 });
 
+export const ProductAutoCompleteArtistResponseSchema = z.object({
+	type: z.literal("ARTIST"),
+	id: z.number().describe("아티스트 ID").default(1),
+	stageName: z.string().describe("아티스트 닉네임").default("아티스트"),
+	profileImageUrl: z.string().url().describe("아티스트 프로필 이미지 URL").default("https://example.com/profile.jpg"),
+	slug: z.string().describe("아티스트 슬러그").default("artist-slug"),
+});
+
+export const ProductAutoCompleteProductResponseSchema = z.object({
+	type: z.literal("PRODUCT"),
+	id: z.number().describe("상품 ID").default(1),
+	productName: z.string().describe("상품명").default("상품명"),
+	productImageUrl: z.string().url().describe("상품 이미지 URL").default("https://example.com/product.jpg"),
+});
+
+export const ProductAutoCompleteResponseSchema = z.discriminatedUnion("type", [
+	ProductAutoCompleteArtistResponseSchema,
+	ProductAutoCompleteProductResponseSchema,
+]);
+
 export type ProductListPagingResponse = z.infer<typeof ProductListPagingResponseSchema>;
 export type ProductResponse = z.infer<typeof ProductResponseSchema>;
 export type ProductDetailResponse = z.infer<typeof ProductDetailResponseSchema>;
 export type ProductSearchInfoResponse = z.infer<typeof ProductSearchInfoResponseSchema>;
 export type ProductListDashboardResponse = z.infer<typeof ProductListDashboardResponseSchema>;
 export type ProductRowByDashboardResponse = z.infer<typeof ProductRowByDashboardSchema>;
+export type ProductAutoCompleteArtistResponse = z.infer<typeof ProductAutoCompleteArtistResponseSchema>;
+export type ProductAutoCompleteProductResponse = z.infer<typeof ProductAutoCompleteProductResponseSchema>;
+export type ProductAutoCompleteResponse = z.infer<typeof ProductAutoCompleteResponseSchema>;

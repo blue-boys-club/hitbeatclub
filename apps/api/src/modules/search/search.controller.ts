@@ -7,11 +7,13 @@ import { searchMessage } from "./search.message";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
 import { SearchResultResponseDto } from "./dto/response/search.list.response.dto";
 import { ProductSearchQueryRequestDto } from "./dto/request/search.request.dto";
+import { ProductAutocompleteSearchQueryRequestDto } from "./dto/request/search.autocomplete-request.dto";
 import { SearchQueryDecorator } from "./decorators/search.decorator";
 import { AuthJwtAccessOptional } from "../auth/decorators/auth.jwt.decorator";
 import { ArtistService } from "../artist/artist.service";
 import { ProductLike } from "@prisma/client";
 import { ProductService } from "../product/product.service";
+import { sortAndLimitAutocompleteResults, getEmptyAutocompleteResult } from "./search.utils";
 
 @Controller("search")
 @ApiTags("search")
@@ -142,6 +144,48 @@ export class SearchController {
 				artists,
 				total: viewTotal, // 상품 + 아티스트 총 개수
 			},
+		};
+	}
+
+	@Get("/autocomplete")
+	@ApiOperation({ summary: "상품 자동완성 검색" })
+	@AuthJwtAccessOptional()
+	async findAutocomplete(@Req() req: AuthenticatedRequest, @Query() query: ProductAutocompleteSearchQueryRequestDto) {
+		const { keyword } = query;
+		const userId = req?.user?.id;
+
+		if (!keyword || keyword.trim().length === 0) {
+			return {
+				statusCode: 200,
+				message: "검색 결과가 없습니다.",
+				data: getEmptyAutocompleteResult(),
+			};
+		}
+
+		// 상품 검색 - 키워드만으로 간단하게
+		const productWhere = {
+			OR: [{ productName: { contains: keyword } }, { productDescription: { contains: keyword } }],
+			isPublic: 1,
+			deletedAt: null,
+		};
+
+		const products = await this.productService.findAll(
+			productWhere,
+			{ page: 1, limit: 10 }, // 최대 10개로 제한
+			[],
+			userId,
+		);
+
+		// 아티스트 검색 - 키워드만으로 간단하게
+		const { artists } = await this.artistService.findAllBySearch(keyword);
+
+		// 매칭 점수 기준으로 섞어서 정렬
+		const autocompleteResults = sortAndLimitAutocompleteResults(products, artists, keyword);
+
+		return {
+			statusCode: 200,
+			message: "검색 완료",
+			data: autocompleteResults,
 		};
 	}
 }
