@@ -100,7 +100,6 @@ export const FooterPlayer = () => {
 	useEffect(() => {
 		if (audioFileError) {
 			toast({
-				title: "재생 실패",
 				description: "오디오 파일을 불러올 수 없습니다. 잠시 후 다시 시도해주세요.",
 				variant: "destructive",
 			});

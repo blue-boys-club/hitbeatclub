@@ -71,14 +71,20 @@ export const SearchBarClient = () => {
 		}, 500);
 	}, []);
 
-	const navigateToSearch = useCallback(() => {
-		if (!searchValue) return;
-
-		const url = new URL(window.location.href);
-		url.pathname = "/search";
-		url.searchParams.set("keyword", searchValue);
-		router.push(url.toString());
-	}, [router, searchValue]);
+	/**
+	 * 검색 페이지로 이동하면서 \`keyword\` 쿼리스트링을 전달합니다.
+	 * window.location을 참조하지 않고, 파라미터로 받은 값을 그대로 사용해
+	 * URL을 구성함으로써 상태 업데이트 지연으로 인한 이슈를 방지합니다.
+	 *
+	 * @param keyword 이동 시 사용할 검색어
+	 */
+	const navigateToSearch = useCallback(
+		(keyword: string) => {
+			if (!keyword) return;
+			router.push(`/search?keyword=${encodeURIComponent(keyword)}`);
+		},
+		[router],
+	);
 
 	const handleSearchChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,7 +103,7 @@ export const SearchBarClient = () => {
 			const inputValue = e.currentTarget.querySelector("input")?.value ?? "";
 			setSearchValue(inputValue);
 			if (!isSearch) {
-				navigateToSearch();
+				navigateToSearch(inputValue);
 			}
 		},
 		[isSearch, navigateToSearch, setSearchValue],
@@ -107,7 +113,7 @@ export const SearchBarClient = () => {
 		(value: string) => {
 			setSearchValue(value);
 			if (!isSearch) {
-				navigateToSearch();
+				navigateToSearch(value);
 			}
 		},
 		[isSearch, navigateToSearch, setSearchValue],

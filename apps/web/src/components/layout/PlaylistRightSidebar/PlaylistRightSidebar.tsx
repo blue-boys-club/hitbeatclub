@@ -2,54 +2,25 @@
 import { CloseMosaic, ArrowLeftMosaic } from "@/assets/svgs";
 import { cn } from "@/common/utils";
 import Image from "next/image";
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useEffect, useRef, useCallback, useMemo } from "react";
 import PlaylistItem from "./PlaylistItem";
 import { useLayoutStore } from "@/stores/layout";
 import { useShallow } from "zustand/react/shallow";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { getPlayerListInfiniteQueryOptions } from "@/apis/player/query/player.query-options";
 import { PlayerListResponse } from "@hitbeatclub/shared-types";
-import { useStartPlayerMutation } from "@/apis/player/mutations/useStartPlayerMutation";
-import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
-import { useToast } from "@/hooks/use-toast";
 import { DropContentWrapper } from "@/features/dnd/components/DropContentWrapper";
 import blankCdImage from "@/assets/images/blank-cd.png";
-import { useAudioStore } from "@/stores/audio";
+import { usePlayTrack } from "@/hooks/usePlayTrack";
 
 const PlaylistRightSidebar = () => {
-	const { toast } = useToast();
-
-	// 사용자 정보 조회
-	const { data: user } = useQuery(getUserMeQueryOption());
-
-	const { setProductId, setIsPlaying } = useAudioStore();
-
-	// 플레이어 시작 mutation
-
 	const { isOpen, setRightSidebar, currentTrackId } = useLayoutStore(
 		useShallow((state) => ({
 			isOpen: state.rightSidebar.isOpen,
 			setRightSidebar: state.setRightSidebar,
-			currentTrackId: state.rightSidebar.trackId,
+			currentTrackId: state.player.trackId,
 		})),
 	);
-
-	const startPlayerMutation = useStartPlayerMutation({
-		onSuccess: () => {
-			// toast({
-			// 	description: "플레이어가 시작되었습니다.",
-			// });
-			setProductId(currentTrackId ?? null);
-			setIsPlaying(true);
-		},
-		// onError: (error) => {
-		// 	toast({
-		// 		description: "플레이어 시작에 실패했습니다.",
-		// 		variant: "destructive",
-		// 	});
-		// 	console.error("Player start error:", error);
-		// },
-	});
 
 	const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } = useInfiniteQuery(
 		getPlayerListInfiniteQueryOptions(),
@@ -84,28 +55,7 @@ const PlaylistRightSidebar = () => {
 		setRightSidebar(!isOpen);
 	}, [setRightSidebar, isOpen]);
 
-	const handlePlaylistItemClick = useCallback(
-		(id: number) => {
-			// 사용자가 로그인되어 있는지 확인
-			if (!user?.id) {
-				toast({
-					description: "로그인 후 이용해주세요.",
-					variant: "destructive",
-				});
-				return;
-			}
-
-			// 플레이어 시작 API 호출
-			startPlayerMutation.mutate({
-				userId: user.id,
-				productId: id,
-			});
-
-			// 사이드바 상태 업데이트
-			setRightSidebar(true, { trackId: id });
-		},
-		[user?.id, toast, startPlayerMutation, setRightSidebar],
-	);
+	const playTrack = usePlayTrack();
 
 	// 모든 페이지의 플레이리스트 데이터를 평탄화 - useMemo로 최적화
 	const allPlaylists: PlayerListResponse[] = useMemo(() => {
@@ -201,7 +151,7 @@ const PlaylistRightSidebar = () => {
 												key={playlist.id}
 												{...playlist}
 												isSelected={playlist.productId === currentTrackId}
-												onClick={handlePlaylistItemClick}
+												onClick={playTrack}
 											/>
 										))}
 									</ul>

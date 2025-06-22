@@ -66,7 +66,7 @@ export const PurchaseModal = memo(({ isOpen, onClose, productId }: PurchaseModal
 	const handleCart = useCallback(() => {
 		addToCart();
 		toast({
-			title: "장바구니에 추가되었습니다.",
+			description: "장바구니에 추가되었습니다.",
 		});
 		onClose();
 	}, [addToCart, onClose, toast]);

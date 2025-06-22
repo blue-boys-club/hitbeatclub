@@ -18,8 +18,9 @@ import { useLikeProductMutation } from "@/apis/product/mutations/useLikeProductM
 import { useUnlikeProductMutation } from "@/apis/product/mutations/useUnLikeProductMutation";
 import UserProfileImage from "@/assets/images/user-profile.png";
 import { cn } from "@/common/utils";
-import { useAudioStore } from "@/stores/audio";
 import Link from "next/link";
+import { useAudioStore } from "@/stores/audio";
+import { useShallow } from "zustand/react/shallow";
 
 interface ProductDetailPageProps {
 	trackId: number;
@@ -31,14 +32,16 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 		...getProductQueryOption(trackId),
 	});
 
-	const setAudioData = useAudioStore((state) => state.setAudioData);
-	const updateIsLiked = useAudioStore((state) => state.updateIsLiked);
-
 	const { toast } = useToast();
 	const likeProductMutation = useLikeProductMutation();
 	const unlikeProductMutation = useUnlikeProductMutation();
 
 	const { data: user } = useQuery(getUserMeQueryOption());
+	const { setProductId } = useAudioStore(
+		useShallow((state) => ({
+			setProductId: state.setProductId,
+		})),
+	);
 
 	const isSubscribed = useMemo(() => {
 		return !!user?.subscribedAt;
@@ -46,18 +49,8 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 
 	const onPlay = useCallback(() => {
 		if (!product) return;
-
-		const { id, productName, seller, isLiked, audioFile, coverImage } = product;
-
-		setAudioData({
-			id,
-			productName,
-			seller,
-			isLiked,
-			audioFile,
-			coverImage,
-		});
-	}, [product, setAudioData]);
+		setProductId(product.id);
+	}, [product]);
 
 	const onLikeClick = () => {
 		if (!user) {
@@ -74,13 +67,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 		// 현재 좋아요 상태에 따라 적절한 mutation 실행
 		if (product.isLiked) {
 			unlikeProductMutation.mutate(product.id, {
-				onSuccess: () => {
-					// 현재 재생 중인 트랙과 같은 ID일 때만 좋아요 상태 업데이트
-					const currentAudioState = useAudioStore.getState();
-					if (currentAudioState.id === product.id) {
-						updateIsLiked(false);
-					}
-				},
+				onSuccess: () => {},
 				onError: () => {
 					toast({
 						description: "좋아요 취소에 실패했습니다.",
@@ -90,13 +77,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 			});
 		} else {
 			likeProductMutation.mutate(product.id, {
-				onSuccess: () => {
-					// 현재 재생 중인 트랙과 같은 ID일 때만 좋아요 상태 업데이트
-					const currentAudioState = useAudioStore.getState();
-					if (currentAudioState.id === product.id) {
-						updateIsLiked(true);
-					}
-				},
+				onSuccess: () => {},
 				onError: () => {
 					toast({
 						description: "좋아요에 실패했습니다.",

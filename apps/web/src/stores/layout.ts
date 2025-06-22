@@ -15,7 +15,10 @@ export interface LayoutState {
 	rightSidebar: {
 		isOpen: boolean;
 		currentType: SidebarType;
+	};
+	player: {
 		trackId?: number | null;
+		isPlaying: boolean;
 	};
 }
 
@@ -25,7 +28,7 @@ export interface LayoutActions {
 		isOpen: LayoutState["rightSidebar"]["isOpen"],
 		states?: Partial<Omit<LayoutState["rightSidebar"], "isOpen">>,
 	) => void;
-
+	setPlayer: (states?: Partial<Omit<LayoutState["player"], "isPlaying">>) => void;
 	init: () => void;
 }
 
@@ -38,6 +41,10 @@ const initialState: LayoutState = {
 	rightSidebar: {
 		isOpen: true,
 		currentType: SidebarType.PLAYLIST,
+	},
+	player: {
+		trackId: null,
+		isPlaying: false,
 	},
 };
 
@@ -62,6 +69,14 @@ export const useLayoutStore = create<LayoutStore>()(
 							...states,
 						};
 					}
+				}),
+
+			setPlayer: (states) =>
+				set((state) => {
+					state.player = {
+						...state.player,
+						...states,
+					};
 				}),
 
 			init: () => set(initialState),

@@ -164,7 +164,7 @@ export class SearchController {
 
 		// 상품 검색 - 키워드만으로 간단하게
 		const productWhere = {
-			OR: [{ productName: { contains: keyword } }, { productDescription: { contains: keyword } }],
+			OR: [{ productName: { contains: keyword } }, { description: { contains: keyword } }],
 			isPublic: 1,
 			deletedAt: null,
 		};

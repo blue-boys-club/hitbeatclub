@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import Image from "next/image";
 import { cn } from "@/common/utils";
@@ -36,11 +36,10 @@ export const MusicRightSidebar = memo(() => {
 	const likeProductMutation = useLikeProductMutation();
 	const unlikeProductMutation = useUnlikeProductMutation();
 
-	const { audioStoreId, audioStoreIsLiked, updateIsLiked } = useAudioStore(
+	const { productId } = useAudioStore(
 		useShallow((state) => ({
-			audioStoreId: state.id,
-			audioStoreIsLiked: state.isLiked,
-			updateIsLiked: state.updateIsLiked,
+			productId: state.productId,
+			isPlaying: state.isPlaying,
 		})),
 	);
 
@@ -52,7 +51,7 @@ export const MusicRightSidebar = memo(() => {
 		useShallow((state) => ({
 			isOpen: state.rightSidebar.isOpen,
 			setRightSidebar: state.setRightSidebar,
-			currentTrackId: state.rightSidebar.trackId,
+			currentTrackId: state.player.trackId,
 		})),
 	);
 
@@ -62,7 +61,9 @@ export const MusicRightSidebar = memo(() => {
 		select: (data) => data.data,
 	});
 
-	const isLiked = audioStoreId === Number(currentTrackId) ? audioStoreIsLiked : currentTrack?.isLiked;
+	const isLiked = useMemo(() => {
+		return productId === Number(currentTrackId) && currentTrack?.isLiked;
+	}, [productId, currentTrackId, currentTrack?.isLiked]);
 
 	const handleToggleOpen = () => {
 		setRightSidebar(!isOpen);
@@ -83,12 +84,7 @@ export const MusicRightSidebar = memo(() => {
 		// 현재 좋아요 상태에 따라 적절한 mutation 실행
 		if (isLiked) {
 			unlikeProductMutation.mutate(currentTrack.id, {
-				onSuccess: () => {
-					// 현재 트랙이 스토어의 트랙과 같으면 스토어도 업데이트
-					if (audioStoreId === currentTrack.id) {
-						updateIsLiked(false);
-					}
-				},
+				onSuccess: () => {},
 				onError: () => {
 					toast({
 						description: "좋아요 취소에 실패했습니다.",
@@ -98,12 +94,7 @@ export const MusicRightSidebar = memo(() => {
 			});
 		} else {
 			likeProductMutation.mutate(currentTrack.id, {
-				onSuccess: () => {
-					// 현재 트랙이 스토어의 트랙과 같으면 스토어도 업데이트
-					if (audioStoreId === currentTrack.id) {
-						updateIsLiked(true);
-					}
-				},
+				onSuccess: () => {},
 				onError: () => {
 					toast({
 						description: "좋아요에 실패했습니다.",
