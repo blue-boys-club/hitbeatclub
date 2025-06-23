@@ -117,6 +117,7 @@ const QUERY_KEYS = {
 	question: {
 		_key: ["question"],
 		list: ["question", "list"],
+		detail: (id: number): QueryKey => ["question", id],
 	},
 };
 
