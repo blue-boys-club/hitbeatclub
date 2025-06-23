@@ -1,12 +1,20 @@
 import { queryOptions, infiniteQueryOptions } from "@tanstack/react-query";
 import { NoticeListQueryRequest } from "@hitbeatclub/shared-types/notice";
 import { QUERY_KEYS } from "../../query-keys";
-import { getNoticeList } from "../notice.api";
+import { getNoticeList, getNoticeDetail } from "../notice.api";
 
 export const getNoticeListQueryOption = (payload: NoticeListQueryRequest) => {
 	return queryOptions({
 		queryKey: QUERY_KEYS.notices.list(payload),
 		queryFn: () => getNoticeList(payload),
+		select: (response) => response,
+	});
+};
+
+export const getNoticeDetailQueryOption = (noticeId: number) => {
+	return queryOptions({
+		queryKey: QUERY_KEYS.notices.one(noticeId),
+		queryFn: () => getNoticeDetail(noticeId),
 		select: (response) => response,
 	});
 };

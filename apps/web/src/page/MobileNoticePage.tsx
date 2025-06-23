@@ -17,13 +17,15 @@ const MobileNoticePage = () => {
 	const [currentPage, setCurrentPage] = useState(1);
 	const [searchQuery, setSearchQuery] = useState("");
 
-	// sortBy를 searchType으로 매핑
+	// sortBy를 sort type으로 매핑
 	const getSearchType = (sortBy: "제목" | "날짜" | "조회수") => {
 		switch (sortBy) {
 			case "제목":
 				return "title";
 			case "날짜":
+				return "date";
 			case "조회수":
+				return "view";
 			default:
 				return "title";
 		}
@@ -34,7 +36,7 @@ const MobileNoticePage = () => {
 			page: currentPage,
 			limit: 10,
 			search: searchQuery || undefined,
-			searchType: getSearchType(sortBy),
+			sort: getSearchType(sortBy),
 		}),
 	);
 
