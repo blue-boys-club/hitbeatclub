@@ -1,14 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Checkbox, Correct, EmptyCheckbox, HBCLoginMain, Incorrect } from "@/assets/svgs";
 import { Button } from "@/components/ui/Button";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { AuthSignupCompletionModal } from "./Modal/AuthSignupCompletionModal";
 import { UserUpdatePayload } from "@hitbeatclub/shared-types/user";
-import { set, z } from "zod";
+import { z } from "zod";
 import moment from "moment-timezone";
 import { useAuthStore } from "@/stores/auth";
 import { useShallow } from "zustand/react/shallow";
@@ -51,9 +51,10 @@ const createFormSchema = (isSocialJoin: boolean) => {
 			name: z.string().min(1, "이름을 입력해주세요."),
 			phoneNumber: z.string().min(10, "유효한 연락처를 입력해주세요. (예: 01012345678)").max(11),
 			gender: z.enum(["M", "F"], { errorMap: () => ({ message: "성별을 선택해주세요." }) }).optional(),
-			year: z.string().length(4, "태어난 년도 4자리를 정확히 입력해주세요."),
-			month: z.string().min(1, "태어난 월을 선택해주세요.").max(2),
-			day: z.string().min(1, "태어난 일을 선택해주세요.").max(2),
+			// 생년월일 필드는 통합 검증을 위해 기본 문자열로 설정
+			year: z.string(),
+			month: z.string(),
+			day: z.string(),
 			country: z.string().optional(),
 			region: z.string().optional(),
 			isAgreedTerms: z.boolean().refine((val) => val === true, {
@@ -66,16 +67,37 @@ const createFormSchema = (isSocialJoin: boolean) => {
 			musicType: z.enum(["BEAT", "ACAPELLA"]).optional(),
 		})
 		.superRefine((data, ctx) => {
-			if (data.year && data.month && data.day) {
-				const dateStr = `${data.year}-${data.month.padStart(2, "0")}-${data.day.padStart(2, "0")}`;
-				const parsedDate = moment.tz(dateStr, "YYYY-MM-DD", true, "Asia/Seoul");
-				if (!parsedDate.isValid()) {
-					ctx.addIssue({
-						code: z.ZodIssueCode.custom,
-						message: "유효하지 않은 생년월일입니다.",
-						path: ["year"],
-					});
-				}
+			const { year, month, day } = data;
+
+			// 생년월일 필드가 하나라도 비어있는 경우
+			if (!year || !month || !day) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: "생년월일을 모두 입력해주세요.",
+					path: ["year"], // 에러 메시지를 'year' 필드에 연결
+				});
+				return;
+			}
+
+			// 년도 형식 확인
+			if (year.length !== 4) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: "태어난 년도 4자리를 정확히 입력해주세요.",
+					path: ["year"],
+				});
+				return;
+			}
+
+			// 유효한 날짜인지 확인
+			const dateStr = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+			const parsedDate = moment.tz(dateStr, "YYYY-MM-DD", true, "Asia/Seoul");
+			if (!parsedDate.isValid()) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: "유효하지 않은 생년월일입니다.",
+					path: ["year"],
+				});
 			}
 		});
 
@@ -312,13 +334,11 @@ export const AuthSignup = () => {
 	}, [isAgreedTerms, isAgreedPrivacyPolicy, isAgreedEmail, setValue]);
 
 	// 전체 동의 체크박스 상태
-	// const allAgreementsChecked = isAgreedTerms && isAgreedPrivacyPolicy && isAgreedEmail;
 	const allAgreementsChecked = useMemo(() => {
 		return isAgreedTerms && isAgreedPrivacyPolicy && isAgreedEmail;
 	}, [isAgreedTerms, isAgreedPrivacyPolicy, isAgreedEmail]);
 
 	// 현재 선택된 국가에 따른 지역 옵션
-	// const regionOptions = country ? getRegionOptionsByCountry(country) : [];
 	const regionOptions = useMemo(() => {
 		return country ? getRegionOptionsByCountry(country as CountryCode) : [];
 	}, [country]);
@@ -380,7 +400,6 @@ export const AuthSignup = () => {
 								id="email"
 								{...register("email")}
 								type="email"
-								required
 								readOnly={isSocialJoin}
 								value={isSocialJoin ? authUser?.email || "" : undefined}
 								className={`w-full px-3 py-[5px] border border-hbc-black rounded-md focus:outline-none ${
@@ -415,7 +434,6 @@ export const AuthSignup = () => {
 									id="password"
 									{...register("password")}
 									type="password"
-									required
 									className="w-full px-3 py-[5px] border border-hbc-black rounded-md focus:outline-none"
 								/>
 								{errors.password && <em className="mt-1 text-sm text-hbc-red">{errors.password.message}</em>}
@@ -443,7 +461,6 @@ export const AuthSignup = () => {
 									id="passwordConfirm"
 									{...register("passwordConfirm")}
 									type="password"
-									required
 									className="w-full px-3 py-[5px] border border-hbc-black rounded-md focus:outline-none"
 								/>
 								{errors.passwordConfirm && (
@@ -465,7 +482,6 @@ export const AuthSignup = () => {
 							id="name"
 							{...register("name")}
 							type="text"
-							required
 							className="w-full px-3 py-[5px] border border-hbc-black rounded-md focus:outline-none"
 						/>
 						{errors.name && <em className="mt-1 text-sm text-hbc-red">{errors.name.message}</em>}
@@ -480,20 +496,19 @@ export const AuthSignup = () => {
 							>
 								연락처 <span className="absolute text-red-500 -top-2 -right-2">*</span>
 							</label>
-							<div className="relative">
+							<div>
 								<input
 									id="phoneNumber"
 									{...register("phoneNumber")}
 									type="tel"
-									required
 									className="w-full px-3 py-[5px] pr-20 border border-hbc-black rounded-md focus:outline-none"
+									maxLength={11}
+									onChange={(e) => {
+										// 숫자만 입력 가능
+										const value = e.target.value.replace(/[^0-9]/g, "");
+										setValue("phoneNumber", value);
+									}}
 								/>
-								<button
-									type="button"
-									className="absolute px-2 py-1 text-sm font-semibold -translate-y-1/2 rounded-md cursor-pointer right-2 top-1/2 text-hbc-blue"
-								>
-									인증
-								</button>
 							</div>
 							{errors.phoneNumber && <em className="mt-1 text-sm text-hbc-red">{errors.phoneNumber.message}</em>}
 						</div>
@@ -594,7 +609,7 @@ export const AuthSignup = () => {
 
 					<div className="w-full h-[1px] bg-hbc-black my-8"></div>
 					<div className="text-center">어떤 서비스를 선호하시나요?</div>
-					<div className="flex gap-4">
+					<div className="flex justify-center gap-4">
 						<Button
 							type="button"
 							className={cn("w-full text-lg py-2 font-suisse")}
@@ -653,7 +668,11 @@ export const AuthSignup = () => {
 										에 동의합니다.
 									</span>
 								</div>
-								{errors.isAgreedTerms && <em className="mt-1 text-sm text-hbc-red">{errors.isAgreedTerms.message}</em>}
+								<div>
+									{errors.isAgreedTerms && (
+										<em className="mt-1 text-sm text-hbc-red">{errors.isAgreedTerms.message}</em>
+									)}
+								</div>
 							</div>
 							<div>
 								<div
@@ -677,9 +696,11 @@ export const AuthSignup = () => {
 										에 동의합니다.
 									</span>
 								</div>
-								{errors.isAgreedPrivacyPolicy && (
-									<em className="mt-1 text-sm text-hbc-red">{errors.isAgreedPrivacyPolicy.message}</em>
-								)}
+								<div>
+									{errors.isAgreedPrivacyPolicy && (
+										<em className="mt-1 text-sm text-hbc-red">{errors.isAgreedPrivacyPolicy.message}</em>
+									)}
+								</div>
 							</div>
 							<div>
 								<div
@@ -692,7 +713,6 @@ export const AuthSignup = () => {
 									{isAgreedEmail ? <Checkbox /> : <EmptyCheckbox />}
 									<span>이메일 수신에 동의합니다. (선택)</span>
 								</div>
-								{errors.isAgreedEmail && <em className="mt-1 text-sm text-hbc-red">{errors.isAgreedEmail.message}</em>}
 							</div>
 						</div>
 					</div>
@@ -723,9 +743,7 @@ export const AuthSignup = () => {
 				isPopupOpen={isPopupOpen}
 				onClosePopup={() => {
 					setIsPopupOpen(false);
-					if (isSocialJoin) {
-						window.location.href = "/";
-					}
+					router.push("/");
 				}}
 			/>
 		</>
