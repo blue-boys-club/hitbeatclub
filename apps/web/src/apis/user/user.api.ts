@@ -1,5 +1,5 @@
 import { CommonResponse, CommonResponseId, PaginationResponse } from "@/apis/api.type";
-import { CartCreateRequestSchema, CartListResponse, ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
+import { CartCreateRequestSchema, CartListResponse, ProductLikeResponse } from "@hitbeatclub/shared-types";
 import {
 	UserFindMeResponse,
 	UserLikeProductListRequest,
@@ -93,8 +93,8 @@ export const updateUserPassword = async (userId: number, data: UserPasswordReset
 export const getLikedProducts = async (
 	userId: number,
 	payload: UserLikeProductListRequest,
-): Promise<PaginationResponse<ProductRowByDashboardResponse[]>> => {
-	const response = await axiosInstance.get<PaginationResponse<ProductRowByDashboardResponse[]>>(
+): Promise<PaginationResponse<ProductLikeResponse[]>> => {
+	const response = await axiosInstance.get<PaginationResponse<ProductLikeResponse[]>>(
 		`/users/${userId}/liked-products`,
 		{
 			params: payload,

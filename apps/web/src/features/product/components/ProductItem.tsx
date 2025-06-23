@@ -7,6 +7,7 @@ import { TagButton } from "@/components/ui/TagButton";
 import { cn } from "@/common/utils";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { PurchaseWithCartTrigger } from "./PurchaseWithCartTrigger";
 
 interface ProductItemProps {
 	productId?: string;
@@ -18,7 +19,6 @@ interface ProductItemProps {
 	isLiked?: boolean;
 	onPlay?: () => void;
 	onLike?: () => void;
-	onAddToCart?: () => void;
 }
 
 /**
@@ -39,11 +39,9 @@ export const ProductItem = memo(
 		isLiked = false,
 		onPlay,
 		onLike,
-		onAddToCart,
 	}: ProductItemProps) => {
 		const router = useRouter();
 		const [status, setStatus] = useState<"playing" | "paused" | "default">("paused");
-		const [cart, setCart] = useState(false);
 
 		const onClickProduct = () => {
 			router.push(`/products/${productId}`);
@@ -51,11 +49,6 @@ export const ProductItem = memo(
 
 		const onClickLike = () => {
 			onLike?.();
-		};
-
-		const onClickCart = () => {
-			setCart(!cart);
-			onAddToCart?.();
 		};
 
 		const togglePlay = () => {
@@ -129,12 +122,9 @@ export const ProductItem = memo(
 							<Like />
 						)}
 					</div>
-					<div
-						onClick={onClickCart}
-						className="cursor-pointer"
-					>
-						<ShoppingBag color={cart ? "#3884FF" : "white"} />
-					</div>
+					<PurchaseWithCartTrigger productId={Number(productId)}>
+						{(isInCart) => <ShoppingBag color={isInCart ? "#3884FF" : "white"} />}
+					</PurchaseWithCartTrigger>
 				</div>
 			</div>
 		);

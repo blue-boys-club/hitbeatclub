@@ -1,5 +1,18 @@
 import { z } from "zod";
 
+export const licenseInfo = [
+	{
+		id: 1,
+		type: "MASTER",
+		label: "Master",
+	},
+	{
+		id: 2,
+		type: "EXCLUSIVE",
+		label: "Exclusive",
+	},
+];
+
 export const licenseTypeEnum = z.enum(["MASTER", "EXCLUSIVE"]);
 export const productSortEnum = z.enum(["RECENT", "RECOMMEND", "null"]);
 export const productCategoryEnum = z.enum(["BEAT", "ACAPELA", "null"]);
@@ -89,7 +102,12 @@ export const ProductSearchQuerySchema = ProductListQuerySchema.extend({
 	keyword: z.string().optional().describe("검색어"),
 });
 
+export const ProductAutocompleteSearchQuerySchema = z.object({
+	keyword: z.string().optional().describe("검색어"),
+});
+
 export type ProductCreateRequest = z.infer<typeof ProductCreateSchema>;
 export type ProductUpdateRequest = z.infer<typeof ProductUpdateSchema>;
 export type ProductListQueryRequest = z.infer<typeof ProductListQuerySchema>;
 export type ProductSearchQueryRequest = z.infer<typeof ProductSearchQuerySchema>;
+export type ProductAutocompleteSearchQueryRequest = z.infer<typeof ProductAutocompleteSearchQuerySchema>;

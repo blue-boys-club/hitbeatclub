@@ -1,21 +1,22 @@
-import { ObjectCannedACL } from '@aws-sdk/client-s3';
+import { ObjectCannedACL } from "@aws-sdk/client-s3";
 
 export interface IAwsS3PutItemOptions {
-    path?: string;
-    customFilename?: string;
+	path?: string;
+	customFilename?: string;
+	contentDisposition?: string;
 }
 
 export interface IAwsS3PutItemWithAclOptions extends IAwsS3PutItemOptions {
-    acl?: ObjectCannedACL;
+	acl?: ObjectCannedACL;
 }
 
 export interface IAwsS3RandomFilename {
-    path: string;
-    customFilename: string;
+	path: string;
+	customFilename: string;
 }
 
 export interface IAwsS3PutItem {
-    buffer: string | Uint8Array | Buffer;
-    originalname: string;
-    size: number;
+	buffer: string | Uint8Array | Buffer;
+	originalname: string;
+	size: number;
 }

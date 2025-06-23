@@ -134,9 +134,10 @@ const CartPage = () => {
 			let availableLicenses = [];
 			if (product.licenseInfo && product.licenseInfo.length > 0) {
 				// ProductResponseSchema에 licenseInfo가 있는 경우 사용
-				availableLicenses = product.licenseInfo.map((license: any) => ({
+				availableLicenses = product.licenseInfo.map((license) => ({
 					id: license.id,
-					type: license?.type?.toUpperCase() as "MASTER" | "EXCLUSIVE",
+					// TODO: 라이센스 타입 확인 필요
+					type: license.label?.toUpperCase() as "MASTER" | "EXCLUSIVE",
 					price: license.price,
 				}));
 			} else {

@@ -121,10 +121,10 @@ export const ArtistProductListFilter = ({ artistId, onDataChange, className }: A
 		}
 
 		// BPM
-		if (filterParams.minBpm > 0) {
+		if (filterParams.minBpm != null && filterParams.minBpm > 0) {
 			query.minBpm = filterParams.minBpm;
 		}
-		if (filterParams.maxBpm > 0) {
+		if (filterParams.maxBpm != null && filterParams.maxBpm > 0) {
 			query.maxBpm = filterParams.maxBpm;
 		}
 

@@ -65,8 +65,9 @@ export const LicenseChangeModal = ({
 	const finalLicenseOptions: LicenseOption[] = (() => {
 		if (productDetail?.licenseInfo && productDetail.licenseInfo.length > 0) {
 			// 제품 상세에서 라이센스 정보가 있는 경우 사용
-			return productDetail.licenseInfo.map((license: any) => {
-				const template = LICENSE_TEMPLATE[license.type as LicenseType];
+			return productDetail.licenseInfo.map((license) => {
+				const type = license?.type?.toUpperCase();
+				const template = LICENSE_TEMPLATE[type as LicenseType];
 				return {
 					id: license.id,
 					type: license.type,
@@ -79,7 +80,9 @@ export const LicenseChangeModal = ({
 		} else {
 			// 없는 경우 availableLicenses 사용
 			return availableLicenses.map((license) => {
-				const template = LICENSE_TEMPLATE[license.type];
+				console.log(license);
+				const type = license.type.toUpperCase();
+				const template = LICENSE_TEMPLATE[type as LicenseType];
 				return {
 					id: license.id,
 					type: license.type,

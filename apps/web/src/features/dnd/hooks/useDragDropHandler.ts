@@ -5,6 +5,8 @@ import { useUpdateFollowedArtistMutation } from "@/apis/user/mutations";
 import { useQuery } from "@tanstack/react-query";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { useToast } from "@/hooks/use-toast";
+import { useStartPlayerMutation } from "@/apis/player/mutations";
+import { AxiosError } from "axios";
 
 /**
  * 드래그 앤 드롭 핸들러를 관리하는 커스텀 훅
@@ -13,8 +15,9 @@ import { useToast } from "@/hooks/use-toast";
 export const useDragDropHandler = () => {
 	const { toast } = useToast();
 	const { data: user } = useQuery(getUserMeQueryOption());
-	const { mutate: likeProduct } = useLikeProductMutation();
-	const { mutate: followArtist } = useUpdateFollowedArtistMutation(user?.id ?? 0);
+	const { mutateAsync: likeProduct } = useLikeProductMutation();
+	const { mutateAsync: followArtist } = useUpdateFollowedArtistMutation(user?.id ?? 0);
+	const { mutateAsync: startPlayer } = useStartPlayerMutation();
 	// const { mutate: followArtist } = useFollowArtistMutation();
 	// const { mutate: addToCart } = useAddToCartMutation();
 
@@ -24,6 +27,7 @@ export const useDragDropHandler = () => {
 
 	const handleDragStart = useCallback((event: DragStartEvent) => {
 		console.log("DragStart", event);
+		console.log(event.active?.data.current);
 		const { active } = event;
 		if (active?.data.current?.type === "PRODUCT") {
 			const { productName, sellerStageName } = active.data.current.meta;
@@ -43,20 +47,56 @@ export const useDragDropHandler = () => {
 
 			if (event?.active?.data.current?.type === "PRODUCT") {
 				if (event.over?.id === "like-follow") {
-					likeProduct(event.active?.data.current?.productId);
+					likeProduct(event.active?.data.current?.productId)
+						.then(() => {
+							toast({
+								description: "좋아요가 완료되었습니다.",
+							});
+						})
+						.catch((error: Error) => {
+							const message = error instanceof AxiosError ? error.response?.data.detail : "좋아요에 실패했습니다.";
+							toast({
+								description: message,
+							});
+						});
 				} else if (event.over?.id === "cart") {
-					// 로그인 체크
-
 					// 라이센스 모달 열기
 					const productId = event.active?.data.current?.productId;
 					if (productId) {
 						setSelectedProductId(productId);
 						setIsLicenseModalOpen(true);
 					}
+				} else if (event.over?.id === "player") {
+					startPlayer({
+						userId: user.id,
+						productId: event.active?.data.current?.productId,
+					})
+						.then(() => {
+							toast({
+								description: "재생이 시작되었습니다.",
+							});
+						})
+						.catch((error: Error) => {
+							const message = error instanceof AxiosError ? error.response?.data.detail : "재생에 실패했습니다.";
+							toast({
+								description: message,
+							});
+						});
 				}
 			} else if (event?.active?.data.current?.type === "ARTIST") {
 				if (event.over?.id === "like-follow") {
-					followArtist(event.active?.data.current?.artistId);
+					followArtist(event.active?.data.current?.artistId)
+						.then(() => {
+							toast({
+								description: "팔로우가 완료되었습니다.",
+							});
+						})
+						.catch((error: Error) => {
+							const message = error instanceof AxiosError ? error.response?.data.detail : "팔로우에 실패했습니다.";
+							toast({
+								description: message,
+							});
+						});
 				}
 			}
 		},

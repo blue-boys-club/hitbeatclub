@@ -6,6 +6,7 @@ import EmailConfig from "~/configs/email.config";
 import AppConfig from "~/configs/app.config";
 import DocConfig from "~/configs/doc.config";
 import MiddlewareConfig from "~/configs/middleware.config";
+import PaymentConfig from "~/configs/payment.config";
 
 export default [
 	AuthConfig,
@@ -16,4 +17,5 @@ export default [
 	AppConfig,
 	DocConfig,
 	MiddlewareConfig,
+	PaymentConfig,
 ];

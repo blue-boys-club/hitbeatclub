@@ -27,8 +27,10 @@ import { IResponse, IResponsePaging } from "~/common/response/interfaces/respons
 import { Webhook } from "@portone/server-sdk";
 import { PaymentPaginationRequestDto } from "./dto/request/payment.pagination.request.dto";
 import { PaymentOrderCreateResponseDto } from "./dto/response/payment.order-create.response.dto";
+import { isBillingKeyWebhook, isPaymentWebhook, PortOneWebhook } from "./payment.utils";
+import { ConfigService } from "@nestjs/config";
 
-@ApiTags("Payment")
+@ApiTags("payment")
 @Controller("payment")
 export class PaymentController {
 	private readonly logger = new Logger(PaymentController.name);
@@ -64,7 +66,13 @@ export class PaymentController {
 		@Body() createPaymentOrderDto: PaymentOrderCreateRequestDto,
 	): Promise<IResponse<PaymentOrderCreateResponseDto>> {
 		const userId = req.user.id;
-		this.logger.log(`createPaymentOrder: ${userId}`);
+		this.logger.log(
+			{
+				userId,
+				dto: createPaymentOrderDto,
+			},
+			"결제 주문 생성 요청",
+		);
 		const result = await this.paymentService.createPaymentOrder(userId, createPaymentOrderDto);
 		return {
 			statusCode: 200,
@@ -134,30 +142,79 @@ export class PaymentController {
 	async handleWebhook(@RawBody() body: string, @Headers() headers: any) {
 		try {
 			// 웹훅 시그니처 검증
-			let webhook;
+			let webhook: PortOneWebhook;
 			try {
-				webhook = await Webhook.verify(process.env.PORTONE_V2_WEBHOOK_SECRET, body, headers);
+				const verifiedWebhook = await this.paymentService.verifyWebhook(body, headers);
+				webhook = verifiedWebhook as PortOneWebhook;
 			} catch (error) {
-				this.logger.error("웹훅 검증 실패", error);
+				this.logger.error({ error }, "웹훅 검증 실패");
 				throw new BadRequestException(WEBHOOK_VERIFICATION_ERROR);
 			}
 
-			// 결제 관련 웹훅만 처리
-			if (webhook.data && "paymentId" in webhook.data) {
-				await this.paymentService.syncPaymentFromWebhook(webhook.data.paymentId, webhook.data);
-				this.logger.log(`웹훅 처리 완료: ${webhook.type}, paymentId: ${webhook.data.paymentId}`);
-			} else {
-				this.logger.log(`결제와 무관한 웹훅 수신: ${webhook.type}`);
+			this.logger.log(
+				{
+					webhookType: webhook.type,
+					timestamp: webhook.timestamp,
+					storeId: webhook.data?.storeId,
+				},
+				"웹훅 수신",
+			);
+
+			// 결제 관련 웹훅 처리
+			if (isPaymentWebhook(webhook)) {
+				const { paymentId } = webhook.data;
+				await this.paymentService.syncPaymentFromWebhook(paymentId, webhook);
+
+				this.logger.log(
+					{
+						webhookType: webhook.type,
+						paymentId,
+						timestamp: webhook.timestamp,
+					},
+					"결제 웹훅 처리 완료",
+				);
+			}
+			// 빌링키 관련 웹훅 처리
+			else if (isBillingKeyWebhook(webhook)) {
+				const { billingKey } = webhook.data;
+
+				// TODO: 빌링키 웹훅 처리 - 구독 관련 로직 추가
+				this.logger.log(
+					{
+						webhookType: webhook.type,
+						billingKey,
+						timestamp: webhook.timestamp,
+					},
+					"빌링키 웹훅 수신 (처리 로직 없음)",
+				);
+			}
+			// 처리하지 않는 웹훅 타입
+			else {
+				this.logger.log(
+					{
+						webhookType: (webhook as PortOneWebhook).type,
+						timestamp: (webhook as PortOneWebhook).timestamp,
+					},
+					"처리하지 않는 웹훅 타입",
+				);
 			}
 
 			return { success: true };
 		} catch (error) {
-			this.logger.error("웹훅 처리 실패", error);
+			this.logger.error(
+				{
+					error: error.message,
+					stack: error.stack,
+				},
+				"웹훅 처리 실패",
+			);
+
 			if (error instanceof BadRequestException) {
 				throw error;
 			}
 			// 웹훅 처리 실패시에도 200을 반환하여 재시도를 방지
-			return { success: false, error: "Internal server error" };
+			// return { success: false, error: "Internal server error" };
+			throw new BadRequestException(WEBHOOK_VERIFICATION_ERROR);
 		}
 	}
 

@@ -207,6 +207,7 @@ export class AwsS3Service implements IAwsS3Service {
 			Bucket: this.bucket,
 			Key: key,
 			Body: content,
+			...(options?.contentDisposition && { ContentDisposition: options.contentDisposition }),
 		});
 
 		try {
@@ -244,6 +245,7 @@ export class AwsS3Service implements IAwsS3Service {
 			Key: key,
 			Body: content,
 			ACL: acl,
+			...(options?.contentDisposition && { ContentDisposition: options.contentDisposition }),
 		});
 
 		try {
@@ -346,6 +348,7 @@ export class AwsS3Service implements IAwsS3Service {
 		const multiPartCommand: CreateMultipartUploadCommand = new CreateMultipartUploadCommand({
 			Bucket: this.bucket,
 			Key: key,
+			...(options?.contentDisposition && { ContentDisposition: options.contentDisposition }),
 		});
 
 		try {
@@ -388,6 +391,7 @@ export class AwsS3Service implements IAwsS3Service {
 			Bucket: this.bucket,
 			Key: key,
 			ACL: acl,
+			...(options?.contentDisposition && { ContentDisposition: options.contentDisposition }),
 		});
 
 		try {

@@ -6,10 +6,11 @@ import { cn } from "@/common/utils";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option"; // Assuming this path
-import { useCartStore } from "@/stores/cart";
 import { useShallow } from "zustand/react/shallow";
 import { useToast } from "@/hooks/use-toast";
 import { LICENSE_MAP_TEMPLATE } from "@/apis/product/product.dummy";
+import { useCreateCartItemMutation } from "@/apis/user/mutations";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 
 interface PurchaseModalProps {
 	isOpen: boolean;
@@ -21,12 +22,17 @@ type LicenseType = "MASTER" | "EXCLUSIVE";
 
 export const PurchaseModal = memo(({ isOpen, onClose, productId }: PurchaseModalProps) => {
 	const router = useRouter();
+	const { data: userMe } = useQuery({
+		...getUserMeQueryOption(),
+	});
 	const { data: product } = useQuery({
 		...getProductQueryOption(productId),
 		enabled: isOpen && !!productId,
 	});
 
 	const { toast } = useToast();
+
+	const { mutate: addItem } = useCreateCartItemMutation(userMe?.id!);
 
 	// 상품의 라이센스 정보와 템플릿 정보를 조합
 	const licenses = useMemo(() => {
@@ -48,25 +54,19 @@ export const PurchaseModal = memo(({ isOpen, onClose, productId }: PurchaseModal
 		[licenses, selectedLicenseType],
 	);
 
-	const { addItem } = useCartStore(
-		useShallow((state) => ({
-			addItem: state.addItem,
-		})),
-	);
-
-	const addToCart = useCallback(() => {
-		if (product) {
-			addItem({
-				id: productId,
-				licenseType: selectedLicenseType,
+	const addToCart = useCallback(async () => {
+		if (product && selectedLicense) {
+			await addItem({
+				productId,
+				licenseId: selectedLicense.id,
 			});
 		}
-	}, [addItem, productId, product, selectedLicenseType]);
+	}, [addItem, productId, product, selectedLicense]);
 
 	const handleCart = useCallback(() => {
 		addToCart();
 		toast({
-			title: "장바구니에 추가되었습니다.",
+			description: "장바구니에 추가되었습니다.",
 		});
 		onClose();
 	}, [addToCart, onClose, toast]);

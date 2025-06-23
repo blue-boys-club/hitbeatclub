@@ -6,9 +6,17 @@ import { PrismaModule } from "~/common/prisma/prisma.module";
 import { TagModule } from "../tag/tag.module";
 import { GenreModule } from "../genre/genre.module";
 import { ArtistModule } from "../artist/artist.module";
+import { PaymentModule } from "../payment/payment.module";
 
 @Module({
-	imports: [FileModule, PrismaModule, TagModule, GenreModule, forwardRef(() => ArtistModule)],
+	imports: [
+		FileModule,
+		PrismaModule,
+		TagModule,
+		GenreModule,
+		forwardRef(() => ArtistModule),
+		forwardRef(() => PaymentModule),
+	],
 	controllers: [ProductController],
 	providers: [ProductService],
 	exports: [ProductService],

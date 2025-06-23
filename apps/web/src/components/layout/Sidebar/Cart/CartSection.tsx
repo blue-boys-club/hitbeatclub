@@ -6,7 +6,7 @@ import { memo } from "react";
 import CartItems from "./CartItems";
 import Link from "next/link";
 import { useDroppable } from "@dnd-kit/core";
-import { DropContentWrapper } from "@/features/dnd/componenets/DropContentWrapper";
+import { DropContentWrapper } from "@/features/dnd/components/DropContentWrapper";
 
 const CartSection = memo(() => {
 	return (

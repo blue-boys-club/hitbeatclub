@@ -33,6 +33,16 @@ export const getArtistDetail = async (id: number) => {
 };
 
 /**
+ * 아티스트 상세 조회 (slug 기준)
+ * @param slug 아티스트 슬러그
+ * @returns 아티스트 정보
+ */
+export const getArtistDetailBySlug = async (slug: string) => {
+	const response = await axiosInstance.get<CommonResponse<ArtistResponse>>(`/artists/slug/${slug}`);
+	return response.data;
+};
+
+/**
  * 아티스트 생성
  * @param payload 아티스트 생성 페이로드
  * @returns 아티스트 생성 결과
@@ -106,4 +116,43 @@ export const getArtistContentList = async (id: number, payload: ArtistProductLis
 		console.error(error);
 		throw error;
 	}
+};
+
+/**
+ * 아티스트 컨텐츠 목록 조회 (slug 기준)
+ * @param slug 아티스트 슬러그
+ * @returns 아티스트 컨텐츠 목록
+ */
+export const getArtistContentListBySlug = async (slug: string, payload: ArtistProductListQueryRequest) => {
+	try {
+		const parsed = deepRemoveDefaults(ArtistProductListQuerySchema).parse(payload);
+		const response = await axiosInstance.get<ProductListPagingResponse>(`/artists/slug/${slug}/products`, {
+			params: parsed,
+			// paramsSerializer: { indexes: null },
+		});
+		return response.data;
+	} catch (error) {
+		console.error(error);
+		throw error;
+	}
+};
+
+/**
+ * 아티스트 차단
+ * @param id 아티스트 아이디
+ * @returns 아티스트 차단 결과
+ */
+export const blockArtist = async (id: number) => {
+	const response = await axiosInstance.post<CommonResponseId>(`/artists/${id}/block`);
+	return response.data;
+};
+
+/**
+ * 아티스트 차단 해제
+ * @param id 아티스트 아이디
+ * @returns 아티스트 차단 해제 결과
+ */
+export const unblockArtist = async (id: number) => {
+	const response = await axiosInstance.delete<CommonResponseId>(`/artists/${id}/block`);
+	return response.data;
 };
