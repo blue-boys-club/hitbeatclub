@@ -119,6 +119,11 @@ const QUERY_KEYS = {
 		list: ["question", "list"],
 		detail: (id: number): QueryKey => ["question", id],
 	},
+	inquiry: {
+		_key: ["inquiry"],
+		list: ["inquiry", "list"],
+		detail: (id: number): QueryKey => ["inquiry", id],
+	},
 };
 
 export { QUERY_KEYS };
