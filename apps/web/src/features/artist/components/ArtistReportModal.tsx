@@ -40,6 +40,7 @@ export const ArtistReportModal = memo(({ isOpen, onCloseModal, artistId }: Artis
 	const [reporterEmail, setReporterEmail] = useState("");
 	const [content, setContent] = useState("");
 	const [agreedPrivacyPolicy, setAgreedPrivacyPolicy] = useState(false);
+	const [validate, setValidate] = useState({ error: false, message: "" });
 	const { mutate: reportArtist, isError, isPending } = useReportArtistMutation();
 
 	const onCheckboxChange = () => {
@@ -48,6 +49,36 @@ export const ArtistReportModal = memo(({ isOpen, onCloseModal, artistId }: Artis
 
 	const onSendReport = (e: MouseEvent<HTMLButtonElement>) => {
 		e.preventDefault();
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+		if (!reporterName) {
+			setValidate({ error: true, message: "이름을 입력해주세요." });
+			return;
+		}
+		if (!reporterPhone) {
+			setValidate({ error: true, message: "번호를 입력해주세요." });
+			return;
+		}
+		if (!reporterEmail) {
+			setValidate({ error: true, message: "이메일을 입력해주세요." });
+			return;
+		}
+		if (!emailRegex.test(reporterEmail)) {
+			setValidate({ error: true, message: "이메일 형식을 정확히 입력해주세요." });
+			return;
+		}
+		if (!content) {
+			setValidate({ error: true, message: "신고 내용을 입력해주세요." });
+			return;
+		}
+		if (content.length < 10) {
+			setValidate({ error: true, message: "신고 내용은 10자 이상 입력해 주세요." });
+			return;
+		}
+		if (!agreedPrivacyPolicy) {
+			setValidate({ error: true, message: "수집 및 동의를 체크해주세요" });
+			return;
+		}
 
 		reportArtist(
 			{
@@ -160,23 +191,21 @@ export const ArtistReportModal = memo(({ isOpen, onCloseModal, artistId }: Artis
 								<ChevronRight />
 							</span>
 						</div>
+						{validate.error && (
+							<div className="items-center gap-2 font-['SUIT'] text-[12px] font-semibold leading-[150%] tracking-[0.12px] text-hbc-red">
+								{validate.message}
+							</div>
+						)}
 						{isError && (
-							<span className="inline-flex items-center gap-2 font-['SUIT'] text-[12px] font-semibold leading-[150%] tracking-[0.12px] text-hbc-red">
+							<div className="inline-flex items-center gap-2 font-['SUIT'] text-[12px] font-semibold leading-[150%] tracking-[0.12px] text-hbc-red">
 								신고 전송 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
-							</span>
+							</div>
 						)}
 					</form>
 				</PopupDescription>
 
 				<PopupFooter>
-					<PopupButton
-						onClick={onSendReport}
-						disabled={
-							isPending || !agreedPrivacyPolicy || !reporterName || !reporterPhone || !reporterEmail || !content
-						}
-					>
-						{isPending ? "전송중..." : "전송하기"}
-					</PopupButton>
+					<PopupButton onClick={onSendReport}>{isPending ? "전송중..." : "전송하기"}</PopupButton>
 				</PopupFooter>
 			</PopupContent>
 		</Popup>
