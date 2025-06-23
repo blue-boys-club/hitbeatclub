@@ -23,8 +23,8 @@ export const UserUpdatePayloadSchema = z.object({
 		.describe("프로필 이미지 URL")
 		.default("https://example.com/profile.jpg")
 		.optional(),
-	country: z.string().max(4).describe("국가 코드").default("KR"),
-	region: z.string().max(100).describe("지역").default("Seoul"),
+	country: z.string().max(4).describe("국가 코드").default("KR").optional(),
+	region: z.string().max(100).describe("지역").default("Seoul").optional(),
 	isAgreedTerms: z
 		.number()
 		.describe("이용약관 동의 여부")
