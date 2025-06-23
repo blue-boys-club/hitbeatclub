@@ -14,6 +14,14 @@ import { AuthFindIdPayload } from "@hitbeatclub/shared-types";
 import { AxiosError } from "axios";
 import { Toaster } from "@/components/ui/Toast/toaster";
 
+const AuthFindIdPayloadSchema = z.object({
+	name: z.string().min(1, "이름을 입력해주세요."),
+	phoneNumber: z
+		.string()
+		.min(1, "휴대폰 번호를 입력해주세요.")
+		.regex(/^01[0-9]{8,9}$/, "올바른 휴대폰 번호 형식을 입력해주세요. (예: 01012345678)"),
+});
+
 export const AuthFindIdPassword = () => {
 	const router = useRouter();
 	const [isIdModalOpen, setIsIdModalOpen] = useState(false);
@@ -24,14 +32,6 @@ export const AuthFindIdPassword = () => {
 
 	const { mutateAsync: findEmail } = useFindEmailMutation();
 	const sendChangePasswordEmailMutation = useSendChangePasswordEmailMutation();
-
-	const AuthFindIdPayloadSchema = z.object({
-		name: z.string().min(1, "이름을 입력해주세요."),
-		phoneNumber: z
-			.string()
-			.min(1, "휴대폰 번호를 입력해주세요.")
-			.regex(/^01[0-9]{8,9}$/, "올바른 휴대폰 번호 형식을 입력해주세요. (예: 01012345678)"),
-	});
 
 	const onCloseModal = () => {
 		setIsIdModalOpen(false);
