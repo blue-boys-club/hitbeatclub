@@ -8,7 +8,6 @@ import { useState } from "react";
 import { PaymentSelectModal } from "./modal/PaymentSelectModal";
 import { PaymentSuccessModal } from "./modal/PaymentSuccessModal";
 import { PaymentFailureModal } from "./modal/PaymentFailureModal";
-import { useCartStore } from "@/stores/cart";
 import Link from "next/link";
 import { createPaymentOrder } from "@/apis/payment/payment.api";
 import type { PaymentOrderResponse } from "@hitbeatclub/shared-types/payment";
@@ -35,7 +34,6 @@ export const CartPaymentDetail = ({ checkoutItems, subtotal, serviceFee = 0, tot
 	const [paymentResult, setPaymentResult] = useState<PaymentOrderResponse | null>(null);
 	const [paymentError, setPaymentError] = useState<{ message: string; code: string } | null>(null);
 	const [isCreatingOrder, setIsCreatingOrder] = useState(false);
-	const clearCart = useCartStore((state) => state.clearCart);
 
 	const handlePaymentClick = () => {
 		if (!checkoutItems.length) {
@@ -57,7 +55,6 @@ export const CartPaymentDetail = ({ checkoutItems, subtotal, serviceFee = 0, tot
 		setPaymentResult(result);
 		setPaymentModalOpen(false);
 		setSuccessModalOpen(true);
-		clearCart();
 	};
 
 	const handlePaymentError = (error: any) => {

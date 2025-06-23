@@ -86,7 +86,7 @@ export const HeaderNav = memo(() => {
 					break;
 				case "logout":
 					signOut();
-					// void router.push("/auth/login");
+					void router.push("/auth/login");
 					break;
 			}
 		},

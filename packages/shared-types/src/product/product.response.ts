@@ -54,6 +54,7 @@ export const ProductResponseSchema = z.object({
 	}),
 	licenseInfo: z.array(
 		z.object({
+			id: z.number().describe("라이센스 ID").default(1),
 			label: z.string().describe("라이센스 타입").default("Master"),
 			price: z.number().describe("라이센스 가격").default(0),
 		}),
