@@ -3,26 +3,14 @@ import { useUploadFileMutation } from "@/apis/notice/mutations/useUploadFileMuta
 import { Button } from "@/components/ui/Button";
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-
-interface UploadedFile {
-	id: number;
-	url: string;
-	name: string;
-}
+import { NoticeCreateContentProps, UploadedFile } from "../notice.types";
 
 export const NoticeCreateContent = ({
 	content,
 	setContent,
-	uploadedFileIds,
 	setUploadedFileIds,
 	onCreateNotice,
-}: {
-	content: string;
-	setContent: (content: string) => void;
-	uploadedFileIds: number[];
-	setUploadedFileIds: (fileIds: number[]) => void;
-	onCreateNotice: () => void;
-}) => {
+}: NoticeCreateContentProps) => {
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
@@ -45,7 +33,7 @@ export const NoticeCreateContent = ({
 	useEffect(() => {
 		const fileIds = uploadedFiles.map((file) => file.id);
 		setUploadedFileIds(fileIds);
-	}, [uploadedFiles, setUploadedFileIds]);
+	}, [uploadedFiles]);
 
 	const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const selectedFiles = event.target.files;

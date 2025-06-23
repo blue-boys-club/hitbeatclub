@@ -3,7 +3,7 @@ import { PaginationRequest } from "@hitbeatclub/shared-types/common";
 import { ProductListQueryRequest } from "@hitbeatclub/shared-types/product";
 import { UserLikeProductListRequest } from "@hitbeatclub/shared-types/user";
 import { UserFollowedArtistListPayload } from "./user/user.type";
-import { NoticePayload } from "./notice/notice.type";
+import { NoticeListQueryRequest } from "@hitbeatclub/shared-types/notice";
 import { ProductSearchQuery } from "./search/search.type";
 
 type QueryKey = Array<
@@ -104,7 +104,7 @@ const QUERY_KEYS = {
 		],
 	},
 	notice: {
-		list: (payload: NoticePayload) => ["notice", "list", payload],
+		list: (payload: NoticeListQueryRequest) => ["notice", "list", payload],
 		detail: (id: string) => ["notice", "detail", id],
 	},
 	search: {

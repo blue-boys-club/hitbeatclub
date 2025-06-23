@@ -6,12 +6,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useRef, useEffect, useState } from "react";
 import { useUploadFileMutation } from "@/apis/notice/mutations/useUploadFileMutation";
-
-interface UploadedFile {
-	id: number;
-	url: string;
-	name: string;
-}
+import { UploadedFile } from "../notice.types";
+import { NoticeEditContentProps } from "../notice.types";
 
 export const NoticeEditContent = ({
 	data,
@@ -20,7 +16,7 @@ export const NoticeEditContent = ({
 	content,
 	uploadedFileIds,
 	setUploadedFileIds,
-}: any) => {
+}: NoticeEditContentProps) => {
 	const router = useRouter();
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);

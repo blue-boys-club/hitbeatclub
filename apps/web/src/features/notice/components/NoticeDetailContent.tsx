@@ -1,7 +1,7 @@
 "use client";
 import { BackArrow } from "@/assets/svgs/BackArrow";
 import { Button } from "@/components/ui/Button";
-import React, { useEffect } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
 import { NoticeDetailContentProps } from "../notice.types";
 import Image from "next/image";
@@ -68,7 +68,7 @@ export const NoticeDetailContent = ({ data, onDelete }: NoticeDetailContentProps
 			</div>
 			<section className="py-10 px-20">
 				{/* 첨부파일 목록 */}
-				{data.files.filter((file) => !isImageFile(file.originalName)).length > 0 && (
+				{data.files && data.files.filter((file) => !isImageFile(file.originalName)).length > 0 && (
 					<div className="mb-6">
 						<h3 className="text-lg font-semibold text-hbc-black mb-3">첨부파일</h3>
 						<div className="space-y-2">
@@ -100,23 +100,24 @@ export const NoticeDetailContent = ({ data, onDelete }: NoticeDetailContentProps
 				)}
 
 				{/* 이미지 파일들 표시 */}
-				{data.files
-					.filter((file) => isImageFile(file.originalName))
-					.map((file) => (
-						<div
-							key={file.id}
-							style={{ position: "relative", width: "100%", minHeight: 200, marginBottom: 16 }}
-						>
-							<Image
-								src={file.url}
-								alt={file.originalName}
-								fill
-								style={{ objectFit: "contain" }}
-								sizes="100vw"
-								className="w-full h-auto"
-							/>
-						</div>
-					))}
+				{data.files &&
+					data.files
+						.filter((file) => isImageFile(file.originalName))
+						.map((file) => (
+							<div
+								key={file.id}
+								style={{ position: "relative", width: "100%", minHeight: 200, marginBottom: 16 }}
+							>
+								<Image
+									src={file.url}
+									alt={file.originalName}
+									fill
+									style={{ objectFit: "contain" }}
+									sizes="100vw"
+									className="w-full h-auto"
+								/>
+							</div>
+						))}
 
 				<div className="text-hbc-black font-['SUIT'] text-base font-semibold leading-[160%] tracking-[-0.32px]">
 					{data.content}

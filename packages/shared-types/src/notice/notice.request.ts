@@ -33,6 +33,7 @@ export const NoticeListQueryRequestSchema = z.object({
 // 공지사항 파일 업로드 스키마
 export const NoticeUploadFileRequestSchema = z.object({
 	type: z.enum(["image", "document"]).describe("파일 타입"),
+	file: z.any().describe("업로드할 파일"),
 });
 
 // 타입 추출

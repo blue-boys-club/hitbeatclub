@@ -1,9 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
-import { NoticePayload } from "../notice.type";
 import { QUERY_KEYS } from "@/apis/query-keys";
 import { getNoticeDetail, getNoticeList } from "../notice.api";
+import { NoticeListQueryRequest } from "@hitbeatclub/shared-types";
 
-export const useNoticeListQueryOptions = (payload: NoticePayload) => {
+export const useNoticeListQueryOptions = (payload: NoticeListQueryRequest) => {
 	return queryOptions({
 		queryKey: QUERY_KEYS.notice.list(payload),
 		queryFn: () => getNoticeList(payload),

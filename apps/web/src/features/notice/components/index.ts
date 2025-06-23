@@ -1,10 +1,10 @@
 export * from "./NoticeDetailContent";
 export * from "./NoticeDetailHeader";
 export * from "./NoticeHeader";
-export { NoticeList } from "./NoticeList";
+export * from "./NoticeList";
 export * from "./NoticeSearchBar";
 export * from "./NoticeEditHeader";
 export * from "./NoticeEditContent";
 export * from "./NoticeCreateHeader";
 export * from "./NoticeCreateContent";
-export { Pagination } from "./Pagination";
+export * from "./Pagination";

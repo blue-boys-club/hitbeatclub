@@ -26,7 +26,7 @@ export function checkIsPureEnglish(text?: string | ReactNode, treatSpecialCharac
 	return isEnglish && !isOnlySpecialCharacters;
 }
 
-export function generateDateObj(dateStr: string) {
+export function generateDateObj(dateStr: Date) {
 	const dateObj = new Date(dateStr);
 	const year = String(dateObj.getFullYear());
 	const month = String(dateObj.getMonth() + 1).padStart(2, "0");

@@ -1,9 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 import { createNotice } from "../notice.api";
-import { NoticeCreatePayload } from "../notice.type";
+import { NoticeCreateRequest } from "@hitbeatclub/shared-types";
 
 export const useCreateNoticeMutation = () => {
 	return useMutation({
-		mutationFn: (payload: NoticeCreatePayload) => createNotice(payload),
+		mutationFn: (payload: NoticeCreateRequest) => createNotice(payload),
 	});
 };

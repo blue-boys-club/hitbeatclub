@@ -1,6 +1,6 @@
-import { Notice, NoticeListResponse } from "@/apis/notice/notice.type";
+import { NoticeDetailResponse, NoticeListPagingResponse } from "@hitbeatclub/shared-types";
 
-export type SortOption = "TITLE" | "CONTENT";
+export type SortOption = "title" | "date" | "view";
 
 export interface NoticeSearchBarProps {
 	searchValue: string;
@@ -11,17 +11,17 @@ export interface NoticeSearchBarProps {
 }
 
 export interface NoticeListProps {
-	data: NoticeListResponse;
+	data: NoticeListPagingResponse;
 	currentPage?: number;
 	onPageChange?: (page: number) => void;
 }
 
 export interface NoticeDetailHeaderProps {
-	data: Notice;
+	data: NoticeDetailResponse;
 }
 
 export interface NoticeDetailContentProps {
-	data: Notice;
+	data: NoticeDetailResponse;
 	onDelete: () => void;
 }
 
@@ -31,7 +31,7 @@ export interface NoticeEditHeaderProps {
 }
 
 export interface NoticeEditContentProps {
-	data: Notice;
+	data: NoticeDetailResponse;
 	onUpdate: () => void;
 	setContent: (content: string) => void;
 	content: string;
@@ -50,4 +50,10 @@ export interface NoticeCreateContentProps {
 	uploadedFileIds: number[];
 	setUploadedFileIds: (fileIds: number[]) => void;
 	onCreateNotice: () => void;
+}
+
+export interface UploadedFile {
+	id: number;
+	url: string;
+	name: string;
 }

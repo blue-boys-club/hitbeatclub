@@ -8,6 +8,7 @@ const ENUM_USER_ROLE = {
 };
 
 export const noticeDropdownOptions = [
-	{ label: "제목", value: "TITLE" },
-	{ label: "내용", value: "CONTENT" },
+	{ label: "날짜", value: "date" },
+	{ label: "제목", value: "title" },
+	{ label: "조회수", value: "view" },
 ];
