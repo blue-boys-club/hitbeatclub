@@ -6,14 +6,17 @@ import React, { useEffect, useRef, useCallback, useMemo } from "react";
 import PlaylistItem from "./PlaylistItem";
 import { useLayoutStore } from "@/stores/layout";
 import { useShallow } from "zustand/react/shallow";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { getPlayerListInfiniteQueryOptions } from "@/apis/player/query/player.query-options";
 import { PlayerListResponse } from "@hitbeatclub/shared-types";
 import { DropContentWrapper } from "@/features/dnd/components/DropContentWrapper";
 import blankCdImage from "@/assets/images/blank-cd.png";
 import { usePlayTrack } from "@/hooks/usePlayTrack";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 
 const PlaylistRightSidebar = () => {
+	const { data: userMe } = useQuery({ ...getUserMeQueryOption(), retry: false });
+
 	const { isOpen, setRightSidebar, currentTrackId } = useLayoutStore(
 		useShallow((state) => ({
 			isOpen: state.rightSidebar.isOpen,
@@ -22,9 +25,10 @@ const PlaylistRightSidebar = () => {
 		})),
 	);
 
-	const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } = useInfiniteQuery(
-		getPlayerListInfiniteQueryOptions(),
-	);
+	const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } = useInfiniteQuery({
+		...getPlayerListInfiniteQueryOptions(),
+		enabled: !!userMe?.id,
+	});
 
 	// 무한 스크롤을 위한 ref와 observer 설정
 	const observerRef = useRef<HTMLDivElement>(null);
@@ -135,7 +139,11 @@ const PlaylistRightSidebar = () => {
 						<div className="flex-1 min-h-0 px-6">
 							<h3 className="py-[6px] border-y-[3px] text-black font-bold text-[20px] leading-[20px] mb-5">Recent</h3>
 
-							{isLoading ? (
+							{!userMe?.id ? (
+								<div className="flex justify-center items-center h-20">
+									<div className="text-gray-500">로그인 후 이용해주세요.</div>
+								</div>
+							) : isLoading ? (
 								<div className="flex justify-center items-center h-20">
 									<div className="text-gray-500">로딩 중...</div>
 								</div>

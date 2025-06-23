@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo, useCallback, useState } from "react";
+import React, { memo, useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useShallow } from "zustand/react/shallow";
@@ -12,8 +12,10 @@ import { LoginButton, SubscribeButton, TagDropdown, UserAvatar } from "@/compone
 import { useLayoutStore } from "@/stores/layout";
 import { useAuthStore } from "@/stores/auth";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { getArtistMeQueryOption } from "@/apis/artist/query/artist.query-options";
+import { QUERY_KEYS } from "@/apis/query-keys";
 
 interface NotificationOption {
 	label: string;
@@ -52,15 +54,26 @@ export const HeaderNav = memo(() => {
 		})),
 	);
 	const { data: user } = useQuery(getUserMeQueryOption());
+	const { data: artist } = useQuery(getArtistMeQueryOption());
+	const queryClient = useQueryClient();
 
 	const [notificationOptions, setNotificationOptions] = useState<NotificationOption[]>([]);
 
 	const signOut = useCallback(() => {
 		logout();
+		queryClient.removeQueries({ queryKey: QUERY_KEYS.user._key });
 		toast({
 			description: "로그아웃 되었습니다.",
 		});
 	}, [logout, toast]);
+
+	const artistStudioHref = useMemo(() => {
+		if (user?.subscribedAt) {
+			return `/artist-studio/${artist?.id}`;
+		} else {
+			return "/subscribe";
+		}
+	}, [user?.subscribedAt, artist?.id]);
 
 	const handelDropdownOptionSelect = useCallback(
 		(value: string) => {
@@ -69,14 +82,15 @@ export const HeaderNav = memo(() => {
 					router.push("/orders");
 					break;
 				case "artist-studio":
-					router.push("/artist-studio/123");
+					router.push(artistStudioHref);
 					break;
 				case "logout":
 					signOut();
+					// void router.push("/auth/login");
 					break;
 			}
 		},
-		[router, signOut],
+		[router, signOut, artistStudioHref],
 	);
 	return (
 		<nav
@@ -87,7 +101,7 @@ export const HeaderNav = memo(() => {
 				<>
 					<SubscribeButton
 						component="Link"
-						href={user?.subscribedAt ? "/artist-studio" : "/subscribe"}
+						href={artistStudioHref}
 						isSubscribed={!!user?.subscribedAt}
 					/>
 
