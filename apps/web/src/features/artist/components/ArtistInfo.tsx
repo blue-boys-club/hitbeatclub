@@ -162,10 +162,13 @@ export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 
 						{isOpenDropdown && <ArtistDropdown options={options} />}
 
-						<ArtistReportModal
-							isOpen={isOpenReportModal}
-							onCloseModal={onCloseReportModal}
-						/>
+						{artist && (
+							<ArtistReportModal
+								isOpen={isOpenReportModal}
+								onCloseModal={onCloseReportModal}
+								artistId={artist.id}
+							/>
+						)}
 					</div>
 				</div>
 
