@@ -12,8 +12,8 @@ import {
 	ARTIST_NOT_BLOCKED_ERROR,
 	ARTIST_SELF_BLOCK_ERROR,
 	ARTIST_REPORT_FAILED_ERROR,
-	ARTIST_REPORT_NOT_FOUND_ERROR,
 } from "./artist.error";
+import { ArtistReportRequestDto } from "./dto/request/artist.report.request.dto";
 
 @Injectable()
 export class ArtistService {
@@ -430,16 +430,7 @@ export class ArtistService {
 		}
 	}
 
-	async reportArtist(
-		artistId: number,
-		reportData: {
-			reporterName: string;
-			reporterPhone: string;
-			reporterEmail: string;
-			content: string;
-			agreedPrivacyPolicy: boolean;
-		},
-	) {
+	async reportArtist(artistId: number, reportData: ArtistReportRequestDto) {
 		try {
 			// 아티스트가 존재하는지 확인
 			const artist = await this.prisma.artist.findFirst({

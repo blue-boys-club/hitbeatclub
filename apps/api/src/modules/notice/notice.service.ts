@@ -1,10 +1,13 @@
 import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "~/common/prisma/prisma.service";
 import { FileService } from "../file/file.service";
-import { NoticeCreateRequest, NoticeUpdateRequest, NoticeListQueryRequest } from "@hitbeatclub/shared-types";
+
 import { NOTICE_NOT_FOUND_ERROR, NOTICE_CREATE_ERROR, NOTICE_UPDATE_ERROR, NOTICE_DELETE_ERROR } from "./notice.error";
 import { Logger } from "@nestjs/common";
-import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types";
+import { ENUM_FILE_TYPE, NOTICE_SORT_TYPE } from "@hitbeatclub/shared-types";
+import { NoticeCreateRequestDto } from "./dto/request/notice.create.request.dto";
+import { NoticeListQueryRequestDto } from "./dto/request/notice.list.request.dto";
+import { NoticeUpdateRequestDto } from "./dto/request/notice.update.request.dto";
 
 @Injectable()
 export class NoticeService {
@@ -15,29 +18,39 @@ export class NoticeService {
 		private readonly fileService: FileService,
 	) {}
 
-	async findAll(query: NoticeListQueryRequest) {
+	async findAll(query: NoticeListQueryRequestDto) {
 		try {
-			const { page, limit, search, searchType } = query;
+			const { page, limit, search, sort } = query;
 
 			const where: any = {
 				deletedAt: null,
 			};
 
-			// 검색 조건 추가
+			// 검색 조건 추가 (제목, 내용 모두 검색)
 			if (search) {
-				if (searchType === "title") {
-					where.title = { contains: search };
-				} else if (searchType === "content") {
-					where.content = { contains: search };
-				} else {
-					where.OR = [{ title: { contains: search } }, { content: { contains: search } }];
+				where.OR = [{ title: { contains: search } }, { content: { contains: search } }];
+			}
+
+			// 정렬 조건 설정
+			let orderBy: any = [{ createdAt: "desc" }]; // 기본값
+			if (sort) {
+				switch (sort) {
+					case NOTICE_SORT_TYPE.TITLE:
+						orderBy = [{ title: "asc" }];
+						break;
+					case NOTICE_SORT_TYPE.DATE:
+						orderBy = [{ createdAt: "desc" }];
+						break;
+					case NOTICE_SORT_TYPE.VIEW:
+						orderBy = [{ viewCount: "desc" }];
+						break;
 				}
 			}
 
 			const notices = await this.prisma.notice
 				.findMany({
 					where,
-					orderBy: [{ createdAt: "desc" }],
+					orderBy,
 					skip: (page - 1) * limit,
 					take: limit,
 				})
@@ -67,8 +80,8 @@ export class NoticeService {
 			// 결과에 파일 정보 추가
 			const result = notices.map((notice) => ({
 				...notice,
-				id: notice.id.toString(),
-				files: filesByNoticeId[notice.id.toString()] || [],
+				id: notice.id,
+				files: filesByNoticeId[notice.id] || [],
 			}));
 
 			return result;
@@ -123,14 +136,15 @@ export class NoticeService {
 		}
 	}
 
-	async create(userId: number, createNoticeDto: NoticeCreateRequest) {
+	async create(userId: number, createNoticeDto: NoticeCreateRequestDto) {
 		try {
 			const { noticeFileIds, ...noticeData } = createNoticeDto;
 
 			const notice = await this.prisma.notice
 				.create({
 					data: {
-						...noticeData,
+						title: noticeData.title,
+						content: noticeData.content,
 						viewCount: 0,
 					},
 				})
@@ -152,7 +166,7 @@ export class NoticeService {
 		}
 	}
 
-	async update(userId: number, id: number, updateNoticeDto: NoticeUpdateRequest) {
+	async update(userId: number, id: number, updateNoticeDto: NoticeUpdateRequestDto) {
 		try {
 			const existingNotice = await this.prisma.notice.findFirst({
 				where: { id, deletedAt: null },
@@ -217,21 +231,16 @@ export class NoticeService {
 		}
 	}
 
-	async getTotal(query: NoticeListQueryRequest) {
-		const { search, searchType } = query;
+	async getTotal(query: NoticeListQueryRequestDto) {
+		const { search } = query;
 
 		const where: any = {
 			deletedAt: null,
 		};
 
+		// 검색 조건 추가 (제목, 내용 모두 검색)
 		if (search) {
-			if (searchType === "title") {
-				where.title = { contains: search };
-			} else if (searchType === "content") {
-				where.content = { contains: search };
-			} else {
-				where.OR = [{ title: { contains: search } }, { content: { contains: search } }];
-			}
+			where.OR = [{ title: { contains: search } }, { content: { contains: search } }];
 		}
 
 		return await this.prisma.notice.count({ where });
