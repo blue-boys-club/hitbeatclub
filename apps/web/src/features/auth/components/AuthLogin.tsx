@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/Button";
 import { useSignInWithEmail } from "@/apis/auth/mutations";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AuthLoginPayloadSchema } from "@hitbeatclub/shared-types/auth";
 import { z } from "zod";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -14,6 +13,11 @@ import { useQuery } from "@tanstack/react-query";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { useRouter } from "next/navigation";
 import { AuthLoginButtonWrapper } from "./AuthLoginButtonWrapper";
+
+const AuthLoginPayloadSchema = z.object({
+	email: z.string().min(1, "이메일을 입력해주세요.").email("올바른 이메일 주소를 입력해주세요."),
+	password: z.string().min(1, "비밀번호를 입력해주세요.").min(8, "비밀번호는 8자 이상 입력해주세요."),
+});
 
 type FormData = z.infer<typeof AuthLoginPayloadSchema>;
 
