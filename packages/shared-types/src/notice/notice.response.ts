@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CommonResponsePagingSchema } from "../common/common.response";
 
 // 공지사항 파일 스키마
 export const NoticeFileResponseSchema = z.object({
@@ -19,6 +20,10 @@ export const NoticeListResponseSchema = z.object({
 	createdAt: z.date().describe("생성일"),
 	updatedAt: z.date().describe("수정일"),
 	files: z.array(NoticeFileResponseSchema).optional().describe("첨부파일 목록"),
+});
+
+export const NoticeListPagingResponseSchema = CommonResponsePagingSchema.extend({
+	data: z.array(NoticeListResponseSchema),
 });
 
 // 공지사항 상세 응답 스키마
@@ -44,3 +49,4 @@ export type NoticeFileResponse = z.infer<typeof NoticeFileResponseSchema>;
 export type NoticeListResponse = z.infer<typeof NoticeListResponseSchema>;
 export type NoticeDetailResponse = z.infer<typeof NoticeDetailResponseSchema>;
 export type NoticeCreateResponse = z.infer<typeof NoticeCreateResponseSchema>;
+export type NoticeListPagingResponse = z.infer<typeof NoticeListPagingResponseSchema>;
