@@ -5,12 +5,15 @@ import { Button } from "@/components/ui/Button";
 import { useToast } from "@/hooks/use-toast";
 import { InquiryCreateRequest, InquiryCreateSchema } from "@hitbeatclub/shared-types";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 
 const SupportForm = () => {
-	const [isChecked, setIsChecked] = useState(false);
+	const router = useRouter();
 	const { toast } = useToast();
+
+	const [isChecked, setIsChecked] = useState(false);
 
 	const { mutate: createInquiry } = useCreateInquiryMutation();
 
@@ -35,8 +38,18 @@ const SupportForm = () => {
 
 	return (
 		<section className="pt-[30px] pl-[46px] pr-[63px] flex flex-col gap-7 pb-[100px]">
-			<div className="border-b-6 border-black pb-[15px] text-hbc-black font-suit text-[26px] font-extrabold leading-[100%] tracking-[0.26px]">
-				그 외의 질문이 있으신가요?
+			<div className="flex justify-between items-center border-b-6 border-black pb-[15px] ">
+				<div className="text-hbc-black font-suit text-[26px] font-extrabold leading-[100%] tracking-[0.26px]">
+					그 외의 질문이 있으신가요?
+				</div>
+				<div
+					className="text-hbc-black font-suit text-[16px] font-semibold leading-[160%] tracking-[0.18px] cursor-pointer"
+					onClick={() => {
+						router.push("/support/inquiries");
+					}}
+				>
+					문의 내역 확인
+				</div>
 			</div>
 
 			<form
@@ -127,7 +140,7 @@ const SupportForm = () => {
 								checked={isChecked}
 								onChange={() => setIsChecked(!isChecked)}
 							/>
-							개인정보 수집 및 이용에 동의합니다.(필수)
+							개인정보 수집 및 이용에 동의합니다. (필수)
 						</label>
 						<button
 							className="cursor-pointer"
