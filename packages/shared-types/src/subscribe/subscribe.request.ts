@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 // 결제 주기 스키마
-export const recurringPeriodSchema = z.enum(["monthly", "yearly"]).describe("결제 주기");
+// export const recurringPeriodSchema = z.enum(["monthly", "yearly"]).describe("결제 주기");
+export const subscriptionPlanSchema = z.enum(["MONTH", "YEAR"]).describe("결제 주기");
 
 // 신용카드 정보 스키마
 export const CardCredentialSchema = z.object({
@@ -33,10 +34,10 @@ export const PaymentMethodSchema = z.discriminatedUnion("type", [
 		type: z.literal("CARD"),
 		billingKey: z.string().min(1, "카드 빌링키를 입력해주세요."),
 	}),
-	z.object({
-		type: z.literal("TOSS"),
-		billingKey: z.string().min(1, "토스 빌링키를 입력해주세요."),
-	}),
+	// z.object({
+	// 	type: z.literal("TOSS"),
+	// 	billingKey: z.string().min(1, "토스페이 빌링키를 입력해주세요."),
+	// }),
 	z.object({
 		type: z.literal("PAYPAL"),
 		billingKey: z.string().min(1, "페이팔 빌링키를 입력해주세요."),
@@ -44,11 +45,11 @@ export const PaymentMethodSchema = z.discriminatedUnion("type", [
 ]);
 
 // 구독 생성 스키마
-export const SubscribeMembershipRequestSchema = z.object({
-	recurringPeriod: recurringPeriodSchema,
-	promotionCode: z.string().describe("프로모션 코드").optional(),
-	method: PaymentMethodSchema.describe("결제 방식").optional(),
-});
+// export const SubscribeMembershipRequestSchema = z.object({
+// 	recurringPeriod: recurringPeriodSchema,
+// 	promotionCode: z.string().describe("프로모션 코드").optional(),
+// 	method: PaymentMethodSchema.describe("결제 방식"),
+// });
 
 // 프로모션 코드 검증 스키마
 export const PromotionCodeSchema = z.object({
@@ -56,16 +57,28 @@ export const PromotionCodeSchema = z.object({
 });
 
 // 타입 추출
-export type RecurringPeriod = z.infer<typeof recurringPeriodSchema>;
+export type SubscriptionPlan = z.infer<typeof subscriptionPlanSchema>;
 export type CardCredential = z.infer<typeof CardCredentialSchema>;
 export type PaymentMethod = z.infer<typeof PaymentMethodSchema>;
-export type SubscribeMembershipRequest = z.infer<typeof SubscribeMembershipRequestSchema>;
+// export type SubscribeMembershipRequest = z.infer<typeof SubscribeMembershipRequestSchema>;
 export type PromotionCodeRequest = z.infer<typeof PromotionCodeSchema>;
 
 // 간단한 구독 요청 스키마
 export const SubscribeRequestSchema = z.object({
-	subscriptionPlan: z.enum(["MONTH", "YEAR"]).describe("구독 플랜 (월간/연간)"),
+	subscriptionPlan: subscriptionPlanSchema.describe("구독 플랜 (월간/연간)"),
 	hitcode: z.string().optional().describe("쿠폰 코드").default("HITCODE"),
+	method: PaymentMethodSchema.describe("결제 방식"),
 });
 
 export type SubscribeRequest = z.infer<typeof SubscribeRequestSchema>;
+
+// 구독 취소 스키마
+export const SubscribeCancelSchema = z.object({
+	cancel: z.boolean().default(true), // true=cancel, false=undo
+});
+export type SubscribeCancelRequest = z.infer<typeof SubscribeCancelSchema>;
+
+export const SubscribePlanUpdateSchema = z.object({
+	subscriptionPlan: subscriptionPlanSchema,
+});
+export type SubscribePlanUpdateRequest = z.infer<typeof SubscribePlanUpdateSchema>;

@@ -28,14 +28,17 @@ import { Webhook } from "@portone/server-sdk";
 import { PaymentPaginationRequestDto } from "./dto/request/payment.pagination.request.dto";
 import { PaymentOrderCreateResponseDto } from "./dto/response/payment.order-create.response.dto";
 import { isBillingKeyWebhook, isPaymentWebhook, PortOneWebhook } from "./payment.utils";
-import { ConfigService } from "@nestjs/config";
+import { SubscribeService } from "../subscribe/subscribe.service";
 
 @ApiTags("payment")
 @Controller("payment")
 export class PaymentController {
 	private readonly logger = new Logger(PaymentController.name);
 
-	constructor(private readonly paymentService: PaymentService) {}
+	constructor(
+		private readonly paymentService: PaymentService,
+		private readonly subscribeService: SubscribeService,
+	) {}
 
 	/**
 	 * 결제 주문을 생성합니다.
@@ -164,6 +167,7 @@ export class PaymentController {
 			if (isPaymentWebhook(webhook)) {
 				const { paymentId } = webhook.data;
 				await this.paymentService.syncPaymentFromWebhook(paymentId, webhook);
+				await this.subscribeService.handlePaymentWebhook(webhook);
 
 				this.logger.log(
 					{
@@ -176,17 +180,7 @@ export class PaymentController {
 			}
 			// 빌링키 관련 웹훅 처리
 			else if (isBillingKeyWebhook(webhook)) {
-				const { billingKey } = webhook.data;
-
-				// TODO: 빌링키 웹훅 처리 - 구독 관련 로직 추가
-				this.logger.log(
-					{
-						webhookType: webhook.type,
-						billingKey,
-						timestamp: webhook.timestamp,
-					},
-					"빌링키 웹훅 수신 (처리 로직 없음)",
-				);
+				await this.subscribeService.handleBillingKeyWebhook(webhook);
 			}
 			// 처리하지 않는 웹훅 타입
 			else {

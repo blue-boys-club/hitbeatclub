@@ -39,15 +39,15 @@ export class AwsSESService implements IAwsSESService {
 	private readonly logger = new Logger(AwsSESService.name);
 
 	constructor(private readonly configService: ConfigService) {
+		const accessKeyId =
+			this.configService.get<string>("aws.ses.credential.key") ?? this.configService.get("AWS_ACCESS_KEY_ID");
+		const secretAccessKey =
+			this.configService.get<string>("aws.ses.credential.secret") ?? this.configService.get("AWS_SECRET_ACCESS_KEY");
+		const region = this.configService.get<string>("aws.ses.region") ?? this.configService.get<string>("AWS_REGION");
+
 		this.sesClient = new SESv2Client({
-			credentials: {
-				accessKeyId:
-					this.configService.get<string>("aws.ses.credential.key") ?? this.configService.get("AWS_ACCESS_KEY_ID"),
-				secretAccessKey:
-					this.configService.get<string>("aws.ses.credential.secret") ??
-					this.configService.get("AWS_SECRET_ACCESS_KEY"),
-			},
-			region: this.configService.get<string>("aws.ses.region") ?? this.configService.get("AWS_REGION"),
+			region,
+			...(accessKeyId && secretAccessKey ? { credentials: { accessKeyId, secretAccessKey } } : {}),
 		});
 	}
 

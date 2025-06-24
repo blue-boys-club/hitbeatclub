@@ -49,7 +49,7 @@ export const PromotionCodeModal = memo(() => {
 
 			if (isValid) {
 				// FormContext를 통해 부모 폼에 코드 적용
-				setValue("promotionCode", code, { shouldValidate: true });
+				setValue("hitcode", code, { shouldValidate: true });
 				toast({
 					description: (
 						<span className="text-16 font-suit font-normal leading-150% tracking-016px">

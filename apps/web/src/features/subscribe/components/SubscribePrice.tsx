@@ -1,4 +1,4 @@
-import { RecurringPeriod } from "@hitbeatclub/shared-types/subscribe";
+import { SubscriptionPlan } from "@hitbeatclub/shared-types/subscribe";
 import { memo } from "react";
 
 /**
@@ -6,12 +6,12 @@ import { memo } from "react";
  */
 interface SubscribePriceProps {
 	isSubscribed: boolean;
-	recurringPeriod: RecurringPeriod;
+	subscriptionPlan: SubscriptionPlan;
 }
 
-export const SubscribePrice = memo(({ isSubscribed, recurringPeriod }: SubscribePriceProps) => {
+export const SubscribePrice = memo(({ isSubscribed, subscriptionPlan }: SubscribePriceProps) => {
 	if (isSubscribed) {
-		if (recurringPeriod === "yearly") {
+		if (subscriptionPlan === "YEAR") {
 			return (
 				<div className="justify-start text-hbc-red text-20px font-extrabold font-suit leading-150% tracking-02px">
 					20% 할인 혜택 적용 중
@@ -19,12 +19,12 @@ export const SubscribePrice = memo(({ isSubscribed, recurringPeriod }: Subscribe
 			);
 		}
 
-		if (recurringPeriod === "monthly") {
+		if (subscriptionPlan === "MONTH") {
 			return <></>;
 		}
 	}
 
-	if (recurringPeriod === "yearly") {
+	if (subscriptionPlan === "YEAR") {
 		return (
 			<div className="inline-flex flex-col items-start justify-start">
 				<div className="inline-flex justify-start items-center gap-[5px]">
@@ -45,7 +45,7 @@ export const SubscribePrice = memo(({ isSubscribed, recurringPeriod }: Subscribe
 		);
 	}
 
-	if (recurringPeriod === "monthly") {
+	if (subscriptionPlan === "MONTH") {
 		return (
 			<div className="inline-flex flex-col items-start justify-start">
 				<div className="justify-start text-12px font-semibold leading-150% tracking-012px text-hbc-red font-suit">

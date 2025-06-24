@@ -2,16 +2,20 @@
 
 import { PauseCircle, PlayCircle } from "@/assets/svgs";
 import { cn } from "@/common/utils";
+import { usePlayTrack } from "@/hooks/use-play-track";
+import { useAudioStore } from "@/stores/audio";
 import { cva, VariantProps } from "class-variance-authority";
 import { StaticImageData } from "next/image";
 import Image from "next/image";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
 
 export interface AlbumCoverCardProps
 	extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onClick">,
 		VariantProps<typeof AlbumCoverCardWrapper>,
 		VariantProps<typeof AlbumCoverCardInner> {
 	albumImgSrc: string | StaticImageData;
+	productId?: number;
 	onClick?: () => void;
 	AlbumCoverCardWrapperClassName?: string;
 	AlbumCoverCardInnerClassName?: string;
@@ -68,17 +72,37 @@ export const AlbumCoverCard = ({
 	border,
 	padding,
 	albumImgSrc,
-	onClick,
+	productId,
 	AlbumCoverCardWrapperClassName,
 	AlbumCoverCardInnerClassName,
 	...props
 }: AlbumCoverCardProps) => {
-	const [isPlay, setIsPlay] = useState(false);
+	const { play } = usePlayTrack();
+	const { status, currentProductId } = useAudioStore(
+		useShallow((state) => ({
+			status: state.status,
+			currentProductId: state.productId,
+		})),
+	);
+
+	const statusIcon = useMemo(() => {
+		if (currentProductId !== productId) {
+			return <PlayCircle />;
+		}
+
+		switch (status) {
+			case "playing":
+				return <PauseCircle />;
+			case "paused":
+				return <PlayCircle />;
+			default:
+				return <PlayCircle />;
+		}
+	}, [status, currentProductId, productId]);
 
 	const onClickHandler = useCallback(() => {
-		setIsPlay((prev) => !prev);
-		onClick?.();
-	}, [onClick]);
+		play(productId);
+	}, [play, productId]);
 
 	return (
 		<button
@@ -94,8 +118,13 @@ export const AlbumCoverCard = ({
 					priority
 					className="object-cover"
 				/>
-				<div className="absolute inset-0 flex items-center justify-center transition-opacity duration-200 opacity-0 bg-black/30 group-hover:opacity-100">
-					{isPlay ? <PauseCircle /> : <PlayCircle />}
+				<div
+					className={cn(
+						"absolute inset-0 flex items-center justify-center transition-opacity duration-200 bg-black/30",
+						currentProductId === productId ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+					)}
+				>
+					{statusIcon}
 				</div>
 			</div>
 		</button>
