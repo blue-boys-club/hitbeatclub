@@ -142,12 +142,14 @@ export class PaymentController {
 		status: 400,
 		description: "웹훅 검증에 실패했습니다.",
 	})
-	async handleWebhook(@Body() body: string, @Headers() headers: any) {
+	async handleWebhook(@RawBody() body: Buffer | undefined, @Headers() headers: any) {
 		try {
 			// 웹훅 시그니처 검증
 			let webhook: PortOneWebhook;
 			try {
-				const verifiedWebhook = await this.paymentService.verifyWebhook(body, headers);
+				const bodyString = body ? body.toString() : "";
+				this.logger.log({ body, bodyString, headers }, "웹훅 수신");
+				const verifiedWebhook = await this.paymentService.verifyWebhook(bodyString, headers);
 				webhook = verifiedWebhook as PortOneWebhook;
 			} catch (error) {
 				this.logger.error({ error }, "웹훅 검증 실패");
