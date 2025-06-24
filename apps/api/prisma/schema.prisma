@@ -412,6 +412,11 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum SubscribeStatus {
+  ACTIVE
+  CANCELED
+}
+
 model AccountToken {
   id          BigInt   @id @default(autoincrement())
   token       String   @db.Char(64) @unique      // SHA-256 → 64byte 등
@@ -475,12 +480,16 @@ model Subscribe {
   productType      ProductType     @map("product_type")
   price           Int             @db.Int
   nextPaymentDate  DateTime?       @map("next_payment_date") @db.Timestamp(0)
+  status           SubscribeStatus @default(ACTIVE)
+  cancelledAt      DateTime?       @map("cancelled_at") @db.Timestamp(0)
   createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt        DateTime        @default(now()) @map("updated_at") @db.Timestamp(0)
   deletedAt        DateTime?       @map("deleted_at") @db.Timestamp(0)
   
   user             User            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_user_TO_subscribe_1")
   coupon           Coupon?         @relation(fields: [couponId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_coupon_TO_subscribe_1")
+  subscribeBilling SubscribeBilling[] @relation("FK_subscribe_TO_billing_1")
+  subscribeTransactions SubscribeTransaction[] @relation("FK_subscribe_TO_transaction_1")
 
   @@index([userId], map: "FK_user_TO_subscribe_1")
   @@index([couponId], map: "FK_coupon_TO_subscribe_1")
@@ -591,4 +600,59 @@ model Inquiry {
 
   @@index([createdAt], map: "idx_inquiry_created")
   @@map("inquiry")
+}
+
+// Add TransactionStatus enum for subscription payment attempts
+enum TransactionStatus {
+  INITIATED
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+// Add BillingKeyStatus enum and status field to SubscribeBilling model
+enum BillingKeyStatus {
+  READY
+  ISSUED
+  FAILED
+  DELETED
+}
+
+// 빌링키 저장 테이블 - 정기 구독 결제용
+model SubscribeBilling {
+  id          BigInt  @id @default(autoincrement())
+  subscribeId BigInt  @map("subscribe_id")
+  billingKey  String  @map("billing_key") @db.VarChar(255)
+  pg          String? @db.VarChar(20)
+  status      BillingKeyStatus @default(ISSUED)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamp(0)
+
+  subscribe   Subscribe @relation("FK_subscribe_TO_billing_1", fields: [subscribeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([subscribeId], map: "idx_billing_subscribe_id")
+  @@map("subscribe_billing")
+}
+
+// 구독 결제 시도 내역 테이블
+model SubscribeTransaction {
+  id            BigInt          @id @default(autoincrement())
+  subscribeId   BigInt          @map("subscribe_id")
+  paymentId     String?         @map("payment_id") @db.VarChar(255)
+  amount        Int
+  status        TransactionStatus
+  attemptedAt   DateTime        @map("attempted_at") @db.Timestamp(0)
+  succeededAt   DateTime?       @map("succeeded_at") @db.Timestamp(0)
+  failedAt      DateTime?       @map("failed_at") @db.Timestamp(0)
+  pgTxId        String?         @map("pg_tx_id") @db.VarChar(255)
+  failReason    String?         @map("fail_reason") @db.VarChar(255)
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt     DateTime        @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt     DateTime?       @map("deleted_at") @db.Timestamp(0)
+
+  subscribe     Subscribe       @relation("FK_subscribe_TO_transaction_1", fields: [subscribeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([subscribeId], map: "idx_transaction_subscribe_id")
+  @@map("subscribe_transaction")
 }

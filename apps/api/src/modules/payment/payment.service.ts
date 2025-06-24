@@ -27,19 +27,15 @@ import {
 	INVALID_PAYMENT_AMOUNT_ERROR,
 	CART_EMPTY_ERROR,
 } from "./payment.error";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore -- vscode doesn't recognize this is a dual package even though it is and can be compiled
-import { PortOneClient, Payment } from "@portone/server-sdk";
-import { PAYMENT_PORTONE_API_KEY } from "./payment.constant";
-import z from "zod";
 import { type OrderStatus } from "@hitbeatclub/shared-types/payment";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types";
 import { FileService } from "~/modules/file/file.service";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore -- vscode doesn't recognize this is a dual package even though it is and can be compiled
-import { Webhook } from "@portone/server-sdk";
 import { PortOneWebhook, isPaymentWebhook } from "./payment.utils";
 import { ConfigService } from "@nestjs/config";
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore -- vscode doesn't recognize this is a dual package even though it is and can be compiled
+import { PortOneClient, Payment, Webhook } from "@portone/server-sdk";
 
 // CartService.findAll()이 실제로 반환하는 타입 정의
 interface CartItemWithProduct {
