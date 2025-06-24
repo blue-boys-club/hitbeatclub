@@ -18,7 +18,7 @@ import UserChangePasswordModal from "./modal/UserChangePasswordModal";
 import UserDeleteAccountModal from "./modal/UserDeleteAccountModal";
 import UserDeleteCompleteModal from "./modal/UserDeleteCompleteModal";
 import UserCancelMembershipModal from "./modal/UserCancelMembershipModal";
-import { COUNTRY_OPTIONS, getRegionOptionsByCountry } from "@hitbeatclub/country-options";
+import { COUNTRY_OPTIONS, CountryCode, getRegionOptionsByCountry } from "@hitbeatclub/country-options";
 import { GENDER_OPTIONS } from "@/features/auth/auth.constants";
 
 // 폼 스키마 정의 (이메일 제외)
@@ -146,7 +146,7 @@ const UserAccountForm = memo(() => {
 	const country = watch("country");
 
 	const regionOptions = useMemo(() => {
-		return country ? getRegionOptionsByCountry(country) : [];
+		return country ? getRegionOptionsByCountry(country as CountryCode) : [];
 	}, [country]);
 
 	const openChangePasswordModal = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
