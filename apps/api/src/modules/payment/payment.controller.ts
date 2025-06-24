@@ -10,6 +10,7 @@ import {
 	RawBody,
 	BadRequestException,
 	Logger,
+	HttpCode,
 } from "@nestjs/common";
 import { PaymentService } from "./payment.service";
 import { PaymentOrderCreateRequestDto } from "./dto/request/payment.order.create.request.dto";
@@ -142,6 +143,7 @@ export class PaymentController {
 		status: 400,
 		description: "웹훅 검증에 실패했습니다.",
 	})
+	@HttpCode(200) // PortOne에서 POST 인데도 200을 요구함...
 	async handleWebhook(@RawBody() body: Buffer | undefined, @Headers() headers: any) {
 		try {
 			// 웹훅 시그니처 검증
