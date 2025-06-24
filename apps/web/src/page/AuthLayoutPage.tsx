@@ -7,7 +7,7 @@ interface AuthPageProps {
 
 const AuthLayoutPage = ({ children }: AuthPageProps) => {
 	return (
-		<div className="relative font-['suit']">
+		<div className="relative font-suit">
 			<div className="absolute top-2 left-2">
 				<HBCLoginHeader />
 			</div>
