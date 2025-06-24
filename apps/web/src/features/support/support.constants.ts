@@ -31,3 +31,8 @@ export const questions = [
 		content: "",
 	},
 ];
+
+export const inquiryDropdownOptions = [
+	{ label: "날짜", value: "date" },
+	{ label: "이름", value: "name" },
+];
