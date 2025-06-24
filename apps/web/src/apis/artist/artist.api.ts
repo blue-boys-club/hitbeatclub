@@ -5,6 +5,7 @@ import {
 	ArtistResponse,
 	ArtistUpdateRequest,
 	ArtistProductListQuerySchema,
+	ArtistReportRequest,
 } from "@hitbeatclub/shared-types/artist";
 import type { CommonResponse, CommonResponseId } from "@/apis/api.type";
 import { ArtistUploadProfileRequest } from "./artist.type";
@@ -154,5 +155,10 @@ export const blockArtist = async (id: number) => {
  */
 export const unblockArtist = async (id: number) => {
 	const response = await axiosInstance.delete<CommonResponseId>(`/artists/${id}/block`);
+	return response.data;
+};
+
+export const reportArtist = async (id: number, payload: ArtistReportRequest) => {
+	const response = await axiosInstance.post<CommonResponseId>(`/artists/${id}/report`, payload);
 	return response.data;
 };

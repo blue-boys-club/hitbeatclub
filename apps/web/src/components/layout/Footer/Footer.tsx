@@ -55,7 +55,7 @@ export const Footer = () => {
 					환불정책
 				</Link>
 				<Link
-					href="/notice"
+					href="/notices"
 					className="text-hbc-gray-400 text-[16px] font-medium font-suit leading-none tracking-016px"
 				>
 					공지사항
@@ -107,7 +107,7 @@ export const Footer = () => {
 				</div>
 				<div className="flex flex-col">
 					<Link
-						href="/notice"
+						href="/notices"
 						className="flex items-center gap-3px"
 					>
 						공지사항

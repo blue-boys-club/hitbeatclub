@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
+import moment from "moment-timezone";
 
 import { Dropdown, Input } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
@@ -98,10 +99,11 @@ const UserAccountForm = memo(() => {
 	//폼 초기화
 	useEffect(() => {
 		if (user) {
-			const birthDate = user.birthDate ? new Date(user.birthDate) : null;
-			const birthYear = birthDate ? birthDate.getUTCFullYear().toString() : "";
-			const birthMonth = birthDate ? (birthDate.getUTCMonth() + 1).toString().padStart(2, "0") : "";
-			const birthDay = birthDate ? birthDate.getUTCDate().toString().padStart(2, "0") : "";
+			// UTC 날짜를 KST로 변환
+			const kstMoment = user.birthDate ? moment.utc(user.birthDate).tz("Asia/Seoul") : null;
+			const birthYear = kstMoment ? kstMoment.format("YYYY") : "";
+			const birthMonth = kstMoment ? kstMoment.format("MM") : "";
+			const birthDay = kstMoment ? kstMoment.format("DD") : "";
 
 			setSelectedYear(birthYear);
 			setSelectedMonth(birthMonth);
@@ -122,10 +124,9 @@ const UserAccountForm = memo(() => {
 	//생년월일 선택 시 폼 값 변경
 	useEffect(() => {
 		if (user && selectedYear && selectedMonth && selectedDay) {
-			const year = parseInt(selectedYear, 10);
-			const month = parseInt(selectedMonth, 10) - 1;
-			const day = parseInt(selectedDay, 10);
-			const newBirthDate = new Date(Date.UTC(year, month, day)).toISOString();
+			// KST 시간으로 날짜 생성 후 UTC로 변환
+			const kstMoment = moment.tz(`${selectedYear}-${selectedMonth}-${selectedDay}`, "Asia/Seoul");
+			const newBirthDate = kstMoment.utc().toISOString();
 
 			// 초기 로드 시 불필요한 dirty 상태 변경을 막기 위해 기존 값과 비교
 			if (newBirthDate !== user.birthDate) {

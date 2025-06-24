@@ -18,6 +18,7 @@ export interface SquareDropdownProps {
 	optionsClassName?: string;
 	optionClassName?: string;
 	placeholderClassName?: string;
+	svgClassName?: string;
 }
 
 export const SquareDropdown = ({
@@ -30,6 +31,7 @@ export const SquareDropdown = ({
 	optionsClassName,
 	optionClassName,
 	placeholderClassName,
+	svgClassName,
 }: SquareDropdownProps) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [internalValue, setInternalValue] = useState(defaultValue || options[0]?.value);
@@ -86,7 +88,7 @@ export const SquareDropdown = ({
 			>
 				<span className={cn(placeholderClassName)}>{currentLabel}</span>
 				<svg
-					className={cn("ml-3 h-4 shrink-0")}
+					className={cn("ml-3 h-4 shrink-0", svgClassName)}
 					width={10}
 					height={10}
 					viewBox="0 0 8 7"

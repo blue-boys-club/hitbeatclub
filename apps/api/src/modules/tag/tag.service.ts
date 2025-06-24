@@ -83,7 +83,7 @@ export class TagService {
 			return await this.prisma.tag
 				.create({
 					data: {
-						...createTagDto,
+						name: createTagDto.name,
 						userId,
 					},
 				})
