@@ -99,10 +99,7 @@ export const SearchTrackItem = memo(({ product, onPlay, onLike, onAddToCart }: T
 			productId={product.id}
 			meta={product}
 		>
-			<Link
-				href={`/products/${product.id}`}
-				className="flex justify-between items-center hover:bg-[#D9D9D9] rounded-lg cursor-pointer"
-			>
+			<div className="flex justify-between items-center hover:bg-[#D9D9D9] rounded-lg cursor-pointer">
 				<div className="flex items-center gap-5">
 					<div className="flex items-center">
 						<div
@@ -132,11 +129,19 @@ export const SearchTrackItem = memo(({ product, onPlay, onLike, onAddToCart }: T
 					</div>
 
 					<div className="flex flex-col">
-						<p className="flex items-center gap-2.5 text-16px font-bold">
+						<Link
+							href={`/products/${product.id}`}
+							className="flex items-center gap-2.5 text-16px font-bold"
+						>
 							{product.productName}
 							<Beat />
-						</p>
-						<p className="text-16px">{product.seller?.stageName}</p>
+						</Link>
+						<Link
+							href={`/artists/${product.seller?.slug || product.seller?.id}`}
+							className="text-16px"
+						>
+							{product.seller?.stageName}
+						</Link>
 					</div>
 				</div>
 
@@ -177,7 +182,7 @@ export const SearchTrackItem = memo(({ product, onPlay, onLike, onAddToCart }: T
 						{({ isOnCart }) => <ShoppingBag color={isOnCart ? "#3884FF" : "white"} />}
 					</PurchaseWithCartTrigger>
 				</div>
-			</Link>
+			</div>
 		</DraggableProductWrapper>
 	);
 });

@@ -44,7 +44,7 @@ export const ProductTrackCarouselItem = ({ track }: ProductTrackCarouselItemProp
 						{/* {isHit && <Hit />} */}
 					</div>
 					<Link
-						href={`/artists/${track.seller?.id}`}
+						href={`/artists/${track.seller?.slug || track.seller?.id}`}
 						className={cn(
 							"w-48 justify-start text-zinc-500 text-16px font-normal leading-18px tracking-016px",
 							isArtistPureEnglish ? "font-suisse" : "font-suit",
