@@ -20,7 +20,7 @@ interface SubscribePaypalModalProps {
  */
 export const SubscribePaypalModal = memo(({ isOpen, onClose, onSuccess, onError }: SubscribePaypalModalProps) => {
 	const { watch, setValue } = useFormContext<SubscribeFormValue>();
-	const recurringPeriod = watch("recurringPeriod");
+	const subscriptionPlan = watch("subscriptionPlan");
 	const { isSubmitting: isParentSubmitting } = useSubscription(); // Renamed to avoid conflict
 
 	const [paypalBillingKey, setPaypalBillingKey] = useState<string | null>(null); // Keep for internal state if needed before onSuccess
@@ -30,8 +30,8 @@ export const SubscribePaypalModal = memo(({ isOpen, onClose, onSuccess, onError 
 	);
 
 	const subscriptionIssueName = useMemo(
-		() => (recurringPeriod === "yearly" ? "HITBEAT 연간 멤버십" : "HITBEAT 월간 멤버십"),
-		[recurringPeriod],
+		() => (subscriptionPlan === "YEAR" ? "HITBEAT 연간 멤버십" : "HITBEAT 월간 멤버십"),
+		[subscriptionPlan],
 	);
 
 	const loadPaypalUI = useCallback(async () => {

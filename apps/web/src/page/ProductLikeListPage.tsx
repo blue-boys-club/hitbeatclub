@@ -128,7 +128,8 @@ const ProductLikeListPage = memo(() => {
 					likedProducts.map((product) => (
 						<ProductItem
 							key={product.id}
-							productId={product.id.toString()}
+							type={"BEAT"} // TODO: 타입 추가
+							productId={product?.id}
 							title={product.productName}
 							artist={product.seller?.stageName}
 							albumImgSrc={product.coverImage?.url}

@@ -1,19 +1,19 @@
 import { Toggle } from "@/components/ui/Toggle";
-import { RecurringPeriod } from "@hitbeatclub/shared-types/subscribe";
+import { SubscriptionPlan } from "@hitbeatclub/shared-types/subscribe";
 
 /**
  * 구독 폼 헤더 컴포넌트
  */
 interface SubscribeFormHeaderProps {
 	isSubscribed: boolean;
-	recurringPeriod: RecurringPeriod;
-	onPeriodChange: (period: RecurringPeriod) => void;
+	subscriptionPlan: SubscriptionPlan;
+	onPeriodChange: (period: SubscriptionPlan) => void;
 }
 
-export const SubscribeFormHeader = ({ isSubscribed, recurringPeriod, onPeriodChange }: SubscribeFormHeaderProps) => {
+export const SubscribeFormHeader = ({ isSubscribed, subscriptionPlan, onPeriodChange }: SubscribeFormHeaderProps) => {
 	const handlePeriodToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const isMonthly = event.target.checked;
-		onPeriodChange(isMonthly ? "monthly" : "yearly");
+		onPeriodChange(isMonthly ? "MONTH" : "YEAR");
 	};
 
 	if (isSubscribed) {
@@ -36,7 +36,7 @@ export const SubscribeFormHeader = ({ isSubscribed, recurringPeriod, onPeriodCha
 				<Toggle
 					toggleClassName="w-28px h-16px after:w-12px after:h-12px bg-[#0061ff] peer-checked:bg-hbc-black"
 					onChange={handlePeriodToggle}
-					defaultChecked={recurringPeriod === "monthly"}
+					defaultChecked={subscriptionPlan === "MONTH"}
 				/>
 				<div className="justify-start font-extrabold leading-none text-14px text-hbc-gray-300 font-suit tracking-014px">
 					월간
