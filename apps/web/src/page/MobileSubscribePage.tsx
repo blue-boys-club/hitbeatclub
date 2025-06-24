@@ -90,6 +90,7 @@ export const MobileSubscribePage = () => {
 			<MembershipInformationModal
 				isOpen={isMembershipInformationModalOpen}
 				onClose={() => setIsMembershipInformationModalOpen(false)}
+				plan={isMonthly ? "MONTH" : "YEAR"}
 			/>
 			<UnsubscribeModal
 				isOpen={isUnsubscribeModalOpen}
