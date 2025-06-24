@@ -3,3 +3,8 @@ export * from "./NoticeDetailHeader";
 export * from "./NoticeHeader";
 export * from "./NoticeList";
 export * from "./NoticeSearchBar";
+export * from "./NoticeEditHeader";
+export * from "./NoticeEditContent";
+export * from "./NoticeCreateHeader";
+export * from "./NoticeCreateContent";
+export * from "./Pagination";

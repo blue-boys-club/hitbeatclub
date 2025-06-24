@@ -149,7 +149,7 @@ export const AudioPlayer = ({ url }: AudioPlayerProps) => {
 
 			{/* 재생 시간 및 프로그레스 바 */}
 			<div className="inline-flex items-center justify-center gap-4">
-				<div className="text-black text-base font-bold font-['suit'] leading-3">{formatTime(currentTime)}</div>
+				<div className="text-black text-base font-bold font-suit leading-3">{formatTime(currentTime)}</div>
 				<Slider.Root
 					className="relative flex h-5 w-[500px] items-center cursor-pointer group"
 					value={[tempSeekValue]}
@@ -170,7 +170,7 @@ export const AudioPlayer = ({ url }: AudioPlayerProps) => {
 						<VolumeThumb />
 					</Slider.Thumb>
 				</Slider.Root>
-				<div className="text-black text-base font-bold font-['suit'] leading-3">{formatTime(duration)}</div>
+				<div className="text-black text-base font-bold font-suit leading-3">{formatTime(duration)}</div>
 			</div>
 		</div>
 	);

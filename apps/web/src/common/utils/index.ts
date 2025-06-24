@@ -25,3 +25,11 @@ export function checkIsPureEnglish(text?: string | ReactNode, treatSpecialCharac
 	// 영문이면서 특수문자로만 이루어지지 않은 경우를 순수 영문으로 판단
 	return isEnglish && !isOnlySpecialCharacters;
 }
+
+export function generateDateObj(dateStr: Date) {
+	const dateObj = new Date(dateStr);
+	const year = String(dateObj.getFullYear());
+	const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+	const date = String(dateObj.getDate()).padStart(2, "0");
+	return { year, month, date };
+}
