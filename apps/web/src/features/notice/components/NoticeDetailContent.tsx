@@ -130,7 +130,7 @@ export const NoticeDetailContent = ({ data, onDelete }: NoticeDetailContentProps
 							</div>
 						))}
 
-				<div className="text-hbc-black font-['SUIT'] text-base font-semibold leading-[160%] tracking-[-0.32px]">
+				<div className="text-hbc-black font-suit text-base font-semibold leading-[160%] tracking-[-0.32px]">
 					{data.content}
 				</div>
 			</section>

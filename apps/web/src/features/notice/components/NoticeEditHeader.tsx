@@ -13,7 +13,7 @@ export const NoticeEditHeader = ({ title, setTitle }: NoticeEditHeaderProps) => 
 		<header>
 			<input
 				ref={inputRef}
-				className="px-8 pb-3 border-b-6 outline-none w-full border-black flex justify-start items-center text-black font-bold text-[31px] leading-[46px] tracking-[0.31px] uppercase font-['Suisse_Intl']"
+				className="px-8 pb-3 border-b-6 outline-none w-full border-black flex justify-start items-center text-black font-bold text-[31px] leading-[46px] tracking-[0.31px] uppercase font-suisse"
 				value={title}
 				onChange={(e) => setTitle(e.target.value)}
 			/>
