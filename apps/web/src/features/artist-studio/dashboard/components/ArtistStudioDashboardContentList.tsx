@@ -115,6 +115,7 @@ const ArtistStudioDashboardContentList = () => {
 				<AlbumCoverCard
 					albumImgSrc={product.coverImage?.url || blankCdImage}
 					size={"xl"}
+					productId={product.id}
 					AlbumCoverCardWrapperClassName={"rounded-full"}
 					AlbumCoverCardInnerClassName={"rounded-full"}
 				/>

@@ -18,9 +18,9 @@ export const ProductTrackCarouselItem = ({ track }: ProductTrackCarouselItemProp
 			productId={track.id}
 			meta={track}
 		>
-			<Link
+			<div
 				// TODO: 상품 상세 페이지 링크 추가
-				href={`/products/${track.id}`}
+				// href={`/products/${track.id}`}
 				className="inline-flex flex-col items-start justify-start w-48 gap-6px"
 			>
 				<AlbumCoverCard
@@ -28,29 +28,32 @@ export const ProductTrackCarouselItem = ({ track }: ProductTrackCarouselItemProp
 					size="xl"
 					rounded="none"
 					border="main"
+					productId={track.id}
 				/>
 				<div className="flex flex-col items-start justify-start gap-3px">
 					<div className="inline-flex items-center justify-center gap-10px">
-						<div
+						<Link
+							href={`/products/${track.id}`}
 							className={cn(
 								"justify-start text-hbc-black text-18px font-semibold leading-24px tracking-018px",
 								isTitlePureEnglish ? "font-suisse" : "font-suit",
 							)}
 						>
 							{productName}
-						</div>
+						</Link>
 						{/* {isHit && <Hit />} */}
 					</div>
-					<div
+					<Link
+						href={`/artists/${track.seller?.id}`}
 						className={cn(
 							"w-48 justify-start text-zinc-500 text-16px font-normal leading-18px tracking-016px",
 							isArtistPureEnglish ? "font-suisse" : "font-suit",
 						)}
 					>
 						{seller?.stageName}
-					</div>
+					</Link>
 				</div>
-			</Link>
+			</div>
 		</DraggableProductWrapper>
 	);
 };

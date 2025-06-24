@@ -112,6 +112,7 @@ export const SearchTrackItem = memo(({ product, onPlay, onLike, onAddToCart }: T
 								size="lg"
 								border={false}
 								padding={false}
+								productId={product.id}
 							/>
 							<div className="absolute inset-0 flex items-center justify-center transition-opacity opacity-0 bg-black/20 group-hover:opacity-100">
 								{status === "playing" ? <PauseCircle /> : <PlayCircle />}

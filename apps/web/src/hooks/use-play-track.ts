@@ -13,7 +13,7 @@ import { useShallow } from "zustand/react/shallow";
  * const playTrack = usePlayTrack();
  * playTrack(123); // productId 123 번 재생
  */
-export const usePlayTrack = () => {
+export const usePlayTrackCore = () => {
 	/** 사용자 정보 (로그인 여부 확인) */
 	const { data: user } = useQuery({ ...getUserMeQueryOption(), retry: false });
 
@@ -84,4 +84,25 @@ export const usePlayTrack = () => {
 	);
 
 	return playTrack;
+};
+
+/**
+ * Wrapper hook exposing a simple API
+ * Usage:
+ *   const { play } = usePlayTrack();
+ *   play(trackId);
+ */
+export const usePlayTrack = () => {
+	const playTrack = usePlayTrackCore();
+
+	const play = useCallback(
+		(trackId?: number | null) => {
+			if (typeof trackId === "number") {
+				playTrack(trackId);
+			}
+		},
+		[playTrack],
+	);
+
+	return { play };
 };

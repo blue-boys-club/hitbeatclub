@@ -494,8 +494,7 @@ export class ProductController {
 
 	@Get(":id/file-url")
 	@ApiOperation({ summary: "상품 파일 다운로드 링크 조회" })
-	@AuthenticationDoc()
-	@AuthJwtAccessOptional()
+	@AuthenticationDoc({ optional: true })
 	@DocResponse<FileUploadResponseDto>(productMessage.find.success, {
 		dto: FileUploadResponseDto,
 	})

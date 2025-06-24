@@ -10,12 +10,12 @@ import { useRouter } from "next/navigation";
 import { PurchaseWithCartTrigger } from "./PurchaseWithCartTrigger";
 
 interface ProductItemProps {
-	productId?: string;
-	title?: string;
-	artist?: string;
-	albumImgSrc?: string;
+	productId?: number;
+	title: string;
+	artist: string;
+	albumImgSrc: string;
 	tags?: string[];
-	type?: "BEAT" | "ACAPELLA";
+	type: "BEAT" | "ACAPELLA";
 	isLiked?: boolean;
 	onPlay?: () => void;
 	onLike?: () => void;
@@ -29,17 +29,7 @@ interface ProductItemProps {
  * - 트랙 관련 태그 표시
  */
 export const ProductItem = memo(
-	({
-		productId = "123",
-		title = "La Vie En Rose",
-		artist = "Moon River",
-		albumImgSrc = "https://placehold.co/70x70.png",
-		tags = ["G-funk", "Trippy", "Flower"],
-		type = "BEAT",
-		isLiked = false,
-		onPlay,
-		onLike,
-	}: ProductItemProps) => {
+	({ productId, title, artist, albumImgSrc, tags = [], type, isLiked = false, onPlay, onLike }: ProductItemProps) => {
 		const router = useRouter();
 		const [status, setStatus] = useState<"playing" | "paused" | "default">("paused");
 
@@ -76,6 +66,7 @@ export const ProductItem = memo(
 							<AlbumCoverCard
 								albumImgSrc={albumImgSrc}
 								size="lg"
+								productId={productId}
 							/>
 							<div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
 								{status === "playing" ? <PauseCircle /> : <PlayCircle />}
