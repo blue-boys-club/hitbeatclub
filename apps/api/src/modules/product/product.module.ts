@@ -7,6 +7,7 @@ import { TagModule } from "../tag/tag.module";
 import { GenreModule } from "../genre/genre.module";
 import { ArtistModule } from "../artist/artist.module";
 import { PaymentModule } from "../payment/payment.module";
+import { AwsModule } from "~/common/aws/aws.module";
 
 @Module({
 	imports: [
@@ -16,6 +17,7 @@ import { PaymentModule } from "../payment/payment.module";
 		GenreModule,
 		forwardRef(() => ArtistModule),
 		forwardRef(() => PaymentModule),
+		AwsModule,
 	],
 	controllers: [ProductController],
 	providers: [ProductService],

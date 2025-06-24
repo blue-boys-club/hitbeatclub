@@ -20,6 +20,14 @@ export default registerAs(
 			distributionDomain: process.env.AWS_CLOUDFRONT_DISTRIBUTION_DOMAIN,
 			keyPairId: process.env.AWS_CLOUDFRONT_KEY_PAIR_ID,
 			privateKey: process.env.AWS_CLOUDFRONT_PRIVATE_KEY,
+			privateKeySecretId: process.env.AWS_CLOUDFRONT_PRIVATE_KEY_SECRET_ID,
+		},
+		secretsManager: {
+			credential: {
+				key: process.env.AWS_SECRETS_MANAGER_CREDENTIAL_KEY,
+				secret: process.env.AWS_SECRETS_MANAGER_CREDENTIAL_SECRET,
+			},
+			region: process.env.AWS_SECRETS_MANAGER_REGION,
 		},
 		ses: {
 			credential: {
