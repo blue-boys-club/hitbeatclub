@@ -18,9 +18,9 @@ const NoticeEditPage = () => {
 	const { mutate: updateNotice, isSuccess } = useUpdateNoticeMutation(noticeId as string);
 	console.log(uploadedFileIds);
 	useEffect(() => {
-		if (data?.data) {
-			setTitle(data.data.title);
-			setContent(data.data.content);
+		if (data) {
+			setTitle(data.title);
+			setContent(data.content);
 		}
 	}, [data]);
 
@@ -38,7 +38,7 @@ const NoticeEditPage = () => {
 				setTitle={setTitle}
 			/>
 			<NoticeEditContent
-				data={data.data}
+				data={data}
 				content={content}
 				setContent={setContent}
 				uploadedFileIds={uploadedFileIds}

@@ -7,6 +7,7 @@ export const useNoticeListQueryOptions = (payload: NoticeListQueryRequest) => {
 	return queryOptions({
 		queryKey: QUERY_KEYS.notice.list(payload),
 		queryFn: () => getNoticeList(payload),
+		// select: (data) => data.data,
 	});
 };
 
@@ -14,5 +15,6 @@ export const useNoticeDetailQueryOptions = (id: string) => {
 	return queryOptions({
 		queryKey: QUERY_KEYS.notice.detail(id),
 		queryFn: () => getNoticeDetail(id),
+		select: (data) => data.data,
 	});
 };

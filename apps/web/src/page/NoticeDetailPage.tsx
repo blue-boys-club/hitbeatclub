@@ -14,9 +14,9 @@ const NoticeDetailPage = () => {
 	if (isPending || isError) return <></>;
 	return (
 		<>
-			<NoticeDetailHeader data={data.data} />
+			<NoticeDetailHeader data={data} />
 			<NoticeDetailContent
-				data={data.data}
+				data={data}
 				onDelete={() => {
 					deleteNotice(noticeId as string);
 					router.push("/notices");

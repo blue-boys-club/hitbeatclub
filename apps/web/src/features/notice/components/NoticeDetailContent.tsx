@@ -5,6 +5,8 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { NoticeDetailContentProps } from "../notice.types";
 import Image from "next/image";
+import { useQuery } from "@tanstack/react-query";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 
 // 이미지 파일 확장자 체크 함수
 const isImageFile = (fileName: string): boolean => {
@@ -15,6 +17,8 @@ const isImageFile = (fileName: string): boolean => {
 
 export const NoticeDetailContent = ({ data, onDelete }: NoticeDetailContentProps) => {
 	const router = useRouter();
+
+	const { data: userMe } = useQuery(getUserMeQueryOption());
 
 	const handleDelete = () => {
 		if (window.confirm("정말 삭제하시겠습니까?")) {
@@ -34,26 +38,33 @@ export const NoticeDetailContent = ({ data, onDelete }: NoticeDetailContentProps
 	return (
 		<div>
 			<div className="flex w-full justify-end items-center gap-2 pt-3 px-5">
-				<Button
-					variant="outline"
-					size="sm"
-					rounded="full"
-					fontWeight="semibold"
-					className="border-3 justify-center flex items-center gap-2 text-hbc-black text-[20px] font-semibold"
-					onClick={() => router.push(`/notices/${data.id}/edit`)}
-				>
-					수정
-				</Button>
-				<Button
-					variant="outline"
-					size="sm"
-					rounded="full"
-					fontWeight="semibold"
-					className="border-3 justify-center flex items-center gap-2 text-hbc-black text-[20px] font-semibold"
-					onClick={handleDelete}
-				>
-					삭제
-				</Button>
+				{
+					/*userMe.role === "ADMIN"*/ !!userMe && (
+						<>
+							<Button
+								variant="outline"
+								size="sm"
+								rounded="full"
+								fontWeight="semibold"
+								className="border-3 justify-center flex items-center gap-2 text-hbc-black text-[20px] font-semibold"
+								onClick={() => router.push(`/notices/${data.id}/edit`)}
+							>
+								수정
+							</Button>
+							<Button
+								variant="outline"
+								size="sm"
+								rounded="full"
+								fontWeight="semibold"
+								className="border-3 justify-center flex items-center gap-2 text-hbc-black text-[20px] font-semibold"
+								onClick={handleDelete}
+							>
+								삭제
+							</Button>
+						</>
+					)
+				}
+
 				<Button
 					variant="outline"
 					size="sm"
