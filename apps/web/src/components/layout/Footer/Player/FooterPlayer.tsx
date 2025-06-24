@@ -35,7 +35,7 @@ export const FooterPlayer = () => {
 	);
 
 	// Audio player state and controls - Context를 통해 깔끔하게 관리
-	const { autoPlay, stop, isPlaying: contextIsPlaying, togglePlay } = useAudioContext();
+	const { autoPlay, stop, isPlaying: contextIsPlaying } = useAudioContext();
 	const { toast } = useToast();
 
 	const { mutate: likeMutation } = useLikeProductMutation();
@@ -107,13 +107,12 @@ export const FooterPlayer = () => {
 		}
 	}, [audioFileError, toast, setIsPlaying]);
 
-	// 글로벌 isPlaying 상태와 AudioContext 재생 상태 동기화
+	// AudioContext 재생 상태를 글로벌 스토어와 동기화 (단방향: Context -> Store)
 	useEffect(() => {
-		// 상태가 불일치할 때만 토글하여 동기화
 		if (isPlaying !== contextIsPlaying) {
-			togglePlay();
+			setIsPlaying(contextIsPlaying);
 		}
-	}, [isPlaying, contextIsPlaying, togglePlay]);
+	}, [isPlaying, contextIsPlaying, setIsPlaying]);
 
 	return (
 		<DropContentWrapper

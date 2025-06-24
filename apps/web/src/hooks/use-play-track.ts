@@ -6,6 +6,7 @@ import { SidebarType, useLayoutStore } from "@/stores/layout";
 import { useAudioStore } from "@/stores/audio";
 import { useShallow } from "zustand/react/shallow";
 import { useToast } from "@/hooks/use-toast";
+import { useAudioContext } from "@/contexts/AudioContext";
 
 /**
  * 재생(플레이어 시작) 로직을 공통 Hook 으로 분리합니다.
@@ -20,17 +21,10 @@ export const usePlayTrackCore = () => {
 	const { toast } = useToast();
 
 	/** 오디오 관련 상태 */
-	const {
-		productId: currentProductId,
-		status: audioStatus,
-		setProductId,
-		setIsPlaying,
-	} = useAudioStore(
+	const { productId: currentProductId, setProductId } = useAudioStore(
 		useShallow((state) => ({
 			productId: state.productId,
-			status: state.status,
 			setProductId: state.setProductId,
-			setIsPlaying: state.setIsPlaying,
 		})),
 	);
 
@@ -46,6 +40,9 @@ export const usePlayTrackCore = () => {
 	/** 플레이어 시작(백엔드) Mutation */
 	const startPlayerMutation = useStartPlayerMutation();
 
+	/** AudioContext for controlling actual playback */
+	const { togglePlay } = useAudioContext();
+
 	/**
 	 * 트랙 재생 핸들러
 	 * @param productId 재생할 트랙의 상품 ID
@@ -54,8 +51,8 @@ export const usePlayTrackCore = () => {
 		(productId: number) => {
 			// 같은 트랙을 다시 클릭했을 때 토글 처리 (재생 중 -> 일시정지, 일시정지 -> 재생)
 			if (currentProductId === productId) {
-				// 현재 재생 중이면 일시정지, 일시정지 상태면 재생으로 전환
-				setIsPlaying(audioStatus !== "playing");
+				// 오디오 컨텍스트 재생/일시정지
+				togglePlay();
 				return;
 			}
 
@@ -71,7 +68,6 @@ export const usePlayTrackCore = () => {
 					{
 						onSuccess: () => {
 							setProductId(productId);
-							setIsPlaying(true);
 						},
 						onError: () => {
 							// 에러는 호출 측에서 toast 등으로 처리하도록 함
@@ -82,7 +78,6 @@ export const usePlayTrackCore = () => {
 			// 2) 비로그인 상태 -> 클라이언트에서만 재생 처리 (TO BE)
 			// else {
 			// 	setProductId(productId);
-			// 	setIsPlaying(true);
 			// }
 			// 2) 비로그인 상태 -> toast 메시지 표시 후 미 재생 (AS IS)
 			else {
@@ -105,12 +100,11 @@ export const usePlayTrackCore = () => {
 		[
 			user?.id,
 			currentProductId,
-			audioStatus,
 			isRightSidebarOpen,
 			setRightSidebar,
 			setPlayer,
 			setProductId,
-			setIsPlaying,
+			togglePlay,
 			startPlayerMutation,
 		],
 	);
