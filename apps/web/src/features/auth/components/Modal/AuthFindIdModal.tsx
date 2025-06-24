@@ -1,61 +1,49 @@
-import { Popup, PopupContent, PopupDescription, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
-import { Toast, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/Toast/toast";
+import { Popup, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
 import { PopupButton } from "@/components/ui/PopupButton";
-import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthFindIdModalProps {
 	isOpen: boolean;
 	onCloseModal: () => void;
+	email: string;
 }
-export const AuthFindIdModal = ({ isOpen, onCloseModal }: AuthFindIdModalProps) => {
-	const [isToastOpen, setIsToastOpen] = useState(false);
+export const AuthFindIdModal = ({ isOpen, onCloseModal, email }: AuthFindIdModalProps) => {
+	const { toast } = useToast();
 
 	const onCopyEmail = async () => {
-		const emailInput = document.getElementById("popup-email") as HTMLInputElement;
-		if (emailInput?.value) {
+		if (email) {
 			try {
-				await navigator.clipboard.writeText(emailInput.value);
-				setIsToastOpen(true);
+				await navigator.clipboard.writeText(email);
+				toast({
+					title: "이메일이 복사되었습니다.",
+				});
 			} catch (err) {
-				console.error("Failed to copy text: ", err);
+				console.error("이메일 복사에 실패했습니다. ", err);
 			}
 		}
-		setIsToastOpen(true);
 	};
 
 	return (
-		<ToastProvider>
-			<Popup
-				open={isOpen}
-				onOpenChange={onCloseModal}
-			>
-				<PopupContent>
-					<PopupHeader>
-						<PopupTitle className="text-[26px] font-bold">이메일 찾기</PopupTitle>
-					</PopupHeader>
+		<Popup
+			open={isOpen}
+			onOpenChange={onCloseModal}
+		>
+			<PopupContent>
+				<PopupHeader>
+					<PopupTitle className="text-[26px] font-bold">이메일 찾기</PopupTitle>
+				</PopupHeader>
 
-					<PopupDescription>
-						<div className="text-center">이메일</div>
-					</PopupDescription>
+				<div className="text-center">{email}</div>
 
-					<PopupFooter>
-						<PopupButton
-							onClick={onCopyEmail}
-							className="py-2.5 font-bold"
-						>
-							복사하기
-						</PopupButton>
-					</PopupFooter>
-
-					<Toast
-						open={isToastOpen}
-						onOpenChange={setIsToastOpen}
+				<PopupFooter>
+					<PopupButton
+						onClick={onCopyEmail}
+						className="py-2.5 font-bold"
 					>
-						<ToastTitle>이메일이 복사되었습니다.</ToastTitle>
-					</Toast>
-					<ToastViewport />
-				</PopupContent>
-			</Popup>
-		</ToastProvider>
+						복사하기
+					</PopupButton>
+				</PopupFooter>
+			</PopupContent>
+		</Popup>
 	);
 };
