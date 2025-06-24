@@ -86,7 +86,7 @@ export class SubscribeService {
 		}
 
 		// 1) 선결제 시도
-		const paymentId = randomUUID();
+		const paymentId = `subscribe-${randomUUID()}`;
 		let pgTxId: string | undefined;
 		try {
 			const paymentResponse = await this.portone.payment.payWithBillingKey({
@@ -201,7 +201,7 @@ export class SubscribeService {
 		paymentMethodType: string,
 		isInitial: boolean = false,
 	) {
-		const paymentId = randomUUID();
+		const paymentId = `subscribe-${randomUUID()}`;
 		const transaction = await this.prisma.subscribeTransaction.create({
 			data: {
 				subscribeId: BigInt(subscribeId),
@@ -332,10 +332,16 @@ export class SubscribeService {
 
 			const webhook = webhookRaw as Webhook.Webhook;
 			const transaction = await this.prisma.subscribeTransaction.findFirst({ where: { paymentId } });
-			if (!transaction) return; // not a subscription payment
+			if (!transaction) {
+				this.logger.warn({ paymentId }, "Subscription transaction not found in webhook");
+				return;
+			}
 
 			const payment = await this.portone.payment.getPayment({ paymentId });
-			if (!payment) return;
+			if (!payment) {
+				this.logger.warn({ paymentId }, "Payment not found in portone");
+				return;
+			}
 
 			if (payment.status === "PAID") {
 				await this.prisma.subscribeTransaction.update({

@@ -148,21 +148,19 @@ export class PaymentController {
 			let webhook: PortOneWebhook;
 			try {
 				const bodyString = body ? body.toString() : "";
-				this.logger.log({ body, bodyString, headers }, "웹훅 수신");
+				// this.logger.log({ body, bodyString, headers }, "웹훅 수신");
 				const verifiedWebhook = await this.paymentService.verifyWebhook(bodyString, headers);
 				webhook = verifiedWebhook as PortOneWebhook;
 			} catch (error) {
-				this.logger.error({ error }, "웹훅 검증 실패");
+				this.logger.error({ error }, "Failed to verify webhook");
 				throw new BadRequestException(WEBHOOK_VERIFICATION_ERROR);
 			}
 
 			this.logger.log(
 				{
-					webhookType: webhook.type,
-					timestamp: webhook.timestamp,
-					storeId: webhook.data?.storeId,
+					webhook,
 				},
-				"웹훅 수신",
+				"Webhook received",
 			);
 
 			// 결제 관련 웹훅 처리
@@ -177,7 +175,7 @@ export class PaymentController {
 						paymentId,
 						timestamp: webhook.timestamp,
 					},
-					"결제 웹훅 처리 완료",
+					"Payment webhook processed",
 				);
 			}
 			// 빌링키 관련 웹훅 처리
@@ -191,7 +189,7 @@ export class PaymentController {
 						webhookType: (webhook as PortOneWebhook).type,
 						timestamp: (webhook as PortOneWebhook).timestamp,
 					},
-					"처리하지 않는 웹훅 타입",
+					"Unhandled webhook type",
 				);
 			}
 
@@ -202,7 +200,7 @@ export class PaymentController {
 					error: error.message,
 					stack: error.stack,
 				},
-				"웹훅 처리 실패",
+				"Webhook processing failed",
 			);
 
 			if (error instanceof BadRequestException) {

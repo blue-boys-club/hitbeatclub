@@ -335,13 +335,13 @@ export class PaymentService {
 	 */
 	async syncPaymentFromWebhook(paymentId: string, baseWebhookData: PortOneWebhook) {
 		try {
-			this.logger.log(
+			this.logger.debug(
 				{
 					paymentId,
 					webhookType: baseWebhookData.type,
 					timestamp: baseWebhookData.timestamp,
 				},
-				"웹훅 처리 시작",
+				"Webhook processing started",
 			);
 
 			// 결제 관련 웹훅이 아닌 경우 early return
@@ -351,7 +351,7 @@ export class PaymentService {
 						paymentId,
 						webhookType: baseWebhookData.type,
 					},
-					"결제 관련 웹훅이 아님",
+					"Not a product payment webhook",
 				);
 				return;
 			}
@@ -366,7 +366,7 @@ export class PaymentService {
 				.then((order) => this.prisma.serializeBigIntTyped(order));
 
 			if (!order) {
-				this.logger.warn({ paymentId }, "웹훅에서 주문 정보를 찾을 수 없음");
+				this.logger.warn({ paymentId }, "Order not found in webhook");
 				return;
 			}
 
@@ -376,7 +376,7 @@ export class PaymentService {
 				const payment = await this.portone.payment.getPayment({ paymentId });
 
 				if (!payment) {
-					this.logger.error({ paymentId }, "포트원에서 결제 정보를 찾을 수 없음");
+					this.logger.error({ paymentId }, "Payment not found in portone");
 					return;
 				}
 
@@ -388,7 +388,7 @@ export class PaymentService {
 							webhookStatus: "Transaction.Paid",
 							actualStatus: payment.status,
 						},
-						"웹훅과 실제 결제 상태 불일치",
+						"Webhook and actual payment status mismatch",
 					);
 					return;
 				}
