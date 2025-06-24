@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { Beat, Like, PauseCircle, PlayCircle, ShoppingBag, SmallEqualizer } from "@/assets/svgs";
 import { AlbumCoverCard } from "@/components/ui";
 import { TagButton } from "@/components/ui/TagButton";
@@ -18,6 +18,8 @@ import { useCartListQueryOptions } from "@/apis/user/query/user.query-option";
 import { PurchaseWithCartTrigger } from "@/features/product/components/PurchaseWithCartTrigger";
 import { DraggableProductWrapper } from "@/features/dnd/components/DraggableProductWrapper";
 import Link from "next/link";
+import { usePlayTrack } from "@/hooks/use-play-track";
+import { useShallow } from "zustand/react/shallow";
 
 interface TrackItemProps {
 	product: ProductResponse;
@@ -34,7 +36,14 @@ interface TrackItemProps {
  * - 트랙 관련 태그 표시
  */
 export const SearchTrackItem = memo(({ product, onPlay, onLike, onAddToCart }: TrackItemProps) => {
-	const [status, setStatus] = useState<"playing" | "paused" | "default">("paused");
+	const { status, currentProductId } = useAudioStore(
+		useShallow((state) => ({
+			status: state.status,
+			currentProductId: state.productId,
+		})),
+	);
+
+	const { play } = usePlayTrack();
 
 	const { data: user } = useQuery(getUserMeQueryOption());
 	const { data: cart } = useQuery(useCartListQueryOptions(user?.id ?? 0));
@@ -79,9 +88,11 @@ export const SearchTrackItem = memo(({ product, onPlay, onLike, onAddToCart }: T
 	}, [cart]);
 
 	const togglePlay = useCallback(() => {
-		setStatus(status === "playing" ? "paused" : "playing");
+		play(product.id);
 		onPlay?.();
-	}, [status, onPlay]);
+	}, [play, product.id, onPlay]);
+
+	const effectiveStatus = currentProductId === product.id ? status : "paused";
 
 	return (
 		<DraggableProductWrapper
@@ -97,7 +108,7 @@ export const SearchTrackItem = memo(({ product, onPlay, onLike, onAddToCart }: T
 						<div
 							className={cn(
 								"transition-all duration-300",
-								status === "playing" ? "opacity-100 translate-x-0 mr-3" : "opacity-0 -translate-x-2 w-0",
+								effectiveStatus === "playing" ? "opacity-100 translate-x-0 mr-3" : "opacity-0 -translate-x-2 w-0",
 							)}
 						>
 							<SmallEqualizer />
@@ -115,7 +126,7 @@ export const SearchTrackItem = memo(({ product, onPlay, onLike, onAddToCart }: T
 								productId={product.id}
 							/>
 							<div className="absolute inset-0 flex items-center justify-center transition-opacity opacity-0 bg-black/20 group-hover:opacity-100">
-								{status === "playing" ? <PauseCircle /> : <PlayCircle />}
+								{effectiveStatus === "playing" ? <PauseCircle /> : <PlayCircle />}
 							</div>
 						</div>
 					</div>

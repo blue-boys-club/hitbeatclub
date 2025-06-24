@@ -86,6 +86,10 @@ export const AlbumCoverCard = ({
 	);
 
 	const statusIcon = useMemo(() => {
+		if (currentProductId !== productId) {
+			return <PlayCircle />;
+		}
+
 		switch (status) {
 			case "playing":
 				return <PauseCircle />;
@@ -94,7 +98,7 @@ export const AlbumCoverCard = ({
 			default:
 				return <PlayCircle />;
 		}
-	}, [status]);
+	}, [status, currentProductId, productId]);
 
 	const onClickHandler = useCallback(() => {
 		play(productId);
