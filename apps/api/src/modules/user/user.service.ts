@@ -88,10 +88,12 @@ export class UserService {
 							deletedAt: null,
 						},
 						select: {
-							cancelledAt: true,
 							status: true,
 							productType: true,
 							subscriptionPlan: true,
+							price: true,
+							nextPaymentDate: true,
+							cancelledAt: true,
 							createdAt: true,
 						},
 					},

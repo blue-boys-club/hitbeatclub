@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { SubscribeFormValue } from "../schema";
 import { useCreateSubscriptionMutation } from "@/apis/subscribe/mutations/useCreateSubscriptionMutation";
 import { useValidateCouponMutation } from "@/apis/coupon/mutations/useValidateCouponMutation";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * 사용 가능한 모달 유형
@@ -213,7 +214,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 				displayAmount: args.amount,
 				redirectUrl: args.redirectUrl,
 				customer: args.customer,
-				issueId: `${crypto.randomUUID()}`,
+				issueId: `portone-issue-${uuidv4()}`,
 			};
 			console.log(`Requesting ${paymentGateway} billing key with payload:`, payload);
 			const response = await PortOne.requestIssueBillingKey(payload);

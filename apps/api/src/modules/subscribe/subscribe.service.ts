@@ -177,6 +177,7 @@ export class SubscribeService {
 			userId,
 			createdAt: subscribeRecord.createdAt,
 			nextPaymentDate: subscribeRecord.nextPaymentDate,
+			price: subscribeRecord.price,
 			artistId: Number(artist.id),
 		};
 	}

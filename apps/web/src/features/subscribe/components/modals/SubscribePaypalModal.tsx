@@ -7,6 +7,7 @@ import PortOne from "@portone/browser-sdk/v2";
 import { useSubscription } from "../../hooks/useSubscription";
 import { PORTONE_CHANNEL_KEY, PORTONE_STORE_ID } from "../../../../lib/payment.constant";
 import { SubscribeFormValue } from "../../schema";
+import { v4 as uuidv4 } from "uuid";
 
 interface SubscribePaypalModalProps {
 	isOpen: boolean;
@@ -50,7 +51,7 @@ export const SubscribePaypalModal = memo(({ isOpen, onClose, onSuccess, onError 
 					issueName: subscriptionIssueName,
 					billingKeyMethod: "PAYPAL",
 					channelKey: PORTONE_CHANNEL_KEY.PAYPAL,
-					// issueId: `paypal-issue-${crypto.randomUUID()}` // Optional: for better tracking
+					issueId: `paypal-issue-${uuidv4()}`, // Optional: for better tracking
 				},
 				{
 					onIssueBillingKeySuccess: (response) => {
