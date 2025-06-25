@@ -68,7 +68,6 @@ export class SubscribeController {
 	@Get("plans")
 	@ApiOperation({ summary: "멤버십 플랜 조회" })
 	@DocAuth({ jwtAccessToken: true })
-	@AuthJwtAccessProtected()
 	async getPlans(): Promise<IResponse<SubscribePlansResponseDto>> {
 		const plans = await this.subscribeService.getPlans();
 

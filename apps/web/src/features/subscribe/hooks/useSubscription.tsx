@@ -9,6 +9,8 @@ import { SubscribeFormValue } from "../schema";
 import { useCreateSubscriptionMutation } from "@/apis/subscribe/mutations/useCreateSubscriptionMutation";
 import { useValidateCouponMutation } from "@/apis/coupon/mutations/useValidateCouponMutation";
 import { v4 as uuidv4 } from "uuid";
+import { useSubscribePlansQueryOptions } from "@/apis/subscribe/query/subscribe.query-options";
+import { SubscribePlansResponse } from "@hitbeatclub/shared-types/subscribe";
 
 /**
  * 사용 가능한 모달 유형
@@ -113,6 +115,10 @@ export type UseSubscriptionReturn = {
 		paymentGateway: PaymentGatewayType,
 		args: BaseBillingKeyIssueArgs,
 	) => Promise<string | null>;
+	/** 구독 플랜(가격) 조회 */
+	subscribePlans?: SubscribePlansResponse;
+	/** 구독 플랜(가격) 로딩 상태 */
+	isLoadingSubscribePlans: boolean;
 };
 
 const SubscriptionContext = createContext<UseSubscriptionReturn | undefined>(undefined);
@@ -141,6 +147,19 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 
 	const { mutate: createSubscription } = useCreateSubscriptionMutation();
 	const { mutateAsync: validateCoupon } = useValidateCouponMutation();
+
+	/**
+	 * 구독 플랜(가격) 조회
+	 */
+	const { data: subscribePlansResponse, isLoading: isLoadingSubscribePlans } = useQuery(
+		useSubscribePlansQueryOptions(),
+	);
+
+	// 실제 플랜 데이터만 추출
+	const subscribePlans = useMemo<SubscribePlansResponse | undefined>(
+		() => (subscribePlansResponse as any)?.data as SubscribePlansResponse | undefined,
+		[subscribePlansResponse],
+	);
 
 	/**
 	 * 지정된 타입의 모달을 엽니다.
@@ -308,6 +327,8 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 		isProcessingPayment,
 		paymentError,
 		initiateBillingKeyIssue, // Expose the new generic function
+		subscribePlans,
+		isLoadingSubscribePlans,
 	};
 
 	return <SubscriptionContext.Provider value={value}>{children}</SubscriptionContext.Provider>;

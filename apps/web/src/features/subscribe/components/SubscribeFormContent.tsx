@@ -42,6 +42,8 @@ export const SubscribeFormContent = () => {
 		openModal,
 		submitSubscription,
 		initiateBillingKeyIssue,
+		subscribePlans,
+		isLoadingSubscribePlans,
 	} = useSubscription();
 	const { toast } = useToast();
 
@@ -72,7 +74,18 @@ export const SubscribeFormContent = () => {
 	);
 
 	/** 현재 구독 상품 가격 */
-	const currentAmount = useMemo(() => (subscriptionPlan === "YEAR" ? 189900 : 24990), [subscriptionPlan]);
+	const currentPlanData = useMemo(() => subscribePlans?.[subscriptionPlan], [subscribePlans, subscriptionPlan]);
+
+	/** 연간 플랜 할인율 */
+	const yearDiscountRate = useMemo(() => {
+		const rate = subscribePlans?.["YEAR"]?.discountRate;
+		return rate ?? 0;
+	}, [subscribePlans]);
+
+	const currentAmount = useMemo(() => {
+		if (!currentPlanData) return 0;
+		return currentPlanData.discountPrice ?? currentPlanData.price;
+	}, [currentPlanData]);
 
 	/**
 	 * 빌링키 발급 후 실제 구독 처리를 위해 `useSubscription`의 `submitSubscription`을 호출합니다.
@@ -236,9 +249,9 @@ export const SubscribeFormContent = () => {
 			toast({
 				description: (
 					<span className="text-center text-16px justify-start text-hbc-black font-suit leading-150% tracking-016px">
-						{"연간 결제시 2개월 할인 혜택이 제공 됩니다 ("}
-						<span className="text-hbc-red">20% 할인</span>
-						{")"}
+						{"연간 결제시 "}
+						<span className="text-hbc-red">{yearDiscountRate}% 할인</span>
+						{" 혜택이 제공 됩니다"}
 					</span>
 				),
 			});
@@ -247,16 +260,17 @@ export const SubscribeFormContent = () => {
 				description: (
 					<span className="text-center text-16px justify-start text-hbc-black font-suit leading-150% tracking-016px">
 						{"연간 결제 전환시, "}
-						<span className="text-hbc-red">20% 할인</span>
+						<span className="text-hbc-red">{yearDiscountRate}% 할인</span>
 						{"된 가격으로 사용 가능합니다."}
 					</span>
 				),
 			});
 		}
-	}, [subscriptionPlan, toast]);
+	}, [subscriptionPlan, toast, yearDiscountRate]);
 
 	// Determine if any payment process is active for disabling the main button
-	const isAnyPaymentProcessing = isFinalSubmitting || isProcessingPayment || isInitiatingCard || isInitiatingToss;
+	const isAnyPaymentProcessing =
+		isLoadingSubscribePlans || isFinalSubmitting || isProcessingPayment || isInitiatingCard || isInitiatingToss;
 
 	return (
 		<FormProvider {...methods}>
@@ -288,6 +302,8 @@ export const SubscribeFormContent = () => {
 							<SubscribePrice
 								isSubscribed={isMembership}
 								subscriptionPlan={subscriptionPlan}
+								subscribePlans={subscribePlans}
+								isLoading={isLoadingSubscribePlans}
 							/>
 							{!isMembership && (
 								<div className="h-6 px-3.5 py-[3px] bg-white rounded-[30px] flex justify-center items-center gap-2.5">

@@ -10,6 +10,9 @@ import {
 } from "@/components/ui/Popup";
 import { SubscriptionPlan } from "@hitbeatclub/shared-types/subscribe";
 import Image from "next/image";
+import { useSubscription } from "../../hooks/useSubscription";
+import { formatPrice } from "@/common/utils";
+
 /**
  * `SubscribePaymentChoiceModal` 컴포넌트의 Props 정의
  */
@@ -60,12 +63,21 @@ export const SubscribePaymentChoiceModal = memo(
 			}
 		};
 
-		/** 구독 플랜에 대한 설명 텍스트 (예: "연간 멤버십 (189,900원 결제)") */
+		/** 구독 플랜에 대한 설명 텍스트 (API 기반 동적 가격) */
+		const { subscribePlans, isLoadingSubscribePlans } = useSubscription();
 		const subscriptionPlanText = useMemo(() => {
-			const yearlyPrice = "189,900원";
-			const monthlyPrice = "24,990원/월";
-			return subscriptionPlan === "YEAR" ? `연간 멤버십 (${yearlyPrice} 결제)` : `월간 멤버십 (${monthlyPrice})`;
-		}, [subscriptionPlan]);
+			if (isLoadingSubscribePlans || !subscribePlans) {
+				return subscriptionPlan === "YEAR" ? "연간 멤버십" : "월간 멤버십";
+			}
+
+			if (subscriptionPlan === "YEAR") {
+				const yearly = subscribePlans!["YEAR"]!;
+				const displayAmount = yearly.discountPrice ?? yearly.price;
+				return `연간 멤버십 (${formatPrice(displayAmount)} 결제)`;
+			}
+			const monthly = subscribePlans!["MONTH"]!;
+			return `월간 멤버십 (${formatPrice(monthly.price)} /월)`;
+		}, [subscriptionPlan, subscribePlans, isLoadingSubscribePlans]);
 
 		return (
 			<Popup

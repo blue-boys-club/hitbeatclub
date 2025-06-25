@@ -33,3 +33,13 @@ export function generateDateObj(dateStr: Date) {
 	const date = String(dateObj.getDate()).padStart(2, "0");
 	return { year, month, date };
 }
+
+/**
+ * 숫자를 한국 원화 형식(천단위 콤마 + "원")으로 포맷합니다.
+ * @param amount 포맷할 금액 (number)
+ * @returns 포맷된 문자열 (예: 19900 -> "19,900원")
+ */
+export function formatPrice(amount?: number | null) {
+	if (amount === undefined || amount === null) return "-";
+	return new Intl.NumberFormat("ko-KR").format(amount) + "원";
+}
