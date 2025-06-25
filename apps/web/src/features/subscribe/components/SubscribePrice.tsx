@@ -52,9 +52,9 @@ export const SubscribePrice = memo(
 						<>
 							<div className="inline-flex justify-start items-center gap-[5px]">
 								<div className="justify-start text-12px font-semibold leading-137% tracking-012px text-neutral-600/80 font-suit">
-									{formatPrice(currentPlan.price)} / 년
+									{formatPrice(currentPlan.discountPrice || currentPlan.price)} / 년
 								</div>
-								{currentPlan.discountRate && (
+								{currentPlan.discountPrice && currentPlan.discountRate && (
 									<div className="justify-start text-hbc-red text-8px font-semibold leading-150% tracking-008px font-suit">
 										({currentPlan.discountRate}% 할인)
 									</div>
@@ -63,7 +63,7 @@ export const SubscribePrice = memo(
 							{currentPlan.discountPrice && (
 								<div className="inline-flex items-center justify-center gap-10px">
 									<div className="justify-start text-20px font-extrabold leading-140% tracking-02px text-hbc-red font-suit">
-										{formatPrice(currentPlan.discountPrice)} / 월
+										{formatPrice(currentPlan.discountPrice / 12)} / 월
 									</div>
 								</div>
 							)}
