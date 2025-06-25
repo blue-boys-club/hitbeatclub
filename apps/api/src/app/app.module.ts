@@ -44,7 +44,7 @@ import { RouterModule } from "~/router/router.module";
 						}
 
 						// Deployed whatever reason
-						if (process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.AWS_ECS_CONTAINER_METADATA_URI) {
+						if (!!process.env.AWS_LAMBDA_FUNCTION_NAME || !!process.env.ECS_CONTAINER_METADATA_URI) {
 							return false;
 						}
 
@@ -56,7 +56,11 @@ import { RouterModule } from "~/router/router.module";
 					},
 				},
 
-				transport: process.env.NODE_ENV !== "production" ? { target: "pino-pretty" } : undefined,
+				transport:
+					process.env.NODE_ENV !== "production" &&
+					!(!!process.env.AWS_LAMBDA_FUNCTION_NAME || !!process.env.ECS_CONTAINER_METADATA_URI)
+						? { target: "pino-pretty" }
+						: undefined,
 			},
 		}),
 	],

@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { defaultProvider } from "@aws-sdk/credential-provider-node";
 import {
 	IAwsS3PutItem,
 	IAwsS3PutItemOptions,
@@ -79,11 +80,15 @@ export class AwsS3Service implements IAwsS3Service {
 			this.configService.get<string>("AWS_SECRET_ACCESS_KEY");
 		const region = this.configService.get<string>("aws.s3.region") ?? this.configService.get<string>("AWS_REGION");
 
-		this.logger.log({ accessKeyId, secretAccessKey, region }, "AWS S3 Credentials");
+		// 로컬 개발용으로 정적 자격 증명이 모두 제공되면 그 값을 사용하고,
+		// 그렇지 않으면 SDK 기본 Credential Provider Chain을 사용 (ECS, EC2, SSO 등 포함)
+		const staticCredentials = accessKeyId && secretAccessKey ? { accessKeyId, secretAccessKey } : undefined;
+
+		this.logger.log({ hasStaticCredentials: !!staticCredentials, region }, "AWS S3 Credentials");
 
 		this.s3Client = new S3Client({
 			region,
-			...(accessKeyId && secretAccessKey ? { credentials: { accessKeyId, secretAccessKey } } : {}),
+			credentials: staticCredentials ?? defaultProvider(),
 		});
 
 		this.logger.log({ clientCredentials: this.s3Client.config.credentials }, "AWS S3 Client Credentials");
