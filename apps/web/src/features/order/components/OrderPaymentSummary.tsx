@@ -30,6 +30,8 @@ export const OrderPaymentSummary = ({ total, status, orderNumber }: OrderPayment
 				return "결제 완료";
 			case "WAITING_FOR_DEPOSIT":
 				return "입금 대기";
+			case "PARTIAL_CANCELLED":
+				return "부분 취소";
 			case "CANCELLED":
 				return "결제 취소";
 			default:
@@ -41,6 +43,7 @@ export const OrderPaymentSummary = ({ total, status, orderNumber }: OrderPayment
 		switch (status) {
 			case "COMPLETED":
 				return "text-green-600";
+			case "PARTIAL_CANCELLED":
 			case "CANCELLED":
 				return "text-red-600";
 			case "PENDING":

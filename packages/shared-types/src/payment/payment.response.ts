@@ -2,7 +2,14 @@ import { z } from "zod";
 import { ProductDetailResponseSchema } from "../product";
 import { ArtistPublicResponseSchema } from "../artist";
 
-export const OrderStatusSchema = z.enum(["INITIATE", "PENDING", "COMPLETED", "WAITING_FOR_DEPOSIT", "CANCELLED"]);
+export const OrderStatusSchema = z.enum([
+	"INITIATE",
+	"PENDING",
+	"COMPLETED",
+	"WAITING_FOR_DEPOSIT",
+	"CANCELLED",
+	"PARTIAL_CANCELLED",
+]);
 export type OrderStatus = z.infer<typeof OrderStatusSchema>;
 
 // 가상계좌 정보 스키마

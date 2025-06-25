@@ -176,7 +176,7 @@ export class ProductService {
 						type: product.type,
 						productName: product.productName,
 						description: product.description,
-						price: product.price,
+						// price: product.price,
 						category: product.category,
 						isActive: product.isActive,
 						createdAt: product.createdAt,

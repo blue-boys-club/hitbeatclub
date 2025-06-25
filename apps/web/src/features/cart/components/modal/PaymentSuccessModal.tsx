@@ -16,7 +16,8 @@ export const PaymentSuccessModal = ({ isOpen, onClose, paymentResult }: PaymentS
 			// 결제 성공 이후 필요한 작업을 여기서 수행할 수 있습니다.
 			// 예: 주문 정보 저장, 영수증 생성 등
 			// paymentResult 객체에 데이터가 있는지 확인
-			console.log(paymentResult);
+			// console.log(paymentResult);
+			console.log(JSON.parse(JSON.stringify(paymentResult)));
 		}
 	}, [isOpen, paymentResult]);
 

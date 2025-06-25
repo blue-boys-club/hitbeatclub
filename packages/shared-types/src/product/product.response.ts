@@ -6,7 +6,7 @@ export const ProductResponseSchema = z.object({
 	id: z.number().describe("상품 ID").default(8),
 	productName: z.string().describe("상품명").default("Sample Product"),
 	description: z.string().describe("상품 설명").default("곡 설명 /가사"),
-	price: z.number().describe("가격").default(10000),
+	// price: z.number().describe("가격").default(10000),
 	category: productCategoryEnum.describe("카테고리").default("BEAT"),
 	createdAt: z.string().datetime().describe("생성 시간").default("2025-06-04T17:12:58.000Z"),
 	minBpm: z.number().describe("최소 BPM").default(100),

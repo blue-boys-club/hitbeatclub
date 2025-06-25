@@ -74,8 +74,8 @@ export const CartPaymentDetail = ({ checkoutItems, subtotal, serviceFee = 0, tot
 	};
 
 	return (
-		<div className="flex flex-col items-center gap-10px">
-			<div className="flex flex-col items-start gap-23px">
+		<div className="flex flex-col items-center gap-10px min-w-259px">
+			<div className="flex flex-col items-start gap-23px w-full">
 				<div className="flex flex-col items-start self-stretch gap-4">
 					<div className="text-2xl font-bold tracking-tight text-black uppercase font-suisse">Checkout</div>
 					<div className="flex flex-col items-start self-stretch">

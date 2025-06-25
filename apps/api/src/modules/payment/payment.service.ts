@@ -265,7 +265,7 @@ export class PaymentService {
 				return {
 					orderId: Number(order.id),
 					paymentId: order.paymentId,
-					status: updatedOrder.status as OrderStatus,
+					status: updatedOrder.status,
 					amount: paymentAmount,
 					paidAt: updatedOrder.paidAt,
 					paymentMethod: updatedOrder.paymentMethod,
@@ -417,15 +417,43 @@ export class PaymentService {
 					},
 					"웹훅으로 결제 완료 처리",
 				);
-			} else if (
-				(webhookData.type === "Transaction.Cancelled" || webhookData.type === "Transaction.PartialCancelled") &&
-				order.status !== "CANCELLED"
-			) {
-				// 주문 취소 처리
+			} else if (webhookData.type === "Transaction.PartialCancelled" && order.status !== "PARTIAL_CANCELLED") {
+				// 부분 취소 처리
+				// 포트원에서 최신 결제 정보 조회하여 남은 결제 금액 확인
+				const payment = (await this.portone.payment.getPayment({ paymentId })) as any;
+
+				// 계산: 취소된 금액 = 원래 총 금액 - 남은 결제 금액
+				const originalTotal = order.totalAmount ?? 0;
+				const remainingAmount = payment?.amount?.total ?? originalTotal;
+				const cancelledAmount = originalTotal - remainingAmount;
+
+				await this.prisma.order.update({
+					where: { id: order.id },
+					data: {
+						status: "PARTIAL_CANCELLED",
+						cancelledAmount: cancelledAmount,
+						cancelledAt: new Date(),
+						pgTransactionId: payment?.pgTxId ?? null,
+					},
+				});
+
+				this.logger.log(
+					{
+						orderId: order.id,
+						paymentId,
+						webhookType: webhookData.type,
+						cancellationId: webhookData.data.cancellationId,
+						remainingAmount: payment?.amount?.total,
+					},
+					"웹훅으로 결제 부분 취소 처리",
+				);
+			} else if (webhookData.type === "Transaction.Cancelled" && order.status !== "CANCELLED") {
+				// 주문 전체 취소 처리
 				await this.prisma.order.update({
 					where: { id: order.id },
 					data: {
 						status: "CANCELLED",
+						cancelledAmount: order.totalAmount,
 						cancelledAt: new Date(),
 					},
 				});
