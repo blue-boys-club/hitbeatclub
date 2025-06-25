@@ -114,6 +114,7 @@ model Order {
   pgTransactionId  String?       @map("pg_transaction_id") @db.VarChar(255)
   paidAt           DateTime?     @map("paid_at") @db.Timestamp(0)
   cancelledAt      DateTime?     @map("cancelled_at") @db.Timestamp(0)
+  cancelledAmount  Int?          @map("cancelled_amount")
   createdAt        DateTime?     @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt        DateTime?     @default(now()) @map("updated_at") @db.Timestamp(0)
   deletedAt        DateTime?     @map("deleted_at") @db.Timestamp(0)
@@ -412,6 +413,7 @@ enum OrderStatus {
   COMPLETED
   WAITING_FOR_DEPOSIT
   CANCELLED
+  PARTIAL_CANCELLED
 }
 
 enum SubscribeStatus {

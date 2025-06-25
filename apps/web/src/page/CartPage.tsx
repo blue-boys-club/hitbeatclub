@@ -257,19 +257,6 @@ const CartPage = () => {
 		}
 	};
 
-	if (!cartItems || cartItems.length === 0) {
-		return (
-			<div className="flex flex-col h-full overflow-hidden">
-				<div className="flex-shrink-0">
-					<CartHeader />
-				</div>
-				<div className="flex flex-col items-center justify-center flex-1 h-full">
-					<p className="text-xl text-hbc-gray-400">Your cart is empty.</p>
-				</div>
-			</div>
-		);
-	}
-
 	if (isLoading) {
 		return (
 			<div className="flex flex-col h-full overflow-hidden">
@@ -314,7 +301,7 @@ const CartPage = () => {
 				<div className="flex flex-col flex-1 overflow-x-hidden overflow-y-auto p-1px gap-15px pr-16px">
 					{artistsWithItems.length === 0 ? (
 						<div className="flex flex-col items-center justify-center h-full">
-							<p className="text-lg text-gray-500">아이템을 표시할 수 없습니다</p>
+							<p className="text-lg text-gray-500">카트가 비었습니다.</p>
 						</div>
 					) : (
 						artistsWithItems.map((artistData) => (
