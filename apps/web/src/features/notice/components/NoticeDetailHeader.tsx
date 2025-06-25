@@ -6,7 +6,7 @@ export const NoticeDetailHeader = ({ data }: NoticeDetailHeaderProps) => {
 	const createdAt = `${year}/${month}/${date}`;
 	return (
 		<header>
-			<div className="px-8 pb-3 border-b-6 border-black flex justify-start items-center text-black font-bold text-[31px] leading-[46px] tracking-[0.31px] uppercase font-['Suisse_Intl']">
+			<div className="px-8 pb-3 border-b-6 border-black flex justify-start items-center text-black font-bold text-[31px] leading-[46px] tracking-[0.31px] uppercase font-suisse-intl">
 				{data.title}
 			</div>
 			<div className="flex justify-between items-center px-5 py-2 border-b-6 border-black">

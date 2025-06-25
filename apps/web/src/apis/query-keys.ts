@@ -119,7 +119,16 @@ const QUERY_KEYS = {
 		infiniteList: ["player", "list", "infinite"],
 		list: (payload: PaginationRequest): QueryKey => ["player", "list", payload],
 	},
-
+	question: {
+		_key: ["question"],
+		list: ["question", "list"],
+		detail: (id: number): QueryKey => ["question", id],
+	},
+	inquiry: {
+		_key: ["inquiry"],
+		list: ["inquiry", "list"],
+		detail: (id: number): QueryKey => ["inquiry", id],
+  },
 	subscribe: {
 		plans: ["subscribe", "plans"],
 	},

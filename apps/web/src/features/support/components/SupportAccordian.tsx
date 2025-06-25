@@ -1,12 +1,18 @@
 "use client";
 import { cn } from "@/common/utils";
 import { useState } from "react";
+
 interface SupportAccordianProps {
+	id: number;
 	title: string;
 	content: string;
+	onClickItem: (id: number) => void;
+	onDeleteClick: (id: number, title: string) => void;
 }
-const SupportAccordian = ({ title, content }: SupportAccordianProps) => {
+
+const SupportAccordian = ({ id, title, content, onClickItem, onDeleteClick }: SupportAccordianProps) => {
 	const [isOpen, setIsOpen] = useState(false);
+
 	return (
 		<div className="w-full">
 			<div
@@ -40,8 +46,25 @@ const SupportAccordian = ({ title, content }: SupportAccordianProps) => {
 					isOpen ? "max-h-[2000px] opacity-100 pb-3 border-b-2 border-black" : "max-h-0 opacity-0",
 				)}
 			>
-				<div className="text-black font-suit text-base leading-[25.6px] tracking-[0.16px] whitespace-pre-wrap break-words">
+				<div className="mb-3 text-black font-suit text-base leading-[25.6px] tracking-[0.16px] whitespace-pre-wrap break-words">
 					{content}
+				</div>
+
+				<div className="flex justify-end gap-3">
+					<div
+						className="text-hbc-black font-suit text-[16px] font-semibold leading-[100%] tracking-[0.16px] cursor-pointer"
+						onClick={() => {
+							onClickItem(id);
+						}}
+					>
+						수정
+					</div>
+					<div
+						className="text-hbc-black font-suit text-[16px] font-semibold leading-[100%] tracking-[0.16px] cursor-pointer"
+						onClick={() => onDeleteClick(id, title)}
+					>
+						삭제
+					</div>
 				</div>
 			</div>
 		</div>
