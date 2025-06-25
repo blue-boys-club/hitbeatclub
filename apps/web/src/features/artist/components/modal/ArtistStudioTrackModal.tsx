@@ -126,7 +126,7 @@ const ArtistStudioTrackModal = ({
 				...baseDefaults,
 				productName: productData.productName,
 				description: productData.description,
-				price: productData.price,
+				// price: productData.price,
 				category: productData.category,
 				// API 응답에서 객체 배열을 문자열 배열로 변환
 				genres: productData.genres?.map((genre: any) => genre.name) || [],
@@ -438,7 +438,7 @@ const ArtistStudioTrackModal = ({
 			const payload = {
 				productName: data.productName,
 				description: data.description,
-				price: data.licenseInfo[0]?.price || 0,
+				// price: data.licenseInfo[0]?.price || 0,
 				category: data.category,
 				genres: data.genres,
 				tags: data.tags || [],
