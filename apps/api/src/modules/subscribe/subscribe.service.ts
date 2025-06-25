@@ -1,3 +1,4 @@
+import { CountryCode, getAlpha2ByAlpha3 } from "@hitbeatclub/country-options";
 import { Injectable, NotFoundException, BadRequestException, Logger } from "@nestjs/common";
 import { UserService } from "../user/user.service";
 import { ArtistService } from "../artist/artist.service";
@@ -57,12 +58,14 @@ export class SubscribeService {
 		}
 
 		// 구독 상품 정보 조회
-		const subscribeProduct = await this.prisma.subscribeProduct.findFirst({
-			where: {
-				type: subscribeData.subscriptionPlan,
-				deletedAt: null,
-			},
-		});
+		const subscribeProduct = await this.prisma.subscribeProduct
+			.findFirst({
+				where: {
+					type: subscribeData.subscriptionPlan,
+					deletedAt: null,
+				},
+			})
+			.then((data) => this.prisma.serializeBigIntTyped(data));
 
 		if (!subscribeProduct) {
 			throw new BadRequestException("해당 구독 상품을 찾을 수 없습니다.");
@@ -93,7 +96,15 @@ export class SubscribeService {
 				paymentId,
 				billingKey,
 				orderName: "멤버십 첫 결제",
-				customer: { id: String(userId) },
+				customer: {
+					id: `hitbeatclub-${userId}`,
+					email: user.email,
+					name: {
+						full: user.name,
+					},
+					phoneNumber: user.phoneNumber,
+					country: getAlpha2ByAlpha3(user.country as CountryCode),
+				},
 				amount: { total: finalPrice },
 				currency: "KRW",
 			});
@@ -262,18 +273,22 @@ export class SubscribeService {
 	 */
 	async runScheduledPayments() {
 		const now = new Date();
-		const dueSubscriptions = await this.prisma.subscribe.findMany({
-			where: {
-				deletedAt: null,
-				status: "ACTIVE",
-				nextPaymentDate: { lte: now },
-			},
-		});
+		const dueSubscriptions = await this.prisma.subscribe
+			.findMany({
+				where: {
+					deletedAt: null,
+					status: "ACTIVE",
+					nextPaymentDate: { lte: now },
+				},
+			})
+			.then((data) => this.prisma.serializeBigIntTyped(data));
 
 		for (const sub of dueSubscriptions) {
-			const billing = await this.prisma.subscribeBilling.findFirst({
-				where: { subscribeId: sub.id, deletedAt: null },
-			});
+			const billing = await this.prisma.subscribeBilling
+				.findFirst({
+					where: { subscribeId: sub.id, deletedAt: null },
+				})
+				.then((data) => this.prisma.serializeBigIntTyped(data));
 			if (!billing) continue;
 			await this.attemptPayment(sub.id, sub.subscriptionPlan, billing.billingKey, sub.price, billing.pg || "CARD");
 		}
@@ -289,7 +304,9 @@ export class SubscribeService {
 
 		const { billingKey } = webhookRaw.data;
 
-		const billing = await this.prisma.subscribeBilling.findFirst({ where: { billingKey } });
+		const billing = await this.prisma.subscribeBilling
+			.findFirst({ where: { billingKey } })
+			.then((data) => this.prisma.serializeBigIntTyped(data));
 		if (!billing) return;
 
 		let newStatus: "READY" | "ISSUED" | "FAILED" | "DELETED" | undefined;
@@ -331,7 +348,9 @@ export class SubscribeService {
 			const paymentId: string = webhookRaw.data.paymentId;
 
 			const webhook = webhookRaw as Webhook.Webhook;
-			const transaction = await this.prisma.subscribeTransaction.findFirst({ where: { paymentId } });
+			const transaction = await this.prisma.subscribeTransaction
+				.findFirst({ where: { paymentId } })
+				.then((data) => this.prisma.serializeBigIntTyped(data));
 			if (!transaction) {
 				this.logger.warn({ paymentId }, "Subscription transaction not found in webhook");
 				return;
@@ -370,6 +389,30 @@ export class SubscribeService {
 						failReason: (payment as any)?.failReason ?? undefined,
 					},
 				});
+			} else if (webhook.type === "Transaction.Cancelled") {
+				// Transaction was cancelled – mark subscription as cancelled as well
+				await this.prisma.subscribeTransaction.update({
+					where: { id: transaction.id },
+					data: {
+						status: "FAILED", // treat cancelled as failed for now
+						failedAt: new Date(),
+						failReason: "Transaction cancelled",
+					},
+				});
+
+				// Cancel the related subscription
+				await this.prisma.subscribe.update({
+					where: { id: transaction.subscribeId },
+					data: {
+						status: "CANCELED",
+						cancelledAt: new Date(),
+					},
+				});
+
+				this.logger.log(
+					{ webhookType: webhook.type, paymentStatus: payment.status, paymentId, subscribeId: transaction.subscribeId },
+					"Subscription cancelled via webhook",
+				);
 			}
 
 			this.logger.log(
@@ -413,5 +456,29 @@ export class SubscribeService {
 				cancelledAt: cancel ? new Date() : null,
 			},
 		});
+	}
+
+	/**
+	 * 맴버십 종류 조회
+	 */
+	async getPlans() {
+		const plans = await this.prisma.subscribeProduct
+			.findMany({
+				where: { deletedAt: null },
+				select: {
+					// id: true,
+					type: true,
+					discountPrice: true,
+					price: true,
+					discountRate: true,
+				},
+			})
+			.then((data) => this.prisma.serializeBigIntTyped(data));
+
+		//  map by type
+		return plans.reduce((acc, plan) => {
+			acc[plan.type] = plan;
+			return acc;
+		}, {});
 	}
 }

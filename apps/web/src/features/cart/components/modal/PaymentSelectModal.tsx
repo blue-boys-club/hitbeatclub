@@ -1,5 +1,6 @@
 "use client";
 
+import { randomUUID } from "crypto";
 import { useCallback, useEffect, useState } from "react";
 import * as PortOne from "@portone/browser-sdk/v2";
 import * as Popup from "@/components/ui/Popup";
@@ -158,7 +159,8 @@ export const PaymentSelectModal = ({
 
 		try {
 			// 1. 백엔드에 주문 생성 요청
-			const paymentId = `payment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+			// const paymentId = `payment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+			const paymentId = `payment-${randomUUID()}`;
 			const cartItemIds = checkoutItems.map((item) => item.id);
 
 			console.log("Creating payment order:", { paymentId, cartItemIds });

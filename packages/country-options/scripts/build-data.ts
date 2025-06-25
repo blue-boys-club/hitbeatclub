@@ -138,6 +138,12 @@ async function buildData() {
 		countryCodeToNameMapEn[alpha3Code] = country.name;
 	});
 
+	// ISO 3자리 코드 → ISO 2자리 코드 매핑
+	const alpha3ToAlpha2Map: Record<string, string> = {};
+	filteredCountriesKo.forEach((country) => {
+		alpha3ToAlpha2Map[country.alpha3.toUpperCase()] = country.alpha2.toUpperCase();
+	});
+
 	// subdivision 데이터 처리
 	const regionsByCountry: Record<string, DropdownOption[]> = {};
 
@@ -219,7 +225,16 @@ import type { CountryCode } from './types';
 
 export const COUNTRY_CODE_TO_NAME_MAP_EN: Record<CountryCode, string> = ${JSON.stringify(countryCodeToNameMapEn, null, 2)} as any;`;
 
-	// 5. 지역 관련 유틸리티 함수
+	// 5. Alpha3 → Alpha2 매핑
+	const alpha3ToAlpha2Content = `${linterDisable}
+// 이 파일은 자동 생성됩니다. 직접 수정하지 마세요.
+// Generated at: ${new Date().toISOString()}
+
+import type { CountryCode } from './types';
+
+export const ALPHA3_TO_ALPHA2_MAP: Record<CountryCode, string> = ${JSON.stringify(alpha3ToAlpha2Map, null, 2)} as any;`;
+
+	// 6. 지역 관련 유틸리티 함수
 	const regionUtilsContent = `${linterDisable}
 // 이 파일은 자동 생성됩니다. 직접 수정하지 마세요.
 // Generated at: ${new Date().toISOString()}
@@ -231,7 +246,7 @@ export const getRegionOptionsByCountry = (countryCode: CountryCode): DropdownOpt
 	return REGION_OPTIONS_BY_COUNTRY[countryCode] || [];
 };`;
 
-	// 6. 국가명 관련 유틸리티 함수
+	// 7. 국가명 관련 유틸리티 함수 및 Alpha3→Alpha2 util
 	const countryUtilsContent = `${linterDisable}
 // 이 파일은 자동 생성됩니다. 직접 수정하지 마세요.
 // Generated at: ${new Date().toISOString()}
@@ -239,6 +254,7 @@ export const getRegionOptionsByCountry = (countryCode: CountryCode): DropdownOpt
 import type { CountryCode } from './types';
 import { COUNTRY_CODE_TO_NAME_MAP_KO } from './country-names-ko';
 import { COUNTRY_CODE_TO_NAME_MAP_EN } from './country-names-en';
+import { ALPHA3_TO_ALPHA2_MAP } from './alpha3-to-alpha2';
 
 export const getCountryNameByCodeKo = (countryCode: CountryCode): string => {
 	return COUNTRY_CODE_TO_NAME_MAP_KO[countryCode] || countryCode;
@@ -249,8 +265,8 @@ export const getCountryNameByCodeEn = (countryCode: CountryCode): string => {
 };
 
 export const getCountryNameByCodeWithLang = (countryCode: CountryCode, lang: 'ko' | 'en' = 'ko'): string => {
-	return lang === 'en' 
-		? getCountryNameByCodeEn(countryCode) 
+	return lang === 'en'
+		? getCountryNameByCodeEn(countryCode)
 		: getCountryNameByCodeKo(countryCode);
 };
 
@@ -259,10 +275,15 @@ export const getCountryNameByCode = (countryCode: CountryCode): string => {
 	return getCountryNameByCodeKo(countryCode);
 };
 
+// Alpha3 → Alpha2 변환 유틸리티
+export const getAlpha2ByAlpha3 = (countryCode: CountryCode): string => {
+	return ALPHA3_TO_ALPHA2_MAP[countryCode] || countryCode.slice(0, 2);
+};
+
 // 기본값으로 한국어 매핑 export (하위 호환성)
 export const COUNTRY_CODE_TO_NAME_MAP = COUNTRY_CODE_TO_NAME_MAP_KO;`;
 
-	// 7. 메인 index 파일 (re-exports)
+	// 8. 메인 index 파일 (re-exports)
 	const indexContent = `${linterDisable}
 // 이 파일은 자동 생성됩니다. 직접 수정하지 마세요.
 // Generated at: ${new Date().toISOString()}
@@ -275,6 +296,7 @@ export { COUNTRY_OPTIONS } from './country-options';
 export { REGION_OPTIONS_BY_COUNTRY } from './region-options';
 export { COUNTRY_CODE_TO_NAME_MAP_KO } from './country-names-ko';
 export { COUNTRY_CODE_TO_NAME_MAP_EN } from './country-names-en';
+export { ALPHA3_TO_ALPHA2_MAP } from './alpha3-to-alpha2';
 
 // Utility functions - tree-shakable
 export { getRegionOptionsByCountry } from './region-utils';
@@ -283,7 +305,8 @@ export {
 	getCountryNameByCodeEn, 
 	getCountryNameByCodeWithLang,
 	getCountryNameByCode,
-	COUNTRY_CODE_TO_NAME_MAP
+	COUNTRY_CODE_TO_NAME_MAP,
+	getAlpha2ByAlpha3
 } from './country-utils';
 
 // Legacy re-exports for backward compatibility
@@ -297,6 +320,7 @@ export { COUNTRY_CODE_TO_NAME_MAP_EN as COUNTRY_CODE_TO_NAME_MAP_EN_LEGACY } fro
 	writeFileSync(join(srcDir, "region-options.ts"), regionOptionsContent);
 	writeFileSync(join(srcDir, "country-names-ko.ts"), countryNamesKoContent);
 	writeFileSync(join(srcDir, "country-names-en.ts"), countryNamesEnContent);
+	writeFileSync(join(srcDir, "alpha3-to-alpha2.ts"), alpha3ToAlpha2Content);
 	writeFileSync(join(srcDir, "region-utils.ts"), regionUtilsContent);
 	writeFileSync(join(srcDir, "country-utils.ts"), countryUtilsContent);
 	writeFileSync(join(srcDir, "index.ts"), indexContent);

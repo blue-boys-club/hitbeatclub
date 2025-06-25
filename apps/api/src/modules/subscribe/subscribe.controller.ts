@@ -1,4 +1,4 @@
-import { Controller, Post, Req, Body, Patch } from "@nestjs/common";
+import { Controller, Post, Req, Body, Patch, Get } from "@nestjs/common";
 import { SubscribeService } from "./subscribe.service";
 import { ApiOperation, ApiTags, ApiBearerAuth, ApiBody } from "@nestjs/swagger";
 import { AuthJwtAccessProtected } from "../auth/decorators/auth.jwt.decorator";
@@ -10,6 +10,7 @@ import { SubscribeRequestDto } from "./dto/request/subscribe.request.dto";
 import { SubscribeCreateResponseDto } from "./dto/response/subscribe.create.response.dto";
 import { SubscribePlanUpdateRequestDto } from "./dto/request/subscribe.plan-update.request.dto";
 import { SubscribeCancelRequestDto } from "./dto/request/subscribe.cancel.request.dto";
+import { SubscribePlansResponseDto } from "./dto/response/subscribe.plans.response.dto";
 
 @Controller("subscribe")
 @ApiTags("subscribe")
@@ -62,9 +63,26 @@ export class SubscribeController {
 	}
 
 	/**
+	 * 맴버십 종류 조회
+	 */
+	@Get("plans")
+	@ApiOperation({ summary: "멤버십 플랜 조회" })
+	@DocAuth({ jwtAccessToken: true })
+	@AuthJwtAccessProtected()
+	async getPlans(): Promise<IResponse<SubscribePlansResponseDto>> {
+		const plans = await this.subscribeService.getPlans();
+
+		return {
+			statusCode: 200,
+			message: subscribeMessage.plans.success,
+			data: plans,
+		};
+	}
+
+	/**
 	 * 멤버십 결제 주기 변경 (월↔연)
 	 */
-	@Patch("plan")
+	@Patch("")
 	@ApiOperation({ summary: "멤버십 플랜 변경" })
 	@DocAuth({ jwtAccessToken: true })
 	@AuthJwtAccessProtected()
@@ -86,7 +104,7 @@ export class SubscribeController {
 	async cancelSubscription(
 		@Req() req: AuthenticatedRequest,
 		@Body() body: SubscribeCancelRequestDto,
-	): Promise<IResponse<unknown>> {
+	): Promise<IResponse<void>> {
 		await this.subscribeService.cancelSubscription(req.user.id, body.cancel);
 		return {
 			statusCode: 200,

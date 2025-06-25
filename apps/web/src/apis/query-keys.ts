@@ -119,6 +119,10 @@ const QUERY_KEYS = {
 		infiniteList: ["player", "list", "infinite"],
 		list: (payload: PaginationRequest): QueryKey => ["player", "list", payload],
 	},
+
+	subscribe: {
+		plans: ["subscribe", "plans"],
+	},
 };
 
 export { QUERY_KEYS };
