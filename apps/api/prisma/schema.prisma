@@ -53,6 +53,7 @@ model Artist {
   userId                     BigInt    @map("user_id")
   stageName                  String?   @map("stage_name") @db.VarChar(30)
   slug                       String?   @db.VarChar(20)
+  viewCount                  BigInt?   @map("view_count") @db.UnsignedBigInt
   description                String?   @db.Text
   isVerified                 Int?      @map("is_verified") @db.TinyInt 
   profileImageUrl            String?   @map("profile_image_url") @db.VarChar(255)
@@ -76,6 +77,7 @@ model Artist {
   userArtistBlock            UserArtistBlock[]
   artistReport               ArtistReport[]
 
+  @@unique([slug, deletedAt], map: "ux_artist_slug")
   @@index([userId], map: "FK_user_TO_artist_1")
   @@map("artist")
 }

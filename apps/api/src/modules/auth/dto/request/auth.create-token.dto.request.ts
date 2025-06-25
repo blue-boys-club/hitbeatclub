@@ -8,4 +8,11 @@ export class CreateAccessTokenDto {
 		example: "test@test.com",
 	})
 	email: string;
+
+	@IsString()
+	@ApiProperty({
+		description: "시크릿 키",
+		example: "1234567890",
+	})
+	secretKey: string;
 }

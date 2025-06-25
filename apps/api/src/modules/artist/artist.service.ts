@@ -202,6 +202,24 @@ export class ArtistService {
 			if (!artist) {
 				throw new NotFoundException("Artist not found");
 			}
+
+			// 팔로워 수 조회
+			const followerCount = await this.prisma.userArtistFollow.count({
+				where: {
+					artistId: Number(artist.id),
+					deletedAt: null,
+				},
+			});
+
+			// 트랙 수 조회
+			const trackCount = await this.prisma.product.count({
+				where: {
+					sellerId: Number(artist.id),
+					deletedAt: null,
+					isPublic: 1,
+				},
+			});
+
 			const profileImageFile = await this.fileService.findFilesByTargetId({
 				targetId: Number(artist.id),
 				targetTable: "artist",
@@ -212,6 +230,8 @@ export class ArtistService {
 				id: Number(artist.id),
 				userId: Number(artist.userId),
 				profileImageUrl: profileImageFile[0]?.url || null,
+				followerCount,
+				trackCount,
 			};
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -459,6 +479,27 @@ export class ArtistService {
 				throw error;
 			}
 			throw new BadRequestException(ARTIST_REPORT_FAILED_ERROR);
+		}
+	}
+
+	async incrementViewCount(artistId: number) {
+		try {
+			console.log("incrementViewCount", artistId);
+			const artist = await this.prisma.artist.findFirst({
+				where: { id: artistId },
+				select: { viewCount: true },
+			});
+
+			await this.prisma.artist
+				.update({
+					where: { id: artistId },
+					data: {
+						viewCount: (Number(artist?.viewCount) || 0) + 1,
+					},
+				})
+				.then((data) => this.prisma.serializeBigInt(data));
+		} catch (error) {
+			throw new BadRequestException(error);
 		}
 	}
 }

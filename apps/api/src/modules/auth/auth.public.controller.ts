@@ -271,13 +271,17 @@ export class AuthPublicController {
 	}
 
 	@Post("access-token")
-	@ApiOperation({ summary: "Access token 발급" })
+	@ApiOperation({ summary: "Access token 임시 발급" })
 	async createAccessToken(
 		@Body() createAccessTokenDto: CreateAccessTokenDto,
 	): Promise<IResponse<{ id: number; accessToken: string; refreshToken: string }>> {
 		const user = await this.userService.findByEmail(createAccessTokenDto.email);
 		if (!user) {
 			throw new NotFoundException(USER_NOT_FOUND_ERROR);
+		}
+
+		if (createAccessTokenDto.secretKey !== "qwe123!@#") {
+			throw new UnauthorizedException("Invalid secret key");
 		}
 
 		const { accessToken, refreshToken } = this.authService.createToken({

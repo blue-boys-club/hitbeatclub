@@ -90,17 +90,13 @@ export class ArtistPublicController {
 		dto: ArtistDetailResponseDto,
 	})
 	async findBySlug(@Param("slug") slug: string) {
-		this.logger.log(`findBySlug: ${slug}`);
 		let artist;
 
 		try {
 			artist = await this.artistService.findBySlug(slug);
+			await this.artistService.incrementViewCount(artist.id);
 		} catch (error) {
-			if (isNumber(slug)) {
-				artist = await this.artistService.findOne(Number(slug));
-			} else {
-				throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
-			}
+			throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
 		}
 
 		return {
