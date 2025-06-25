@@ -189,7 +189,7 @@ export class SubscribeService {
 					deletedAt: null,
 				},
 			})
-			.then((data) => this.prisma.serializeBigInt(data));
+			.then((data) => this.prisma.serializeBigIntTyped(data));
 
 		return subscribe;
 	}
@@ -273,6 +273,26 @@ export class SubscribeService {
 	 */
 	async runScheduledPayments() {
 		const now = new Date();
+		// 1) 최종 해지(만료) 처리: 이미 취소된(CANCELED) 구독 중 nextPaymentDate가 경과한 건을 소프트 삭제
+		const expiredCanceledSubs = await this.prisma.subscribe
+			.findMany({
+				where: {
+					status: "CANCELED",
+					deletedAt: null,
+					nextPaymentDate: { lte: now },
+				},
+			})
+			.then((data) => this.prisma.serializeBigIntTyped(data));
+
+		for (const sub of expiredCanceledSubs) {
+			await this.prisma.subscribe.update({
+				where: { id: sub.id },
+				data: { deletedAt: new Date() },
+			});
+			this.logger.log({ subscribeId: sub.id }, "Subscription finalized and soft-deleted after cancellation period");
+		}
+
+		// 2) 예정 결제가 도래한 ACTIVE 구독 결제 시도
 		const dueSubscriptions = await this.prisma.subscribe
 			.findMany({
 				where: {
@@ -406,6 +426,7 @@ export class SubscribeService {
 					data: {
 						status: "CANCELED",
 						cancelledAt: new Date(),
+						deletedAt: new Date(),
 					},
 				});
 

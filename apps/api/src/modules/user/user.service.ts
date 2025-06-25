@@ -87,6 +87,13 @@ export class UserService {
 						where: {
 							deletedAt: null,
 						},
+						select: {
+							cancelledAt: true,
+							status: true,
+							productType: true,
+							subscriptionPlan: true,
+							createdAt: true,
+						},
 					},
 					userArtistBlock: {
 						where: {

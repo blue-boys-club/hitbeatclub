@@ -1,6 +1,13 @@
+"use client";
+
 import { Popup, PopupContent, PopupDescription, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
 import { PopupButton } from "@/components/ui/PopupButton";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { useAuthStore } from "@/stores/auth";
+import { useEffect } from "react";
+import { useShallow } from "zustand/react/shallow";
 
 interface AuthSignupCompletionModalProps {
 	isPopupOpen: boolean;
@@ -8,6 +15,19 @@ interface AuthSignupCompletionModalProps {
 }
 
 export const AuthSignupCompletionModal = ({ isPopupOpen, onClosePopup }: AuthSignupCompletionModalProps) => {
+	const { data: user } = useQuery({
+		...getUserMeQueryOption(),
+		enabled: isPopupOpen,
+	});
+
+	const { setPhoneNumber } = useAuthStore(useShallow((state) => ({ setPhoneNumber: state.setPhoneNumber })));
+
+	useEffect(() => {
+		if (user) {
+			setPhoneNumber(user.phoneNumber);
+		}
+	}, [user]);
+
 	return (
 		<Popup
 			open={isPopupOpen}
