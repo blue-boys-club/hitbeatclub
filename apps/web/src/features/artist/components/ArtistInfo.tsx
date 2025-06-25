@@ -9,6 +9,7 @@ import {
 	ShuffleOff,
 	ShuffleOn,
 	SoundCloud,
+	Tiktok,
 	Youtube,
 } from "@/assets/svgs";
 import { ArtistAvatar } from "@/components/ui";
@@ -201,19 +202,12 @@ export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 						{isFollwingArtist ? "Following" : "Follow"}
 					</Button>
 
-					<div className="text-[12px] font-semibold leading-[18px] tracking-0.12px">398 Followers</div>
+					<div className="text-[12px] font-semibold leading-[18px] tracking-0.12px">
+						{artist?.followerCount} Followers
+					</div>
 				</div>
 
 				<div className="flex items-center gap-2">
-					{/* <div className="cursor-pointer">
-						<FilledInstagram />
-					</div>
-					<div className="cursor-pointer">
-						<Youtube />
-					</div>
-					<div className="cursor-pointer">
-						<SoundCloud />
-					</div> */}
 					{artist?.instagramAccount && (
 						<a
 							href={`https://www.instagram.com/${artist?.instagramAccount}`}
@@ -247,14 +241,14 @@ export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 							target="_blank"
 							rel="noopener noreferrer"
 						>
-							{/* <TikTok /> */}
+							<Tiktok />
 						</a>
 					)}
 				</div>
 
 				<div className="text-[12px] text-[#777] font-medium leading-[16.8px]">
-					{/* <div>{artist?.productCount} Tracks</div> */}
-					{/* <div>{artist?.visitCount} Visits</div> */}
+					<div>{artist?.trackCount} Tracks</div>
+					<div>{artist?.viewCount} Visits</div>
 				</div>
 
 				<div className="text-[12px] text-[#1F1F21] font-semibold leading-[18px] tracking-0.12px">
