@@ -7,6 +7,7 @@ import {
 	UserUpdatePayloadSchema,
 	UserProfileUpdatePayload,
 	UserPasswordResetPayload,
+	UserFollowArtistListResponse,
 } from "@hitbeatclub/shared-types/user";
 import axiosInstance from "@/apis/api.client";
 import { z } from "zod";
@@ -150,9 +151,12 @@ export const updateCartItem = async (userId: number, { id, licenseId }: UpdateCa
  * @returns 팔로잉 아티스트 목록
  */
 export const getFollowingArtists = async (userId: number, payload: UserFollowedArtistListPayload) => {
-	const response = await axiosInstance.get(`/users/${userId}/followed-artists`, {
-		params: payload,
-	});
+	const response = await axiosInstance.get<PaginationResponse<UserFollowArtistListResponse[]>>(
+		`/users/${userId}/followed-artists`,
+		{
+			params: payload,
+		},
+	);
 	return response.data;
 };
 

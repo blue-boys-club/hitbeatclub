@@ -95,6 +95,12 @@ const QUERY_KEYS = {
 	followedArtists: {
 		_key: ["followedArtists"],
 		list: (userId: number, payload: UserFollowedArtistListPayload) => ["followedArtists", "list", userId, payload],
+		all: (userId: number, payload?: Omit<UserFollowedArtistListPayload, "page" | "limit">) => [
+			"followedArtists",
+			"all",
+			userId,
+			payload,
+		],
 		infiniteList: (userId: number, payload: UserFollowedArtistListPayload) => [
 			"followedArtists",
 			"list",
