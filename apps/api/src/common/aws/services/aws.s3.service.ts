@@ -85,12 +85,17 @@ export class AwsS3Service implements IAwsS3Service {
 		const staticCredentials = accessKeyId && secretAccessKey ? { accessKeyId, secretAccessKey } : undefined;
 		const credentialProvider = !staticCredentials ? fromNodeProviderChain() : staticCredentials;
 
-		this.logger.log({ hasStaticCredentials: !!staticCredentials, region }, "AWS S3 Credentials");
+		this.logger.log({ credentialProvider, region }, "AWS S3 Credentials");
 
-		this.s3Client = new S3Client({
-			region,
-			credentials: credentialProvider,
-		});
+		try {
+			this.s3Client = new S3Client({
+				region,
+				credentials: credentialProvider,
+			});
+		} catch (err) {
+			this.logger.error(err, "AWS S3 Client Credentials");
+			throw err;
+		}
 
 		this.logger.log({ clientCredentials: this.s3Client.config.credentials }, "AWS S3 Client Credentials");
 

@@ -45,6 +45,15 @@ import { RouterModule } from "~/router/router.module";
 
 						// Deployed whatever reason
 						if (!!process.env.AWS_LAMBDA_FUNCTION_NAME || !!process.env.ECS_CONTAINER_METADATA_URI) {
+							// ignore health check
+							if (
+								req.url?.includes("/health") &&
+								(req.headers["user-agent"]?.includes("ELB-HealthChecker") ||
+									req.headers["user-agent"]?.includes("curl"))
+							) {
+								return true;
+							}
+
 							return false;
 						}
 
