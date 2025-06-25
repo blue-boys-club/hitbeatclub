@@ -1,13 +1,17 @@
 import { z } from "zod";
 import { subscriptionPlanSchema } from "./subscribe.request";
 
+export const SubscribeStatusSchema = z.enum(["ACTIVE", "CANCELED"]);
+
 export const SubscribeResponseSchema = z.object({
 	id: z.number().describe("구독 ID").default(1),
 	userId: z.number().describe("사용자 ID").default(1),
+	status: SubscribeStatusSchema.describe("구독 상태").default("ACTIVE"),
 	subscriptionPlan: z.string().describe("구독 플랜").default("MONTH"),
 	productType: z.string().describe("상품 유형").default("MEMBERSHIP"),
 	price: z.number().describe("가격").default(19900),
 	nextPaymentDate: z.date().describe("다음 결제일").default(new Date()),
+	cancelledAt: z.date().nullable().describe("취소(예정)일").default(null),
 	createdAt: z.date().describe("생성일").default(new Date()),
 	updatedAt: z.date().describe("수정일").default(new Date()),
 	deletedAt: z.date().nullable().describe("삭제일").default(null),
@@ -27,6 +31,7 @@ export const SubscribeCreateResponseSchema = z.object({
 	userId: z.number().describe("사용자 ID"),
 	createdAt: z.date().describe("구독 생성 일시"),
 	nextPaymentDate: z.date().nullable().describe("다음 결제일"),
+	price: z.number().describe("가격"),
 	artistId: z.number().describe("아티스트 ID"),
 });
 
