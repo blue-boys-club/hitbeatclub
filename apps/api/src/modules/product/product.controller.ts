@@ -58,6 +58,7 @@ import { FILE_NOT_SUPPORTED_MIME_TYPE_ERROR } from "../file/file.error";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types";
 import { FileUrlRequestDto } from "./dto/request/product.file-url.request.dto";
 import { PaymentService } from "../payment/payment.service";
+import { AwsCloudfrontService } from "~/common/aws/services/aws.cloudfront.service";
 
 @Controller("products")
 @ApiTags("product")
@@ -73,6 +74,7 @@ export class ProductController {
 		private readonly artistService: ArtistService,
 		@Inject(forwardRef(() => PaymentService))
 		private readonly paymentService: PaymentService,
+		private readonly cloudFrontService: AwsCloudfrontService,
 	) {}
 
 	@Get()
@@ -494,8 +496,7 @@ export class ProductController {
 
 	@Get(":id/file-url")
 	@ApiOperation({ summary: "상품 파일 다운로드 링크 조회" })
-	@AuthenticationDoc()
-	@AuthJwtAccessOptional()
+	@AuthenticationDoc({ optional: true })
 	@DocResponse<FileUploadResponseDto>(productMessage.find.success, {
 		dto: FileUploadResponseDto,
 	})
@@ -518,12 +519,12 @@ export class ProductController {
 
 		const file = await this.productService.findFile(id, fileUrlRequestDto.type);
 
-		// const url = await this.cloudFrontService.getSignedUrl(file.url);
+		const url = await this.cloudFrontService.createSignedUrl(file.url);
 
 		return {
 			statusCode: 200,
 			message: productMessage.find.success,
-			data: { id: Number(file.id), url: file.url },
+			data: { id: Number(file.id), url },
 		};
 	}
 }

@@ -45,6 +45,11 @@
 			"types": "./dist/country-utils.d.ts",
 			"import": "./dist/country-utils.mjs",
 			"require": "./dist/country-utils.js"
+		},
+		"./alpha3-to-alpha2": {
+			"types": "./dist/alpha3-to-alpha2.d.ts",
+			"import": "./dist/alpha3-to-alpha2.mjs",
+			"require": "./dist/alpha3-to-alpha2.js"
 		}
 	},
 	"files": [

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, memo } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { Acapella, Beat, Like, PauseCircle, PlayCircle, ShoppingBag, SmallEqualizer } from "@/assets/svgs";
 import { AlbumCoverCard } from "@/components/ui";
 import { TagButton } from "@/components/ui/TagButton";
@@ -8,14 +8,17 @@ import { cn } from "@/common/utils";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { PurchaseWithCartTrigger } from "./PurchaseWithCartTrigger";
+import { usePlayTrack } from "@/hooks/use-play-track";
+import { useAudioStore } from "@/stores/audio";
+import { useShallow } from "zustand/react/shallow";
 
 interface ProductItemProps {
-	productId?: string;
-	title?: string;
-	artist?: string;
-	albumImgSrc?: string;
+	productId?: number;
+	title: string;
+	artist: string;
+	albumImgSrc: string;
 	tags?: string[];
-	type?: "BEAT" | "ACAPELLA";
+	type: "BEAT" | "ACAPELLA";
 	isLiked?: boolean;
 	onPlay?: () => void;
 	onLike?: () => void;
@@ -29,19 +32,18 @@ interface ProductItemProps {
  * - 트랙 관련 태그 표시
  */
 export const ProductItem = memo(
-	({
-		productId = "123",
-		title = "La Vie En Rose",
-		artist = "Moon River",
-		albumImgSrc = "https://placehold.co/70x70.png",
-		tags = ["G-funk", "Trippy", "Flower"],
-		type = "BEAT",
-		isLiked = false,
-		onPlay,
-		onLike,
-	}: ProductItemProps) => {
+	({ productId, title, artist, albumImgSrc, tags = [], type, isLiked = false, onPlay, onLike }: ProductItemProps) => {
 		const router = useRouter();
-		const [status, setStatus] = useState<"playing" | "paused" | "default">("paused");
+		const { status, currentProductId } = useAudioStore(
+			useShallow((state) => ({
+				status: state.status,
+				currentProductId: state.productId,
+			})),
+		);
+
+		const { play } = usePlayTrack();
+
+		const effectiveStatus = currentProductId === productId ? status : "paused";
 
 		const onClickProduct = () => {
 			router.push(`/products/${productId}`);
@@ -52,7 +54,7 @@ export const ProductItem = memo(
 		};
 
 		const togglePlay = () => {
-			setStatus(status === "playing" ? "paused" : "playing");
+			play(productId);
 			onPlay?.();
 		};
 
@@ -63,7 +65,7 @@ export const ProductItem = memo(
 						<div
 							className={cn(
 								"transition-all duration-300",
-								status === "playing" ? "opacity-100 translate-x-0 mr-3" : "opacity-0 -translate-x-2 w-0",
+								effectiveStatus === "playing" ? "opacity-100 translate-x-0 mr-3" : "opacity-0 -translate-x-2 w-0",
 							)}
 						>
 							<SmallEqualizer />
@@ -76,9 +78,10 @@ export const ProductItem = memo(
 							<AlbumCoverCard
 								albumImgSrc={albumImgSrc}
 								size="lg"
+								productId={productId}
 							/>
 							<div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
-								{status === "playing" ? <PauseCircle /> : <PlayCircle />}
+								{effectiveStatus === "playing" ? <PauseCircle /> : <PlayCircle />}
 							</div>
 						</div>
 					</div>

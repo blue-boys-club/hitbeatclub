@@ -7,6 +7,7 @@ import { getArtistProductListBySlugInfiniteQueryOption } from "@/apis/artist/que
 import type { ArtistProductListQueryRequest } from "@hitbeatclub/shared-types/artist";
 import type { ProductListItem } from "@/features/product/product.types";
 import { useLikeProductMutation } from "@/apis/product/mutations";
+import blankCdImage from "@/assets/images/blank-cd.png";
 
 interface ArtistProductListProps {
 	slug: string;
@@ -147,10 +148,10 @@ export const ArtistProductList = memo(({ slug }: ArtistProductListProps) => {
 					filteredProducts.map((product) => (
 						<ProductItem
 							key={product.id}
-							productId={product.id.toString()}
+							productId={product.id}
 							title={product.productName}
 							artist={product.seller?.stageName}
-							albumImgSrc={product.coverImage?.url}
+							albumImgSrc={product.coverImage?.url || blankCdImage.src}
 							tags={product.tags ? (product.tags as any).map((t: any) => (typeof t === "string" ? t : t.name)) : []}
 							type={product.category as any}
 							isLiked={!!product.isLiked}

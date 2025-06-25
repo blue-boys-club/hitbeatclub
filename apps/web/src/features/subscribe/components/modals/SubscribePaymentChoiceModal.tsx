@@ -8,7 +8,7 @@ import {
 	PopupButton,
 	PopupDescription,
 } from "@/components/ui/Popup";
-import { RecurringPeriod } from "@hitbeatclub/shared-types/subscribe";
+import { SubscriptionPlan } from "@hitbeatclub/shared-types/subscribe";
 import Image from "next/image";
 /**
  * `SubscribePaymentChoiceModal` 컴포넌트의 Props 정의
@@ -19,13 +19,13 @@ interface SubscribePaymentChoiceModalProps {
 	/** 카드 결제 선택 콜백 함수 */
 	onSelectCard: () => void;
 	/** 토스페이 결제 선택 콜백 함수 */
-	onSelectToss: () => void;
+	// onSelectToss: () => void;
 	/** 페이팔 결제 선택 콜백 함수 */
 	onSelectPaypal: () => void;
 	/** 모달의 열림 상태 */
 	isOpen: boolean;
 	/** 현재 선택된 구독 주기 (연간/월간) */
-	recurringPeriod: RecurringPeriod;
+	subscriptionPlan: SubscriptionPlan;
 	/** 적용된 프로모션 코드 (선택 사항) */
 	promotionCode?: string | null;
 	/** 카드 결제 처리 중 상태 (선택 사항) */
@@ -43,9 +43,9 @@ export const SubscribePaymentChoiceModal = memo(
 		isOpen,
 		onClose,
 		onSelectCard,
-		onSelectToss,
+		// onSelectToss,
 		onSelectPaypal,
-		recurringPeriod,
+		subscriptionPlan,
 		promotionCode,
 		isInitiatingCard,
 		isInitiatingToss,
@@ -64,8 +64,8 @@ export const SubscribePaymentChoiceModal = memo(
 		const subscriptionPlanText = useMemo(() => {
 			const yearlyPrice = "189,900원";
 			const monthlyPrice = "24,990원/월";
-			return recurringPeriod === "yearly" ? `연간 멤버십 (${yearlyPrice} 결제)` : `월간 멤버십 (${monthlyPrice})`;
-		}, [recurringPeriod]);
+			return subscriptionPlan === "YEAR" ? `연간 멤버십 (${yearlyPrice} 결제)` : `월간 멤버십 (${monthlyPrice})`;
+		}, [subscriptionPlan]);
 
 		return (
 			<Popup
@@ -91,7 +91,7 @@ export const SubscribePaymentChoiceModal = memo(
 							<h3 className="mb-2 text-base font-semibold text-gray-800">💳 정기 결제 안내</h3>
 							<ul className="ml-5 space-y-1 text-sm text-gray-700 list-disc">
 								<li>선택하신 결제수단으로 정기 결제가 이루어집니다.</li>
-								<li>첫 결제 후 {recurringPeriod === "yearly" ? "매년" : "매월"} 같은 날짜에 자동으로 결제됩니다.</li>
+								<li>첫 결제 후 {subscriptionPlan === "YEAR" ? "매년" : "매월"} 같은 날짜에 자동으로 결제됩니다.</li>
 								<li>결제 정보는 안전하게 암호화되어 관리됩니다.</li>
 								<li>언제든지 멤버십을 취소할 수 있습니다.</li>
 							</ul>
@@ -128,8 +128,8 @@ export const SubscribePaymentChoiceModal = memo(
 							</div>
 
 							{/* Second row for Easy Payments (Toss Pay for now) */}
-							<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-								<button
+							{/* <div className="grid grid-cols-1 gap-4 sm:grid-cols-3"> */}
+							{/* <button
 									onClick={onSelectToss}
 									className="flex flex-col cursor-pointer items-center justify-center p-6 text-lg font-semibold transition-colors rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-50 sm:col-start-1 disabled:opacity-50"
 									disabled={isInitiatingToss || isInitiatingCard}
@@ -142,9 +142,9 @@ export const SubscribePaymentChoiceModal = memo(
 										className="w-6 h-6"
 									/>
 									<span className="mt-2">{isInitiatingToss ? "처리중..." : "토스페이"}</span>
-								</button>
-								{/* Future easy payment methods will go here */}
-							</div>
+								</button> */}
+							{/* Future easy payment methods will go here */}
+							{/* </div> */}
 						</div>
 					</div>
 

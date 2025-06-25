@@ -128,6 +128,9 @@ const QUERY_KEYS = {
 		_key: ["inquiry"],
 		list: ["inquiry", "list"],
 		detail: (id: number): QueryKey => ["inquiry", id],
+  },
+	subscribe: {
+		plans: ["subscribe", "plans"],
 	},
 };
 

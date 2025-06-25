@@ -20,6 +20,8 @@ import { useAudioStore } from "@/stores/audio";
 import { PurchaseWithCartTrigger } from "@/features/product/components";
 import { GenreButton } from "@/components/ui/GenreButton";
 import { TagButton } from "@/components/ui/TagButton";
+import { AlbumAvatar } from "@/components/ui/Avatar/AlbumAvatar";
+import { usePlayTrack } from "@/hooks/use-play-track";
 
 /**
  * 음악 상세 정보를 보여주는 우측 사이드바 컴포넌트
@@ -64,6 +66,8 @@ export const MusicRightSidebar = memo(() => {
 	const isLiked = useMemo(() => {
 		return productId === Number(currentTrackId) && currentTrack?.isLiked;
 	}, [productId, currentTrackId, currentTrack?.isLiked]);
+
+	const { play } = usePlayTrack();
 
 	const handleToggleOpen = () => {
 		setRightSidebar(!isOpen);
@@ -133,7 +137,13 @@ export const MusicRightSidebar = memo(() => {
 				</button>
 
 				<div className="flex items-center justify-center mt-12 mb-6">
-					{/* <AlbumAvatar src={currentTrack?.albumImgSrc || "https://placehold.co/360x360.png"} /> */}
+					{currentTrack && (
+						<AlbumAvatar
+							src={(currentTrack as any)?.albumImgSrc || "https://placehold.co/360x360.png"}
+							onClick={() => play(currentTrack.id)}
+							className="cursor-pointer"
+						/>
+					)}
 				</div>
 
 				<div className="px-6">

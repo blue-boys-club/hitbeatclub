@@ -48,7 +48,8 @@ export type AugmentedSubscribeFormValues = SubscribeFormValue & {
 /**
  * 지원하는 PortOne 결제 게이트웨이 유형
  */
-export type PaymentGatewayType = "CARD" | "TOSS_EASY_PAY"; // 향후 다른 PG 추가 가능
+// export type PaymentGatewayType = "CARD" | "TOSS_EASY_PAY"; // 향후 다른 PG 추가 가능
+export type PaymentGatewayType = "CARD"; //| "PAYPAL";
 
 /**
  * PortOne 빌링키 발급 방식
@@ -76,11 +77,11 @@ const paymentGatewayConfigs: Record<PaymentGatewayType, PaymentGatewayConfig> = 
 		channelKey: PORTONE_CHANNEL_KEY.CARD_RECURRING,
 		displayName: "카드 결제",
 	},
-	TOSS_EASY_PAY: {
-		billingKeyMethod: "EASY_PAY",
-		channelKey: PORTONE_CHANNEL_KEY.EASY_PAY_TOSS_PAY,
-		displayName: "토스페이",
-	},
+	// TOSS_EASY_PAY: {
+	// 	billingKeyMethod: "EASY_PAY",
+	// 	channelKey: PORTONE_CHANNEL_KEY.EASY_PAY_TOSS_PAY,
+	// 	displayName: "토스페이",
+	// },
 	// TODO: 향후 네이버페이, 카카오페이 등 여기에 추가
 };
 
@@ -255,22 +256,23 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 				}
 			}
 
-			if (data.promotionCode) {
-				const isValidPromo = await validatePromotionCode(data.promotionCode);
+			if (data.hitcode) {
+				const isValidPromo = await validatePromotionCode(data.hitcode);
 				if (!isValidPromo) {
 					setPaymentError("Invalid promotion code.");
 					openModal("error");
 					setIsSubmitting(false);
 					return;
 				}
-				console.log("Promotion code applied:", data.promotionCode);
+				console.log("Promotion code applied:", data.hitcode);
 			}
 
 			try {
 				createSubscription(
 					{
-						subscriptionPlan: data.recurringPeriod === "monthly" ? "MONTH" : "YEAR",
-						hitcode: data.promotionCode || "",
+						subscriptionPlan: data.subscriptionPlan,
+						hitcode: data.hitcode || "",
+						method: data.method,
 					},
 					{
 						onSuccess: () => {

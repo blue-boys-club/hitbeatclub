@@ -4,24 +4,46 @@ import { getSignedUrl } from "@aws-sdk/cloudfront-signer";
 import * as crypto from "crypto";
 import { IAwsCloudfrontService } from "~/common/aws/interfaces/aws.cloudfront-service.interface";
 import { ENUM_AWS_STATUS_CODE_ERROR } from "~/common/aws/constants/aws.status-code.constant";
+import { AwsSecretsManagerService } from "~/common/aws/services/aws.secrets-manager.service";
 
 @Injectable()
 export class AwsCloudfrontService implements IAwsCloudfrontService {
 	private readonly distributionDomain: string;
 	private readonly keyPairId: string;
-	private readonly privateKey: string;
+	private readonly privateKeySecretId: string;
+	private privateKey: string;
 	private readonly cloudfrontBaseUrl: string;
 	private readonly cloudfrontEnabled: boolean;
 	private readonly s3BaseUrl: string;
 	private readonly defaultExpiresInSeconds: number = 3600; // 1시간
 
-	constructor(private readonly configService: ConfigService) {
+	constructor(
+		private readonly configService: ConfigService,
+		private readonly secretsManagerService: AwsSecretsManagerService,
+	) {
 		this.distributionDomain = this.configService.get<string>("aws.cloudfront.distributionDomain");
 		this.keyPairId = this.configService.get<string>("aws.cloudfront.keyPairId");
-		this.privateKey = this.configService.get<string>("aws.cloudfront.privateKey");
+		this.privateKeySecretId = this.configService.get<string>("aws.cloudfront.privateKeySecretId");
+		if (!this.privateKeySecretId) {
+			this.privateKey = this.configService.get<string>("aws.cloudfront.privateKey");
+		}
 		this.cloudfrontBaseUrl = this.configService.get<string>("aws.cloudfront.baseUrl");
 		this.cloudfrontEnabled = this.configService.get<boolean>("aws.cloudfront.enabled");
 		this.s3BaseUrl = this.configService.get<string>("aws.s3.baseUrl");
+	}
+
+	/**
+	 * 비밀 저장소 혹은 환경변수에서 CloudFront 개인 키를 가져옵니다
+	 */
+	private async getPrivateKey(): Promise<string> {
+		if (this.privateKey) {
+			return this.privateKey;
+		}
+		if (!this.privateKeySecretId) {
+			throw new Error("CloudFront private key is not configured.");
+		}
+		this.privateKey = await this.secretsManagerService.getSecret(this.privateKeySecretId);
+		return this.privateKey;
 	}
 
 	/**
@@ -41,11 +63,12 @@ export class AwsCloudfrontService implements IAwsCloudfrontService {
 
 			const dateLessThan = new Date(Date.now() + expiresInSeconds * 1000);
 
+			const privateKey = await this.getPrivateKey();
 			const signedUrl = getSignedUrl({
 				url,
 				dateLessThan: dateLessThan.toISOString(),
 				keyPairId: this.keyPairId,
-				privateKey: this.privateKey,
+				privateKey,
 			});
 
 			return Promise.resolve(signedUrl);
@@ -117,9 +140,10 @@ export class AwsCloudfrontService implements IAwsCloudfrontService {
 				.replace(/=/g, "");
 
 			// 서명 생성 (실제 구현에서는 RSA-SHA1 서명이 필요)
+			const privateKey = await this.getPrivateKey();
 			const sign = crypto.createSign("RSA-SHA1");
 			sign.update(policyString);
-			const signature = sign.sign(this.privateKey, "base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+			const signature = sign.sign(privateKey, "base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 
 			return Promise.resolve({
 				"CloudFront-Policy": policyBase64,

@@ -133,6 +133,7 @@ export class ProductService {
 					licenseInfo: product.productLicense
 						.sort((a, b) => a.price - b.price)
 						.map((l) => ({
+							id: l.licenseId,
 							label: l.license.type,
 							price: l.price,
 						})),
@@ -1080,6 +1081,7 @@ export class ProductService {
 				licenseInfo: like.product.productLicense
 					.sort((a, b) => a.price - b.price)
 					.map((l) => ({
+						id: l.licenseId,
 						label: l.license.type,
 						price: l.price,
 					})),

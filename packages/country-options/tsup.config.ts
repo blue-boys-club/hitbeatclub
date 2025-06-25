@@ -10,6 +10,7 @@ export default defineConfig({
 		"country-names-en": "src/country-names-en.ts",
 		"region-utils": "src/region-utils.ts",
 		"country-utils": "src/country-utils.ts",
+		"alpha3-to-alpha2": "src/alpha3-to-alpha2.ts",
 	},
 	format: ["cjs", "esm"],
 	dts: true,

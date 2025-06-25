@@ -38,7 +38,16 @@ import { RouterModule } from "~/router/router.module";
 				redact: ["req.headers.authorization"],
 				autoLogging: {
 					ignore: (req) => {
-						if (process.env.NODE_ENV === "development" && req.url) {
+						if (process.env.APP_DEBUG === "true") {
+							return false;
+						}
+
+						if (
+							process.env.NODE_ENV === "development" &&
+							req.url &&
+							// but not AWS (ECS)
+							!(process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.AWS_ECS_CONTAINER_METADATA_URI)
+						) {
 							return true;
 						}
 						return false;

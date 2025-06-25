@@ -11,7 +11,7 @@ import { getPlayerListInfiniteQueryOptions } from "@/apis/player/query/player.qu
 import { PlayerListResponse } from "@hitbeatclub/shared-types";
 import { DropContentWrapper } from "@/features/dnd/components/DropContentWrapper";
 import blankCdImage from "@/assets/images/blank-cd.png";
-import { usePlayTrack } from "@/hooks/usePlayTrack";
+import { usePlayTrack } from "@/hooks/use-play-track";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 
 const PlaylistRightSidebar = () => {
@@ -59,7 +59,8 @@ const PlaylistRightSidebar = () => {
 		setRightSidebar(!isOpen);
 	}, [setRightSidebar, isOpen]);
 
-	const playTrack = usePlayTrack();
+	// 재생 훅: { play }
+	const { play } = usePlayTrack();
 
 	// 모든 페이지의 플레이리스트 데이터를 평탄화 - useMemo로 최적화
 	const allPlaylists: PlayerListResponse[] = useMemo(() => {
@@ -159,7 +160,7 @@ const PlaylistRightSidebar = () => {
 												key={playlist.id}
 												{...playlist}
 												isSelected={playlist.productId === currentTrackId}
-												onClick={playTrack}
+												onClick={play}
 											/>
 										))}
 									</ul>

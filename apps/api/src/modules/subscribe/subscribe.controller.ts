@@ -1,4 +1,4 @@
-import { Controller, Post, Req, Body } from "@nestjs/common";
+import { Controller, Post, Req, Body, Patch, Get } from "@nestjs/common";
 import { SubscribeService } from "./subscribe.service";
 import { ApiOperation, ApiTags, ApiBearerAuth, ApiBody } from "@nestjs/swagger";
 import { AuthJwtAccessProtected } from "../auth/decorators/auth.jwt.decorator";
@@ -8,6 +8,9 @@ import { DocAuth, DocResponse } from "~/common/doc/decorators/doc.decorator";
 import { IResponse } from "~/common/response/interfaces/response.interface";
 import { SubscribeRequestDto } from "./dto/request/subscribe.request.dto";
 import { SubscribeCreateResponseDto } from "./dto/response/subscribe.create.response.dto";
+import { SubscribePlanUpdateRequestDto } from "./dto/request/subscribe.plan-update.request.dto";
+import { SubscribeCancelRequestDto } from "./dto/request/subscribe.cancel.request.dto";
+import { SubscribePlansResponseDto } from "./dto/response/subscribe.plans.response.dto";
 
 @Controller("subscribe")
 @ApiTags("subscribe")
@@ -56,6 +59,56 @@ export class SubscribeController {
 			statusCode: 201,
 			message: subscribeMessage.subscribeMembership.success,
 			data: result,
+		};
+	}
+
+	/**
+	 * 맴버십 종류 조회
+	 */
+	@Get("plans")
+	@ApiOperation({ summary: "멤버십 플랜 조회" })
+	@DocAuth({ jwtAccessToken: true })
+	@AuthJwtAccessProtected()
+	async getPlans(): Promise<IResponse<SubscribePlansResponseDto>> {
+		const plans = await this.subscribeService.getPlans();
+
+		return {
+			statusCode: 200,
+			message: subscribeMessage.plans.success,
+			data: plans,
+		};
+	}
+
+	/**
+	 * 멤버십 결제 주기 변경 (월↔연)
+	 */
+	@Patch("")
+	@ApiOperation({ summary: "멤버십 플랜 변경" })
+	@DocAuth({ jwtAccessToken: true })
+	@AuthJwtAccessProtected()
+	async updatePlan(
+		@Req() req: AuthenticatedRequest,
+		@Body() body: SubscribePlanUpdateRequestDto,
+	): Promise<IResponse<unknown>> {
+		await this.subscribeService.updateSubscriptionPlan(req.user.id, body.subscriptionPlan);
+		return { statusCode: 200, message: subscribeMessage.planUpdate.success };
+	}
+
+	/**
+	 * 멤버십 취소 (즉시 / 차회)
+	 */
+	@Post("cancel")
+	@ApiOperation({ summary: "멤버십 취소" })
+	@DocAuth({ jwtAccessToken: true })
+	@AuthJwtAccessProtected()
+	async cancelSubscription(
+		@Req() req: AuthenticatedRequest,
+		@Body() body: SubscribeCancelRequestDto,
+	): Promise<IResponse<void>> {
+		await this.subscribeService.cancelSubscription(req.user.id, body.cancel);
+		return {
+			statusCode: 200,
+			message: body.cancel ? subscribeMessage.cancel.success : subscribeMessage.cancel.undo,
 		};
 	}
 }

@@ -71,12 +71,16 @@ export class AwsS3Service implements IAwsS3Service {
 		private readonly helperStringService: HelperStringService,
 		private readonly cloudfrontService: AwsCloudfrontService,
 	) {
+		const accessKeyId =
+			this.configService.get<string>("aws.s3.credential.key") ?? this.configService.get<string>("AWS_ACCESS_KEY_ID");
+		const secretAccessKey =
+			this.configService.get<string>("aws.s3.credential.secret") ??
+			this.configService.get<string>("AWS_SECRET_ACCESS_KEY");
+		const region = this.configService.get<string>("aws.s3.region") ?? this.configService.get<string>("AWS_REGION");
+
 		this.s3Client = new S3Client({
-			credentials: {
-				accessKeyId: this.configService.get<string>("aws.s3.credential.key"),
-				secretAccessKey: this.configService.get<string>("aws.s3.credential.secret"),
-			},
-			region: this.configService.get<string>("aws.s3.region"),
+			region,
+			...(accessKeyId && secretAccessKey ? { credentials: { accessKeyId, secretAccessKey } } : {}),
 		});
 
 		this.bucket = this.configService.get<string>("aws.s3.bucket");

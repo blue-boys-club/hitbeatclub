@@ -56,23 +56,23 @@ export const SubscribeFormContent = () => {
 	const methods = useForm<SubscribeFormValue>({
 		resolver: zodResolver(SubscribeFormSchema),
 		defaultValues: {
-			recurringPeriod: "yearly",
+			subscriptionPlan: "YEAR",
 		},
 	});
 
 	const { handleSubmit, setValue, watch, reset } = methods;
 
-	const recurringPeriod = watch("recurringPeriod");
-	const promotionCode = watch("promotionCode");
+	const subscriptionPlan = watch("subscriptionPlan");
+	const promotionCode = watch("hitcode");
 
 	/** 구독 상품명 (연간/월간) */
 	const subscriptionIssueName = useMemo(
-		() => (recurringPeriod === "yearly" ? "HITBEAT 연간 멤버십" : "HITBEAT 월간 멤버십"),
-		[recurringPeriod],
+		() => (subscriptionPlan === "YEAR" ? "HITBEAT 연간 멤버십" : "HITBEAT 월간 멤버십"),
+		[subscriptionPlan],
 	);
 
 	/** 현재 구독 상품 가격 */
-	const currentAmount = useMemo(() => (recurringPeriod === "yearly" ? 189900 : 24990), [recurringPeriod]);
+	const currentAmount = useMemo(() => (subscriptionPlan === "YEAR" ? 189900 : 24990), [subscriptionPlan]);
 
 	/**
 	 * 빌링키 발급 후 실제 구독 처리를 위해 `useSubscription`의 `submitSubscription`을 호출합니다.
@@ -87,7 +87,8 @@ export const SubscribeFormContent = () => {
 
 			// Map PaymentGatewayType to the string expected by the form schema for `method.type`
 			// Assuming schema expects 'CARD', 'TOSS', 'PAYPAL'
-			const formMethodType = paymentType === "TOSS_EASY_PAY" ? "TOSS" : paymentType;
+			// const formMethodType = paymentType === "TOSS_EASY_PAY" ? "TOSS" : paymentType;
+			const formMethodType = paymentType;
 
 			setValue("method", { type: formMethodType, billingKey }, { shouldValidate: true });
 
@@ -206,10 +207,10 @@ export const SubscribeFormContent = () => {
 		initiatePortOnePayment("CARD", setIsInitiatingCard);
 	};
 
-	const handleSelectToss = () => {
-		setIsPaymentChoiceModalOpen(false);
-		initiatePortOnePayment("TOSS_EASY_PAY", setIsInitiatingToss);
-	};
+	// const handleSelectToss = () => {
+	// 	setIsPaymentChoiceModalOpen(false);
+	// 	initiatePortOnePayment("TOSS_EASY_PAY", setIsInitiatingToss);
+	// };
 
 	const handleSelectPaypal = () => {
 		setIsPaymentChoiceModalOpen(false);
@@ -231,7 +232,7 @@ export const SubscribeFormContent = () => {
 	// 구독 기간 변경 시 알림 (토스트 메시지) 표시
 	useEffect(() => {
 		// This effect provides user feedback on period change, not directly related to submission logic
-		if (recurringPeriod === "yearly") {
+		if (subscriptionPlan === "YEAR") {
 			toast({
 				description: (
 					<span className="text-center text-16px justify-start text-hbc-black font-suit leading-150% tracking-016px">
@@ -252,7 +253,7 @@ export const SubscribeFormContent = () => {
 				),
 			});
 		}
-	}, [recurringPeriod, toast]);
+	}, [subscriptionPlan, toast]);
 
 	// Determine if any payment process is active for disabling the main button
 	const isAnyPaymentProcessing = isFinalSubmitting || isProcessingPayment || isInitiatingCard || isInitiatingToss;
@@ -268,8 +269,8 @@ export const SubscribeFormContent = () => {
 					<div className="inline-flex items-start self-stretch justify-between h-6">
 						<SubscribeFormHeader
 							isSubscribed={isMembership}
-							recurringPeriod={recurringPeriod}
-							onPeriodChange={(period) => setValue("recurringPeriod", period)}
+							subscriptionPlan={subscriptionPlan}
+							onPeriodChange={(period) => setValue("subscriptionPlan", period)}
 						/>
 					</div>
 
@@ -286,7 +287,7 @@ export const SubscribeFormContent = () => {
 						<div className="inline-flex items-end self-stretch justify-between">
 							<SubscribePrice
 								isSubscribed={isMembership}
-								recurringPeriod={recurringPeriod}
+								subscriptionPlan={subscriptionPlan}
 							/>
 							{!isMembership && (
 								<div className="h-6 px-3.5 py-[3px] bg-white rounded-[30px] flex justify-center items-center gap-2.5">
@@ -347,9 +348,9 @@ export const SubscribeFormContent = () => {
 						isOpen={isPaymentChoiceModalOpen}
 						onClose={handleClosePaymentChoiceModal}
 						onSelectCard={handleSelectCard}
-						onSelectToss={handleSelectToss}
+						// onSelectToss={handleSelectToss}
 						onSelectPaypal={handleSelectPaypal}
-						recurringPeriod={recurringPeriod}
+						subscriptionPlan={subscriptionPlan}
 						promotionCode={promotionCode}
 						isInitiatingCard={isInitiatingCard}
 						isInitiatingToss={isInitiatingToss}

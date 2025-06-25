@@ -10,6 +10,7 @@ import {
 	RawBody,
 	BadRequestException,
 	Logger,
+	HttpCode,
 } from "@nestjs/common";
 import { PaymentService } from "./payment.service";
 import { PaymentOrderCreateRequestDto } from "./dto/request/payment.order.create.request.dto";
@@ -28,14 +29,17 @@ import { Webhook } from "@portone/server-sdk";
 import { PaymentPaginationRequestDto } from "./dto/request/payment.pagination.request.dto";
 import { PaymentOrderCreateResponseDto } from "./dto/response/payment.order-create.response.dto";
 import { isBillingKeyWebhook, isPaymentWebhook, PortOneWebhook } from "./payment.utils";
-import { ConfigService } from "@nestjs/config";
+import { SubscribeService } from "../subscribe/subscribe.service";
 
 @ApiTags("payment")
 @Controller("payment")
 export class PaymentController {
 	private readonly logger = new Logger(PaymentController.name);
 
-	constructor(private readonly paymentService: PaymentService) {}
+	constructor(
+		private readonly paymentService: PaymentService,
+		private readonly subscribeService: SubscribeService,
+	) {}
 
 	/**
 	 * 결제 주문을 생성합니다.
@@ -139,31 +143,33 @@ export class PaymentController {
 		status: 400,
 		description: "웹훅 검증에 실패했습니다.",
 	})
-	async handleWebhook(@RawBody() body: string, @Headers() headers: any) {
+	@HttpCode(200) // PortOne에서 POST 인데도 200을 요구함...
+	async handleWebhook(@RawBody() body: Buffer | undefined, @Headers() headers: any) {
 		try {
 			// 웹훅 시그니처 검증
 			let webhook: PortOneWebhook;
 			try {
-				const verifiedWebhook = await this.paymentService.verifyWebhook(body, headers);
+				const bodyString = body ? body.toString() : "";
+				// this.logger.log({ body, bodyString, headers }, "웹훅 수신");
+				const verifiedWebhook = await this.paymentService.verifyWebhook(bodyString, headers);
 				webhook = verifiedWebhook as PortOneWebhook;
 			} catch (error) {
-				this.logger.error({ error }, "웹훅 검증 실패");
+				this.logger.error({ error }, "Failed to verify webhook");
 				throw new BadRequestException(WEBHOOK_VERIFICATION_ERROR);
 			}
 
 			this.logger.log(
 				{
-					webhookType: webhook.type,
-					timestamp: webhook.timestamp,
-					storeId: webhook.data?.storeId,
+					webhook,
 				},
-				"웹훅 수신",
+				"Webhook received",
 			);
 
 			// 결제 관련 웹훅 처리
 			if (isPaymentWebhook(webhook)) {
 				const { paymentId } = webhook.data;
 				await this.paymentService.syncPaymentFromWebhook(paymentId, webhook);
+				await this.subscribeService.handlePaymentWebhook(webhook);
 
 				this.logger.log(
 					{
@@ -171,22 +177,12 @@ export class PaymentController {
 						paymentId,
 						timestamp: webhook.timestamp,
 					},
-					"결제 웹훅 처리 완료",
+					"Payment webhook processed",
 				);
 			}
 			// 빌링키 관련 웹훅 처리
 			else if (isBillingKeyWebhook(webhook)) {
-				const { billingKey } = webhook.data;
-
-				// TODO: 빌링키 웹훅 처리 - 구독 관련 로직 추가
-				this.logger.log(
-					{
-						webhookType: webhook.type,
-						billingKey,
-						timestamp: webhook.timestamp,
-					},
-					"빌링키 웹훅 수신 (처리 로직 없음)",
-				);
+				await this.subscribeService.handleBillingKeyWebhook(webhook);
 			}
 			// 처리하지 않는 웹훅 타입
 			else {
@@ -195,7 +191,7 @@ export class PaymentController {
 						webhookType: (webhook as PortOneWebhook).type,
 						timestamp: (webhook as PortOneWebhook).timestamp,
 					},
-					"처리하지 않는 웹훅 타입",
+					"Unhandled webhook type",
 				);
 			}
 
@@ -206,7 +202,7 @@ export class PaymentController {
 					error: error.message,
 					stack: error.stack,
 				},
-				"웹훅 처리 실패",
+				"Webhook processing failed",
 			);
 
 			if (error instanceof BadRequestException) {

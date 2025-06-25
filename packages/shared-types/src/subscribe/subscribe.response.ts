@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { subscriptionPlanSchema } from "./subscribe.request";
 
 export const SubscribeResponseSchema = z.object({
 	id: z.number().describe("구독 ID").default(1),
@@ -30,3 +31,14 @@ export const SubscribeCreateResponseSchema = z.object({
 });
 
 export type SubscribeCreateResponse = z.infer<typeof SubscribeCreateResponseSchema>;
+
+export const SubscribePlansResponseSchema = z.record(
+	subscriptionPlanSchema,
+	z.object({
+		price: z.number().describe("가격"),
+		discountPrice: z.number().nullable().describe("할인 가격"),
+		discountRate: z.number().nullable().describe("할인율"),
+	}),
+);
+
+export type SubscribePlansResponse = z.infer<typeof SubscribePlansResponseSchema>;
