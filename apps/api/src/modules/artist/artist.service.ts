@@ -197,28 +197,17 @@ export class ArtistService {
 						},
 					},
 				})
-				.then((data) => this.prisma.serializeBigInt(data) as Artist);
+				.then((data) => this.prisma.serializeBigInt(data));
 
 			if (!artist) {
 				throw new NotFoundException("Artist not found");
 			}
 
 			// 팔로워 수 조회
-			const followerCount = await this.prisma.userArtistFollow.count({
-				where: {
-					artistId: Number(artist.id),
-					deletedAt: null,
-				},
-			});
+			const followerCount = await this.getFollowerCount(artist.id);
 
 			// 트랙 수 조회
-			const trackCount = await this.prisma.product.count({
-				where: {
-					sellerId: Number(artist.id),
-					deletedAt: null,
-					isPublic: 1,
-				},
-			});
+			const trackCount = await this.getTrackCount(artist.id);
 
 			const profileImageFile = await this.fileService.findFilesByTargetId({
 				targetId: Number(artist.id),
@@ -501,5 +490,24 @@ export class ArtistService {
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
+	}
+
+	async getFollowerCount(artistId: number): Promise<number> {
+		return await this.prisma.userArtistFollow.count({
+			where: {
+				artistId: Number(artistId),
+				deletedAt: null,
+			},
+		});
+	}
+
+	async getTrackCount(artistId: number): Promise<number> {
+		return await this.prisma.product.count({
+			where: {
+				sellerId: Number(artistId),
+				deletedAt: null,
+				isPublic: 1,
+			},
+		});
 	}
 }

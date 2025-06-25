@@ -87,10 +87,20 @@ export class ArtistController {
 	async findMe(@Req() req: AuthenticatedRequest): Promise<IResponse<ArtistDetailResponseDto>> {
 		const artist = await this.artistService.findMe(req.user.id);
 
+		// 팔로워 수 조회
+		const followerCount = await this.artistService.getFollowerCount(artist.id);
+
+		// 트랙 수 조회
+		const trackCount = await this.artistService.getTrackCount(artist.id);
+
 		return {
 			statusCode: 200,
 			message: artistMessage.findMe.success,
-			data: artist,
+			data: {
+				...artist,
+				followerCount,
+				trackCount,
+			} as ArtistDetailResponseDto,
 		};
 	}
 
