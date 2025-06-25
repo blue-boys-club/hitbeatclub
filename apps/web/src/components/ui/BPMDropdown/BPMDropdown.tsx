@@ -130,7 +130,7 @@ export const BPMDropdown = ({
 				setInternalMode("range");
 			}
 		}
-	}, [minBpm, maxBpm, internalMode]);
+	}, [minBpm, maxBpm]);
 
 	// 내부적으로 exact/range 모드 결정 - 내부 상태 우선 사용
 	const isExactMode = internalMode === "exact";

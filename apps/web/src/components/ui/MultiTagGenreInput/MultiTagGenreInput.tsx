@@ -99,17 +99,54 @@ const MultiTagGenreInput = ({
 		}
 	}, [initialItems]);
 
+	// 포털 컨테이너 찾기
+	const getPortalContainer = useCallback(() => {
+		if (!containerRef.current) return document.body;
+
+		// Dialog/Modal 컨테이너 찾기
+		let parent = containerRef.current.parentElement;
+		while (parent) {
+			// Radix Dialog Content 또는 일반적인 모달 컨테이너를 찾기
+			if (
+				parent.hasAttribute("data-radix-dialog-content") ||
+				parent.getAttribute("role") === "dialog" ||
+				parent.classList.contains("popup-content") ||
+				parent.classList.contains("modal-content")
+			) {
+				return parent;
+			}
+			parent = parent.parentElement;
+		}
+		return document.body;
+	}, []);
+
 	// 드롭다운 위치 계산
 	const updateDropdownPosition = useCallback(() => {
-		if (containerRef.current) {
-			const rect = containerRef.current.getBoundingClientRect();
+		if (!containerRef.current) return;
+
+		const container = containerRef.current;
+		const containerRect = container.getBoundingClientRect();
+		const portalContainer = getPortalContainer();
+
+		if (portalContainer === document.body) {
+			// document.body에 렌더링되는 경우 (기존 로직)
 			setDropdownPosition({
-				top: rect.bottom + window.scrollY,
-				left: rect.left + window.scrollX,
-				width: rect.width,
+				top: containerRect.bottom + window.scrollY,
+				left: containerRect.left + window.scrollX,
+				width: containerRect.width,
+			});
+		} else {
+			// Dialog/Popup 내부에 렌더링되는 경우
+			const portalRect = portalContainer.getBoundingClientRect();
+
+			setDropdownPosition({
+				// Portal 컨테이너를 기준으로 상대적 위치 계산
+				top: containerRect.bottom - portalRect.top,
+				left: containerRect.left - portalRect.left,
+				width: containerRect.width,
 			});
 		}
-	}, []);
+	}, [getPortalContainer]);
 
 	// 스크롤 및 리사이즈 이벤트 처리
 	useEffect(() => {
@@ -328,17 +365,19 @@ const MultiTagGenreInput = ({
 	const dropdownContent = (
 		<div
 			ref={dropdownRef}
-			className="border rounded-lg bg-white shadow-lg z-[9999] pointer-events-auto"
+			className="border rounded-lg bg-white shadow-lg z-[9999] pointer-events-auto flex flex-col"
 			style={{
 				position: "absolute",
 				top: dropdownPosition.top,
 				left: dropdownPosition.left,
 				width: dropdownPosition.width,
 				minWidth: "200px",
+				maxHeight: "280px",
 			}}
 			onClick={(e) => e.stopPropagation()}
 		>
-			<div className="flex flex-col py-2 px-3 max-h-[200px] overflow-y-auto">
+			{/* 스크롤 가능한 리스트 영역 */}
+			<div className="flex-1 overflow-y-auto max-h-[200px] py-2 px-3">
 				{(useSearchTagTrigger
 					? suggestedItems.filter((suggestion) => suggestion.value.toLowerCase().includes(inputValue.toLowerCase()))
 					: suggestedItems
@@ -357,7 +396,8 @@ const MultiTagGenreInput = ({
 					);
 				})}
 			</div>
-			<div className="flex justify-between p-4 border-t border-hbc-gray-300">
+			{/* 고정된 버튼 영역 */}
+			<div className="flex justify-between p-4 border-t border-hbc-gray-300 ">
 				<button
 					type="button"
 					className="text-hbc-gray-300 text-sm font-semibold cursor-pointer hover:text-hbc-gray-500 transition-colors"
@@ -411,7 +451,7 @@ const MultiTagGenreInput = ({
 				</div>
 
 				{/* Portal로 드롭다운 렌더링 */}
-				{isClient && isFocused && typeof window !== "undefined" && createPortal(dropdownContent, document.body)}
+				{isClient && isFocused && typeof window !== "undefined" && createPortal(dropdownContent, getPortalContainer())}
 			</>
 		);
 	}
@@ -447,7 +487,7 @@ const MultiTagGenreInput = ({
 			</div>
 
 			{/* Portal로 드롭다운 렌더링 */}
-			{isClient && isFocused && typeof window !== "undefined" && createPortal(dropdownContent, document.body)}
+			{isClient && isFocused && typeof window !== "undefined" && createPortal(dropdownContent, getPortalContainer())}
 		</>
 	);
 };
