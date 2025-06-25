@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
 	IAwsS3PutItem,
@@ -62,6 +62,7 @@ import { AwsCloudfrontService } from "~/common/aws/services/aws.cloudfront.servi
 
 @Injectable()
 export class AwsS3Service implements IAwsS3Service {
+	private readonly logger = new Logger(AwsS3Service.name);
 	private readonly s3Client: S3Client;
 	private readonly bucket: string;
 	private readonly baseUrl: string;
@@ -82,6 +83,11 @@ export class AwsS3Service implements IAwsS3Service {
 			region,
 			...(accessKeyId && secretAccessKey ? { credentials: { accessKeyId, secretAccessKey } } : {}),
 		});
+
+		this.logger.log(
+			{ accessKeyId, secretAccessKey, region, clientCredentials: this.s3Client.config.credentials },
+			"AWS S3 Credentials",
+		);
 
 		this.bucket = this.configService.get<string>("aws.s3.bucket");
 		this.baseUrl = this.configService.get<string>("aws.s3.baseUrl");

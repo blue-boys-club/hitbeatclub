@@ -38,16 +38,18 @@ import { RouterModule } from "~/router/router.module";
 				redact: ["req.headers.authorization"],
 				autoLogging: {
 					ignore: (req) => {
+						// DEBUG
 						if (process.env.APP_DEBUG === "true") {
 							return false;
 						}
 
-						if (
-							process.env.NODE_ENV === "development" &&
-							req.url &&
-							// but not AWS (ECS)
-							!(process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.AWS_ECS_CONTAINER_METADATA_URI)
-						) {
+						// Deployed whatever reason
+						if (process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.AWS_ECS_CONTAINER_METADATA_URI) {
+							return false;
+						}
+
+						// Local development
+						if (process.env.NODE_ENV === "development" && req.url) {
 							return true;
 						}
 						return false;
