@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useState, useCallback, useMemo } from "react";
+import { memo, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlbumAvatar, Dropdown, Input } from "@/components/ui";
@@ -452,6 +452,16 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 		return profileImageUrl;
 	}, [profileImageUrl]);
 
+	const scrollRef = useRef<HTMLDivElement>(null);
+
+	const scrollToBottom = () => {
+		if (scrollRef.current) {
+			setTimeout(() => {
+				scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight + 200, behavior: "smooth" });
+			}, 0);
+		}
+	};
+
 	return (
 		<>
 			<form
@@ -484,7 +494,10 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 
 						<div className="flex flex-col items-center gap-6">
 							<ScrollArea.Root className="h-[calc(100vh-292px)]">
-								<ScrollArea.Viewport className="h-full w-full">
+								<ScrollArea.Viewport
+									className="h-full w-full"
+									ref={scrollRef}
+								>
 									<div className="flex flex-col gap-6 pr-4">
 										<div className="flex flex-col gap-2">
 											<label
@@ -664,6 +677,8 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 																field.onChange(value);
 																onChangeField("country", value);
 															}}
+															onClick={scrollToBottom}
+															optionsClassName="max-h-[200px] overflow-y-auto"
 														/>
 														{errors.country && (
 															<span className="text-red-500 text-sm flex justify-end">국가를 선택해주세요</span>
@@ -697,6 +712,8 @@ export const ArtistStudioAccountSettingProfileForm = memo(() => {
 																field.onChange(value);
 																onChangeField("city", value);
 															}}
+															onClick={scrollToBottom}
+															optionsClassName="max-h-[200px] overflow-y-auto"
 														/>
 														{errors.city && (
 															<span className="text-red-500 text-sm flex justify-end">도시를 선택해주세요</span>
