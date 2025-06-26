@@ -9,7 +9,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 	return (
 		<div className="h-screen overflow-hidden">
 			{/* Fixed Sidebar - 100vh - footer size */}
-			<div className={cn("fixed left-0 top-0 h-[calc(100vh-72px)]")}>
+			<div className={cn("fixed left-0 top-0 h-[calc(100vh)]")}>
 				<ArtistSidebar />
 			</div>
 

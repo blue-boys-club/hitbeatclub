@@ -20,6 +20,7 @@ import { cn } from "@/common/utils/tailwind";
 import ArtistStudioTrackModal from "@/features/artist/components/modal/ArtistStudioTrackModal";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
 import { PRODUCT_FILE_TYPE } from "@/apis/product/product.type";
+import * as ScrollArea from "@radix-ui/react-scroll-area";
 
 export const ArtistSidebar = () => {
 	const [isProfileWarningOpen, setIsProfileWarningOpen] = useState(false);
@@ -236,70 +237,80 @@ export const ArtistSidebar = () => {
 						height={67}
 					/>
 				</div>
+				<ScrollArea.Root className="flex-1 overflow-hidden">
+					<ScrollArea.Viewport className="h-full w-full pb-16px">
+						<aside className="w-[300px] border-r-2 bg-hbc-white border-hbc-red">
+							<div className="flex items-center justify-start px-4px pr-5px pl-9px ">
+								{/* 이거 왜 피그마에 SVG로 있나요... */}
+								<ArtistStudioTitle />
+							</div>
 
-				<aside className="w-[300px] border-r-2 bg-hbc-white border-hbc-red pb-16px">
-					<div className="flex items-center justify-start px-4px pr-5px pl-9px ">
-						{/* 이거 왜 피그마에 SVG로 있나요... */}
-						<ArtistStudioTitle />
-					</div>
+							<hr className="border-hbc-red border-3 my-10px mr-9px ml-4px" />
 
-					<hr className="border-hbc-red border-3 my-10px mr-9px ml-4px" />
-
-					<section className="flex flex-col items-center justify-center gap-20px">
-						<ArtistAvatar
-							src={profileUrl}
-							alt="아티스트 프로필 이미지"
-							className={cn("bg-black my-8px", profileUrl === UserProfileImage && "bg-white")}
-							size="small"
-						/>
-
-						<h2 className="font-bold text-center text-black font-suisse text-38px leading-40px tracking-038px h-40px">
-							{artistMe?.stageName}
-						</h2>
-
-						<ArtistStatRow
-							artistStats={[
-								{ label: "Follower", value: artistMe?.followerCount || 0 },
-								{ label: "Tracks", value: artistMe?.trackCount || 0 },
-								{ label: "Visitors", value: artistMe?.viewCount || 0 },
-							]}
-						/>
-					</section>
-
-					<section className="flex flex-col mt-48px pl-20px pr-11px gap-15px ">
-						<div
-							className={cn(
-								"flex flex-col items-center justify-center gap-5 px-8px py-40px border border-dotted border-[#FF1900] cursor-pointer transition-all duration-200",
-								isDragOver && "bg-[#FF1900] bg-opacity-10 border-2 border-[#FF1900]",
-							)}
-							role="button"
-							tabIndex={0}
-							onClick={onUpload}
-							onDragOver={handleDragOver}
-							onDragLeave={handleDragLeave}
-							onDrop={handleDrop}
-						>
-							<Upload className="transition-opacity hover:opacity-80" />
-							<span className="text-[#FF1900] text-[13px] font-extrabold">
-								{isDragOver ? "파일을 여기에 드롭하세요!" : "Drop Your Fire🔥"}
-							</span>
-						</div>
-
-						<nav className="flex flex-col w-full gap-10px pt-11px pb-6px border-y-6px border-hbc-red">
-							{navItems.map(({ href, label, Icon, isLocked, isActive }) => (
-								<NavLink
-									key={label}
-									href={href}
-									label={label}
-									Icon={Icon}
-									isLocked={isLocked}
-									isActive={isActive}
-									onClick={isLocked ? onLockedNavClick : undefined}
+							<section className="flex flex-col items-center justify-center gap-20px">
+								<ArtistAvatar
+									src={profileUrl}
+									alt="아티스트 프로필 이미지"
+									className={cn("bg-black my-8px", profileUrl === UserProfileImage && "bg-white")}
+									size="small"
 								/>
-							))}
-						</nav>
-					</section>
-				</aside>
+
+								<h2 className="font-bold text-center text-black font-suisse text-38px leading-40px tracking-038px h-40px">
+									{artistMe?.stageName}
+								</h2>
+
+								<ArtistStatRow
+									artistStats={[
+										{ label: "Follower", value: artistMe?.followerCount || 0 },
+										{ label: "Tracks", value: artistMe?.trackCount || 0 },
+										{ label: "Visitors", value: artistMe?.viewCount || 0 },
+									]}
+								/>
+							</section>
+
+							<section className="flex flex-col mt-48px pl-20px pr-11px gap-15px ">
+								<div
+									className={cn(
+										"flex flex-col items-center justify-center gap-5 px-8px py-40px border border-dotted border-[#FF1900] cursor-pointer transition-all duration-200",
+										isDragOver && "bg-[#FF1900] bg-opacity-10 border-2 border-[#FF1900]",
+									)}
+									role="button"
+									tabIndex={0}
+									onClick={onUpload}
+									onDragOver={handleDragOver}
+									onDragLeave={handleDragLeave}
+									onDrop={handleDrop}
+								>
+									<Upload className="transition-opacity hover:opacity-80" />
+									<span className="text-[#FF1900] text-[13px] font-extrabold">
+										{isDragOver ? "파일을 여기에 드롭하세요!" : "Drop Your Fire🔥"}
+									</span>
+								</div>
+
+								<nav className="flex flex-col w-full gap-10px pt-11px pb-6px border-y-6px border-hbc-red">
+									{navItems.map(({ href, label, Icon, isLocked, isActive }) => (
+										<NavLink
+											key={label}
+											href={href}
+											label={label}
+											Icon={Icon}
+											isLocked={isLocked}
+											isActive={isActive}
+											onClick={isLocked ? onLockedNavClick : undefined}
+										/>
+									))}
+								</nav>
+							</section>
+						</aside>
+						<ScrollArea.Scrollbar
+							className="flex select-none touch-none p-0.5 bg-gray-100 transition-colors duration-150 ease-out hover:bg-gray-200 data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2.5"
+							orientation="vertical"
+						>
+							<ScrollArea.Thumb className="flex-1 bg-gray-300 rounded-full relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]" />
+						</ScrollArea.Scrollbar>
+						<ScrollArea.Corner className="bg-gray-200" />
+					</ScrollArea.Viewport>
+				</ScrollArea.Root>
 			</div>
 
 			{/* 업로드 모달 */}
