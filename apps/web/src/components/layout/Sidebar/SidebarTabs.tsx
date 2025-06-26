@@ -6,7 +6,8 @@ import { OpenInNew } from "@/assets/svgs";
 import { LikeSection } from "./Like";
 import { FollowSection } from "./Follow";
 import { useRouter } from "next/navigation";
-import { DropContentWrapper } from "@/features/dnd/components/DropContentWrapper";
+import { useQuery } from "@tanstack/react-query";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 
 interface TabTriggerProps {
 	onClick: () => void;
@@ -55,6 +56,8 @@ export const SidebarTabs = memo(() => {
 	const router = useRouter();
 	const [currentTab, setCurrentTab] = useState<Tab>("like");
 
+	const { data: userMe } = useQuery(getUserMeQueryOption());
+
 	return (
 		<Tabs.Root
 			className="flex flex-col flex-1 h-full overflow-y-hidden"
@@ -70,6 +73,10 @@ export const SidebarTabs = memo(() => {
 								if (currentTab === "like") {
 									/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
 									/* @ts-ignore TODO: Implement navigation to /like */
+									if (!userMe) {
+										router.push("/auth/login");
+										return;
+									}
 									router.push("/likes");
 								}
 							}}
@@ -82,6 +89,10 @@ export const SidebarTabs = memo(() => {
 								if (currentTab === "follow") {
 									/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
 									/* @ts-ignore TODO: Implement navigation to /follow */
+									if (!userMe) {
+										router.push("/auth/login");
+										return;
+									}
 									router.push("/follow-artists");
 								}
 							}}
