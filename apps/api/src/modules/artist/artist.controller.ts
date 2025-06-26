@@ -176,15 +176,18 @@ export class ArtistController {
 		@Body() updateArtistDto: ArtistUpdateDto,
 	): Promise<DatabaseIdResponseDto> {
 		const profileImageFileId = updateArtistDto?.profileImageFileId || null;
+		const hasProfileImageFileId = Object.prototype.hasOwnProperty.call(updateArtistDto, "profileImageFileId");
 		delete updateArtistDto?.profileImageFileId;
 
 		const artist = await this.artistService.update(id, updateArtistDto);
 
-		await this.artistService.uploadArtistProfile({
-			uploaderId: req.user.id,
-			artistId: artist.id,
-			profileImageFileId,
-		});
+		if (hasProfileImageFileId) {
+			await this.artistService.uploadArtistProfile({
+				uploaderId: req.user.id,
+				artistId: artist.id,
+				profileImageFileId,
+			});
+		}
 
 		return {
 			statusCode: 200,

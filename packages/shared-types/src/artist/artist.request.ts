@@ -11,7 +11,7 @@ export const ArtistCreateSchema = z.object({
 	tiktokAccount: z.string().max(30).describe("틱톡 계정").default("djcool").optional(),
 	soundcloudAccount: z.string().max(30).describe("사운드클라우드 계정").default("djcool").optional(),
 	etcAccounts: z
-		.array(z.string().url())
+		.array(z.string())
 		.nullable()
 		.describe("기타 계정들")
 		.default(["https://twitter.com/djcool"])
