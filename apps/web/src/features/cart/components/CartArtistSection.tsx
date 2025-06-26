@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { LicenseChangeModal } from "./modal/LicenseChangeModal";
 import UserProfileImage from "@/assets/images/user-profile.png";
+import Link from "next/link";
 
 // Combined type for cart item with product details
 export type CartItemWithProductDetails = {
@@ -28,7 +29,7 @@ export type CartItemWithProductDetails = {
 
 // Type for the artist section props
 interface CartArtistSectionProps {
-	artistId: number;
+	artistSlug: string;
 	artistImageUrl?: string;
 	artistName: string;
 	items: CartItemWithProductDetails[];
@@ -37,7 +38,7 @@ interface CartArtistSectionProps {
 }
 
 export const CartArtistSection = ({
-	artistId,
+	artistSlug,
 	artistImageUrl,
 	artistName,
 	items,
@@ -81,17 +82,22 @@ export const CartArtistSection = ({
 			<div className="flex flex-col items-start gap-8px self-stretch rounded-[10px] p-3 outline-1 outline-hbc-black">
 				<div className="flex items-center self-stretch justify-between">
 					<div className="flex items-center gap-17px">
-						<Image
-							className="h-51px w-51px rounded-full outline-2 outline-offset-[-1px] outline-black"
-							src={avatarImageUrl}
-							alt={artistName}
-							width={51 * 4}
-							height={51 * 4}
-						/>
+						<Link href={`/artists/${artistSlug}`}>
+							<Image
+								className="h-51px w-51px rounded-full outline-2 outline-offset-[-1px] outline-black"
+								src={avatarImageUrl}
+								alt={artistName}
+								width={51 * 4}
+								height={51 * 4}
+							/>
+						</Link>
 						<div className="flex items-center gap-5px">
-							<div className="text-base font-bold text-black font-suisse">
+							<Link
+								href={`/artists/${artistSlug}`}
+								className="text-base font-bold text-black font-suisse"
+							>
 								<span>{artistName}</span>
-							</div>
+							</Link>
 							<SmallAuthBadge />
 						</div>
 					</div>

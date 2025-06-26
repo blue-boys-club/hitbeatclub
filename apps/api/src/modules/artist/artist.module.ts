@@ -8,7 +8,7 @@ import { ProductModule } from "../product/product.module";
 import { ArtistPublicController } from "./artist.public.controller";
 
 @Module({
-	imports: [PrismaModule, FileModule, SettlementModule, forwardRef(() => ProductModule)],
+	imports: [PrismaModule, FileModule, forwardRef(() => SettlementModule), forwardRef(() => ProductModule)],
 	controllers: [ArtistController, ArtistPublicController],
 	providers: [ArtistService],
 	exports: [ArtistService],

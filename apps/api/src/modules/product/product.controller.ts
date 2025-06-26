@@ -511,7 +511,7 @@ export class ProductController {
 				throw new ForbiddenException(PRODUCT_FILE_FORBIDDEN_ERROR);
 			}
 
-			const orderedItems = await this.paymentService.getOrderedItemsByProductId(userId, id);
+			const orderedItems = await this.paymentService.getOrderedItemsByProductId(userId, id, true);
 			if (orderedItems.length === 0) {
 				throw new ForbiddenException(PRODUCT_FILE_FORBIDDEN_ERROR);
 			}
@@ -525,6 +525,22 @@ export class ProductController {
 			statusCode: 200,
 			message: productMessage.find.success,
 			data: { id: Number(file.id), url },
+		};
+	}
+
+	@Get("ids")
+	@ApiOperation({ summary: "상품 목록 조회" })
+	@AuthenticationDoc()
+	@DocResponse<ProductListResponseDto>(productMessage.find.success, {
+		dto: ProductListResponseDto,
+	})
+	async findItems(@Req() req: AuthenticatedRequest, @Query() productIds: number[]) {
+		const products = await this.productService.findItemByProductIds(productIds);
+
+		return {
+			statusCode: 200,
+			message: productMessage.find.success,
+			data: products,
 		};
 	}
 }

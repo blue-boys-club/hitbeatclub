@@ -7,7 +7,11 @@ import { NoticeListQueryRequest } from "@hitbeatclub/shared-types/notice";
 import { ProductSearchQuery } from "./search/search.type";
 
 type QueryKey = Array<
-	string | number | boolean | Record<string, string | number | boolean | Array<number | string | boolean>>
+	| string
+	| number
+	| boolean
+	| Array<number | string | boolean>
+	| Record<string, string | number | boolean | Array<number | string | boolean>>
 >;
 
 const QUERY_KEYS = {
@@ -53,6 +57,7 @@ const QUERY_KEYS = {
 		searchInfo: ["products", "searchInfo"],
 		dashboard: ["products", "dashboard"],
 		fileDownloadLink: (productId: number, type: string): QueryKey => ["products", productId, "fileDownloadLink", type],
+		ids: (productIds: number[]): QueryKey => ["products", "ids", productIds],
 	},
 	artist: {
 		_key: ["artist"],
@@ -134,7 +139,7 @@ const QUERY_KEYS = {
 		_key: ["inquiry"],
 		list: ["inquiry", "list"],
 		detail: (id: number): QueryKey => ["inquiry", id],
-  },
+	},
 	subscribe: {
 		plans: ["subscribe", "plans"],
 	},

@@ -1,7 +1,7 @@
 "use client";
 
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { getSearchInfiniteQueryOption } from "@/apis/search/query/product.query-option";
+import { getSearchInfiniteQueryOption } from "@/apis/search/query/search.query-option";
 import { useSearchParametersStatesWithKeywordDebounced } from "./useSearchParameters";
 import type { ProductSearchQuery } from "@/apis/search/search.type";
 

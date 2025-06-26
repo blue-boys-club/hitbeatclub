@@ -1,14 +1,15 @@
 import { memo, useMemo, useState, type ReactNode } from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { useQuery } from "@tanstack/react-query";
-import { getUserMeQueryOption, useCartListQueryOptions } from "@/apis/user/query/user.query-option";
-import { useCreateCartItemMutation, useDeleteCartItemMutation } from "@/apis/user/mutations";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 import { useToast } from "@/hooks/use-toast";
 import { PurchaseButton } from "@/components/ui";
 import { ProductDetailLicenseModal } from "./modal/ProductDetailLicenseModal";
 import { LICENSE_MAP_TEMPLATE } from "@/apis/product/product.dummy";
 import { LicenseType } from "../product.constants";
+import { useCartStore } from "@/stores/cart";
+import { useShallow } from "zustand/react/shallow";
 
 interface PurchaseWithCartTriggerProps {
 	/**
@@ -73,20 +74,13 @@ export const PurchaseWithCartTrigger = memo(
 			...getProductQueryOption(productId),
 		});
 
-		// 장바구니 데이터 가져오기
-		const { data: cartItems } = useQuery({
-			...useCartListQueryOptions(user?.id ?? 0),
-			enabled: !!user?.id,
-		});
-
-		// 장바구니 mutations
-		// const createCartItemMutation = useCreateCartItemMutation(user?.id ?? 0);
-		// const deleteCartItemMutation = useDeleteCartItemMutation(user?.id ?? 0);
+		// Local cart store 데이터 가져오기
+		const cartItems = useCartStore(useShallow((state) => state.items));
 
 		// 현재 상품이 장바구니에 있는지 확인
 		const cartItem = useMemo(() => {
 			if (!cartItems || !product) return null;
-			return cartItems.find((item) => item.product?.id === product.id);
+			return cartItems.find((item) => item.productId === product.id);
 		}, [cartItems, product]);
 
 		const isOnCart = useMemo(() => {
@@ -110,15 +104,8 @@ export const PurchaseWithCartTrigger = memo(
 			return Math.min(...licenses.map((license) => license.price));
 		}, [licenses]);
 
-		// 클릭 핸들러
+		// 클릭 핸들러 (비회원도 가능)
 		const handleClick = () => {
-			if (!user) {
-				toast({
-					description: "로그인 후 이용해주세요.",
-				});
-				return;
-			}
-
 			if (!product) {
 				toast({
 					description: "상품 정보를 불러오는 중입니다.",

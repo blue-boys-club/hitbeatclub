@@ -133,3 +133,10 @@ export const getProductFileDownloadLink = async (productId: number, type: PRODUC
 	});
 	return response.data;
 };
+
+export const getProductsByIds = async (productIds: number[]) => {
+	const response = await client.get<CommonResponse<Array<ProductDetailResponse>>>(`/products/ids`, {
+		params: { ids: productIds },
+	});
+	return response.data;
+};

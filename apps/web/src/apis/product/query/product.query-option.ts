@@ -4,6 +4,7 @@ import {
 	getProductListForDashboard,
 	getProductSearchInfo,
 	getProductFileDownloadLink,
+	getProductsByIds,
 } from "@/apis/product/product.api";
 import { QUERY_KEYS } from "@/apis/query-keys";
 import { ProductListQueryRequest } from "@hitbeatclub/shared-types/product";
@@ -75,6 +76,14 @@ export const getProductFileDownloadLinkQueryOption = (productId: number, type: P
 	return queryOptions({
 		queryKey: QUERY_KEYS.products.fileDownloadLink(productId, type),
 		queryFn: () => getProductFileDownloadLink(productId, type),
+		select: (response) => response.data,
+	});
+};
+
+export const getProductsByIdsQueryOption = (productIds: number[]) => {
+	return queryOptions({
+		queryKey: QUERY_KEYS.products.ids(productIds),
+		queryFn: () => getProductsByIds(productIds),
 		select: (response) => response.data,
 	});
 };

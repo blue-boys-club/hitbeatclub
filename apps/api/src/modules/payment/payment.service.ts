@@ -36,6 +36,7 @@ import { ConfigService } from "@nestjs/config";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore -- vscode doesn't recognize this is a dual package even though it is and can be compiled
 import { PortOneClient, Payment, Webhook } from "@portone/server-sdk";
+import { ProductService } from "../product/product.service";
 
 // CartService.findAll()이 실제로 반환하는 타입 정의
 interface CartItemWithProduct {
@@ -91,6 +92,7 @@ export class PaymentService {
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly cartService: CartService,
+		private readonly productService: ProductService,
 		private readonly fileService: FileService,
 		private readonly configService: ConfigService,
 	) {
@@ -108,21 +110,82 @@ export class PaymentService {
 	 */
 	async createPaymentOrder(userId: number, dto: PaymentOrderCreateRequestDto): Promise<PaymentOrderCreateResponseDto> {
 		try {
-			// 사용자의 카트 아이템들 조회
-			const cartItems = (await this.cartService.findAll(userId)) as unknown as CartItemWithProduct[];
-			this.logger.log({ cartItems, userId }, "카트 아이템 조회");
+			// 주문에 포함될 아이템 목록
+			let selectedItems: Array<{
+				product: { id: number; productName: string };
+				selectedLicense: { id: number; type: string; price: number };
+			}> = [];
 
-			if (!cartItems || cartItems.length === 0) {
-				throw new BadRequestException(CART_EMPTY_ERROR);
-			}
+			// dto.type 에 따라 분기 처리
+			if (dto.type === "CART") {
+				// 사용자의 카트 아이템들 조회
+				const cartItems = (await this.cartService.findAll(userId)) as unknown as CartItemWithProduct[];
+				this.logger.log({ cartItems, userId }, "카트 아이템 조회");
 
-			// 선택된 아이템들만 필터링 (dto.cartItemIds가 제공된 경우)
-			const selectedItems = dto.cartItemIds
-				? cartItems.filter((item) => dto.cartItemIds.includes(Number(item.id)))
-				: cartItems;
+				if (!cartItems || cartItems.length === 0) {
+					throw new BadRequestException(CART_EMPTY_ERROR);
+				}
 
-			if (selectedItems.length === 0) {
-				throw new BadRequestException(CART_EMPTY_ERROR);
+				// 선택된 아이템들만 필터링 (dto.cartItemIds가 제공된 경우)
+				const cartSelected =
+					dto.cartItemIds && dto.cartItemIds.length > 0
+						? cartItems.filter((item) => dto.cartItemIds!.includes(Number(item.id)))
+						: cartItems;
+
+				if (cartSelected.length === 0) {
+					throw new BadRequestException(CART_EMPTY_ERROR);
+				}
+
+				// CartItemWithProduct -> 공통 포맷으로 변환
+				selectedItems = cartSelected.map((item) => ({
+					product: {
+						id: Number(item.product.id),
+						productName: item.product.productName,
+					},
+					selectedLicense: {
+						id: Number(item.selectedLicense.id),
+						type: item.selectedLicense.type,
+						price: item.selectedLicense.price,
+					},
+				}));
+			} else if (dto.type === "PRODUCT") {
+				// 비회원 또는 직접 상품 구매 케이스
+				selectedItems = await Promise.all(
+					dto.products.map(async ({ productId, licenseId }) => {
+						// 상품 정보 조회
+						const product = await this.productService.findOne(productId);
+
+						if (!product) {
+							throw new NotFoundException({
+								code: "PRODUCT_NOT_FOUND",
+								message: `상품을 찾을 수 없습니다. (productId: ${productId})`,
+							});
+						}
+
+						const licenseInfo = product.licenseInfo?.find((l) => Number(l.id) === Number(licenseId));
+						if (!licenseInfo) {
+							throw new BadRequestException({
+								code: "LICENSE_NOT_FOUND",
+								message: `해당 상품의 라이센스를 찾을 수 없습니다. (productId: ${productId}, licenseId: ${licenseId})`,
+							});
+						}
+
+						return {
+							product: {
+								id: product.id,
+								productName: product.productName,
+							},
+							selectedLicense: {
+								id: licenseInfo.id,
+								type: licenseInfo.type ?? licenseInfo.label,
+								price: licenseInfo.price,
+							},
+						};
+					}),
+				);
+			} else {
+				// 위의 두 가지 타입 외에는 허용하지 않음
+				throw new BadRequestException(PAYMENT_INVALID_REQUEST_ERROR);
 			}
 
 			// 총 금액 계산
@@ -812,7 +875,11 @@ export class PaymentService {
 	 * @param productId 상품 ID
 	 * @returns
 	 */
-	async getOrderedItemsByProductId(userId: number | bigint, productId: number | bigint) {
+	async getOrderedItemsByProductId(
+		userId: number | bigint,
+		productId: number | bigint,
+		completedOnly: boolean = false,
+	) {
 		const order = await this.prisma.order
 			.findMany({
 				where: {
@@ -822,6 +889,7 @@ export class PaymentService {
 							productId: BigInt(productId),
 						},
 					},
+					...(completedOnly ? { status: "COMPLETED" } : {}),
 				},
 			})
 			.then((order) => this.prisma.serializeBigIntTyped(order));

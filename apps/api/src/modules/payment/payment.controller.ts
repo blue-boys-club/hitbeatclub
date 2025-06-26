@@ -30,6 +30,8 @@ import { PaymentPaginationRequestDto } from "./dto/request/payment.pagination.re
 import { PaymentOrderCreateResponseDto } from "./dto/response/payment.order-create.response.dto";
 import { isBillingKeyWebhook, isPaymentWebhook, PortOneWebhook } from "./payment.utils";
 import { SubscribeService } from "../subscribe/subscribe.service";
+import { PaymentOrderCreateRequestSchema } from "@hitbeatclub/shared-types/payment";
+import { ZodValidationPipe } from "nestjs-zod";
 
 @ApiTags("payment")
 @Controller("payment")
@@ -67,7 +69,7 @@ export class PaymentController {
 	})
 	async createPaymentOrder(
 		@Request() req: AuthenticatedRequest,
-		@Body() createPaymentOrderDto: PaymentOrderCreateRequestDto,
+		@Body(new ZodValidationPipe(PaymentOrderCreateRequestSchema)) createPaymentOrderDto: PaymentOrderCreateRequestDto,
 	): Promise<IResponse<PaymentOrderCreateResponseDto>> {
 		const userId = req.user.id;
 		this.logger.log(

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { usePathname, useRouter } from "next/navigation";
 import { useSearchParametersStateByKey } from "@/features/search/hooks/useSearchParameters";
 import { useQuery } from "@tanstack/react-query";
-import { getAutocompleteSearchQueryOption } from "@/apis/search/query/product.query-option";
+import { getAutocompleteSearchQueryOption } from "@/apis/search/query/search.query-option";
 
 interface SearchOption {
 	label: string;

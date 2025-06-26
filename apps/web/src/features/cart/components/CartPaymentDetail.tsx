@@ -11,6 +11,9 @@ import { PaymentFailureModal } from "./modal/PaymentFailureModal";
 import Link from "next/link";
 import { createPaymentOrder } from "@/apis/payment/payment.api";
 import type { PaymentOrderResponse } from "@hitbeatclub/shared-types/payment";
+import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 
 export type CheckoutItem = {
 	id: number; // cart item ID (not product ID)
@@ -34,10 +37,17 @@ export const CartPaymentDetail = ({ checkoutItems, subtotal, serviceFee = 0, tot
 	const [paymentResult, setPaymentResult] = useState<PaymentOrderResponse | null>(null);
 	const [paymentError, setPaymentError] = useState<{ message: string; code: string } | null>(null);
 	const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+	const router = useRouter();
+	const { data: user } = useQuery(getUserMeQueryOption());
 
 	const handlePaymentClick = () => {
 		if (!checkoutItems.length) {
 			alert("상품을 추가해주세요.");
+			return;
+		}
+
+		if (!user) {
+			router.push("/auth/login?redirect=/carts");
 			return;
 		}
 
@@ -217,11 +227,11 @@ export const CartPaymentDetail = ({ checkoutItems, subtotal, serviceFee = 0, tot
 					trigger={
 						<button
 							onClick={handlePaymentClick}
-							disabled={!checkoutItems.length || !checkPayment || isCreatingOrder}
+							disabled={!checkoutItems.length || isCreatingOrder}
 							className="flex justify-center items-center h-10 bg-black rounded-[5px] outline-1 outline-offset-[-1px] outline-black self-stretch cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
 						>
 							<div className="font-bold leading-none tracking-tight text-white uppercase text-16px font-suisse">
-								{isCreatingOrder ? "주문 생성 중..." : "결제하러 가기"}
+								{isCreatingOrder ? "주문 생성 중..." : !user ? "로그인하기" : "결제하러 가기"}
 							</div>
 						</button>
 					}

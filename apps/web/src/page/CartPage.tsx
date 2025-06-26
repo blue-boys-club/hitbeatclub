@@ -5,14 +5,15 @@ import { CartHeader } from "../features/cart/components/CartHeader";
 import { CartPaymentDetail, CheckoutItem } from "../features/cart/components/CartPaymentDetail";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useCartListQueryOptions } from "@/apis/user/query/user.query-option";
-import { useDeleteCartItemMutation, useUpdateCartItemMutation } from "@/apis/user/mutations";
 import { useToast } from "@/hooks/use-toast";
-import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { useCartStore } from "@/stores/cart";
+import { getProductsByIdsQueryOption } from "@/apis/product/query/product.query-option";
+import { useShallow } from "zustand/react/shallow";
 
 // Define a type for an artist with their cart items
 interface ArtistWithCartItems {
 	artistId: number;
+	artistSlug: string;
 	artistName: string;
 	artistImageUrl: string;
 	items: CartItemWithProductDetails[];
@@ -83,30 +84,33 @@ const PaymentDetailSkeleton = () => (
 
 const CartPage = () => {
 	const { toast } = useToast();
+	const {
+		items: cartItemsStore,
+		addItem,
+		removeItem,
+	} = useCartStore(
+		useShallow((state) => ({
+			items: state.items,
+			addItem: state.addItem,
+			removeItem: state.removeItem,
+		})),
+	);
 
-	const { data: user } = useQuery(getUserMeQueryOption());
-
-	// Cart API를 사용하여 장바구니 데이터 가져오기
+	const productIds = Array.from(new Set(cartItemsStore.map((c) => c.productId)));
 
 	const {
-		data: cartItems,
+		data: products,
 		isLoading,
 		isError,
 		error,
 	} = useQuery({
-		...useCartListQueryOptions(user?.id ?? 0),
-		enabled: !!user?.id,
+		...getProductsByIdsQueryOption(productIds),
+		enabled: productIds.length > 0,
 	});
-
-	// 장바구니 아이템 삭제 mutation
-	const deleteCartItemMutation = useDeleteCartItemMutation(user?.id ?? 0);
-
-	// 장바구니 아이템 라이센스 업데이트 mutation
-	const updateCartItemMutation = useUpdateCartItemMutation(user?.id ?? 0);
 
 	// 카트 데이터를 변환하여 UI에 필요한 형태로 만들기
 	const { artistsWithItems, checkoutItems, subtotal, total } = useMemo(() => {
-		if (!cartItems || cartItems.length === 0) {
+		if (!products || products.length === 0) {
 			return {
 				artistsWithItems: [],
 				checkoutItems: [],
@@ -115,61 +119,42 @@ const CartPage = () => {
 			};
 		}
 
-		console.log("CartPage - cartItems:", cartItems);
+		console.log("CartPage - products:", products);
 
 		const detailedCartItems: CartItemWithProductDetails[] = [];
 		let calculatedSubtotal = 0;
 
 		// 각 카트 아이템을 변환
-		for (const cartItem of cartItems) {
-			const { product, selectedLicense } = cartItem;
+		for (const product of products) {
+			// Find matching cart item
+			const cartItem = cartItemsStore.find((c) => c.productId === product.id);
+			if (!cartItem) continue;
 
-			// product가 없는 경우 스킵
-			if (!product) {
-				console.warn(`CartPage - No product info for cart item ${cartItem.id}`);
-				continue;
-			}
+			const { productId, licenseId } = cartItem;
 
-			// 라이센스 정보 가져오기 (fallback 포함)
-			let availableLicenses = [];
-			if (product.licenseInfo && product.licenseInfo.length > 0) {
-				// ProductResponseSchema에 licenseInfo가 있는 경우 사용
-				availableLicenses = product.licenseInfo.map((license) => ({
-					id: license.id,
-					// TODO: 라이센스 타입 확인 필요
-					type: license.label?.toUpperCase() as "MASTER" | "EXCLUSIVE",
-					price: license.price,
-				}));
-			} else {
-				// CRITICAL FALLBACK: licenseInfo가 없는 경우 selectedLicense 기반으로 생성
-				console.warn(`CartPage - No licenseInfo for product ${product.id}, using fallback`);
-				availableLicenses = [
-					{
-						id: selectedLicense.id,
-						type: selectedLicense.type?.toUpperCase() as "MASTER" | "EXCLUSIVE",
-						price: selectedLicense.price,
-					},
-				];
-			}
+			// Build license arrays
+			const availableLicenses = (product.licenseInfo || []).map((l: any) => {
+				const label = (l.label ?? l.type ?? "").toString().toUpperCase();
+				return {
+					id: l.id,
+					type: label as "MASTER" | "EXCLUSIVE",
+					price: l.price,
+				};
+			});
 
-			// 라이센스 이름과 설명 결정 (fallback 포함)
-			let licenseName = selectedLicense.type;
-			let licenseDescription = "";
+			// Find selected license info
+			const selectedLicense = availableLicenses.find((l) => l.id === licenseId) || availableLicenses[0];
+			if (!selectedLicense) continue;
 
-			if (selectedLicense.type.toUpperCase() === "MASTER") {
-				licenseName = "MASTER";
-				licenseDescription = "상업적 이용 가능";
-			} else if (selectedLicense.type.toUpperCase() === "EXCLUSIVE") {
-				licenseName = "EXCLUSIVE";
-				licenseDescription = "독점 사용 가능";
-			}
+			const licenseName = selectedLicense.type;
+			const licenseDescription = selectedLicense.type === "MASTER" ? "상업적 이용 가능" : "독점 사용 가능";
 
 			detailedCartItems.push({
-				cartId: cartItem.id,
+				cartId: productId,
 				productId: product.id,
-				imageUrl: product.coverImage?.url || "", // ProductResponseSchema now includes coverImage
+				imageUrl: product.coverImage?.url || "",
 				title: product.productName,
-				licenseType: selectedLicense.type as "MASTER" | "EXCLUSIVE",
+				licenseType: selectedLicense.type,
 				licenseName,
 				licenseDescription,
 				type: product.category === "BEAT" ? "beat" : "acapella",
@@ -186,15 +171,16 @@ const CartPage = () => {
 		// Group items by artist
 		const groupedByArtist: Record<string, ArtistWithCartItems> = {};
 		for (const item of detailedCartItems) {
-			const cartItem = cartItems.find((c) => c.id === item.cartId);
+			const cartItem = products.find((p) => p.id === item.productId);
 			if (!cartItem) continue;
 
-			const seller = cartItem.product.seller;
+			const seller = cartItem.seller;
 			const artistName = seller.stageName;
 
 			if (!groupedByArtist[artistName]) {
 				groupedByArtist[artistName] = {
 					artistId: seller.id,
+					artistSlug: seller.slug || "",
 					artistName: artistName,
 					artistImageUrl: seller.profileImageUrl || "",
 					items: [],
@@ -223,38 +209,16 @@ const CartPage = () => {
 			subtotal: calculatedSubtotal,
 			total: calculatedTotal,
 		};
-	}, [cartItems]);
+	}, [products, cartItemsStore]);
 
-	// 장바구니 아이템 삭제 핸들러
-	const handleDeleteItem = async (cartId: number) => {
-		try {
-			await deleteCartItemMutation.mutateAsync(cartId);
-			toast({
-				description: "장바구니에서 삭제되었습니다.",
-			});
-		} catch (error) {
-			console.error("Failed to delete cart item:", error);
-			toast({
-				description: "삭제 중 오류가 발생했습니다.",
-				variant: "destructive",
-			});
-		}
+	const handleDeleteItem = (productId: number) => {
+		removeItem(productId);
+		toast({ description: "장바구니에서 삭제되었습니다." });
 	};
 
-	// 라이센스 업데이트 핸들러
-	const handleUpdateItemLicense = async (cartId: number, licenseId: number) => {
-		try {
-			await updateCartItemMutation.mutateAsync({ id: cartId, licenseId });
-			toast({
-				description: "라이센스가 변경되었습니다.",
-			});
-		} catch (error) {
-			console.error("Failed to update cart item license:", error);
-			toast({
-				description: "라이센스 변경 중 오류가 발생했습니다.",
-				variant: "destructive",
-			});
-		}
+	const handleUpdateItemLicense = (productId: number, licenseId: number) => {
+		addItem(productId, licenseId); // addItem updates license if exists
+		toast({ description: "라이센스가 변경되었습니다." });
 	};
 
 	if (isLoading) {
@@ -307,7 +271,7 @@ const CartPage = () => {
 						artistsWithItems.map((artistData) => (
 							<CartArtistSection
 								key={artistData.artistId}
-								artistId={artistData.artistId}
+								artistSlug={artistData.artistSlug}
 								artistName={artistData.artistName}
 								artistImageUrl={artistData.artistImageUrl}
 								items={artistData.items}

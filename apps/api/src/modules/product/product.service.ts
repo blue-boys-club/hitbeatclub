@@ -1145,4 +1145,17 @@ export class ProductService {
 
 		return file;
 	}
+
+	/**
+	 * Find details by productIds
+	 * @param productIds
+	 * @returns
+	 */
+	async findItemByProductIds(productIds: number[]) {
+		const products = await this.prisma.product.findMany({
+			where: { id: { in: productIds } },
+		});
+
+		return products;
+	}
 }

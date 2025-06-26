@@ -38,69 +38,68 @@ export const useDragDropHandler = () => {
 	const handleDragEnd = useCallback(
 		(event: DragEndEvent) => {
 			console.log("DragEnd", event, user);
-			if (!user) {
-				toast({
-					description: "로그인 후 이용해주세요.",
-				});
-				return;
-			}
 
+			// PRODUCT 드래그 처리
 			if (event?.active?.data.current?.type === "PRODUCT") {
-				if (event.over?.id === "like-follow") {
-					likeProduct(event.active?.data.current?.productId)
-						.then(() => {
-							toast({
-								description: "좋아요가 완료되었습니다.",
-							});
-						})
-						.catch((error: Error) => {
-							const message = error instanceof AxiosError ? error.response?.data.detail : "좋아요에 실패했습니다.";
-							toast({
-								description: message,
-							});
-						});
-				} else if (event.over?.id === "cart") {
-					// 라이센스 모달 열기
+				if (event.over?.id === "cart") {
+					// 비회원도 라이센스 모달을 열 수 있다.
 					const productId = event.active?.data.current?.productId;
 					if (productId) {
 						setSelectedProductId(productId);
 						setIsLicenseModalOpen(true);
 					}
+					return;
+				}
+
+				// 아래 작업은 로그인 필요
+				if (!user) {
+					toast({ description: "로그인 후 이용해주세요." });
+					return;
+				}
+
+				if (event.over?.id === "like-follow") {
+					likeProduct(event.active?.data.current?.productId)
+						.then(() => {
+							toast({ description: "좋아요가 완료되었습니다." });
+						})
+						.catch((error: Error) => {
+							const message = error instanceof AxiosError ? error.response?.data.detail : "좋아요에 실패했습니다.";
+							toast({ description: message });
+						});
 				} else if (event.over?.id === "player") {
 					startPlayer({
-						userId: user.id,
+						userId: user?.id ?? 0,
 						productId: event.active?.data.current?.productId,
 					})
 						.then(() => {
-							toast({
-								description: "재생이 시작되었습니다.",
-							});
+							toast({ description: "재생이 시작되었습니다." });
 						})
 						.catch((error: Error) => {
 							const message = error instanceof AxiosError ? error.response?.data.detail : "재생에 실패했습니다.";
-							toast({
-								description: message,
-							});
+							toast({ description: message });
 						});
 				}
-			} else if (event?.active?.data.current?.type === "ARTIST") {
+			}
+
+			// ARTIST 드래그 처리 (로그인 필요)
+			if (event?.active?.data.current?.type === "ARTIST") {
+				if (!user) {
+					toast({ description: "로그인 후 이용해주세요." });
+					return;
+				}
 				if (event.over?.id === "like-follow") {
 					followArtist(event.active?.data.current?.artistId)
 						.then(() => {
-							toast({
-								description: "팔로우가 완료되었습니다.",
-							});
+							toast({ description: "팔로우가 완료되었습니다." });
 						})
 						.catch((error: Error) => {
 							const message = error instanceof AxiosError ? error.response?.data.detail : "팔로우에 실패했습니다.";
-							toast({
-								description: message,
-							});
+							toast({ description: message });
 						});
 				}
 			}
 		},
-		[likeProduct, followArtist, user, toast],
+		[likeProduct, followArtist, user, toast, startPlayer],
 	);
 
 	// 라이센스 모달 닫기 핸들러
