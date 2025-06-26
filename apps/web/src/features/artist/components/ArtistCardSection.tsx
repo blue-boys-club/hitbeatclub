@@ -2,8 +2,8 @@
 import { cn } from "@/common/utils";
 import { ArtistAvatar } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
-import React, { useState, useEffect, useMemo } from "react";
-import { Artist, ArtistCardProps, ViewType } from "../artist.types";
+import React, { useState, useEffect } from "react";
+import { ArtistCardProps, ViewType } from "../artist.types";
 import { useRouter } from "next/navigation";
 import { useDeleteFollowedArtistMutation } from "../../../apis/user/mutations/useDeleteFollowedArtistMutation";
 import { useQuery } from "@tanstack/react-query";
@@ -81,7 +81,7 @@ const ArtistCardSection = ({
 				)}
 			>
 				{artists && artists.length > 0 ? (
-					artists.map((artist: Artist) => {
+					artists.map((artist) => {
 						const isFollowing = followStates[artist.artistId];
 						const artistProfileImageUrl = artist.profileImageUrl || UserProfileImage;
 
@@ -103,7 +103,7 @@ const ArtistCardSection = ({
 									<div className="flex items-center justify-center pt-2">
 										<ArtistAvatar
 											src={artistProfileImageUrl}
-											alt={artist.stageName}
+											alt={artist.stageName ?? ""}
 											className={cn(
 												activeView === ViewType.GRID && "size-[174px]",
 												activeView === ViewType.LIST && "size-[59px]",

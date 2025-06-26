@@ -1,13 +1,12 @@
 import { cn } from "@/common/utils";
-import { useQuery } from "@tanstack/react-query";
 import { memo } from "react";
 import FollowItem from "./FollowItem";
-import { FollowItem as FollowItemType } from "../types";
+import { UserFollowArtistListResponse } from "@hitbeatclub/shared-types";
 
 interface FollowItemsProps {
 	search?: string;
 	sort?: "RECENT" | "NAME";
-	followedArtists: FollowItemType[];
+	followedArtists: UserFollowArtistListResponse[];
 }
 
 const FollowItems = memo(

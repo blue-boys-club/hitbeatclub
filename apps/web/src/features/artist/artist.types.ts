@@ -1,3 +1,5 @@
+import { UserFollowArtistListResponse } from "@hitbeatclub/shared-types";
+
 export enum ViewType {
 	GRID = "GRID",
 	LIST = "LIST",
@@ -20,7 +22,7 @@ export interface Artist {
 
 export interface ArtistCardProps {
 	activeView: ViewType;
-	artists: Artist[];
+	artists: UserFollowArtistListResponse[];
 }
 
 export interface ArtistSearchBarProps {
