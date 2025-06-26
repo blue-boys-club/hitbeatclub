@@ -5,12 +5,11 @@ import Image from "next/image";
 import { Acapella, Beat, Like } from "@/assets/svgs";
 import { Heart } from "@/assets/svgs/Heart";
 import { ProductSearchResponse } from "@/apis/search/search.type";
-import { useCreateCartItemMutation } from "@/apis/user/mutations/useCreateCartItemMutation";
 import { useLikeProductMutation } from "@/apis/product/mutations/useLikeProductMutation";
 import { useUnlikeProductMutation } from "@/apis/product/mutations/useUnLikeProductMutation";
 import { useAuthStore } from "@/stores/auth";
 import { useShallow } from "zustand/react/shallow";
-import { ProductLikeResponse } from "@hitbeatclub/shared-types";
+import { ProductLikeResponse, ProductListPagingResponse } from "@hitbeatclub/shared-types";
 
 interface SearchProduct {
 	type: "search";
@@ -22,7 +21,14 @@ interface LikeProduct {
 	product: ProductLikeResponse;
 }
 
-type MobileProductItemProps = SearchProduct | LikeProduct;
+interface FollowProduct {
+	type: "follow";
+	product: ProductListPagingResponse["data"][number];
+}
+
+type MobileProductItemProps = (SearchProduct | LikeProduct | FollowProduct) & {
+	onBuyClick?: (product: SearchProduct['product'] | LikeProduct['product'] | FollowProduct['product']) => void;
+};
 
 /**
  * 좋아요한 트랙 아이템 컴포넌트
@@ -31,14 +37,9 @@ type MobileProductItemProps = SearchProduct | LikeProduct;
  * - 장바구니 담기 기능
  * - 트랙 관련 태그 표시
  */
-export const MobileProductItem = memo(({ type, product }: MobileProductItemProps) => {
-	const [isAddingToCart, setIsAddingToCart] = useState(false);
-
+export const MobileProductItem = memo(({ type, product, onBuyClick }: MobileProductItemProps) => {
 	// 사용자 ID 가져오기
 	const userId = useAuthStore(useShallow((state) => state.user?.userId));
-
-	// 장바구니 추가 mutation
-	const createCartItemMutation = useCreateCartItemMutation(userId!);
 
 	// 좋아요 관련 mutations
 	const likeProductMutation = useLikeProductMutation();
@@ -51,10 +52,6 @@ export const MobileProductItem = memo(({ type, product }: MobileProductItemProps
 	const bpmDisplay =
 		product.minBpm === product.maxBpm ? `${product.minBpm}BPM` : `${product.minBpm}BPM - ${product.maxBpm}BPM`;
 
-	// 기본 라이센스 선택 (첫 번째 라이센스 또는 MASTER 타입 우선)
-	// licenseInfo에서 label과 price만 있으므로, 임시로 ID를 생성해야 함
-	const defaultLicense =
-		product.licenseInfo?.find((license) => license.label.toUpperCase() === "MASTER") || product.licenseInfo?.[0];
 
 	// 좋아요 토글 핸들러
 	const handleLikeToggle = async () => {
@@ -76,40 +73,6 @@ export const MobileProductItem = memo(({ type, product }: MobileProductItemProps
 		}
 	};
 
-	// 장바구니 추가 핸들러
-	const handleAddToCart = async () => {
-		// 로그인 체크
-		if (!userId) {
-			alert("로그인이 필요합니다");
-			return;
-		}
-
-		// 라이센스 정보 체크
-		if (!defaultLicense) {
-			alert("라이센스 정보를 찾을 수 없습니다");
-			return;
-		}
-
-		setIsAddingToCart(true);
-
-		try {
-			// TODO: 실제 API에서 licenseId를 제공받아야 함
-			// 현재는 label 기반으로 임시 ID를 생성
-			const tempLicenseId = defaultLicense.label.toUpperCase() === "MASTER" ? 1 : 2;
-
-			await createCartItemMutation.mutateAsync({
-				productId: product.id,
-				licenseId: tempLicenseId,
-			});
-
-			alert("장바구니에 추가되었습니다");
-		} catch (error) {
-			console.error("장바구니 추가 실패:", error);
-			alert("장바구니 추가에 실패했습니다");
-		} finally {
-			setIsAddingToCart(false);
-		}
-	};
 
 	return (
 		<div className="bg-[#dadada] p-2 rounded-5px flex justify-between hover:bg-[#D9D9D9] cursor-pointer">
@@ -156,13 +119,25 @@ export const MobileProductItem = memo(({ type, product }: MobileProductItemProps
 					</button>
 				</div>
 				<div className="flex flex-col items-end font-semibold">
-					<button className="bg-black text-white h-13px px-6px rounded-15px text-8px">Buy</button>
+					<button 
+						onClick={(e) => {
+							e.stopPropagation();
+							onBuyClick?.(product);
+						}}
+						className="bg-black text-white h-13px px-6px rounded-15px text-8px disabled:opacity-50 disabled:cursor-not-allowed"
+						disabled={!userId}
+					>
+						Buy
+					</button>
 					<button
 						className="bg-black text-white h-13px px-6px rounded-15px text-8px disabled:opacity-50 disabled:cursor-not-allowed"
-						onClick={handleAddToCart}
-						disabled={isAddingToCart || !userId || !defaultLicense}
+						onClick={(e) => {
+							e.stopPropagation();
+							onBuyClick?.(product);
+						}}
+						disabled={!userId}
 					>
-						{isAddingToCart ? "추가중..." : "Add to Cart"}
+						Add to Cart
 					</button>
 				</div>
 			</div>

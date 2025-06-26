@@ -18,8 +18,15 @@ const MobileSearchPage = () => {
 	const [selectedIndex, setSelectedIndex] = useState(-1);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [isOpenBuyOrCartModal, setIsOpenBuyOrCartModal] = useState(false);
+	const [selectedProduct, setSelectedProduct] = useState<any>(null);
 	const [isShowFilter, setIsShowFilter] = useState(false);
 	const [searchFilters, setSearchFilters] = useState<Partial<ProductSearchQuery>>({});
+
+	// Buy/Cart 모달 열기 핸들러
+	const handleBuyClick = (product: any) => {
+		setSelectedProduct(product);
+		setIsOpenBuyOrCartModal(true);
+	};
 
 	// 자동완성용 디바운스 (300ms)
 	useEffect(() => {
@@ -243,17 +250,13 @@ const MobileSearchPage = () => {
 								<span className="text-16px">검색 결과가 없습니다.</span>
 							</div>
 						) : (
-							<div
-								className="flex flex-col gap-2"
-								onClick={() => {
-									setIsOpenBuyOrCartModal(true);
-								}}
-							>
+							<div className="flex flex-col gap-2">
 								{searchResults?.products.map((product) => (
 									<MobileProductItem
 										key={product.id}
 										type="search"
 										product={product}
+										onBuyClick={handleBuyClick}
 									/>
 								))}
 							</div>
@@ -261,10 +264,16 @@ const MobileSearchPage = () => {
 					</div>
 				)}
 			</div>
-			<MobileBuyOrCartModal
-				isOpen={isOpenBuyOrCartModal}
-				onClose={() => setIsOpenBuyOrCartModal(false)}
-			/>
+			{selectedProduct && (
+				<MobileBuyOrCartModal
+					isOpen={isOpenBuyOrCartModal}
+					onClose={() => {
+						setIsOpenBuyOrCartModal(false);
+						setSelectedProduct(null);
+					}}
+					product={selectedProduct}
+				/>
+			)}
 			{isShowFilter && (
 				<MobileProductListFilter
 					onClose={() => setIsShowFilter(false)}

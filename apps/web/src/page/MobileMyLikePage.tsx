@@ -2,9 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useShallow } from "zustand/react/shallow";
+import { useState } from "react";
 import { HeartFilled } from "@/assets/svgs";
 import { MobileMyPageTitle } from "@/features/mobile/my/components";
 import { MobileProductItem } from "@/features/mobile/product/components";
+import { MobileBuyOrCartModal } from "@/features/mobile/search/modals";
 import { getLikedProductsQueryOption } from "@/apis/user/query/user.query-option";
 import { useAuthStore } from "@/stores/auth";
 import { ProductLikeResponse } from "@hitbeatclub/shared-types";
@@ -12,6 +14,16 @@ import { ProductLikeResponse } from "@hitbeatclub/shared-types";
 export const MobileMyLikePage = () => {
 	// 현재 사용자 ID 가져오기
 	const userId = useAuthStore(useShallow((state) => state.user?.userId));
+
+	// 모달 상태 관리
+	const [isOpenBuyOrCartModal, setIsOpenBuyOrCartModal] = useState(false);
+	const [selectedProduct, setSelectedProduct] = useState<any>(null);
+
+	// Buy/Cart 모달 열기 핸들러
+	const handleBuyClick = (product: any) => {
+		setSelectedProduct(product);
+		setIsOpenBuyOrCartModal(true);
+	};
 
 	// 좋아요한 제품 목록 조회
 	const {
@@ -92,6 +104,7 @@ export const MobileMyLikePage = () => {
 							key={product.id}
 							type="like"
 							product={product}
+							onBuyClick={handleBuyClick}
 						/>
 					))
 				) : (
@@ -100,6 +113,16 @@ export const MobileMyLikePage = () => {
 					</div>
 				)}
 			</div>
+			{selectedProduct && (
+				<MobileBuyOrCartModal
+					isOpen={isOpenBuyOrCartModal}
+					onClose={() => {
+						setIsOpenBuyOrCartModal(false);
+						setSelectedProduct(null);
+					}}
+					product={selectedProduct}
+				/>
+			)}
 		</div>
 	);
 };

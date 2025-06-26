@@ -1,16 +1,93 @@
 "use client";
 
-import { Acapella } from "@/assets/svgs";
+import { Acapella, Beat } from "@/assets/svgs";
 import { Popup, PopupContent, PopupHeader, PopupTitle } from "@/components/ui/Popup";
 import Image from "next/image";
-import { memo } from "react";
+import { memo, useState } from "react";
+import { ProductSearchResponse } from "@/apis/search/search.type";
+import { ProductLikeResponse, ProductListPagingResponse } from "@hitbeatclub/shared-types";
+import { useCreateCartItemMutation } from "@/apis/user/mutations/useCreateCartItemMutation";
+import { useAuthStore } from "@/stores/auth";
+import { useShallow } from "zustand/react/shallow";
+import { useToast } from "@/hooks/use-toast";
+
+type ProductData = 
+	| ProductSearchResponse["products"][number]
+	| ProductLikeResponse  
+	| ProductListPagingResponse["data"][number];
 
 interface MobileBuyOrCartModalProps {
 	isOpen: boolean;
 	onClose: () => void;
+	product: ProductData;
 }
 
-export const MobileBuyOrCartModal = memo(({ isOpen, onClose }: MobileBuyOrCartModalProps) => {
+export const MobileBuyOrCartModal = memo(({ isOpen, onClose, product }: MobileBuyOrCartModalProps) => {
+	const [selectedLicenseId, setSelectedLicenseId] = useState<number>(product.licenseInfo?.[0]?.id || 0);
+	const [isProcessing, setIsProcessing] = useState(false);
+
+	// 사용자 ID 가져오기
+	const userId = useAuthStore(useShallow((state) => state.user?.userId));
+
+	// Toast 훅
+	const { toast } = useToast();
+
+	// 장바구니 추가 mutation
+	const createCartItemMutation = useCreateCartItemMutation(userId!);
+
+	// BPM 표시 로직
+	const bpmDisplay = product.minBpm === product.maxBpm 
+		? `${product.minBpm}BPM` 
+		: `${product.minBpm}BPM - ${product.maxBpm}BPM`;
+
+	// 선택된 라이센스 정보
+	const selectedLicense = product.licenseInfo?.find(license => license.id === selectedLicenseId) || product.licenseInfo?.[0];
+
+	// 장바구니 추가 핸들러
+	const handleAddToCart = async () => {
+		if (!userId) {
+			toast({
+				description: "로그인이 필요합니다",
+				variant: "destructive",
+			});
+			return;
+		}
+
+		if (!selectedLicense?.id) {
+			toast({
+				description: "라이센스를 선택해주세요",
+				variant: "destructive",
+			});
+			return;
+		}
+
+		setIsProcessing(true);
+		try {
+			await createCartItemMutation.mutateAsync({
+				productId: product.id,
+				licenseId: selectedLicense.id,
+			});
+			toast({
+				description: "장바구니에 추가되었습니다",
+			});
+			onClose();
+		} catch (error) {
+			console.error("장바구니 추가 실패:", error);
+			toast({
+				description: "장바구니 추가에 실패했습니다",
+				variant: "destructive",
+			});
+		} finally {
+			setIsProcessing(false);
+		}
+	};
+
+	// 구매 핸들러 (현재는 장바구니와 동일하게 동작)
+	const handleBuy = async () => {
+		// TODO: 실제 구매 로직 구현
+		await handleAddToCart();
+	};
+
 	return (
 		<Popup
 			open={isOpen}
@@ -22,49 +99,73 @@ export const MobileBuyOrCartModal = memo(({ isOpen, onClose }: MobileBuyOrCartMo
 					<div className="flex gap-2">
 						<div className="w-76px h-76px relative rounded-5px overflow-hidden">
 							<Image
-								alt=""
-								src="https://street-h.com/wp-content/uploads/2023/03/hanroro.jpg"
+								alt={product.productName}
+								src={product.coverImage?.url || ""}
 								fill
 								className="object-cover"
 							/>
 						</div>
 						<div className="flex flex-col gap-10px">
 							<div className="flex flex-col">
-								<span className="font-semibold text-12px leading-100%">Smile For Me</span>
-								<span className="text-10px leading-10px mt-1px">NotJake</span>
-								<Acapella className="mt-3px" />
+								<span className="font-semibold text-12px leading-100%">{product.productName}</span>
+								<span className="text-10px leading-10px mt-1px">{product.seller.stageName}</span>
+								{product.category === "ACAPELA" ? <Acapella className="mt-3px" /> : <Beat className="mt-3px" />}
 							</div>
 							<div className="flex flex-col gap-2px font-[450] text-8px leading-100%">
-								<span>89BPM</span>
-								<span>A min</span>
+								<span>{bpmDisplay}</span>
+								<span>{product.musicKey} {product.scaleType?.toLowerCase()}</span>
 							</div>
 						</div>
 					</div>
-					<div className="flex flex-col items-center gap-2px">
-						<div className="font-medium text-12px leading-100%">Basic 라이센스 사용범위</div>
-						<div className="flex gap-10px font-bold text-8px leading-150%">
-							<span>믹스테잎용 곡 녹음</span>
-							<span>1개의 상업적 곡 녹음</span>
+					{selectedLicense && (
+						<div className="flex flex-col items-center gap-2px">
+							<div className="font-medium text-12px leading-100%">{selectedLicense.label} 라이센스 사용범위</div>
+							<div className="flex gap-10px font-bold text-8px leading-150%">
+								{selectedLicense.label.toUpperCase() === 'MASTER' ? (
+									<>
+										<span>믹스테잎용 곡 녹음</span>
+										<span>1개의 상업적 곡 녹음</span>
+									</>
+								) : (
+									<>
+										<span>무제한 상업적 사용</span>
+										<span>독점적 라이센스</span>
+									</>
+								)}
+							</div>
 						</div>
-					</div>
+					)}
 					<div className="flex flex-col gap-1">
-						<button className="h-44px rounded-3px bg-white flex flex-col justify-center items-center gap-1 font-[450] text-8px leading-100%">
-							<span>Basic</span>
-							<span>40,000 KRW</span>
-							<span>MP3, WAV</span>
-						</button>
-						<button className="h-44px rounded-3px bg-black text-white flex flex-col justify-center items-center gap-1 font-[450] text-8px leading-100%">
-							<span>Exclusive</span>
-							<span>140,000 KRW</span>
-							<span>MP3, WAV</span>
-						</button>
+						{product.licenseInfo?.map((license) => (
+							<button
+								key={license.id}
+								onClick={() => setSelectedLicenseId(license.id)}
+								className={`h-44px rounded-3px flex flex-col justify-center items-center gap-1 font-[450] text-8px leading-100% ${
+									selectedLicenseId === license.id 
+										? 'bg-black text-white' 
+										: 'bg-white text-black'
+								}`}
+							>
+								<span>{license.label}</span>
+								<span>{license.price?.toLocaleString()} KRW</span>
+								<span>MP3, WAV</span>
+							</button>
+						))}
 					</div>
 					<div className="flex gap-1">
-						<button className="rounded-3px h-20px flex-1 font-bold text-8px leading-100% bg-black text-white">
-							장바구니 담기
+						<button 
+							className="rounded-3px h-20px flex-1 font-bold text-8px leading-100% bg-black text-white disabled:opacity-50 disabled:cursor-not-allowed"
+							onClick={handleAddToCart}
+							disabled={isProcessing || !userId}
+						>
+							{isProcessing ? "처리중..." : "장바구니 담기"}
 						</button>
-						<button className="rounded-3px h-20px flex-1 font-bold text-8px leading-100% bg-black text-white">
-							구매하기
+						<button 
+							className="rounded-3px h-20px flex-1 font-bold text-8px leading-100% bg-black text-white disabled:opacity-50 disabled:cursor-not-allowed"
+							onClick={handleBuy}
+							disabled={isProcessing || !userId}
+						>
+							{isProcessing ? "처리중..." : "구매하기"}
 						</button>
 					</div>
 				</div>

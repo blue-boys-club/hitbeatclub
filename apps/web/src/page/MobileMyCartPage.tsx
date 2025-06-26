@@ -194,12 +194,6 @@ export const MobileMyCartPage = () => {
 						>
 							Checkout
 						</button>
-						<button
-							onClick={() => toast({ description: "좋아요 목록에서 삭제되었습니다." })}
-							className="h-10 rounded-5px bg-black text-white font-semibold text-16px leading-100%"
-						>
-							Toast Open (삭제할 것)
-						</button>
 					</div>
 				</div>
 			</div>

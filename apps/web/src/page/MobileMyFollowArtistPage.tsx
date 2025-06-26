@@ -1,12 +1,15 @@
+"use client";
+
 import {
 	getArtistDetailBySlugQueryOption,
-	getArtistDetailQueryOption,
 	getArtistProductListBySlugQueryOption,
 } from "@/apis/artist/query/artist.query-options";
 import { CrossArrow } from "@/assets/svgs/CrossArrow";
 import { PlayCircleBlack } from "@/assets/svgs/PlayCircleBlack";
 import { MobileProductItem } from "@/features/mobile/product/components";
+import { MobileBuyOrCartModal } from "@/features/mobile/search/modals";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import Image from "next/image";
 
 export const MobileMyFollowArtistPage = ({ slug }: { slug: string }) => {
@@ -14,6 +17,16 @@ export const MobileMyFollowArtistPage = ({ slug }: { slug: string }) => {
 	const { data: products } = useQuery(
 		getArtistProductListBySlugQueryOption(slug, { page: 1, limit: 10, isPublic: true }),
 	);
+
+	// 모달 상태 관리
+	const [isOpenBuyOrCartModal, setIsOpenBuyOrCartModal] = useState(false);
+	const [selectedProduct, setSelectedProduct] = useState<any>(null);
+
+	// Buy/Cart 모달 열기 핸들러
+	const handleBuyClick = (product: any) => {
+		setSelectedProduct(product);
+		setIsOpenBuyOrCartModal(true);
+	};
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -49,11 +62,22 @@ export const MobileMyFollowArtistPage = ({ slug }: { slug: string }) => {
 				{products?.data?.map((product) => (
 					<MobileProductItem
 						key={product.id}
-						type="search"
+						type="follow"
 						product={product}
+						onBuyClick={handleBuyClick}
 					/>
 				))}
 			</div>
+			{selectedProduct && (
+				<MobileBuyOrCartModal
+					isOpen={isOpenBuyOrCartModal}
+					onClose={() => {
+						setIsOpenBuyOrCartModal(false);
+						setSelectedProduct(null);
+					}}
+					product={selectedProduct}
+				/>
+			)}
 		</div>
 	);
 };

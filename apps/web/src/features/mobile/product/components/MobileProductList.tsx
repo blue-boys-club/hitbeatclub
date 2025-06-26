@@ -16,6 +16,7 @@ export const MobileProductList = memo(
 					return (
 						<MobileProductItem
 							key={product.id}
+							type="search"
 							product={product}
 						/>
 					);
