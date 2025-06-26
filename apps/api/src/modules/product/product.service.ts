@@ -211,7 +211,7 @@ export class ProductService {
 		}
 	}
 
-	async findOne(id: number, userId?: number) {
+	async findOne(id: number | bigint, userId?: number | bigint) {
 		try {
 			const product = await this.prisma.product
 				.findFirst({
@@ -1151,11 +1151,26 @@ export class ProductService {
 	 * @param productIds
 	 * @returns
 	 */
-	async findItemByProductIds(productIds: number[]) {
-		const products = await this.prisma.product.findMany({
-			where: { id: { in: productIds } },
-		});
+	async findItemByProductIds(productIds: number[] | bigint[], userId?: number | bigint) {
+		try {
+			const products = await Promise.allSettled(
+				productIds.map(async (id) => {
+					const product = await this.findOne(id, userId);
+					const productFiles = await this.findProductFiles(id);
+					return {
+						...product,
+						coverImage: productFiles.coverImage,
+					};
+				}),
+			);
 
-		return products;
+			return products
+				.map((product) => (product.status === "fulfilled" ? product.value : null))
+				.filter((product) => product !== null);
+		} catch (error) {
+			console.error(error);
+			this.logger.error(error, "Error in findItemByProductIds");
+			throw new BadRequestException(error);
+		}
 	}
 }

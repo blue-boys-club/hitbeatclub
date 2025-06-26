@@ -51,7 +51,13 @@ export const useCartStore = create<CartStore>()(
 
 				init: () => set(() => ({ ...initialState })),
 			})),
-			{ storage: createJSONStorage(() => localStorage), name },
+			{
+				storage: createJSONStorage(() => localStorage),
+				name,
+				version: 10,
+				// Do not migrate at all. it's different but just same name
+				migrate: () => initialState,
+			},
 		),
 		{ name },
 	),

@@ -6,8 +6,7 @@ import { getProductQueryOption } from "@/apis/product/query/product.query-option
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { LICENSE_MAP_TEMPLATE } from "@/apis/product/product.dummy";
-import { useCartStore } from "@/stores/cart";
-import { useShallow } from "zustand/react/shallow";
+import { useUnifiedCart } from "@/hooks/use-unified-cart";
 
 interface ProductDetailLicenseModalProps {
 	isOpen: boolean;
@@ -27,8 +26,8 @@ export const ProductDetailLicenseModal = memo(({ isOpen, onClose, productId }: P
 		enabled: isOpen && !!productId,
 	});
 
-	// Local cart store
-	const { addItem } = useCartStore(useShallow((state) => ({ addItem: state.addItem })));
+	// 통합 카트 훅 사용
+	const { addItem } = useUnifiedCart();
 
 	// 상품의 라이센스 정보와 템플릿 정보를 조합
 	const licenses = useMemo(() => {
@@ -50,7 +49,7 @@ export const ProductDetailLicenseModal = memo(({ isOpen, onClose, productId }: P
 		[licenses, selectedLicenseType],
 	);
 
-	// 장바구니에 추가하는 함수 (비회원도 가능)
+	// 장바구니에 추가하는 함수 (로그인 상태에 따라 자동으로 서버/로컬 카트 처리)
 	const addToCart = useCallback(async () => {
 		if (!selectedLicense) {
 			toast({
@@ -60,10 +59,14 @@ export const ProductDetailLicenseModal = memo(({ isOpen, onClose, productId }: P
 			return false;
 		}
 
-		// 1) 로컬 스토어 업데이트
-		addItem(productId, selectedLicense.id);
-
-		return true;
+		try {
+			// 통합 카트 훅의 addItem 사용 (로그인 상태에 따라 자동 처리)
+			await addItem(productId, selectedLicense.id);
+			return true;
+		} catch (error) {
+			console.error("장바구니 추가 실패:", error);
+			return false;
+		}
 	}, [selectedLicense, productId, addItem, toast]);
 
 	// 장바구니 담기 핸들러

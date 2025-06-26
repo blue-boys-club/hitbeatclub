@@ -59,6 +59,7 @@ import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types";
 import { FileUrlRequestDto } from "./dto/request/product.file-url.request.dto";
 import { PaymentService } from "../payment/payment.service";
 import { AwsCloudfrontService } from "~/common/aws/services/aws.cloudfront.service";
+import { ProductIdsRequestDto } from "./dto/request/product.ids.request.dto";
 
 @Controller("products")
 @ApiTags("product")
@@ -252,6 +253,29 @@ export class ProductController {
 		};
 	}
 
+	@Get("/ids")
+	@ApiOperation({ summary: "상품 목록 조회" })
+	@AuthenticationDoc({ optional: true })
+	@DocResponse<ProductListResponseDto>(productMessage.find.success, {
+		dto: ProductListResponseDto,
+	})
+	async findItems(@Req() req: AuthenticatedRequest, @Query() productIdsRequestDto: ProductIdsRequestDto) {
+		const userId = req?.user?.id;
+		const productIdsNumbers =
+			typeof productIdsRequestDto.productIds === "number"
+				? [productIdsRequestDto.productIds]
+				: productIdsRequestDto.productIds;
+		const productIds = productIdsNumbers.map((id) => Number(BigInt(id)));
+		this.logger.log(productIds, "productIds");
+		const products = await this.productService.findItemByProductIds(productIds, userId);
+
+		return {
+			statusCode: 200,
+			message: productMessage.find.success,
+			data: products,
+		};
+	}
+
 	@Get(":id")
 	@ApiOperation({ summary: "상품 상세 조회" })
 	@AuthJwtAccessOptional()
@@ -281,9 +305,9 @@ export class ProductController {
 			message: productMessage.find.success,
 			data: {
 				...product,
-				audioFile: productFiles.audioFile,
+				// audioFile: productFiles.audioFile,
 				coverImage: productFiles.coverImage,
-				zipFile: productFiles.zipFile,
+				// zipFile: productFiles.zipFile,
 			},
 		};
 	}
@@ -525,22 +549,6 @@ export class ProductController {
 			statusCode: 200,
 			message: productMessage.find.success,
 			data: { id: Number(file.id), url },
-		};
-	}
-
-	@Get("ids")
-	@ApiOperation({ summary: "상품 목록 조회" })
-	@AuthenticationDoc()
-	@DocResponse<ProductListResponseDto>(productMessage.find.success, {
-		dto: ProductListResponseDto,
-	})
-	async findItems(@Req() req: AuthenticatedRequest, @Query() productIds: number[]) {
-		const products = await this.productService.findItemByProductIds(productIds);
-
-		return {
-			statusCode: 200,
-			message: productMessage.find.success,
-			data: products,
 		};
 	}
 }

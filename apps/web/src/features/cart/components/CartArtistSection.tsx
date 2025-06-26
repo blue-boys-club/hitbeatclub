@@ -121,9 +121,12 @@ export const CartArtistSection = ({
 								/>
 								<div className="flex flex-col items-start justify-between h-20 py-1">
 									<div className="flex items-center justify-start overflow-hidden">
-										<div className="h-6 text-20px font-bold leading-120% tracking-02px text-black truncate font-suit w-80">
+										<Link
+											href={`/products/${item.productId}`}
+											className="h-6 text-20px font-bold leading-120% tracking-02px text-black truncate font-suit w-80"
+										>
 											{item.title}
-										</div>
+										</Link>
 										{item.type === "acapella" && <Acapella />}
 										{item.type === "beat" && <Beat />}
 									</div>

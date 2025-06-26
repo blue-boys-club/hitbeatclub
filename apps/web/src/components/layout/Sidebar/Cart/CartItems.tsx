@@ -1,10 +1,7 @@
 import { cn } from "@/common/utils";
-import { useQuery } from "@tanstack/react-query";
-import { memo, useMemo } from "react";
+import { memo } from "react";
 import CartItem from "./CartItem";
-import { getProductsByIdsQueryOption } from "@/apis/product/query/product.query-option";
-import { useCartStore } from "@/stores/cart";
-import { useShallow } from "zustand/react/shallow";
+import { useUnifiedCart } from "@/hooks/use-unified-cart";
 
 // Cart Items Skeleton Component
 const CartItemsSkeleton = () => (
@@ -26,20 +23,8 @@ const CartItemsSkeleton = () => (
 );
 
 const CartItems = memo(() => {
-	// Local cart items (persisted in localStorage)
-	const cartStoreItems = useCartStore(useShallow((state) => state.items));
-
-	// 중복 제거된 상품 ID 배열
-	const productIds = useMemo(() => Array.from(new Set(cartStoreItems.map((c) => c.productId))), [cartStoreItems]);
-
-	const {
-		data: products,
-		isLoading,
-		isError,
-	} = useQuery({
-		...getProductsByIdsQueryOption(productIds),
-		enabled: productIds.length > 0,
-	});
+	// 통합 카트 훅 사용
+	const { products, isLoading, isError } = useUnifiedCart();
 
 	// 로딩 상태
 	if (isLoading) {

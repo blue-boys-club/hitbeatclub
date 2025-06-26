@@ -118,6 +118,7 @@ export class CartService {
 									select: {
 										id: true,
 										stageName: true,
+										slug: true,
 										profileImageUrl: true,
 										isVerified: true,
 									},
@@ -205,6 +206,7 @@ export class CartService {
 				? {
 						id: cartItem.product.artistSellerIdToArtist.id,
 						stageName: cartItem.product.artistSellerIdToArtist.stageName,
+						slug: cartItem.product.artistSellerIdToArtist.slug,
 						profileImageUrl: cartItem.product.artistSellerIdToArtist.profileImageUrl,
 						isVerified: cartItem.product.artistSellerIdToArtist.isVerified,
 					}

@@ -1,15 +1,13 @@
 import { memo, useMemo, useState, type ReactNode } from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { useQuery } from "@tanstack/react-query";
-import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 import { useToast } from "@/hooks/use-toast";
 import { PurchaseButton } from "@/components/ui";
 import { ProductDetailLicenseModal } from "./modal/ProductDetailLicenseModal";
 import { LICENSE_MAP_TEMPLATE } from "@/apis/product/product.dummy";
 import { LicenseType } from "../product.constants";
-import { useCartStore } from "@/stores/cart";
-import { useShallow } from "zustand/react/shallow";
+import { useUnifiedCart } from "@/hooks/use-unified-cart";
 
 interface PurchaseWithCartTriggerProps {
 	/**
@@ -66,26 +64,19 @@ export const PurchaseWithCartTrigger = memo(
 		const { toast } = useToast();
 		const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
 
-		// 사용자 정보 가져오기
-		const { data: user } = useQuery(getUserMeQueryOption());
-
 		// 상품 정보 가져오기
 		const { data: product } = useQuery({
 			...getProductQueryOption(productId),
 		});
 
-		// Local cart store 데이터 가져오기
-		const cartItems = useCartStore(useShallow((state) => state.items));
+		// 통합 카트 훅 사용
+		const { isOnCart: isProductOnCart, getCartItemByProductId } = useUnifiedCart();
 
 		// 현재 상품이 장바구니에 있는지 확인
-		const cartItem = useMemo(() => {
-			if (!cartItems || !product) return null;
-			return cartItems.find((item) => item.productId === product.id);
-		}, [cartItems, product]);
-
 		const isOnCart = useMemo(() => {
-			return !!cartItem;
-		}, [cartItem]);
+			if (!product) return false;
+			return isProductOnCart(product.id);
+		}, [product, isProductOnCart]);
 
 		// 라이센스 정보 처리
 		const licenses = useMemo(() => {

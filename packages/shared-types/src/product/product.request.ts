@@ -113,7 +113,15 @@ export type ProductSearchQueryRequest = z.infer<typeof ProductSearchQuerySchema>
 export type ProductAutocompleteSearchQueryRequest = z.infer<typeof ProductAutocompleteSearchQuerySchema>;
 
 export const ProductIdsRequestSchema = z.object({
-	productIds: z.array(z.number()).min(1, "상품 ID를 입력해주세요").describe("상품 ID 목록"),
+	productIds: z
+		.union([
+			z.array(z.coerce.number().int()).min(1, "상품 ID를 입력해주세요"),
+			z.coerce
+				.number()
+				.min(1, "상품 ID를 입력해주세요")
+				.transform((val) => [val]),
+		])
+		.describe("상품 ID 목록"),
 });
 
 export type ProductIdsRequest = z.infer<typeof ProductIdsRequestSchema>;

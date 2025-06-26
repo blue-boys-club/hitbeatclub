@@ -5,6 +5,7 @@ import { useState } from "react";
 import { cn } from "@/common/utils";
 import { useQuery } from "@tanstack/react-query";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
+import { LICENSE_MAP_TEMPLATE } from "@/apis/product/product.dummy";
 
 interface LicenseChangeModalProps {
 	isOpen: boolean;
@@ -30,20 +31,6 @@ export type LicenseOption = {
 
 type LicenseType = "MASTER" | "EXCLUSIVE";
 
-// 라이센스 타입별 템플릿 (기존 LICENSE_MAP_TEMPLATE을 간소화)
-const LICENSE_TEMPLATE = {
-	MASTER: {
-		name: "마스터",
-		description: "상업적 이용 가능",
-		notes: ["상업적 이용 가능", "무제한 배포", "저작권 표기 필수"],
-	},
-	EXCLUSIVE: {
-		name: "익스클루시브",
-		description: "독점 사용 가능",
-		notes: ["독점 사용 가능", "무제한 배포", "상업적 이용 가능", "저작권 표기 선택"],
-	},
-};
-
 export const LicenseChangeModal = ({
 	isOpen,
 	onClose,
@@ -61,38 +48,20 @@ export const LicenseChangeModal = ({
 		select: (response) => response.data,
 	});
 
-	// 최종 라이센스 옵션 결정: productDetail에서 가져온 라이센스 정보를 우선적으로 사용
+	// ProductDetailLicenseModal 과 동일 로직: 라이센스 정보 생성
 	const finalLicenseOptions: LicenseOption[] = (() => {
-		if (productDetail?.licenseInfo && productDetail.licenseInfo.length > 0) {
-			// 제품 상세에서 라이센스 정보가 있는 경우 사용
-			return productDetail.licenseInfo.map((license) => {
-				const type = license?.type?.toUpperCase();
-				const template = LICENSE_TEMPLATE[type as LicenseType];
-				return {
-					id: license.id,
-					type: license.type,
-					name: template.name,
-					description: template.description,
-					price: license.price,
-					notes: template.notes,
-				};
-			});
-		} else {
-			// 없는 경우 availableLicenses 사용
-			return availableLicenses.map((license) => {
-				console.log(license);
-				const type = license.type.toUpperCase();
-				const template = LICENSE_TEMPLATE[type as LicenseType];
-				return {
-					id: license.id,
-					type: license.type,
-					name: template.name,
-					description: template.description,
-					price: license.price,
-					notes: template.notes,
-				};
-			});
-		}
+		// 1. productDetail 에 licenseInfo 가 존재하면 우선 사용
+		const licenseInfoSource =
+			productDetail?.licenseInfo && productDetail.licenseInfo.length > 0
+				? productDetail.licenseInfo
+				: availableLicenses;
+
+		return licenseInfoSource.map((license) => ({
+			id: license.id,
+			type: license.type,
+			price: license.price,
+			...LICENSE_MAP_TEMPLATE[license.type as LicenseType],
+		}));
 	})();
 
 	const handleChangeLicense = () => {

@@ -202,6 +202,7 @@ export const ProductLikeResponseSchema = z.object({
 	tags: z.array(z.string()).describe("태그 목록"),
 	licenseInfo: z.array(
 		z.object({
+			id: z.number().describe("라이센스 ID").default(1),
 			label: z.string().describe("라이센스 타입").default("MASTER"),
 			price: z.number().describe("라이센스 가격").default(10000),
 		}),

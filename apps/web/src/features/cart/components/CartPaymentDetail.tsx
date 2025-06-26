@@ -14,13 +14,7 @@ import type { PaymentOrderResponse } from "@hitbeatclub/shared-types/payment";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
-
-export type CheckoutItem = {
-	id: number; // cart item ID (not product ID)
-	imageUrl: string;
-	title: string;
-	price: number;
-};
+import type { CheckoutItem } from "./modal/PaymentSelectModal";
 
 interface CartPaymentDetailProps {
 	checkoutItems: CheckoutItem[];
@@ -88,10 +82,10 @@ export const CartPaymentDetail = ({ checkoutItems, subtotal, serviceFee = 0, tot
 			<div className="flex flex-col items-start gap-23px w-full">
 				<div className="flex flex-col items-start self-stretch gap-4">
 					<div className="text-2xl font-bold tracking-tight text-black uppercase font-suisse">Checkout</div>
-					<div className="flex flex-col items-start self-stretch">
+					<div className="flex flex-col items-start self-stretch max-h-[30vh] overflow-y-auto">
 						{checkoutItems.map((item, index) => (
 							<div
-								key={item.id}
+								key={`${item.productId}-${item.licenseId}-${index}`}
 								className={cn("py-3 inline-flex items-center gap-2.5 w-259px border-t-2 border-black ")}
 							>
 								<div className={cn("relative w-66px h-66px")}>
@@ -218,24 +212,39 @@ export const CartPaymentDetail = ({ checkoutItems, subtotal, serviceFee = 0, tot
 						이에 동의합니다.
 					</div>
 				</div>
-				<PaymentSelectModal
-					total={total}
-					orderName={getOrderName()}
-					checkoutItems={checkoutItems}
-					onPaymentComplete={handlePaymentComplete}
-					onPaymentError={handlePaymentError}
-					trigger={
+				{user && (
+					<>
 						<button
 							onClick={handlePaymentClick}
 							disabled={!checkoutItems.length || isCreatingOrder}
 							className="flex justify-center items-center h-10 bg-black rounded-[5px] outline-1 outline-offset-[-1px] outline-black self-stretch cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
 						>
 							<div className="font-bold leading-none tracking-tight text-white uppercase text-16px font-suisse">
-								{isCreatingOrder ? "주문 생성 중..." : !user ? "로그인하기" : "결제하러 가기"}
+								{isCreatingOrder ? "주문 생성 중..." : "결제하러 가기"}
 							</div>
 						</button>
-					}
-				/>
+
+						<PaymentSelectModal
+							open={paymentModalOpen}
+							onOpenChange={setPaymentModalOpen}
+							total={total}
+							orderName={getOrderName()}
+							checkoutItems={checkoutItems}
+							onPaymentComplete={handlePaymentComplete}
+							onPaymentError={handlePaymentError}
+						/>
+					</>
+				)}
+				{!user && (
+					<button
+						onClick={() => router.push("/auth/login?redirect=/carts")}
+						className="flex justify-center items-center h-10 bg-black rounded-[5px] outline-1 outline-offset-[-1px] outline-black self-stretch cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+					>
+						<div className="font-bold leading-none tracking-tight text-white uppercase text-16px font-suisse">
+							로그인하기
+						</div>
+					</button>
+				)}
 			</div>
 
 			{paymentResult && (

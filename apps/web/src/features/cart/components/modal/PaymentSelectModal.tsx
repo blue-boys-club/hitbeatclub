@@ -2,7 +2,7 @@
 
 // import { randomUUID } from "crypto";
 import { v4 as uuidv4 } from "uuid";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import * as PortOne from "@portone/browser-sdk/v2";
 import * as Popup from "@/components/ui/Popup";
 import { cn } from "@/common/utils";
@@ -17,7 +17,8 @@ import { useQuery } from "@tanstack/react-query";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 
 export type CheckoutItem = {
-	id: number; // cart item ID (not product ID)
+	productId: number;
+	licenseId: number;
 	imageUrl: string;
 	title: string;
 	price: number;
@@ -27,18 +28,16 @@ export type CheckoutItem = {
  * 결제 수단 선택 모달 컴포넌트 Props
  */
 interface PaymentSelectModalProps {
-	/** 모달을 열기 위한 트리거 요소 */
-	trigger?: React.ReactNode;
 	/** 총 결제 금액 */
 	total: number;
 	/** 주문명 */
 	orderName: string;
 	/** 체크아웃 아이템 목록 */
 	checkoutItems: CheckoutItem[];
-	/** 모달 열림 상태 (제어 컴포넌트로 사용 시) */
-	open?: boolean;
+	/** 모달 열림 상태 */
+	open: boolean;
 	/** 모달 열림/닫힘 상태 변경 콜백 */
-	onOpenChange?: (open: boolean) => void;
+	onOpenChange: (open: boolean) => void;
 	/** 결제 완료 콜백 */
 	onPaymentComplete?: (result: PaymentOrderResponse) => void;
 	/** 결제 실패 콜백 */
@@ -103,41 +102,36 @@ const paymentMethods: PaymentMethod[] = [
 /**
  * 결제 수단 선택 및 결제 요청을 처리하는 모달 컴포넌트입니다.
  *
- * @param trigger 모달을 열기 위한 트리거 요소
  * @param total 총 결제 금액
  * @param orderName 주문명
  * @param checkoutItems 체크아웃 아이템 목록
- * @param open 모달 열림 상태 (제어 컴포넌트로 사용 시)
+ * @param open 모달 열림 상태
  * @param onOpenChange 모달 열림/닫힘 상태 변경 콜백
  * @param onPaymentComplete 결제 완료 콜백
  * @param onPaymentError 결제 실패 콜백
  */
 export const PaymentSelectModal = ({
-	trigger,
 	total,
 	orderName,
 	checkoutItems,
-	open = false,
+	open,
 	onOpenChange,
 	onPaymentComplete,
 	onPaymentError,
 }: PaymentSelectModalProps) => {
-	const [isOpen, setIsOpen] = useState(open);
 	const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
 	const [selectedEasyPayProvider, setSelectedEasyPayProvider] = useState<EasyPayProvider | null>(null);
 	const [isProcessing, setIsProcessing] = useState(false);
 
 	const { mutateAsync: createPaymentOrder } = useCreatePaymentOrderMutation();
 	const { mutateAsync: completePayment } = useCompletePaymentOrderMutation();
-	useEffect(() => {
-		setIsOpen(open);
-	}, [open]);
 
 	const onHandleOpenChange = useCallback(
-		(open: boolean) => {
-			console.log("open", open);
-			setIsOpen(open);
-			onOpenChange?.(open);
+		(openState: boolean) => {
+			onOpenChange(openState);
+			if (!openState) {
+				setSelectedMethod(null);
+			}
 		},
 		[onOpenChange],
 	);
@@ -162,13 +156,13 @@ export const PaymentSelectModal = ({
 			// 1. 백엔드에 주문 생성 요청
 			// const paymentId = `payment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 			const paymentId = `payment-${uuidv4()}`;
-			const cartItemIds = checkoutItems.map((item) => item.id);
 
-			console.log("Creating payment order:", { paymentId, cartItemIds });
+			console.log("Creating payment order:", { paymentId });
 
 			const orderResponse = await createPaymentOrder({
+				type: "CART",
 				paymentId,
-				cartItemIds,
+				// cartItemIds 생략하면 전체 카트 아이템으로 결제
 			});
 
 			console.log("Order created:", orderResponse);
@@ -247,10 +241,9 @@ export const PaymentSelectModal = ({
 
 	return (
 		<Popup.Popup
-			open={isOpen}
+			open={open}
 			onOpenChange={onHandleOpenChange}
 		>
-			{trigger && <Popup.PopupTrigger asChild>{trigger}</Popup.PopupTrigger>}
 			<Popup.PopupContent className="w-[520px] max-h-[90vh]">
 				<div className="max-h-[90vh] overflow-y-auto">
 					<Popup.PopupHeader>
