@@ -11,7 +11,7 @@ interface MobileNoticeDetailPageProps {
 }
 
 const MobileNoticeDetailPage = ({ noticeId }: MobileNoticeDetailPageProps) => {
-	const noticeDetailQuery = useQuery(getNoticeDetailQueryOption(Number(noticeId)));
+	const noticeDetailQuery = useQuery(getNoticeDetailQueryOption(noticeId));
 
 	const { data: notice, isLoading, error } = noticeDetailQuery;
 
@@ -45,7 +45,7 @@ const MobileNoticeDetailPage = ({ noticeId }: MobileNoticeDetailPageProps) => {
 
 	return (
 		<div className="flex flex-col px-4 pb-4">
-			<MobileNoticePageTitle title={notice.title} />
+			<MobileNoticePageTitle title={notice.data.title} />
 			<div className="mt-13px flex justify-end">
 				<button
 					className="flex items-center rounded-30px h-24px px-3 border-2px border-black"
@@ -60,19 +60,19 @@ const MobileNoticeDetailPage = ({ noticeId }: MobileNoticeDetailPageProps) => {
 
 			{/* 공지사항 메타 정보 */}
 			<div className="my-17px flex justify-between items-center text-12px text-gray-600">
-				<div>작성일: {new Date(notice.createdAt).toLocaleDateString("ko-KR")}</div>
-				<div>조회수: {notice.viewCount}</div>
+				<div>작성일: {new Date(notice.data.createdAt).toLocaleDateString("ko-KR")}</div>
+				<div>조회수: {notice.data.viewCount}</div>
 			</div>
 
 			{/* 공지사항 내용 */}
-			<div className="text-14px leading-160% font-semibold whitespace-pre-wrap">{notice.content}</div>
+			<div className="text-14px leading-160% font-semibold whitespace-pre-wrap">{notice.data.content}</div>
 
 			{/* 첨부 파일 */}
-			{notice.files && notice.files.length > 0 && (
+			{notice.data.files && notice.data.files.length > 0 && (
 				<div className="mt-6 border-t pt-4">
 					<div className="text-12px font-semibold mb-2">첨부 파일:</div>
 					<div className="space-y-2">
-						{notice.files.map((file, index) => (
+						{notice.data.files.map((file, index) => (
 							<a
 								key={file.id}
 								href={file.url}

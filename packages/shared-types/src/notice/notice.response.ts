@@ -44,11 +44,6 @@ export const NoticeCreateResponseSchema = z.object({
 	id: z.string().describe("생성된 공지사항 ID"),
 });
 
-// 공지사항 목록 페이징 응답 스키마
-export const NoticeListPagingResponseSchema = CommonResponsePagingSchema.extend({
-	data: z.array(NoticeListResponseSchema),
-});
-
 // 타입 추출
 export type NoticeFileResponse = z.infer<typeof NoticeFileResponseSchema>;
 export type NoticeListResponse = z.infer<typeof NoticeListResponseSchema>;

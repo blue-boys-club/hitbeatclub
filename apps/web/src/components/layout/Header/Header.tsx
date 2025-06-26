@@ -45,7 +45,10 @@ const MobileHeader = () => {
 		<header className={cn("bg-white px-4 w-full h-62px flex justify-between items-center")}>
 			<div className="relative border-3px border-hbc-red rounded-40px pl-10px pr-30px py-6px">
 				<span className="block text-hbc-red font-bold leading-14px">ARTIST STUDIO</span>
-				<button className="absolute top-1/2 right-2px -translate-y-1/2 w-6 h-6 flex justify-center items-center">
+				<button
+					className="absolute top-1/2 right-2px w-6 h-6 flex justify-center items-center"
+					style={{ transform: "translateY(-50%)" }}
+				>
 					<ArrowLeftShort fill="red" />
 				</button>
 			</div>

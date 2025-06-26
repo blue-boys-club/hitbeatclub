@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
 			new URL("https://staging-assets.hitbeatclub.com/**"),
 			new URL("https://dev-assets.hitbeatclub.com/**"),
 			new URL("https://prod-hitbeatclub-assets.s3.ap-northeast-2.amazonaws.com/**"),
+			new URL("https://*/**"),
 		],
 	},
 	eslint: {
