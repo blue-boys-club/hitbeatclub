@@ -13,7 +13,5 @@ export interface FollowItem {
 	artistId: number;
 	stageName: string;
 	profileImageUrl: string;
-
-	isNotification: boolean;
-	isVerified: boolean;
+	followerCount: number;
 }

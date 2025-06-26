@@ -1,17 +1,13 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import ArtistHeader from "@/features/artist/components/ArtistHeader";
 import ArtistSearchBar from "@/features/artist/components/ArtistSearchBar";
 import ArtistCardSection from "@/features/artist/components/ArtistCardSection";
 import { SortOption } from "@/features/artist/artist.types";
 import { ViewType } from "@/features/artist/artist.types";
-import { useSearchParams } from "next/navigation";
-import { infiniteQueryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import {
-	useFollowedArtistsInfiniteQueryOptions,
-	useFollowedArtistsQueryOptions,
-} from "@/apis/user/query/user.query-option";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useFollowedArtistsInfiniteQueryOptions } from "@/apis/user/query/user.query-option";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { useInView } from "react-intersection-observer";
 

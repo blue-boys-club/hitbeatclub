@@ -9,7 +9,6 @@ import { useUpdateProductMutation } from "@/apis/product/mutations";
 import { useUploadProductFileMutation } from "@/apis/product/mutations/useUploadProductFileMutation";
 import { PRODUCT_FILE_TYPE } from "@/apis/product/product.type";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
-import { ProductCreateSchema } from "@hitbeatclub/shared-types/product";
 import { TrackUploadFormSchema } from "@/features/artist-studio/artist-studio.types";
 import { Acapella, AddCircle, Beat, LargeEqualizer, MinusCircle, Plus } from "@/assets/svgs";
 import Circle from "@/assets/svgs/Circle";
@@ -24,28 +23,32 @@ import blankCdImage from "@/assets/images/blank-cd.png";
 
 export type KeyValue = { label: string; value: string };
 
-// 확장된 폼 스키마 - 파일 관련 필드 추가, BPM 관련 필드 단순화
-const ExtendedTrackFormSchema = TrackUploadFormSchema.extend({
+type ExtendedTrackFormData = z.infer<typeof TrackUploadFormSchema> & {
+	// 필수 검증 추가
+	productName: string;
+	description: string;
+	genres: string[];
+	licenseInfo: Array<{
+		type: "MASTER" | "EXCLUSIVE";
+		price: number;
+	}>;
 	// 파일 업로드 상태
-	uploadedFiles: z.object({
-		coverImage: z.instanceof(File).nullable(),
-		audioFile: z.instanceof(File).nullable(),
-		zipFile: z.instanceof(File).nullable(),
-	}),
-	uploadedFileIds: z.object({
-		coverImageFileId: z.number().optional(),
-		audioFileFileId: z.number().optional(),
-		zipFileId: z.number().optional(),
-	}),
+	uploadedFiles: {
+		coverImage: File | null;
+		audioFile: File | null;
+		zipFile: File | null;
+	};
+	uploadedFileIds: {
+		coverImageFileId?: number;
+		audioFileFileId?: number;
+		zipFileId?: number;
+	};
 	// UI 상태
-	isDragOver: z.boolean(),
+	isDragOver: boolean;
 	// Key 관련 UI 필드들
-	keyValue: z.object({ label: z.string(), value: z.string() }).optional(),
-	scaleValue: z.string().nullable(),
-});
-
-type ExtendedTrackFormData = z.infer<typeof ExtendedTrackFormSchema>;
-type ProductData = z.infer<typeof ProductCreateSchema> & { id: number };
+	keyValue?: { label: string; value: string };
+	scaleValue: string | null;
+};
 
 interface ArtistStudioTrackModalProps {
 	mode: "upload" | "edit";
@@ -78,12 +81,77 @@ const ArtistStudioTrackModal = ({
 
 	const isProcessing = isCreating || isUpdating || isUploading;
 
+	// 모드에 따른 동적 스키마 생성
+	const formSchema = useMemo(() => {
+		const baseSchema = TrackUploadFormSchema.extend({
+			// 필수 검증 추가
+			productName: z.string().min(1, "필수 입력사항입니다."),
+			description: z.string().min(1, "필수 입력사항입니다."),
+			genres: z.array(z.string()).min(1, "필수 입력사항입니다."),
+			licenseInfo: z
+				.array(
+					z.object({
+						type: z.enum(["MASTER", "EXCLUSIVE"]),
+						price: z.number().min(1, "가격을 입력해주세요."),
+					}),
+				)
+				.min(1, "필수 입력사항입니다."),
+			// 파일 업로드 상태
+			uploadedFiles: z.object({
+				coverImage: z.instanceof(File).nullable(),
+				audioFile: z.instanceof(File).nullable(),
+				zipFile: z.instanceof(File).nullable(),
+			}),
+			uploadedFileIds: z.object({
+				coverImageFileId: z.number().optional(),
+				audioFileFileId: z.number().optional(),
+				zipFileId: z.number().optional(),
+			}),
+			// UI 상태
+			isDragOver: z.boolean(),
+			// Key 관련 UI 필드들
+			keyValue: z.object({ label: z.string(), value: z.string() }).optional(),
+			scaleValue: z.string().nullable(),
+		});
+
+		// 업로드 모드에서만 파일 검증 추가
+		if (mode === "upload") {
+			return baseSchema.superRefine((data, ctx) => {
+				if (!data.uploadedFileIds.coverImageFileId) {
+					ctx.addIssue({
+						code: z.ZodIssueCode.custom,
+						message: "커버 이미지는 필수입니다.",
+						path: ["uploadedFiles", "coverImage"],
+					});
+				}
+
+				if (!data.uploadedFileIds.audioFileFileId) {
+					ctx.addIssue({
+						code: z.ZodIssueCode.custom,
+						message: "오디오 파일은 필수입니다.",
+						path: ["uploadedFiles", "audioFile"],
+					});
+				}
+
+				if (!data.uploadedFileIds.zipFileId) {
+					ctx.addIssue({
+						code: z.ZodIssueCode.custom,
+						message: "압축 파일은 필수입니다.",
+						path: ["uploadedFiles", "zipFile"],
+					});
+				}
+			});
+		}
+
+		return baseSchema;
+	}, [mode]);
+
 	// 모드에 따른 기본값 설정
 	const getDefaultValues = useCallback((): ExtendedTrackFormData => {
 		const baseDefaults = {
 			productName: "",
 			description: "",
-			price: 0,
+			// price: 0,
 			category: "BEAT" as const,
 			genres: [] as string[],
 			tags: [] as string[],
@@ -98,8 +166,8 @@ const ArtistStudioTrackModal = ({
 			currency: "KRW",
 			isFreeDownload: 0,
 			isPublic: 1,
-			coverImageFileId: 1,
-			audioFileFileId: 2,
+			coverImageFileId: undefined,
+			audioFileFileId: undefined,
 			// UI 전용 필드들
 			keyValue: undefined,
 			scaleValue: null,
@@ -126,7 +194,6 @@ const ArtistStudioTrackModal = ({
 				...baseDefaults,
 				productName: productData.productName,
 				description: productData.description,
-				// price: productData.price,
 				category: productData.category,
 				// API 응답에서 객체 배열을 문자열 배열로 변환
 				genres: productData.genres?.map((genre: any) => genre.name) || [],
@@ -170,10 +237,10 @@ const ArtistStudioTrackModal = ({
 		trigger,
 		clearErrors,
 		setError,
-		formState: { errors },
+		formState: { errors, isDirty },
 		reset,
 	} = useForm<ExtendedTrackFormData>({
-		resolver: zodResolver(ExtendedTrackFormSchema),
+		resolver: zodResolver(formSchema),
 		defaultValues: getDefaultValues(),
 	});
 
@@ -374,33 +441,6 @@ const ArtistStudioTrackModal = ({
 	// 폼 제출 처리
 	const onSubmit = useCallback(
 		(data: ExtendedTrackFormData) => {
-			// 업로드 모드에서는 파일 업로드 검증
-			if (mode === "upload") {
-				if (!data.uploadedFileIds.audioFileFileId) {
-					setError("uploadedFiles.audioFile", {
-						type: "manual",
-						message: "오디오 파일은 필수입니다.",
-					});
-					return;
-				}
-
-				if (!data.uploadedFileIds.coverImageFileId) {
-					setError("uploadedFiles.coverImage", {
-						type: "manual",
-						message: "커버 이미지는 필수입니다.",
-					});
-					return;
-				}
-
-				if (!data.uploadedFileIds.zipFileId) {
-					setError("uploadedFiles.zipFile", {
-						type: "manual",
-						message: "압축 파일은 필수입니다.",
-					});
-					return;
-				}
-			}
-
 			// musicKey와 scaleType 타입 안전성 보장
 			const validMusicKeys = [
 				"null",
@@ -610,15 +650,62 @@ const ArtistStudioTrackModal = ({
 		[getValues, setValue, trigger],
 	);
 
+	// 파일 상태 가져오기
+	const getFileInfo = useCallback(
+		(fileType: "coverImage" | "audioFile" | "zipFile") => {
+			const uploadedFile = watchedUploadedFiles?.[fileType];
+			const existingFile = productData?.[fileType];
+
+			return {
+				displayName: uploadedFile?.name || existingFile?.originName,
+				isCompleted: !!uploadedFile || (mode === "edit" && !!existingFile),
+			};
+		},
+		[watchedUploadedFiles, productData, mode],
+	);
+
+	const coverImageFileInfo = getFileInfo("coverImage");
+	const audioFileFileInfo = getFileInfo("audioFile");
+	const zipFileFileInfo = getFileInfo("zipFile");
+
 	// 커버 이미지 소스
 	const coverImageSrc = useMemo(() => {
-		return watchedUploadedFiles?.coverImage ? URL.createObjectURL(watchedUploadedFiles.coverImage) : blankCdImage;
-	}, [watchedUploadedFiles?.coverImage]);
+		// 새로 업로드된 파일이 있으면 우선 사용
+		if (watchedUploadedFiles?.coverImage) {
+			return URL.createObjectURL(watchedUploadedFiles.coverImage);
+		}
+		// 편집 모드에서 기존 파일이 있으면 사용
+		if (mode === "edit" && productData?.coverImage?.url) {
+			return productData.coverImage.url;
+		}
+		// 기본 이미지
+		return blankCdImage;
+	}, [watchedUploadedFiles?.coverImage, mode, productData?.coverImage?.url]);
+
+	// 바깥 클릭 시 모달 닫기 제어
+	const handleOpenChange = useCallback(
+		(open: boolean) => {
+			// 모달을 닫으려고 할 때 (open === false)
+			if (!open) {
+				// 폼이 수정되지 않았거나 이미 처리 중이면 바로 닫기
+				if (!isDirty || isProcessing) {
+					onClose();
+					return;
+				}
+				// 폼이 수정되었으면 확인 후 닫기
+				const shouldClose = window.confirm("작성 중인 내용이 있습니다. 정말 닫으시겠습니까?");
+				if (shouldClose) {
+					onClose();
+				}
+			}
+		},
+		[isDirty, isProcessing, onClose],
+	);
 
 	return (
 		<Popup
 			open={isModalOpen}
-			onOpenChange={onClose}
+			onOpenChange={handleOpenChange}
 		>
 			<PopupContent
 				className={cn(
@@ -682,11 +769,13 @@ const ArtistStudioTrackModal = ({
 											</Button>
 										</label>
 									</div>
-									{watchedUploadedFiles?.coverImage && (
+									{coverImageFileInfo.displayName && (
 										<div className="flex items-center justify-center gap-1">
-											<Circle />
-											<span className="text-[#3884FF] text-sm font-extrabold">
-												{watchedUploadedFiles.coverImage.name}
+											<div className="flex-shrink-0">
+												<Circle />
+											</div>
+											<span className="text-[#3884FF] text-sm font-extrabold break-all">
+												{coverImageFileInfo.displayName}
 											</span>
 										</div>
 									)}
@@ -705,13 +794,13 @@ const ArtistStudioTrackModal = ({
 
 							{/* MP3 파일 업로드 섹션 */}
 							<div className="flex flex-col gap-[10px] justify-center items-center">
-								{watchedUploadedFiles?.audioFile ? (
+								{audioFileFileInfo.displayName ? (
 									<Badge
 										variant="default"
 										className="flex gap-[7px] px-5 py-[14px] rounded-5px bg-[#3884FF]"
 									>
 										<LargeEqualizer fill="white" />
-										<div className="text-white">{watchedUploadedFiles.audioFile.name}</div>
+										<div className="text-white">{audioFileFileInfo.displayName}</div>
 									</Badge>
 								) : (
 									<Badge
@@ -756,7 +845,7 @@ const ArtistStudioTrackModal = ({
 										{errors.uploadedFiles.audioFile.message}
 									</div>
 								)}
-								{watchedUploadedFiles?.audioFile && (
+								{audioFileFileInfo.isCompleted && (
 									<div className="flex items-center justify-center gap-1">
 										<Circle />
 										<span className="text-[#3884FF] text-sm font-extrabold">완료 !</span>
@@ -766,13 +855,13 @@ const ArtistStudioTrackModal = ({
 
 							{/* 압축 파일 업로드 섹션 */}
 							<div className="flex flex-col gap-[10px] justify-center items-center">
-								{watchedUploadedFiles?.zipFile ? (
+								{zipFileFileInfo.displayName ? (
 									<Badge
 										variant="default"
 										className="flex gap-[7px] px-5 py-[14px] rounded-5px bg-[#3884FF]"
 									>
 										<LargeEqualizer fill="white" />
-										<div className="text-white">{watchedUploadedFiles.zipFile.name}</div>
+										<div className="text-white">{zipFileFileInfo.displayName}</div>
 									</Badge>
 								) : (
 									<Badge
@@ -817,7 +906,7 @@ const ArtistStudioTrackModal = ({
 										{errors.uploadedFiles.zipFile.message}
 									</div>
 								)}
-								{watchedUploadedFiles?.zipFile && (
+								{zipFileFileInfo.isCompleted && (
 									<div className="flex items-center justify-center gap-1">
 										<Circle />
 										<span className="text-[#3884FF] text-sm font-extrabold">완료 !</span>
@@ -845,7 +934,6 @@ const ArtistStudioTrackModal = ({
 										<Input
 											variant={"rounded"}
 											{...field}
-											className={errors.productName ? "border-red-500" : ""}
 										/>
 									)}
 								/>
@@ -869,7 +957,6 @@ const ArtistStudioTrackModal = ({
 											{...field}
 											className={cn(
 												"border-x-[1px] border-y-[2px] border-black rounded-lg p-2 h-[162px] resize-none text-hbc-black font-suit text-xs font-semibold leading-[160%] tracking-[0.18px] focus:outline-none",
-												errors.description && "border-red-500",
 											)}
 										/>
 									)}
@@ -932,7 +1019,13 @@ const ArtistStudioTrackModal = ({
 												[]
 											}
 											initialItems={initialGenres}
-											onChange={field.onChange}
+											onChange={(items) => {
+												// 객체 배열을 문자열 배열로 변환
+												const stringArray = items.map((item: any) =>
+													typeof item === "string" ? item : item.text || item.value || item,
+												);
+												field.onChange(stringArray);
+											}}
 										/>
 									)}
 								/>
@@ -961,7 +1054,13 @@ const ArtistStudioTrackModal = ({
 												searchInfo?.tags?.map((tag) => ({ id: tag.id, value: tag.name, count: tag.count })) || []
 											}
 											initialItems={initialTags}
-											onChange={field.onChange}
+											onChange={(items) => {
+												// 객체 배열을 문자열 배열로 변환
+												const stringArray = items.map((item: any) =>
+													typeof item === "string" ? item : item.text || item.value || item,
+												);
+												field.onChange(stringArray);
+											}}
 										/>
 									)}
 								/>
@@ -1026,42 +1125,57 @@ const ArtistStudioTrackModal = ({
 							<div className="flex flex-col gap-[5px]">
 								<div className="font-[SUIT] text-xs flex justify-between">
 									<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">License</div>
-									<div className="text-hbc-red font-semibold leading-[150%] tracking-[0.12px]">
-										필수 입력사항 입니다.
-									</div>
+									{errors.licenseInfo && (
+										<div className="text-hbc-red font-semibold leading-[150%] tracking-[0.12px]">
+											{errors.licenseInfo.message}
+										</div>
+									)}
 								</div>
 								{watchedLicenseInfo?.map((license, index) => (
 									<div
 										key={index}
-										className="flex gap-5 items-center"
+										className="flex gap-5"
 									>
 										<div className="flex-grow grid grid-cols-2 gap-[5px]">
 											<Input
 												variant="rounded"
 												value={license.type}
+												readOnly
 												onChange={(e) => updateLicense(index, "type", e.target.value)}
 												placeholder="라이센스 타입"
 											/>
-											<div className="relative">
-												<Input
-													variant="rounded"
-													type="number"
-													value={license.price}
-													onChange={(e) => updateLicense(index, "price", e.target.value)}
-													placeholder="가격"
-												/>
-												<span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm font-semibold tracking-[-0.24px] text-gray-400">
-													KRW
-												</span>
+											<div className="flex flex-col gap-1">
+												<div className="flex gap-2 items-center">
+													<div className="flex-1 relative">
+														<Input
+															variant="rounded"
+															type="text"
+															inputMode="numeric"
+															pattern="[0-9]*"
+															value={license.price || ""}
+															onChange={(e) => updateLicense(index, "price", e.target.value)}
+															placeholder="가격"
+															className={errors.licenseInfo?.[index]?.price ? "border-red-500" : ""}
+														/>
+														<span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm font-semibold tracking-[-0.24px] text-gray-400">
+															KRW
+														</span>
+													</div>
+													<button
+														type="button"
+														className="flex-shrink-0 flex items-center justify-center cursor-pointer"
+														onClick={() => removeLicense(index)}
+													>
+														<MinusCircle />
+													</button>
+												</div>
+												{errors.licenseInfo?.[index]?.price && (
+													<div className="text-hbc-red text-xs leading-tight">
+														{errors.licenseInfo[index]?.price?.message}
+													</div>
+												)}
 											</div>
 										</div>
-										<button
-											type="button"
-											className="flex-shrink-0 cursor-pointer"
-											onClick={() => removeLicense(index)}
-										>
-											<MinusCircle />
-										</button>
 									</div>
 								))}
 								{errors.licenseInfo && <span className="text-red-500 text-xs">{errors.licenseInfo.message}</span>}

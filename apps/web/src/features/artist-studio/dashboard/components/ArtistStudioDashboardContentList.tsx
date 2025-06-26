@@ -11,6 +11,7 @@ import ArtistStudioDashDeleteTrackModal from "@/features/artist/components/modal
 import ArtistStudioDashCompleteModal from "@/features/artist/components/modal/ArtistStudioDashCompleteModal";
 import { useArtistProductParametersStateByKey } from "@/features/artist/hooks/useArtistProductParameters";
 import blankCdImage from "@/assets/images/blank-cd.png";
+import { AudioProvider } from "@/contexts/AudioContext";
 
 const ArtistStudioDashboardContentList = () => {
 	const [editingProductId, setEditingProductId] = useState<number | null>(null);
@@ -209,7 +210,7 @@ const ArtistStudioDashboardContentList = () => {
 	}
 
 	return (
-		<>
+		<AudioProvider>
 			<section>
 				<div className="border-b-6 pl-[2px] pb-2 text-hbc-black text-[24px] font-extrabold leading-[100%] tracking-[0.24px]">
 					컨텐츠 목록
@@ -286,7 +287,7 @@ const ArtistStudioDashboardContentList = () => {
 				isModalOpen={isCompleteOpen}
 				onClose={closeCompleteModal}
 			/>
-		</>
+		</AudioProvider>
 	);
 };
 

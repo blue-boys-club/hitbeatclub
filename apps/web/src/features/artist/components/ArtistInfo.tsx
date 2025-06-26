@@ -9,6 +9,7 @@ import {
 	ShuffleOff,
 	ShuffleOn,
 	SoundCloud,
+	Tiktok,
 	Youtube,
 } from "@/assets/svgs";
 import { ArtistAvatar } from "@/components/ui";
@@ -17,11 +18,12 @@ import { ArtistDropdown } from "./ArtistDropdown";
 import { ArtistReportModal } from "./ArtistReportModal";
 import { useToast } from "@/hooks/use-toast";
 import { useBlockArtistMutation, useUnblockArtistMutation } from "@/apis/artist/mutation";
-import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { getUserMeQueryOption, useAllFollowedArtistsQueryOptions } from "@/apis/user/query/user.query-option";
 import { getArtistDetailBySlugQueryOption } from "@/apis/artist/query/artist.query-options";
 import UserProfileImage from "@/assets/images/user-profile.png";
+import { useDeleteFollowedArtistMutation, useUpdateFollowedArtistMutation } from "@/apis/user/mutations";
+import { UserFollowArtistListResponse } from "@hitbeatclub/shared-types";
 
 interface DropdownOption {
 	label: string;
@@ -50,6 +52,13 @@ export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 	const { toast } = useToast();
 
 	const { data: userMe } = useQuery({ ...getUserMeQueryOption() });
+
+	const { mutate: followArtist } = useUpdateFollowedArtistMutation(userMe?.id ?? 0);
+	const { mutate: deleteFollowedArtist } = useDeleteFollowedArtistMutation(userMe?.id ?? 0);
+	const { data: followedArtistList } = useQuery({
+		...useAllFollowedArtistsQueryOptions(userMe?.id ?? 0),
+	});
+
 	const { mutateAsync: blockArtist } = useBlockArtistMutation();
 	const { mutateAsync: unblockArtist } = useUnblockArtistMutation();
 
@@ -57,6 +66,9 @@ export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 		...getArtistDetailBySlugQueryOption(slug),
 	});
 
+	const isFollwingArtist = followedArtistList?.some(
+		(followedArtist: UserFollowArtistListResponse) => followedArtist.artistId === artist?.id,
+	);
 	const isBlockedArtist = userMe?.blockArtistList.some((blockedArtist) => blockedArtist.artistId === artist?.id);
 
 	const onPlay = () => {
@@ -91,6 +103,8 @@ export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 			label: "팔로잉 취소",
 			value: "unfollow",
 			onClick: () => {
+				if (!artist?.id) return;
+				deleteFollowedArtist(artist.id);
 				setIsOpenDropdown(false);
 				toast({
 					description: "팔로잉이 취소되었습니다.",
@@ -100,7 +114,7 @@ export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 		{
 			label: isBlockedArtist ? "차단 해제" : "차단하기",
 			value: "block",
-			onClick: async () => {
+			onClick: () => {
 				if (!artist?.id) return;
 				if (isBlockedArtist) {
 					unblockArtist({ artistId: artist.id });
@@ -174,25 +188,26 @@ export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 
 				<div className="flex items-center gap-2">
 					<Button
-						variant="outline"
+						variant={isFollwingArtist ? "fill" : "outline"}
 						rounded="full"
+						onClick={() => {
+							if (!artist?.id) return;
+							if (isFollwingArtist) {
+								deleteFollowedArtist(artist.id);
+							} else {
+								followArtist(artist.id);
+							}
+						}}
 					>
-						Follow
+						{isFollwingArtist ? "Following" : "Follow"}
 					</Button>
 
-					<div className="text-[12px] font-semibold leading-[18px] tracking-0.12px">398 Followers</div>
+					<div className="text-[12px] font-semibold leading-[18px] tracking-0.12px">
+						{artist?.followerCount} Followers
+					</div>
 				</div>
 
 				<div className="flex items-center gap-2">
-					{/* <div className="cursor-pointer">
-						<FilledInstagram />
-					</div>
-					<div className="cursor-pointer">
-						<Youtube />
-					</div>
-					<div className="cursor-pointer">
-						<SoundCloud />
-					</div> */}
 					{artist?.instagramAccount && (
 						<a
 							href={`https://www.instagram.com/${artist?.instagramAccount}`}
@@ -226,14 +241,14 @@ export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 							target="_blank"
 							rel="noopener noreferrer"
 						>
-							{/* <TikTok /> */}
+							<Tiktok />
 						</a>
 					)}
 				</div>
 
 				<div className="text-[12px] text-[#777] font-medium leading-[16.8px]">
-					{/* <div>{artist?.productCount} Tracks</div> */}
-					{/* <div>{artist?.visitCount} Visits</div> */}
+					<div>{artist?.trackCount} Tracks</div>
+					<div>{artist?.viewCount} Visits</div>
 				</div>
 
 				<div className="text-[12px] text-[#1F1F21] font-semibold leading-[18px] tracking-0.12px">

@@ -95,6 +95,24 @@ export const useFollowedArtistsQueryOptions = (userId: number, payload: UserFoll
 	});
 };
 
+/**
+ * 팔로잉 아티스트 전체 목록 조회 (페이지네이션 없음)
+ * @param userId 유저 아이디
+ * @param payload 검색 및 정렬 옵션
+ * @returns 모든 팔로잉 아티스트 목록
+ */
+export const useAllFollowedArtistsQueryOptions = (
+	userId: number,
+	payload?: Omit<UserFollowedArtistListPayload, "page" | "limit">,
+) => {
+	return queryOptions({
+		queryKey: QUERY_KEYS.followedArtists.all(userId, payload),
+		queryFn: () => getFollowingArtists(userId, payload || {}),
+		select: (response) => response.data,
+		enabled: !!userId,
+	});
+};
+
 export const useFollowedArtistsInfiniteQueryOptions = (userId: number, payload: UserFollowedArtistListPayload) => {
 	return infiniteQueryOptions({
 		queryKey: QUERY_KEYS.followedArtists.infiniteList(userId, payload),
@@ -102,7 +120,7 @@ export const useFollowedArtistsInfiniteQueryOptions = (userId: number, payload: 
 		select: (response) => {
 			return {
 				data: response.pages.flatMap((page) => page.data),
-				total: response.pages[0]._pagination.total,
+				total: response.pages[0]?._pagination.total ?? 0,
 				pageParams: response.pageParams,
 			};
 		},

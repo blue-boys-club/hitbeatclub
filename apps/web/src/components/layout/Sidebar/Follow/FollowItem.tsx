@@ -1,14 +1,14 @@
 "use client";
-import { SmallAuthBadge } from "@/assets/svgs";
-import { FollowItem as FollowItemType } from "../types";
-import { UserAvatar } from "@/components/ui";
-import Link from "next/link";
-import { useMemo } from "react";
-import UserProfileImage from "@/assets/images/user-profile.png";
+
 import { cn } from "@/common/utils";
+import { UserAvatar } from "@/components/ui";
+import UserProfileImage from "@/assets/images/user-profile.png";
+import { useMemo } from "react";
+import Link from "next/link";
+import { UserFollowArtistListResponse } from "@hitbeatclub/shared-types";
 
 export interface FollowItemProps {
-	follow: FollowItemType;
+	follow: UserFollowArtistListResponse;
 }
 
 export const FollowItem = ({ follow }: FollowItemProps) => {
@@ -26,7 +26,7 @@ export const FollowItem = ({ follow }: FollowItemProps) => {
 					size="sidebar"
 					src={artistProfileImageUrl}
 					alt={follow.stageName ?? ""}
-					isNotification={follow.isNotification}
+					isNotification={false}
 					className={cn("bg-hbc-black", artistProfileImageUrl === UserProfileImage && "bg-hbc-white")}
 				/>
 			</div>
@@ -36,11 +36,11 @@ export const FollowItem = ({ follow }: FollowItemProps) => {
 						{follow.stageName ?? ""}
 					</div>
 				</div>
-				{follow.isVerified && (
+				{/* {follow.isVerified && (
 					<div className="flex items-center justify-center h-full py-4px ">
 						<SmallAuthBadge />
 					</div>
-				)}
+				)} */}
 			</div>
 		</Link>
 	);
