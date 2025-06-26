@@ -212,7 +212,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 							</div>
 
 							<div className="flex flex-col gap-0.5">
-								{!!product?.isFreeDownload && (
+								{user?.subscribedAt && !!product?.isFreeDownload && (
 									<FreeDownloadButton
 										variant="secondary"
 										className="outline-4 outline-hbc-black px-2.5 font-suisse"
