@@ -21,12 +21,6 @@ import ArtistStudioTrackModal from "@/features/artist/components/modal/ArtistStu
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
 import { PRODUCT_FILE_TYPE } from "@/apis/product/product.type";
 
-const artistStats = [
-	{ label: "Follower", value: "4,567" },
-	{ label: "Tracks", value: "52" },
-	{ label: "Visitors", value: "976" },
-];
-
 export const ArtistSidebar = () => {
 	const [isProfileWarningOpen, setIsProfileWarningOpen] = useState(false);
 	const [isLockedNavWarningOpen, setIsLockedNavWarningOpen] = useState(false);
@@ -225,10 +219,10 @@ export const ArtistSidebar = () => {
 	};
 
 	const profileUrl = useMemo(() => {
-		if (!artistMe?.profileImageUrl || artistMe?.profileImageUrl === "") {
+		if (!artistMe?.profileImage?.url || artistMe?.profileImage?.url === "") {
 			return UserProfileImage;
 		}
-		return artistMe.profileImageUrl;
+		return artistMe?.profileImage?.url;
 	}, [artistMe]);
 
 	return (
@@ -260,10 +254,16 @@ export const ArtistSidebar = () => {
 						/>
 
 						<h2 className="font-bold text-center text-black font-suisse text-38px leading-40px tracking-038px h-40px">
-							홍길동
+							{artistMe?.stageName}
 						</h2>
 
-						<ArtistStatRow artistStats={artistStats} />
+						<ArtistStatRow
+							artistStats={[
+								{ label: "Follower", value: artistMe?.followerCount || 0 },
+								{ label: "Tracks", value: artistMe?.trackCount || 0 },
+								{ label: "Visitors", value: artistMe?.viewCount || 0 },
+							]}
+						/>
 					</section>
 
 					<section className="flex flex-col mt-48px pl-20px pr-11px gap-15px ">

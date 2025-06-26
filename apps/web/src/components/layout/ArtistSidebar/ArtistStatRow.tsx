@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/Badge";
 interface ArtistStatRowProps {
 	artistStats: Array<{
 		label: string;
-		value: string;
+		value: number | undefined;
 	}>;
 }
 const ArtistStatRow = ({ artistStats }: ArtistStatRowProps) => (
