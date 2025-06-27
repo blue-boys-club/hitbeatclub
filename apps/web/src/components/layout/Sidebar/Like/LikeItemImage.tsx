@@ -24,7 +24,7 @@ const LikeItemImage = memo(function LikeItemImage({ status = "default", alt, ima
 					alt="Media thumbnail"
 					width={240}
 					height={240}
-					className="object-cover w-full h-full rounded-lg"
+					className="object-cover aspect-square w-full h-full rounded-lg"
 				/>
 			)}
 

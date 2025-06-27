@@ -17,3 +17,4 @@ export * from "./payment";
 export * from "./player";
 export * from "./question";
 export * from "./inquiry";
+export * from "./playlist";

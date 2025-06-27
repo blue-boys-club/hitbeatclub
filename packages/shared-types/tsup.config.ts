@@ -20,7 +20,7 @@ export default defineConfig({
 		"notice/index": "src/notice/index.ts",
 		"payment/index": "src/payment/index.ts",
 		"search/index": "src/search/index.ts",
-		"player/index": "src/player/index.ts",
+		"playlist/index": "src/playlist/index.ts",
 		"question/index": "src/question/index.ts",
 		"inquiry/index": "src/inquiry/index.ts",
 	},
