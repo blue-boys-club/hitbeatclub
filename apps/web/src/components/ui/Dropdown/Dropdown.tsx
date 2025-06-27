@@ -65,6 +65,8 @@ export interface DropdownProps extends VariantProps<typeof dropdownVariants> {
 	optionsClassName?: string;
 	buttonClassName?: string;
 	placeholder?: string;
+	onClick?: () => void;
+	optionsWrapperClassName?: string;
 }
 
 export const Dropdown = ({
@@ -77,6 +79,8 @@ export const Dropdown = ({
 	buttonClassName,
 	placeholder = "Please select...",
 	size,
+	onClick,
+	optionsWrapperClassName,
 }: DropdownProps) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [internalValue, setInternalValue] = useState(defaultValue);
@@ -134,6 +138,7 @@ export const Dropdown = ({
 		<div
 			ref={dropdownRef}
 			className={cn("relative inline-flex flex-col w-fit", className)}
+			onClick={onClick}
 		>
 			<div className="relative w-full">
 				<select
@@ -197,6 +202,7 @@ export const Dropdown = ({
 						"absolute top-[calc(100%+2px)]",
 						dropdownPosition === "left" ? "left-0" : "right-0",
 						"z-50 w-full max-w-[calc(100%+4px)]",
+						optionsWrapperClassName,
 					)}
 				>
 					<ul
