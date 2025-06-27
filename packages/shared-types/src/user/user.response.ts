@@ -67,6 +67,7 @@ export const UserFollowArtistListResponseSchema = z.object({
 	artistId: z.number().describe("아티스트 ID"),
 	stageName: z.string().nullable().describe("아티스트 스테이지명"),
 	profileImageUrl: z.string().nullable().describe("아티스트 프로필 이미지"),
+	slug: z.string().nullable().describe("아티스트 슬러그"),
 	followerCount: z.number().describe("팔로워 수"),
 });
 
