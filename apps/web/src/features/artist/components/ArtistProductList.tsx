@@ -1,12 +1,12 @@
 import { memo, useCallback, useMemo, useState, useEffect } from "react";
 import { ProductItem, ProductSearch, ProductSort } from "@/features/product/components";
 import { ArtistProductFilter } from "@/features/artist/components/ArtistProductFilter";
-import { useInfiniteQuery, keepPreviousData } from "@tanstack/react-query";
+import { useInfiniteQuery, keepPreviousData, useQueryClient } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import { getArtistProductListBySlugInfiniteQueryOption } from "@/apis/artist/query/artist.query-options";
 import type { ArtistProductListQueryRequest } from "@hitbeatclub/shared-types/artist";
 import type { ProductListItem } from "@/features/product/product.types";
-import { useLikeProductMutation } from "@/apis/product/mutations";
+import { useLikeProductMutation, useUnlikeProductMutation } from "@/apis/product/mutations";
 import blankCdImage from "@/assets/images/blank-cd.png";
 
 interface ArtistProductListProps {
@@ -25,13 +25,31 @@ export const ArtistProductList = memo(({ slug }: ArtistProductListProps) => {
 		isPublic: true,
 	});
 
+	const queryClient = useQueryClient();
 	const { mutate: likeProduct } = useLikeProductMutation();
+	const { mutate: unlikeProduct } = useUnlikeProductMutation();
 
 	const handleLike = useCallback(
-		(productId: number) => {
-			likeProduct(productId);
+		(productId: number, isLiked: boolean) => {
+			if (isLiked) {
+				unlikeProduct(productId, {
+					onSuccess: () => {
+						queryClient.invalidateQueries({
+							queryKey: getArtistProductListBySlugInfiniteQueryOption(slug, filters).queryKey,
+						});
+					},
+				});
+			} else {
+				likeProduct(productId, {
+					onSuccess: () => {
+						queryClient.invalidateQueries({
+							queryKey: getArtistProductListBySlugInfiniteQueryOption(slug, filters).queryKey,
+						});
+					},
+				});
+			}
 		},
-		[likeProduct],
+		[likeProduct, unlikeProduct, queryClient, slug, filters],
 	);
 
 	const handleFiltersChange = useCallback((newFilters: Omit<ArtistProductListQueryRequest, "page" | "limit">) => {
@@ -155,7 +173,7 @@ export const ArtistProductList = memo(({ slug }: ArtistProductListProps) => {
 							tags={product.tags ? (product.tags as any).map((t: any) => (typeof t === "string" ? t : t.name)) : []}
 							type={product.category as any}
 							isLiked={!!product.isLiked}
-							onLike={() => handleLike(product.id)}
+							onLike={() => handleLike(product.id, !!product.isLiked)}
 						/>
 					))
 				)}

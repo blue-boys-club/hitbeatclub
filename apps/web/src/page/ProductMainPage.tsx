@@ -31,7 +31,7 @@ export default function ProductMainPage() {
 					title: "ALL",
 					goTo: {
 						label: "Show All",
-						href: "#",
+						href: "/search",
 					},
 				}}
 				products={data?.all || []}
@@ -42,7 +42,7 @@ export default function ProductMainPage() {
 					title: "Beat",
 					goTo: {
 						label: "Show All",
-						href: "#",
+						href: "/search?category=BEAT",
 					},
 				}}
 				products={data?.beat || []}
@@ -53,7 +53,7 @@ export default function ProductMainPage() {
 					title: "Acappella",
 					goTo: {
 						label: "Show All",
-						href: "#",
+						href: "/search?category=ACAPELA",
 					},
 				}}
 				products={data?.acappella || []}
