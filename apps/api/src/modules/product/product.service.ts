@@ -991,6 +991,7 @@ export class ProductService {
 									id: true,
 									stageName: true,
 									profileImageUrl: true,
+									slug: true,
 								},
 							},
 							createdAt: true,
@@ -1059,6 +1060,7 @@ export class ProductService {
 				id: like.product.artistSellerIdToArtist.id,
 				stageName: like.product.artistSellerIdToArtist.stageName,
 				profileImageUrl: like.product.artistSellerIdToArtist.profileImageUrl,
+				slug: like.product.artistSellerIdToArtist.slug,
 			};
 
 			const files = filesByProductId[like.product.id.toString()] ?? [];

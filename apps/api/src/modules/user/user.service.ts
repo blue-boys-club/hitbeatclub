@@ -283,6 +283,7 @@ export class UserService {
 				SELECT 
 					a.id as "artistId",
 					a.stage_name as "stageName", 
+					a.slug as "slug",
 					f.url as "profileImageUrl",
 					(SELECT COUNT(*) FROM user_artist_follow WHERE artist_id = a.id) as "followerCount"
 				FROM user_artist_follow uaf
