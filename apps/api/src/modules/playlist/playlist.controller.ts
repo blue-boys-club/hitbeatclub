@@ -7,10 +7,10 @@ import { IResponse } from "~/common/response/interfaces/response.interface";
 import { AuthenticatedRequest } from "../auth/dto/request/auth.dto.request";
 import { PlaylistTracksResponseDto } from "./dto/response/playlist.tracks.response.dto";
 import { DocResponse } from "~/common/doc/decorators/doc.decorator";
-
-// TODO: Replace 'any' with actual imports when shared-types export is available
-type PlaylistAutoRequest = any;
-type PlaylistManualRequest = { trackIds: number[] };
+import { ZodValidationPipe } from "nestjs-zod";
+import { PlaylistAutoRequestSchema, PlaylistManualRequestSchema } from "@hitbeatclub/shared-types";
+import { PlaylistAutoRequestDto } from "./dto/request/playlist.auto.request.dto";
+import { PlaylistManualRequestDto } from "./dto/request/playlist.manual.request.dto";
 
 @Controller("playlists")
 @ApiTags("playlist")
@@ -23,7 +23,7 @@ export class PlaylistController {
 	@DocResponse<PlaylistTracksResponseDto>("success", { dto: PlaylistTracksResponseDto })
 	async getAutoPlaylist(
 		@Req() req: AuthenticatedRequest,
-		@Query() query: PlaylistAutoRequest,
+		@Query(new ZodValidationPipe(PlaylistAutoRequestSchema)) query: PlaylistAutoRequestDto,
 	): Promise<IResponse<{ trackIds: number[] }>> {
 		const result = await this.playlistService.createAutoPlaylist(req?.user?.id, query);
 		return {
@@ -39,7 +39,7 @@ export class PlaylistController {
 	@DocResponse<PlaylistTracksResponseDto>("success", { dto: PlaylistTracksResponseDto })
 	async postManualPlaylist(
 		@Req() req: AuthenticatedRequest,
-		@Body() body: PlaylistManualRequest,
+		@Body(new ZodValidationPipe(PlaylistManualRequestSchema)) body: PlaylistManualRequestDto,
 	): Promise<IResponse<{ trackIds: number[] }>> {
 		const result = await this.playlistService.createManualPlaylist(req?.user?.id, body);
 		return {

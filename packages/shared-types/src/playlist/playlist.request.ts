@@ -52,3 +52,13 @@ export const PlaylistManualRequestSchema = z.object({
 });
 
 export type PlaylistManualRequest = z.infer<typeof PlaylistManualRequestSchema>;
+
+/**
+ * PUT /users/me/playlist 요청 스키마 - 트랙 변경 시 전체 재생목록 덮어쓰기
+ */
+export const PlaylistUpdateRequestSchema = z.object({
+	trackIds: z.array(z.coerce.number()).max(100).describe("재생목록 트랙 ID 배열"),
+	currentIndex: z.coerce.number().min(0).describe("현재 재생 인덱스"),
+});
+
+export type PlaylistUpdateRequest = z.infer<typeof PlaylistUpdateRequestSchema>;

@@ -10,6 +10,7 @@ import {
 	NotFoundException,
 	Query,
 	BadRequestException,
+	Put,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { ApiOperation, ApiTags, ApiBody, ApiQuery } from "@nestjs/swagger";
@@ -37,6 +38,10 @@ import { UserProfileUpdateDto } from "./dto/request/user.profile-update.request.
 import { UserDeleteDto } from "./dto/request/user.delete.request.dto";
 import { UserPasswordResetDto } from "./dto/request/user.password-reset.request.dto";
 import { USER_RESET_PASSWORD_ID_MISMATCH_ERROR } from "./user.error";
+import { PlaylistFullResponseDto } from "../playlist/dto/response/playlist.full.response.dto";
+import { playlistMessage } from "../playlist/player.message";
+import { PlaylistService } from "../playlist/playlist.service";
+import { PlaylistUpdateRequestDto } from "../playlist/dto/request/playlist.update.request.dto";
 
 @Controller("users")
 @ApiTags("user")
@@ -46,6 +51,7 @@ export class UserController {
 		private readonly userService: UserService,
 		private readonly productService: ProductService,
 		private readonly cartService: CartService,
+		private readonly playlistService: PlaylistService,
 	) {}
 
 	@Get("me")
@@ -349,6 +355,39 @@ export class UserController {
 			data: {
 				id: user.id,
 			},
+		};
+	}
+
+	@Put("me/playlist")
+	@ApiOperation({ summary: "재생목록 수정" })
+	@AuthenticationDoc()
+	@DocResponse<PlaylistFullResponseDto>("재생목록 수정 성공", {
+		dto: PlaylistFullResponseDto,
+	})
+	async updatePlaylist(
+		@Req() req: AuthenticatedRequest,
+		@Body() playlistUpdateRequestDto: PlaylistUpdateRequestDto,
+	): Promise<IResponse<PlaylistFullResponseDto>> {
+		const result = await this.playlistService.overwritePlaylist(req.user.id, playlistUpdateRequestDto);
+		return {
+			statusCode: 200,
+			message: "재생목록 수정 성공",
+			data: result,
+		};
+	}
+
+	@Get("me/playlist")
+	@ApiOperation({ summary: "저장된 재생목록 조회" })
+	@AuthenticationDoc()
+	@DocResponse<PlaylistFullResponseDto>("재생목록 조회 성공", {
+		dto: PlaylistFullResponseDto,
+	})
+	async getPlaylist(@Req() req: AuthenticatedRequest): Promise<IResponse<PlaylistFullResponseDto>> {
+		const result = await this.playlistService.findPlaylist(req.user.id);
+		return {
+			statusCode: 200,
+			message: "재생목록 조회 성공",
+			data: result,
 		};
 	}
 }

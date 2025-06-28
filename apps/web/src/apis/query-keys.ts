@@ -5,6 +5,7 @@ import { UserLikeProductListRequest } from "@hitbeatclub/shared-types/user";
 import { UserFollowedArtistListPayload } from "./user/user.type";
 import { NoticeListQueryRequest } from "@hitbeatclub/shared-types/notice";
 import { ProductSearchQuery } from "./search/search.type";
+import { PlaylistAutoRequest, PlaylistManualRequest } from "@hitbeatclub/shared-types";
 
 type QueryKey = Array<
 	| string
@@ -142,6 +143,12 @@ const QUERY_KEYS = {
 	},
 	subscribe: {
 		plans: ["subscribe", "plans"],
+	},
+	playlist: {
+		_key: ["playlist"],
+		userPlaylist: ["playlist", "userPlaylist"],
+		auto: (data: PlaylistAutoRequest) => ["playlist", "auto", data],
+		manual: (data: PlaylistManualRequest) => ["playlist", "manual", data],
 	},
 };
 

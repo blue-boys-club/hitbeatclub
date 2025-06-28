@@ -52,4 +52,7 @@ export const MUTATION_KEYS = {
 	player: {
 		startPlayer: ["player", "startPlayer"],
 	},
+	playlist: {
+		update: ["playlist", "update"],
+	},
 };
