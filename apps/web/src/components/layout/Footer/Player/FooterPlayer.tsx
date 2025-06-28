@@ -17,6 +17,7 @@ import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
 import { useQuery } from "@tanstack/react-query";
 import { getProductFileDownloadLinkQueryOption } from "@/apis/product/query/product.query-option";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
+import { SidebarType, useLayoutStore } from "@/stores/layout";
 
 /**
  * 푸터 플레이어 컴포넌트
@@ -31,6 +32,14 @@ export const FooterPlayer = () => {
 			productId: state.productId,
 			isPlaying: state.isPlaying,
 			setIsPlaying: state.setIsPlaying,
+		})),
+	);
+
+	const { isOpen, setRightSidebar, setPlayer } = useLayoutStore(
+		useShallow((state) => ({
+			isOpen: state.rightSidebar.isOpen,
+			setRightSidebar: state.setRightSidebar,
+			setPlayer: state.setPlayer,
 		})),
 	);
 
@@ -135,9 +144,17 @@ export const FooterPlayer = () => {
 											width={60}
 											height={60}
 											alt="track-image"
-											className="border-black w-14 h-14"
+											className="border-black w-14 h-14 cursor-pointer"
 											src={productData.coverImage.url}
 											loader={assetImageLoader}
+											onClick={() => {
+												setPlayer({
+													trackId: productId,
+												});
+												setRightSidebar(true, {
+													currentType: SidebarType.TRACK,
+												});
+											}}
 										/>
 									) : (
 										<div className="w-14 h-14 bg-gray-200 border border-black flex items-center justify-center">
