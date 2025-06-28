@@ -116,13 +116,15 @@ const PlaylistRightSidebar = () => {
 
 							{selectedPlaylist ? (
 								<div className="flex gap-4 mb-7">
-									<Image
-										src={albumImage}
-										alt="앨범 표지"
-										width={54}
-										height={54}
-										className="rounded-[8px]"
-									/>
+									<div className="w-54px h-54px">
+										<Image
+											src={albumImage}
+											alt="앨범 표지"
+											width={54}
+											height={54}
+											className="object-cover rounded-[8px] w-full h-full"
+										/>
+									</div>
 									<div className="pt-1 flex flex-col gap-[2px]">
 										<div className="text-black font-bold text-[24px] leading-[28px] tracking-[0.24px] truncate w-[155px]">
 											{selectedPlaylist.productName}
