@@ -10,6 +10,7 @@ import { assetImageLoader } from "@/common/utils/image-loader";
 import { useLikeProductMutation, useUnlikeProductMutation } from "@/apis/product/mutations";
 import { useShallow } from "zustand/react/shallow";
 import { useAudioStore } from "@/stores/audio";
+import { usePlaylist } from "@/hooks/use-playlist";
 import { PurchaseWithCartTrigger } from "@/features/product/components/PurchaseWithCartTrigger";
 import { DropContentWrapper } from "@/features/dnd/components/DropContentWrapper";
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +24,8 @@ import { getProductQueryOption } from "@/apis/product/query/product.query-option
  * - productId 기반으로 서버에서 데이터 조회
  * - 오디오 파일 다운로드 링크를 가져와서 재생
  * - 재생 실패시 토스트 메시지 표시
- * - 플레이어 리스트를 활용한 다음 트랙 재생 기능
+ * - 플레이리스트를 활용한 이전/다음 트랙 재생 기능
+ * - 재생 불가 트랙 자동 건너뛰기
  */
 export const FooterPlayer = () => {
 	const { productId, isPlaying, setIsPlaying } = useAudioStore(
@@ -34,8 +36,31 @@ export const FooterPlayer = () => {
 		})),
 	);
 
+	// 플레이리스트 훅 사용
+	const {
+		trackIds,
+		currentIndex,
+		currentPlayableTrackId,
+		playNextTrack,
+		playPreviousTrack,
+		handleUnplayableTrack,
+		isShuffleEnabled,
+		repeatMode,
+		toggleShuffle,
+		toggleRepeatMode,
+	} = usePlaylist();
+
 	// Audio player state and controls - Context를 통해 깔끔하게 관리
-	const { autoPlay, stop, isPlaying: contextIsPlaying } = useAudioContext();
+	const {
+		autoPlay,
+		stop,
+		isPlaying: contextIsPlaying,
+		setPreviousCallback,
+		setNextCallback,
+		setShuffleCallback,
+		setRepeatCallback,
+		setEndedCallback,
+	} = useAudioContext();
 	const { toast } = useToast();
 
 	const { mutate: likeMutation } = useLikeProductMutation();
@@ -96,16 +121,14 @@ export const FooterPlayer = () => {
 		}
 	}, [audioFileDownloadLink, stop, autoPlay, setIsPlaying]);
 
-	// 오디오 파일 다운로드 에러 처리
+	// 오디오 파일 다운로드 에러 처리 - 재생 불가 트랙으로 처리
 	useEffect(() => {
-		if (audioFileError) {
-			toast({
-				description: "오디오 파일을 불러올 수 없습니다. 잠시 후 다시 시도해주세요.",
-				variant: "destructive",
-			});
+		if (audioFileError && productId) {
+			// 재생 불가 트랙으로 마킹하고 자동으로 다음 트랙으로 이동
+			handleUnplayableTrack(productId);
 			setIsPlaying(false);
 		}
-	}, [audioFileError, toast, setIsPlaying]);
+	}, [audioFileError, productId, handleUnplayableTrack, setIsPlaying]);
 
 	// AudioContext 재생 상태를 글로벌 스토어와 동기화 (단방향: Context -> Store)
 	useEffect(() => {
@@ -113,6 +136,78 @@ export const FooterPlayer = () => {
 			setIsPlaying(contextIsPlaying);
 		}
 	}, [isPlaying, contextIsPlaying, setIsPlaying]);
+
+	// 이전 트랙 재생 핸들러
+	const handlePreviousTrack = () => {
+		const success = playPreviousTrack();
+		if (!success) {
+			toast({
+				description: "이전 곡이 없습니다.",
+			});
+		}
+	};
+
+	// 다음 트랙 재생 핸들러
+	const handleNextTrack = () => {
+		const success = playNextTrack();
+		if (!success) {
+			toast({
+				description: "다음 곡이 없습니다.",
+			});
+		}
+	};
+
+	// AudioContext와 플레이리스트 연동
+	useEffect(() => {
+		// AudioContext 콜백들을 플레이리스트 시스템에 연결
+		setPreviousCallback(handlePreviousTrack);
+		setNextCallback(handleNextTrack);
+		setShuffleCallback(toggleShuffle);
+		setRepeatCallback(toggleRepeatMode);
+
+		// 트랙 종료 시 처리
+		setEndedCallback(() => {
+			// 반복 모드가 "one"이면 현재 트랙 재시작
+			if (repeatMode === "one") {
+				if (productId) {
+					// 현재 트랙 다시 재생
+					setTimeout(() => {
+						autoPlay();
+						setIsPlaying(true);
+					}, 100);
+				}
+				return;
+			}
+
+			// 다음 트랙으로 자동 진행
+			const success = playNextTrack();
+			if (!success) {
+				// 더 이상 재생할 트랙이 없으면 재생 중지
+				setIsPlaying(false);
+				if (repeatMode === "none") {
+					toast({
+						description: "플레이리스트가 끝났습니다.",
+					});
+				}
+			}
+		});
+	}, [
+		handlePreviousTrack,
+		handleNextTrack,
+		toggleShuffle,
+		toggleRepeatMode,
+		playNextTrack,
+		repeatMode,
+		productId,
+		autoPlay,
+		setIsPlaying,
+		toast,
+		setPreviousCallback,
+		setNextCallback,
+		setShuffleCallback,
+		setRepeatCallback,
+		setEndedCallback,
+	]);
 
 	return (
 		<DropContentWrapper

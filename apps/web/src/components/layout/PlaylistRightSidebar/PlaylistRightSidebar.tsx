@@ -6,13 +6,13 @@ import React, { useEffect, useRef, useCallback, useMemo } from "react";
 import PlaylistItem from "./PlaylistItem";
 import { useLayoutStore } from "@/stores/layout";
 import { useShallow } from "zustand/react/shallow";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { getPlayerListInfiniteQueryOptions } from "@/apis/player/query/player.query-options";
-import { PlayerListResponse } from "@hitbeatclub/shared-types";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { DropContentWrapper } from "@/features/dnd/components/DropContentWrapper";
 import blankCdImage from "@/assets/images/blank-cd.png";
 import { usePlayTrack } from "@/hooks/use-play-track";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { usePlaylist } from "@/hooks/use-playlist";
+import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 
 const PlaylistRightSidebar = () => {
 	const { data: userMe } = useQuery({ ...getUserMeQueryOption(), retry: false });
@@ -25,35 +25,16 @@ const PlaylistRightSidebar = () => {
 		})),
 	);
 
-	const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } = useInfiniteQuery({
-		...getPlayerListInfiniteQueryOptions(),
-		enabled: !!userMe?.id,
+	// 새로운 플레이리스트 시스템 사용
+	const { trackIds, currentIndex, isLoggedIn } = usePlaylist();
+
+	// 플레이리스트의 각 트랙에 대한 상품 정보 조회
+	const trackQueries = useQueries({
+		queries: trackIds.map((trackId) => ({
+			...getProductQueryOption(trackId),
+			enabled: !!trackId && isLoggedIn,
+		})),
 	});
-
-	// 무한 스크롤을 위한 ref와 observer 설정
-	const observerRef = useRef<HTMLDivElement>(null);
-
-	const handleObserver = useCallback(
-		(entries: IntersectionObserverEntry[]) => {
-			const target = entries[0];
-			if (target?.isIntersecting && hasNextPage && !isFetchingNextPage) {
-				fetchNextPage();
-			}
-		},
-		[fetchNextPage, hasNextPage, isFetchingNextPage],
-	);
-
-	useEffect(() => {
-		const element = observerRef.current;
-		if (!element) return;
-
-		const observer = new IntersectionObserver(handleObserver, {
-			threshold: 0.1,
-		});
-
-		observer.observe(element);
-		return () => observer.disconnect();
-	}, [handleObserver]);
 
 	const handleToggleOpen = useCallback(() => {
 		setRightSidebar(!isOpen);
@@ -62,19 +43,49 @@ const PlaylistRightSidebar = () => {
 	// 재생 훅: { play }
 	const { play } = usePlayTrack();
 
-	// 모든 페이지의 플레이리스트 데이터를 평탄화 - useMemo로 최적화
-	const allPlaylists: PlayerListResponse[] = useMemo(() => {
-		return data?.pages.flat() ?? [];
-	}, [data?.pages]);
+	// 플레이리스트 데이터를 PlayerListResponse 형태로 변환
+	const allPlaylists = useMemo(() => {
+		return trackQueries
+			.map((query, index) => {
+				if (!query.data) return null;
+
+				const product = query.data;
+				return {
+					id: product.id,
+					productId: product.id,
+					productName: product.productName,
+					seller: {
+						id: product.seller?.id || 0,
+						stageName: product.seller?.stageName || "",
+						profileImageUrl: product.seller?.profileImageUrl || "",
+					},
+					coverImage: {
+						id: product.coverImage?.id || 0,
+						url: product.coverImage?.url || "",
+						originName: product.coverImage?.originName || "",
+					},
+					audioFile: {
+						id: product.audioFile?.id || 0,
+						url: product.audioFile?.url || "",
+						originName: product.audioFile?.originName || "",
+					},
+				};
+			})
+			.filter(Boolean);
+	}, [trackQueries]);
 
 	// 현재 선택된 플레이리스트 찾기 - useMemo로 최적화
 	const selectedPlaylist = useMemo(() => {
-		return allPlaylists.find((playlist) => playlist.productId === currentTrackId);
+		return allPlaylists.find((playlist) => playlist?.productId === currentTrackId);
 	}, [allPlaylists, currentTrackId]);
 
 	const albumImage = useMemo(() => {
 		return selectedPlaylist?.coverImage?.url || blankCdImage;
 	}, [selectedPlaylist]);
+
+	// 로딩 상태 확인
+	const isLoading = trackQueries.some((query) => query.isLoading);
+	const isError = trackQueries.some((query) => query.isError);
 
 	return (
 		<>
@@ -138,9 +149,11 @@ const PlaylistRightSidebar = () => {
 						</div>
 
 						<div className="flex-1 min-h-0 px-6">
-							<h3 className="py-[6px] border-y-[3px] text-black font-bold text-[20px] leading-[20px] mb-5">Recent</h3>
+							<h3 className="py-[6px] border-y-[3px] text-black font-bold text-[20px] leading-[20px] mb-5">
+								Current Playlist
+							</h3>
 
-							{!userMe?.id ? (
+							{!isLoggedIn ? (
 								<div className="flex justify-center items-center h-20">
 									<div className="text-gray-500">로그인 후 이용해주세요.</div>
 								</div>
@@ -150,35 +163,25 @@ const PlaylistRightSidebar = () => {
 								</div>
 							) : isError ? (
 								<div className="flex justify-center items-center h-20">
-									<div className="text-red-500">데이터를 불러오는데 실패했습니다.</div>
+									<div className="text-red-500">플레이리스트를 불러오는데 실패했습니다.</div>
 								</div>
 							) : allPlaylists.length > 0 ? (
 								<div className="overflow-auto h-full">
 									<ul className="flex flex-col gap-[10px]">
-										{allPlaylists.map((playlist) => (
-											<PlaylistItem
-												key={playlist.id}
-												{...playlist}
-												isSelected={playlist.productId === currentTrackId}
-												onClick={play}
-											/>
-										))}
-									</ul>
-
-									{/* 무한 스크롤 트리거 */}
-									<div
-										ref={observerRef}
-										className="h-4"
-									>
-										{isFetchingNextPage && (
-											<div className="flex justify-center py-4">
-												<div className="text-gray-500 text-sm">더 많은 플레이리스트를 불러오는 중...</div>
-											</div>
+										{allPlaylists.map((playlist, index) =>
+											playlist ? (
+												<PlaylistItem
+													key={playlist.id}
+													{...playlist}
+													isSelected={playlist.productId === currentTrackId}
+													onClick={play}
+												/>
+											) : null,
 										)}
-									</div>
+									</ul>
 								</div>
 							) : (
-								<p className="text-center pt-10">곡 목록이 없습니다.</p>
+								<p className="text-center pt-10">플레이리스트가 비어있습니다.</p>
 							)}
 						</div>
 					</div>

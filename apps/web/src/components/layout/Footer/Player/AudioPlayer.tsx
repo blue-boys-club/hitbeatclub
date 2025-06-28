@@ -14,6 +14,7 @@ import {
 } from "@/assets/svgs";
 import { ReactPlayer } from "./ReactPlayer";
 import { useAudioContext } from "@/contexts/AudioContext";
+import { usePlaylist } from "@/hooks/use-playlist";
 import * as Slider from "@radix-ui/react-slider";
 import { useCallback, useState, useEffect } from "react";
 
@@ -26,8 +27,6 @@ export const AudioPlayer = ({ url }: AudioPlayerProps) => {
 		playerRef,
 		isPlaying,
 		volume,
-		repeatMode,
-		shuffle,
 		currentTime,
 		duration,
 		isUserSeeking,
@@ -43,6 +42,9 @@ export const AudioPlayer = ({ url }: AudioPlayerProps) => {
 		onSeekStart,
 		onSeekEnd,
 	} = useAudioContext();
+
+	// 플레이리스트에서 셔플/반복 상태 가져오기
+	const { isShuffleEnabled, repeatMode } = usePlaylist();
 
 	// 슬라이더 드래그 중 임시 값 저장
 	const [tempSeekValue, setTempSeekValue] = useState<number>(currentTime);
@@ -76,6 +78,7 @@ export const AudioPlayer = ({ url }: AudioPlayerProps) => {
 		},
 		[onSeek, onSeekEnd],
 	);
+
 	const getRepeatIcon = () => {
 		switch (repeatMode) {
 			case "one":
@@ -129,7 +132,7 @@ export const AudioPlayer = ({ url }: AudioPlayerProps) => {
 					className="cursor-pointer"
 					onClick={toggleShuffle}
 				>
-					{shuffle ? <ShuffleOn /> : <ShuffleOff />}
+					{isShuffleEnabled ? <ShuffleOn /> : <ShuffleOff />}
 				</button>
 			</div>
 

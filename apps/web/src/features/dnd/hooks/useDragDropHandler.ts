@@ -5,7 +5,8 @@ import { useUpdateFollowedArtistMutation } from "@/apis/user/mutations";
 import { useQuery } from "@tanstack/react-query";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { useToast } from "@/hooks/use-toast";
-import { useStartPlayerMutation } from "@/apis/player/mutations";
+import { usePlaylist } from "@/hooks/use-playlist";
+import { usePlayTrack } from "@/hooks/use-play-track";
 import { AxiosError } from "axios";
 
 /**
@@ -17,9 +18,10 @@ export const useDragDropHandler = () => {
 	const { data: user } = useQuery(getUserMeQueryOption());
 	const { mutateAsync: likeProduct } = useLikeProductMutation();
 	const { mutateAsync: followArtist } = useUpdateFollowedArtistMutation(user?.id ?? 0);
-	const { mutateAsync: startPlayer } = useStartPlayerMutation();
-	// const { mutate: followArtist } = useFollowArtistMutation();
-	// const { mutate: addToCart } = useAddToCartMutation();
+
+	// 새로운 플레이리스트 시스템 사용
+	const { addTrackToPlaylist, playTrackAtIndex, trackIds } = usePlaylist();
+	const { play } = usePlayTrack();
 
 	// 라이센스 모달 상태 관리
 	const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
@@ -30,8 +32,8 @@ export const useDragDropHandler = () => {
 		console.log(event.active?.data.current);
 		const { active } = event;
 		if (active?.data.current?.type === "PRODUCT") {
-			const { productName, sellerStageName } = active.data.current.meta;
-			console.log(productName, sellerStageName);
+			const { productName, seller } = active.data.current.meta;
+			console.log(productName, seller?.stageName);
 		}
 	}, []);
 
@@ -41,9 +43,10 @@ export const useDragDropHandler = () => {
 
 			// PRODUCT 드래그 처리
 			if (event?.active?.data.current?.type === "PRODUCT") {
+				const productId = event.active?.data.current?.productId;
+
 				if (event.over?.id === "cart") {
 					// 비회원도 라이센스 모달을 열 수 있다.
-					const productId = event.active?.data.current?.productId;
 					if (productId) {
 						setSelectedProductId(productId);
 						setIsLicenseModalOpen(true);
@@ -58,7 +61,7 @@ export const useDragDropHandler = () => {
 				}
 
 				if (event.over?.id === "like-follow") {
-					likeProduct(event.active?.data.current?.productId)
+					likeProduct(productId)
 						.then(() => {
 							toast({ description: "좋아요가 완료되었습니다." });
 						})
@@ -67,17 +70,27 @@ export const useDragDropHandler = () => {
 							toast({ description: message });
 						});
 				} else if (event.over?.id === "player") {
-					startPlayer({
-						userId: user?.id ?? 0,
-						productId: event.active?.data.current?.productId,
-					})
-						.then(() => {
-							toast({ description: "재생이 시작되었습니다." });
-						})
-						.catch((error: Error) => {
-							const message = error instanceof AxiosError ? error.response?.data.detail : "재생에 실패했습니다.";
-							toast({ description: message });
-						});
+					// 새로운 플레이리스트 시스템 사용
+					try {
+						// 트랙이 이미 플레이리스트에 있는지 확인
+						const existingIndex = trackIds.indexOf(productId);
+
+						if (existingIndex !== -1) {
+							// 이미 플레이리스트에 있으면 해당 인덱스로 이동
+							playTrackAtIndex(existingIndex);
+						} else {
+							// 플레이리스트에 없으면 추가하고 재생
+							addTrackToPlaylist(productId);
+							// 새로 추가된 트랙은 마지막 인덱스에 위치
+							const newIndex = trackIds.length;
+							playTrackAtIndex(newIndex);
+						}
+
+						toast({ description: "재생이 시작되었습니다." });
+					} catch (error) {
+						const message = error instanceof Error ? error.message : "재생에 실패했습니다.";
+						toast({ description: message, variant: "destructive" });
+					}
 				}
 			}
 
@@ -99,7 +112,7 @@ export const useDragDropHandler = () => {
 				}
 			}
 		},
-		[likeProduct, followArtist, user, toast, startPlayer],
+		[likeProduct, followArtist, user, toast, addTrackToPlaylist, playTrackAtIndex, trackIds],
 	);
 
 	// 라이센스 모달 닫기 핸들러
