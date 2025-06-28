@@ -6,8 +6,8 @@ import { MobileProductItem, MobileProductListFilter } from "@/features/mobile/pr
 import { MobileBuyOrCartModal } from "@/features/mobile/search/modals";
 import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getSearchQueryOption, getAutocompleteSearchQueryOption } from "@/apis/search/query/product.query-option";
 import { ProductSearchQuery } from "@/apis/search/search.type";
+import { getAutocompleteSearchQueryOption, getSearchQueryOption } from "@/apis/search/query/search.query-option";
 
 const MobileSearchPage = () => {
 	const [isSearchFocused, setIsSearchFocused] = useState(false);

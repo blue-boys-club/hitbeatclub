@@ -1,8 +1,13 @@
 import { checkIsPureEnglish } from "@/common/utils";
 import { cn } from "@/common/utils/tailwind";
-import Link from "next/link";
 import Image from "next/image";
 import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
+import { usePlayTrack } from "@/hooks/use-play-track";
+import { useAudioStore } from "@/stores/audio";
+import { useShallow } from "zustand/react/shallow";
+import { useCallback, useMemo } from "react";
+import { MobilePlayCircleSVG, MobilePauseCircleSVG } from "@/features/mobile/components";
+import { AudioBarPause, AudioBarPlay } from "@/assets/svgs";
 
 interface MobileProductTrackCarouselItemProps {
 	track: ProductRowByDashboardResponse;
@@ -12,11 +17,55 @@ export const MobileProductTrackCarouselItem = ({ track }: MobileProductTrackCaro
 	const isTitlePureEnglish = checkIsPureEnglish(productName);
 	const isArtistPureEnglish = checkIsPureEnglish(seller?.stageName || "");
 
+	const { play } = usePlayTrack();
+	const { status, currentProductId } = useAudioStore(
+		useShallow((state) => ({
+			status: state.status,
+			currentProductId: state.productId,
+		})),
+	);
+
+	const statusIcon = useMemo(() => {
+		if (currentProductId !== track.id) {
+			return <MobilePlayCircleSVG />;
+		}
+
+		switch (status) {
+			case "playing":
+				return (
+					<AudioBarPause
+						width={20}
+						height={20}
+						fill={"white"}
+					/>
+				);
+			case "paused":
+				return (
+					<AudioBarPlay
+						width={20}
+						height={20}
+						fill={"white"}
+					/>
+				);
+			default:
+				return (
+					<AudioBarPlay
+						width={20}
+						height={20}
+						fill={"white"}
+					/>
+				);
+		}
+	}, [status, currentProductId, track.id]);
+
+	const onPlayHandler = useCallback(() => {
+		play(track.id);
+	}, [play, track.id]);
+
 	return (
-		<Link
-			// TODO: 상품 상세 페이지 링크 추가
-			href={`/products/${track.id}`}
-			className="inline-flex flex-col items-start justify-start gap-6px"
+		<div
+			className="inline-flex flex-col items-start justify-start gap-6px group cursor-pointer"
+			onClick={onPlayHandler}
 		>
 			<div className="border-y-3px border-x-1px border-black relative w-110px h-110px">
 				<Image
@@ -25,6 +74,14 @@ export const MobileProductTrackCarouselItem = ({ track }: MobileProductTrackCaro
 					fill
 					className="object-cover"
 				/>
+				<div
+					className={cn(
+						"absolute inset-0 flex items-center justify-center transition-opacity duration-200 bg-black/30",
+						currentProductId === track.id ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+					)}
+				>
+					<div className="flex items-center justify-center">{statusIcon}</div>
+				</div>
 			</div>
 			<div className="flex flex-col items-start justify-start gap-3px">
 				<div className="inline-flex items-center justify-center gap-10px">
@@ -47,6 +104,6 @@ export const MobileProductTrackCarouselItem = ({ track }: MobileProductTrackCaro
 					<span className="text-hbc-gray-300">{seller?.stageName}</span>
 				</div>
 			</div>
-		</Link>
+		</div>
 	);
 };

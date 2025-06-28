@@ -9,7 +9,7 @@ import { MobileProductSection } from "@/features/mobile/product/components/Mobil
 import { useState } from "react";
 import { cn } from "@/common/utils";
 import { Footer } from "@/components/layout/Footer";
-import { MobileFullScreenPlayer } from "@/features/mobile/components";
+import { useMobilePlayerVisibility } from "@/hooks/use-mobile-player-visibility";
 
 export default function MobileMainPage() {
 	const { data } = useQuery({
@@ -18,6 +18,12 @@ export default function MobileMainPage() {
 	});
 
 	const [currentTab, setCurrentTab] = useState<"ALL" | "BEAT" | "ACAPELLA">("ALL");
+	const { isMobilePlayerVisible } = useMobilePlayerVisibility();
+
+	// 동적 높이 계산
+	const contentHeight = isMobilePlayerVisible
+		? "h-[calc(100vh-204px)]" // FooterNav + MobilePlayer
+		: "h-[calc(100vh-132px)]"; // FooterNav만
 
 	const tabContent = {
 		ALL: (
@@ -69,7 +75,7 @@ export default function MobileMainPage() {
 	};
 
 	return (
-		<div className="flex flex-col justify-between h-[calc(100vh-204px)] overflow-y-auto">
+		<div className={`flex flex-col justify-between ${contentHeight} overflow-y-auto`}>
 			<div>
 				<div className="w-full h-90px relative">
 					<Image

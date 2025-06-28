@@ -4,18 +4,19 @@ import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { FooterNav } from "@/components/layout/Footer/FooterNav";
 import Header from "@/components/layout/Header/Header";
 import { Toaster } from "@/components/ui/Toast/toaster";
-import { MobileFooterPlayBar, MobileFullScreenPlayer } from "@/features/mobile/components";
+import { AudioProvider } from "@/contexts/AudioContext";
+import { MobilePlayer } from "@/features/mobile/components/MobilePlayer";
 import { useAuthStore } from "@/stores/auth";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { useMobilePlayerVisibility } from "@/hooks/use-mobile-player-visibility";
 
 export default function MobileMainLayout({ children }: { children: React.ReactNode }) {
-	const [isFullScreenPlayerOpen, setIsFullScreenPlayerOpen] = useState(false);
-
 	const router = useRouter();
 	const pathname = usePathname();
+	const { isMobilePlayerVisible } = useMobilePlayerVisibility();
 
 	const { data: userMe, isSuccess } = useQuery({ ...getUserMeQueryOption(), retry: false });
 
@@ -36,29 +37,30 @@ export default function MobileMainLayout({ children }: { children: React.ReactNo
 
 	const isSearchPage = pathname === "/mobile/search";
 
+	const getContentHeight = () => {
+		if (isSearchPage) {
+			return "h-[calc(100vh-142px)]";
+		}
+		return isMobilePlayerVisible ? "h-[calc(100vh-204px)]" : "h-[calc(100vh-132px)]";
+	};
+
 	return (
-		<>
+		<AudioProvider>
 			<div className="w-full min-h-screen overflow-y-scroll flex flex-col">
 				{!isSearchPage && (
 					<div className="z-50 fixed top-0 left-0 right-0">
 						<Header mobile />
 					</div>
 				)}
-				<div className={`flex-1 ${isSearchPage ? "pt-0" : "pt-[62px]"} pb-[142px]`}>
-					<div className={`${isSearchPage ? "h-[calc(100vh-142px)]" : "h-[calc(100vh-204px)]"} overflow-y-auto`}>
-						{children}
-					</div>
+				<div className={`flex-1 ${isSearchPage ? "pt-0" : "pt-[62px]"} pb-[70px]`}>
+					<div className={`${getContentHeight()} overflow-y-auto`}>{children}</div>
 				</div>
 				<div className="z-50 fixed bottom-0 left-0 right-0">
-					{/* TODO: 임시코드임. 풀스크린 플레이어 표시 조건 확정하여 반영 */}
-					<div onClick={() => setIsFullScreenPlayerOpen(true)}>
-						<MobileFooterPlayBar />
-					</div>
 					<FooterNav />
 				</div>
 			</div>
-			{isFullScreenPlayerOpen && <MobileFullScreenPlayer onHide={() => setIsFullScreenPlayerOpen(false)} />}
+			<MobilePlayer />
 			<Toaster viewportClassName="bottom-72px" />
-		</>
+		</AudioProvider>
 	);
 }

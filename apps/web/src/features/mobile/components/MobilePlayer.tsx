@@ -1,0 +1,670 @@
+import Image from "next/image";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { MobileAddCircleSVG } from "./MobileAddCircleSVG";
+import { MobileLikeSVG } from "./MobileLikeSVG";
+import { MobileSpeakerSVG } from "./MobileSpeakerSVG";
+import { MobilePauseCircleSVG } from "./MobilePauseCircleSVG";
+import { MobilePlayCircleSVG } from "./MobilePlayCircleSVG";
+import { MobileDownArrowSquareSVG } from "./MobileDownArrowSquareSVG";
+import { MobilePlayListSquareSVG } from "./MobilePlayListSquareSVG";
+import { MobileFullScreenPlayerBeatSVG } from "./MobileFullScreenPlayerBeatSVG";
+import { MobileFullScreenPlayerNextSVG } from "./MobileFullScreenPlayerNextSVG";
+import { MobileFullScreenPlayerPauseSVG } from "./MobileFullScreenPlayerPauseSVG";
+import { MobileFullScreenPlayerPreviousSVG } from "./MobileFullScreenPlayerPreviousSVG";
+import { MobileFullScreenPlayerRepeatSVG } from "./MobileFullScreenPlayerRepeatSVG";
+import { MobileFullScreenPlayerShuffleSVG } from "./MobileFullScreenPlayerShuffleSVG";
+import { useAudioStore } from "@/stores/audio";
+import { usePlayTrack } from "@/hooks/use-play-track";
+import { useShallow } from "zustand/react/shallow";
+import { useQuery } from "@tanstack/react-query";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import {
+	getProductQueryOption,
+	getProductFileDownloadLinkQueryOption,
+} from "@/apis/product/query/product.query-option";
+import { useLikeProductMutation, useUnlikeProductMutation } from "@/apis/product/mutations";
+import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
+import { useToast } from "@/hooks/use-toast";
+import { useAudioContext } from "@/contexts/AudioContext";
+import { ReactPlayer } from "@/components/layout/Footer/Player/ReactPlayer";
+import { Heart } from "@/assets/svgs/Heart";
+import { AudioBarPause, AudioBarPlay } from "@/assets/svgs";
+
+export const MobilePlayer = () => {
+	// 확장/축소 상태 관리
+	const [isFullScreen, setIsFullScreen] = useState(false);
+	const [isClosing, setIsClosing] = useState(false);
+	const [showVolumeBar, setShowVolumeBar] = useState(false);
+
+	const { play } = usePlayTrack();
+	const { currentProductId, isPlaying, setIsPlaying } = useAudioStore(
+		useShallow((state) => ({
+			currentProductId: state.productId,
+			isPlaying: state.isPlaying,
+			setIsPlaying: state.setIsPlaying,
+		})),
+	);
+
+	// 로그인 상태 확인
+	const { data: user } = useQuery({ ...getUserMeQueryOption(), retry: false });
+	const isLoggedIn = Boolean(user?.id);
+
+	// 상품 정보 조회
+	const { data: productData } = useQuery({
+		...getProductQueryOption(currentProductId!),
+		enabled: !!currentProductId,
+	});
+
+	// 좋아요 기능
+	const { mutate: likeMutation } = useLikeProductMutation();
+	const { mutate: unlikeProduct } = useUnlikeProductMutation();
+
+	// 토스트 및 오디오 컨텍스트
+	const { toast } = useToast();
+	const {
+		playerRef,
+		autoPlay,
+		stop,
+		isPlaying: contextIsPlaying,
+		onProgress,
+		onDuration,
+		onEnded,
+		volume,
+		onVolumeChange,
+		currentTime,
+		duration,
+		isUserSeeking,
+		onSeek,
+		onSeekStart,
+		onSeekEnd,
+	} = useAudioContext();
+
+	// 시크바 드래그 중 임시 값 저장
+	const [tempSeekValue, setTempSeekValue] = useState<number>(currentTime);
+
+	// 현재 오디오 URL 상태
+	const [currentAudioUrl, setCurrentAudioUrl] = useState<string>("");
+
+	// 오디오 파일 다운로드 링크 조회
+	const { data: audioFileDownloadLink, error: audioFileError } = useQuery({
+		...getProductFileDownloadLinkQueryOption(currentProductId!, ENUM_FILE_TYPE.PRODUCT_AUDIO_FILE),
+		enabled: !!currentProductId,
+	});
+
+	const volumeBarRef = useRef<HTMLDivElement>(null);
+	const speakerRef = useRef<HTMLDivElement>(null);
+	const progressBarRef = useRef<HTMLDivElement>(null);
+
+	const playIcon = useMemo(() => {
+		// AudioContext의 실제 재생 상태를 우선적으로 사용
+		const isCurrentlyPlaying = contextIsPlaying;
+
+		if (isCurrentlyPlaying) {
+			return isFullScreen ? (
+				<AudioBarPause
+					width={58}
+					height={58}
+				/>
+			) : (
+				<div className="flex w-6 h-6 items-center justify-center">
+					<AudioBarPause
+						width={20}
+						height={20}
+					/>
+				</div>
+			);
+		} else {
+			return isFullScreen ? (
+				<AudioBarPlay
+					width={58}
+					height={58}
+				/>
+			) : (
+				<div className="flex w-6 h-6 items-center justify-center">
+					<AudioBarPlay
+						width={20}
+						height={20}
+					/>
+				</div>
+			);
+		}
+	}, [contextIsPlaying, isFullScreen]);
+
+	const onPlayHandler = useCallback(() => {
+		if (currentProductId) {
+			play(currentProductId);
+		}
+	}, [play, currentProductId]);
+
+	const onClickLike = useCallback(() => {
+		if (!currentProductId || !productData) return;
+
+		if (!productData?.isLiked) {
+			likeMutation(currentProductId, {
+				onSuccess: () => {
+					// TODO: 상품 데이터 쿼리 invalidate
+				},
+			});
+		} else if (productData?.isLiked) {
+			unlikeProduct(currentProductId, {
+				onSuccess: () => {
+					// TODO: 상품 데이터 쿼리 invalidate
+				},
+			});
+		}
+	}, [currentProductId, productData, likeMutation, unlikeProduct]);
+
+	// 풀스크린으로 전환
+	const handleShowFullScreen = useCallback(() => {
+		setIsFullScreen(true);
+		setIsClosing(false);
+	}, []);
+
+	// 풀스크린에서 축소
+	const handleHideFullScreen = useCallback(() => {
+		setIsClosing(true);
+		// 애니메이션 완료 후 상태 변경
+		setTimeout(() => {
+			setIsFullScreen(false);
+			setIsClosing(false);
+		}, 300);
+	}, []);
+
+	// 시간을 mm:ss 형식으로 변환하는 함수
+	const formatTime = (seconds: number) => {
+		const minutes = Math.floor(seconds / 60);
+		const remainingSeconds = Math.floor(seconds % 60);
+		return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+	};
+
+	// 스피커 아이콘 클릭 핸들러
+	const handleSpeakerClick = useCallback(() => {
+		setShowVolumeBar(!showVolumeBar);
+	}, [showVolumeBar]);
+
+	// 볼륨바 드래그/터치 핸들러
+	const handleVolumeChange = useCallback(
+		(event: React.MouseEvent | React.TouchEvent) => {
+			if (!volumeBarRef.current) return;
+
+			const rect = volumeBarRef.current.getBoundingClientRect();
+			const clientY = "touches" in event ? event.touches[0]?.clientY : event.clientY;
+			if (clientY === undefined) return;
+
+			const relativeY = rect.bottom - clientY;
+			const newVolume = Math.max(0, Math.min(1, relativeY / rect.height));
+
+			onVolumeChange(newVolume);
+		},
+		[onVolumeChange],
+	);
+
+	// 볼륨바 드래그 이벤트 핸들러
+	const handleMouseDown = useCallback(
+		(event: React.MouseEvent) => {
+			event.stopPropagation();
+			handleVolumeChange(event);
+
+			const handleMouseMove = (e: MouseEvent) => {
+				const rect = volumeBarRef.current?.getBoundingClientRect();
+				if (!rect) return;
+
+				const relativeY = rect.bottom - e.clientY;
+				const newVolume = Math.max(0, Math.min(1, relativeY / rect.height));
+				onVolumeChange(newVolume);
+			};
+
+			const handleMouseUp = () => {
+				document.removeEventListener("mousemove", handleMouseMove);
+				document.removeEventListener("mouseup", handleMouseUp);
+			};
+
+			document.addEventListener("mousemove", handleMouseMove);
+			document.addEventListener("mouseup", handleMouseUp);
+		},
+		[handleVolumeChange, onVolumeChange],
+	);
+
+	// 볼륨바 터치 이벤트 핸들러
+	const handleTouchStart = useCallback(
+		(event: React.TouchEvent) => {
+			event.stopPropagation();
+			handleVolumeChange(event);
+
+			const handleTouchMove = (e: TouchEvent) => {
+				e.preventDefault();
+				const rect = volumeBarRef.current?.getBoundingClientRect();
+				if (!rect || !e.touches[0]) return;
+
+				const relativeY = rect.bottom - e.touches[0].clientY;
+				const newVolume = Math.max(0, Math.min(1, relativeY / rect.height));
+				onVolumeChange(newVolume);
+			};
+
+			const handleTouchEnd = () => {
+				document.removeEventListener("touchmove", handleTouchMove);
+				document.removeEventListener("touchend", handleTouchEnd);
+			};
+
+			document.addEventListener("touchmove", handleTouchMove, { passive: false });
+			document.addEventListener("touchend", handleTouchEnd);
+		},
+		[handleVolumeChange, onVolumeChange],
+	);
+
+	// 재생바 드래그/터치 핸들러
+	const handleProgressChange = useCallback(
+		(event: React.MouseEvent | React.TouchEvent) => {
+			if (!progressBarRef.current || duration === 0) return;
+
+			const rect = progressBarRef.current.getBoundingClientRect();
+			const clientX = "touches" in event ? event.touches[0]?.clientX : event.clientX;
+			if (clientX === undefined) return;
+
+			const relativeX = clientX - rect.left;
+			const progress = Math.max(0, Math.min(1, relativeX / rect.width));
+			const newTime = progress * duration;
+
+			setTempSeekValue(newTime);
+			return newTime;
+		},
+		[duration],
+	);
+
+	// 재생바 드래그 이벤트 핸들러
+	const handleProgressMouseDown = useCallback(
+		(event: React.MouseEvent) => {
+			onSeekStart();
+			const newTime = handleProgressChange(event);
+			if (newTime !== undefined) {
+				onSeek(newTime); // 클릭 시 즉시 해당 지점으로 이동
+			}
+
+			let isDragging = false;
+
+			const handleMouseMove = (e: MouseEvent) => {
+				isDragging = true;
+				const rect = progressBarRef.current?.getBoundingClientRect();
+				if (!rect || duration === 0) return;
+
+				const relativeX = e.clientX - rect.left;
+				const progress = Math.max(0, Math.min(1, relativeX / rect.width));
+				const newTime = progress * duration;
+				setTempSeekValue(newTime);
+				onSeek(newTime); // 드래그 중에도 실시간 업데이트
+			};
+
+			const handleMouseUp = () => {
+				onSeekEnd();
+				document.removeEventListener("mousemove", handleMouseMove);
+				document.removeEventListener("mouseup", handleMouseUp);
+			};
+
+			document.addEventListener("mousemove", handleMouseMove);
+			document.addEventListener("mouseup", handleMouseUp);
+		},
+		[handleProgressChange, onSeekStart, onSeek, onSeekEnd, duration],
+	);
+
+	// 재생바 터치 이벤트 핸들러
+	const handleProgressTouchStart = useCallback(
+		(event: React.TouchEvent) => {
+			onSeekStart();
+			const newTime = handleProgressChange(event);
+			if (newTime !== undefined) {
+				onSeek(newTime); // 터치 시 즉시 해당 지점으로 이동
+			}
+
+			let isDragging = false;
+
+			const handleTouchMove = (e: TouchEvent) => {
+				e.preventDefault();
+				isDragging = true;
+				const rect = progressBarRef.current?.getBoundingClientRect();
+				if (!rect || !e.touches[0] || duration === 0) return;
+
+				const relativeX = e.touches[0].clientX - rect.left;
+				const progress = Math.max(0, Math.min(1, relativeX / rect.width));
+				const newTime = progress * duration;
+				setTempSeekValue(newTime);
+				onSeek(newTime); // 터치 드래그 중에도 실시간 업데이트
+			};
+
+			const handleTouchEnd = () => {
+				onSeekEnd();
+				document.removeEventListener("touchmove", handleTouchMove);
+				document.removeEventListener("touchend", handleTouchEnd);
+			};
+
+			document.addEventListener("touchmove", handleTouchMove, { passive: false });
+			document.addEventListener("touchend", handleTouchEnd);
+		},
+		[handleProgressChange, onSeekStart, onSeek, onSeekEnd, duration],
+	);
+
+	// 볼륨바 외부 클릭 감지
+	useEffect(() => {
+		const handleClickOutside = (event: Event) => {
+			if (
+				volumeBarRef.current &&
+				!volumeBarRef.current.contains(event.target as Node) &&
+				speakerRef.current &&
+				!speakerRef.current.contains(event.target as Node)
+			) {
+				setShowVolumeBar(false);
+			}
+		};
+
+		if (showVolumeBar) {
+			document.addEventListener("mousedown", handleClickOutside);
+			document.addEventListener("touchstart", handleClickOutside);
+		}
+
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+			document.removeEventListener("touchstart", handleClickOutside);
+		};
+	}, [showVolumeBar]);
+
+	// 음원이 변경될 때 바로 재생을 중지시켜 기존 트랙이 이어서 재생되지 않도록 처리
+	useEffect(() => {
+		if (!currentProductId) return;
+		// 현재 재생 중지 및 상태 초기화
+		stop();
+		setCurrentAudioUrl("");
+	}, [currentProductId, stop]);
+
+	// 오디오 파일 다운로드 링크가 변경될 때마다 재생
+	useEffect(() => {
+		if (audioFileDownloadLink?.url) {
+			setCurrentAudioUrl(audioFileDownloadLink.url);
+			stop();
+			const timer = setTimeout(() => {
+				autoPlay();
+			}, 200);
+			return () => clearTimeout(timer);
+		}
+	}, [audioFileDownloadLink, stop, autoPlay]);
+
+	// 오디오 파일 다운로드 에러 처리
+	useEffect(() => {
+		if (audioFileError) {
+			toast({
+				description: "오디오 파일을 불러올 수 없습니다. 잠시 후 다시 시도해주세요.",
+				variant: "destructive",
+			});
+		}
+	}, [audioFileError, toast]);
+
+	// AudioContext 재생 상태를 글로벌 스토어와 동기화 (단방향: Context -> Store)
+	useEffect(() => {
+		if (isPlaying !== contextIsPlaying) {
+			setIsPlaying(contextIsPlaying);
+		}
+	}, [isPlaying, contextIsPlaying, setIsPlaying]);
+
+	// 사용자가 시크바를 조작하지 않을 때만 currentTime과 동기화
+	useEffect(() => {
+		if (!isUserSeeking) {
+			setTempSeekValue(currentTime);
+		}
+	}, [currentTime, isUserSeeking]);
+
+	if (!currentProductId || !isLoggedIn) {
+		return null;
+	}
+
+	return (
+		<>
+			{/* 단일 ReactPlayer */}
+			<ReactPlayer
+				ref={playerRef}
+				url={currentAudioUrl}
+				playing={contextIsPlaying}
+				controls={false}
+				width="0"
+				height="0"
+				volume={volume}
+				onEnded={onEnded}
+				onProgress={({ playedSeconds }) => onProgress(playedSeconds)}
+				onDuration={(duration) => onDuration(duration)}
+			/>
+
+			{/* Footer PlayBar UI - 기본 상태 */}
+			{!isFullScreen && (
+				<div
+					className="fixed bottom-72px left-0 right-0 z-40 flex gap-3 border-t-4px border-black p-2 bg-white"
+					onClick={handleShowFullScreen}
+				>
+					<div className="w-50px h-50px relative border-5px border-black">
+						{productData?.coverImage?.url ? (
+							<Image
+								alt="cover image"
+								src={productData.coverImage.url}
+								fill
+								className="object-cover"
+							/>
+						) : (
+							<div className="w-full h-full bg-gray-200 flex items-center justify-center">
+								<span className="text-xs text-gray-500">No Image</span>
+							</div>
+						)}
+					</div>
+					<div className="flex-1 flex flex-col justify-between">
+						<div className="flex justify-between">
+							<div className="flex-1 flex flex-col gap-3px">
+								<div className="font-bold text-20px leading-16px">{productData?.productName || "Loading..."}</div>
+								<div className="font-bold text-14px leading-16px">
+									{productData?.seller?.stageName || "Unknown Artist"}
+								</div>
+							</div>
+							<div className="flex gap-3 flex-shrink-0">
+								<div className="flex gap-5px relative items-start">
+									<div
+										className="cursor-pointer"
+										onClick={(e) => {
+											e.stopPropagation();
+											onClickLike();
+										}}
+									>
+										<div
+											style={{
+												transform: "translateY(2px)",
+											}}
+										>
+											<Heart
+												width="20px"
+												height="20px"
+												active={!!productData?.isLiked}
+											/>
+										</div>
+									</div>
+									<MobileAddCircleSVG />
+									<div
+										ref={speakerRef}
+										onClick={(e) => {
+											e.stopPropagation();
+											handleSpeakerClick();
+										}}
+										className="cursor-pointer"
+									>
+										<MobileSpeakerSVG />
+									</div>
+
+									{/* 볼륨바 */}
+									{showVolumeBar && (
+										<div
+											ref={volumeBarRef}
+											className="absolute bottom-full right-4px mb-5 w-14px h-64px bg-white p-1 z-50"
+											style={{ boxShadow: "0px 4px 20px 0px #0000004D" }}
+											onClick={(e) => e.stopPropagation()}
+											onMouseDown={handleMouseDown}
+											onTouchStart={handleTouchStart}
+										>
+											<div className="relative w-full h-full flex justify-center">
+												{/* 배경 바 */}
+												<div className="absolute w-1px h-full bg-black" />
+												{/* 볼륨 레벨 바 */}
+												<div
+													className="absolute bottom-0 w-4px bg-black"
+													style={{ height: `${volume * 100}%` }}
+												/>
+											</div>
+										</div>
+									)}
+								</div>
+								<div>
+									<button
+										onClick={(e) => {
+											e.stopPropagation();
+											onPlayHandler();
+										}}
+									>
+										{playIcon}
+									</button>
+								</div>
+							</div>
+						</div>
+						<div
+							ref={progressBarRef}
+							className="relative w-full h-6px flex items-center cursor-pointer"
+							onMouseDown={handleProgressMouseDown}
+							onTouchStart={handleProgressTouchStart}
+							onClick={(e) => e.stopPropagation()}
+						>
+							<div className="absolute w-full h-2px bg-black" />
+							<div
+								className="absolute h-6px bg-black"
+								style={{
+									width: `${duration > 0 ? ((isUserSeeking ? tempSeekValue : currentTime) / duration) * 100 : 0}%`,
+								}}
+							/>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Full Screen Player UI - 확장 상태 */}
+			{(isFullScreen || isClosing) && (
+				<div
+					className={`bg-white z-[1000] fixed top-0 left-0 right-0 bottom-0 flex flex-col ${
+						isClosing ? "animate-slide-down" : "animate-slide-up"
+					}`}
+				>
+					<div className="relative flex-1 flex flex-col pb-108px overflow-y-auto">
+						<div className="w-full aspect-square p-4 relative flex flex-col">
+							<div className="absolute top-9 left-3 right-3 -bottom-3 pointer-events-none">
+								<div className="relative w-full h-full overflow-hidden rounded-full border-6px border-black">
+									{productData?.coverImage?.url ? (
+										<Image
+											src={productData.coverImage.url}
+											alt="cover"
+											fill
+											className="object-cover"
+										/>
+									) : (
+										<div className="w-full h-full bg-gray-200 flex items-center justify-center">
+											<span className="text-gray-500">No Image</span>
+										</div>
+									)}
+								</div>
+							</div>
+							<div className="flex justify-between">
+								<button onClick={handleHideFullScreen}>
+									<MobileDownArrowSquareSVG />
+								</button>
+								<MobilePlayListSquareSVG />
+							</div>
+						</div>
+						<div className="mt-8 flex flex-col px-4 pb-4">
+							<div className="font-bold text-32px leading-40px">{productData?.productName || "Loading..."}</div>
+							<div className="flex justify-between">
+								<span className="font-[450] text-18px leading-100%">
+									{productData?.seller?.stageName || "Unknown Artist"}
+								</span>
+								<MobileFullScreenPlayerBeatSVG />
+							</div>
+						</div>
+						<div className="px-4 flex flex-col">
+							<div
+								ref={progressBarRef}
+								className="relative w-full h-6px flex items-center cursor-pointer"
+								onMouseDown={handleProgressMouseDown}
+								onTouchStart={handleProgressTouchStart}
+							>
+								<div className="w-full h-2px bg-black" />
+								<div
+									className="absolute h-6px bg-black"
+									style={{
+										width: `${duration > 0 ? ((isUserSeeking ? tempSeekValue : currentTime) / duration) * 100 : 0}%`,
+									}}
+								/>
+							</div>
+							<div className="flex justify-between mt-3px text-12px font-[450] leading-16px">
+								<span>{formatTime(isUserSeeking ? tempSeekValue : currentTime)}</span>
+								<span>{formatTime(duration)}</span>
+							</div>
+						</div>
+						<div className="px-4 mt-3 text-14px font-[450] leading-18px">
+							<span>General Information</span>
+							<br />
+							<p className="text-hbc-gray-300">
+								Kind : MPEG audio file
+								<br />
+								Time : 4:32
+								<br />
+								Size : 5.8MB
+								<br />
+								Date : 4/12/2024 10:47 PM
+							</p>
+							<br />
+							<span>Detail Information</span>
+							<br />
+							<p className="text-hbc-gray-300">
+								Bit Rate : 160kbps
+								<br />
+								Sample Rate : 44.100 kHz
+								<br />
+								Channels : Joint Stereo
+								<br />
+								ID3 tag : v2.2
+								<br />
+								Encoded by : X v2.0.1
+							</p>
+						</div>
+					</div>
+					<div className="fixed bg-white bottom-72px left-0 right-0 px-4 py-6 flex justify-between">
+						<div className="flex flex-col">
+							<button className="h-30px font-bold text-16px leading-16px text-black border-4px border-black rounded-40px">
+								Free Download
+							</button>
+							<button className="font-bold text-16px leading-16px text-white bg-black h-30px px-2 border-4px border-black rounded-40px flex items-center gap-2">
+								<MobileAddCircleSVG fill="white" />
+								15,000 KRW
+							</button>
+						</div>
+						<div className="self-end">
+							<div
+								className="cursor-pointer"
+								onClick={onClickLike}
+							>
+								<Heart
+									width="24"
+									height="24"
+									active={!!productData?.isLiked}
+								/>
+							</div>
+						</div>
+					</div>
+					<div className="h-auto border-t-10px border-black px-2 py-1 flex items-center justify-between">
+						<MobileFullScreenPlayerRepeatSVG />
+						<MobileFullScreenPlayerPreviousSVG />
+						<button onClick={onPlayHandler}>{playIcon}</button>
+						<MobileFullScreenPlayerNextSVG />
+						<MobileFullScreenPlayerShuffleSVG />
+					</div>
+				</div>
+			)}
+		</>
+	);
+};
