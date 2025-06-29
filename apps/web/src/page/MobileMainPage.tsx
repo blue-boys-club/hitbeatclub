@@ -10,6 +10,7 @@ import { useState } from "react";
 import { cn } from "@/common/utils";
 import { Footer } from "@/components/layout/Footer";
 import { useMobilePlayerVisibility } from "@/hooks/use-mobile-player-visibility";
+import { createPlaylistConfig } from "@/components/layout/PlaylistProvider";
 
 export default function MobileMainPage() {
 	const { data } = useQuery({
@@ -33,6 +34,7 @@ export default function MobileMainPage() {
 					title="Recent"
 					description="최근 업로드된 음악"
 					href="/mobile/home/products/recent"
+					autoPlaylistConfig={createPlaylistConfig.main("RECENT")}
 					products={data?.recent || []}
 				/>
 				<MobileProductSection
@@ -40,18 +42,21 @@ export default function MobileMainPage() {
 					title="Recommended"
 					description="당신을 위한 오늘의 추천곡"
 					href="/mobile/home/products/recommended"
+					autoPlaylistConfig={createPlaylistConfig.main("RECOMMEND")}
 					products={data?.recommended || []}
 				/>
 				<MobileProductSection
 					type="carousel"
 					title="Beat"
 					href="/mobile/home/products/beat"
+					autoPlaylistConfig={createPlaylistConfig.main("BEAT")}
 					products={data?.beat || []}
 				/>
 				<MobileProductSection
 					type="carousel"
 					title="Acappella"
 					href="/mobile/home/products/acapella"
+					autoPlaylistConfig={createPlaylistConfig.main("ACAPELLA")}
 					products={data?.acappella || []}
 				/>
 			</>
@@ -61,6 +66,7 @@ export default function MobileMainPage() {
 				type="gallery"
 				title="Beat"
 				href="#"
+				autoPlaylistConfig={createPlaylistConfig.main("BEAT")}
 				products={data?.beat || []}
 			/>
 		),
@@ -69,6 +75,7 @@ export default function MobileMainPage() {
 				type="gallery"
 				title="Acappella"
 				href="#"
+				autoPlaylistConfig={createPlaylistConfig.main("ACAPELLA")}
 				products={data?.acappella || []}
 			/>
 		),

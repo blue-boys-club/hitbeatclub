@@ -1,19 +1,25 @@
 import { checkIsPureEnglish } from "@/common/utils";
 import { cn } from "@/common/utils/tailwind";
 import Image from "next/image";
-import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
+import { ProductRowByDashboardResponse, PlaylistAutoRequest } from "@hitbeatclub/shared-types";
 import { usePlayTrack } from "@/hooks/use-play-track";
 import { useAudioStore } from "@/stores/audio";
-import { usePlaylistStore } from "@/stores/playlist";
+import { usePlaylist } from "@/hooks/use-playlist";
 import { useShallow } from "zustand/react/shallow";
 import { useCallback, useMemo } from "react";
-import { MobilePlayCircleSVG, MobilePauseCircleSVG } from "@/features/mobile/components";
+import { MobilePlayCircleSVG } from "@/features/mobile/components";
 import { AudioBarPause, AudioBarPlay } from "@/assets/svgs";
 
 interface MobileProductTrackGalleryItemProps {
 	track: ProductRowByDashboardResponse;
+	autoPlaylistConfig?: PlaylistAutoRequest;
+	trackIndex?: number;
 }
-export const MobileProductTrackGalleryItem = ({ track }: MobileProductTrackGalleryItemProps) => {
+export const MobileProductTrackGalleryItem = ({
+	track,
+	autoPlaylistConfig,
+	trackIndex = 0,
+}: MobileProductTrackGalleryItemProps) => {
 	const isTitlePureEnglish = checkIsPureEnglish(track.productName);
 	const isArtistPureEnglish = checkIsPureEnglish(track.seller?.stageName || "");
 
@@ -25,11 +31,7 @@ export const MobileProductTrackGalleryItem = ({ track }: MobileProductTrackGalle
 		})),
 	);
 
-	const { setPlaylist } = usePlaylistStore(
-		useShallow((state) => ({
-			setPlaylist: state.setPlaylist,
-		})),
-	);
+	const { setCurrentTrackIds, createAutoPlaylistAndPlay } = usePlaylist();
 
 	const statusIcon = useMemo(() => {
 		if (currentProductId !== track.id) {
@@ -64,20 +66,19 @@ export const MobileProductTrackGalleryItem = ({ track }: MobileProductTrackGalle
 		}
 	}, [status, currentProductId, track.id]);
 
-	const onPlayHandler = useCallback(() => {
-		// 플레이리스트를 초기화하고 클릭한 곡만 추가
-		setPlaylist([
-			{
-				id: track.id,
-				productName: track.productName,
-				coverImage: track.coverImage,
-				seller: track.seller,
-			},
-		]);
-
-		// 곡 재생
+	const onPlayHandler = useCallback(async () => {
+		if (autoPlaylistConfig) {
+			try {
+				await createAutoPlaylistAndPlay(autoPlaylistConfig, trackIndex);
+				play(track.id);
+				return;
+			} catch (e) {
+				console.error("auto playlist failed", e);
+			}
+		}
+		setCurrentTrackIds([track.id], 0);
 		play(track.id);
-	}, [play, track.id, track.productName, track.coverImage, track.seller, setPlaylist]);
+	}, [autoPlaylistConfig, trackIndex, createAutoPlaylistAndPlay, setCurrentTrackIds, play, track.id]);
 
 	return (
 		<div

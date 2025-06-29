@@ -2,9 +2,8 @@ import { X } from "@/assets/svgs/X";
 import Image from "next/image";
 import { useDeleteCartItemMutation } from "@/apis/user/mutations";
 import { useToast } from "@/hooks/use-toast";
-import { usePlaylistStore } from "@/stores/playlist";
+import { usePlaylist } from "@/hooks/use-playlist";
 import { usePlayTrack } from "@/hooks/use-play-track";
-import { useShallow } from "zustand/react/shallow";
 import { useCallback } from "react";
 
 export const MobileMyCartItem = ({
@@ -29,12 +28,8 @@ export const MobileMyCartItem = ({
 	const { toast } = useToast();
 	const deleteCartItemMutation = useDeleteCartItemMutation(userId || 0);
 
-	// 플레이리스트 스토어 및 재생 훅
-	const { setPlaylist } = usePlaylistStore(
-		useShallow((state) => ({
-			setPlaylist: state.setPlaylist,
-		})),
-	);
+	// Playlist control via hook
+	const { setCurrentTrackIds } = usePlaylist();
 	const { play } = usePlayTrack();
 
 	// 앨범 커버 클릭 핸들러 (재생)
@@ -50,18 +45,11 @@ export const MobileMyCartItem = ({
 				return;
 			}
 
-			// 플레이리스트 초기화 후 해당 곡만 추가
-			const playlistProduct = {
-				id: productId,
-				productName: title,
-				coverImage: imageUrl ? { url: imageUrl } : undefined,
-				seller: { stageName: artist },
-			};
-
-			setPlaylist([playlistProduct]);
+			// 플레이리스트에 단일 트랙 설정
+			setCurrentTrackIds([productId], 0);
 			play(productId);
 		},
-		[productId, title, imageUrl, artist, setPlaylist, play, toast],
+		[productId, setCurrentTrackIds, play, toast],
 	);
 
 	const handleDelete = () => {

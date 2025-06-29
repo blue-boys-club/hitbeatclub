@@ -14,7 +14,7 @@ import {
 	isValidElement,
 	ComponentProps,
 } from "react";
-import { BodyMedium } from "../Body";
+import { BodyMedium } from "@/components/ui/Body";
 import * as Slot from "@radix-ui/react-slot";
 import Link from "next/link";
 

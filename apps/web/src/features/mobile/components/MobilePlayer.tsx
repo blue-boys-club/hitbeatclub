@@ -27,7 +27,7 @@ import { Heart } from "@/assets/svgs/Heart";
 import { Acapella, AudioBarPause, AudioBarPlay } from "@/assets/svgs";
 import { useCreateCartItemMutation } from "@/apis/user/mutations/useCreateCartItemMutation";
 import { useAuthStore } from "@/stores/auth";
-import { usePlaylistStore, PlaylistProduct } from "@/stores/playlist";
+import { usePlaylist } from "@/hooks/use-playlist";
 
 export const MobilePlayer = () => {
 	// 확장/축소 상태 관리
@@ -38,30 +38,18 @@ export const MobilePlayer = () => {
 	// 플레이리스트 표시 상태
 	const [showPlaylist, setShowPlaylist] = useState(false);
 
-	// 플레이리스트 스토어
+	// Playlist hook (replaces direct store access)
 	const {
-		playlist,
+		trackIds,
 		currentIndex,
-		playNext,
-		playPrevious,
+		playNextTrack,
+		playPreviousTrack,
 		repeatMode,
-		isShuffleMode,
+		isShuffleEnabled,
 		toggleRepeatMode,
-		toggleShuffleMode,
+		toggleShuffle,
 		setCurrentIndex,
-	} = usePlaylistStore(
-		useShallow((state) => ({
-			playlist: state.playlist,
-			currentIndex: state.currentIndex,
-			playNext: state.playNext,
-			playPrevious: state.playPrevious,
-			repeatMode: state.repeatMode,
-			isShuffleMode: state.isShuffleMode,
-			toggleRepeatMode: state.toggleRepeatMode,
-			toggleShuffleMode: state.toggleShuffleMode,
-			setCurrentIndex: state.setCurrentIndex,
-		})),
-	);
+	} = usePlaylist();
 
 	const { play } = usePlayTrack();
 	const { currentProductId, isPlaying, setIsPlaying } = useAudioStore(
@@ -269,7 +257,7 @@ export const MobilePlayer = () => {
 	const handlePlaylistItemClick = useCallback(
 		(productId: number) => {
 			// 클릭한 곡의 인덱스를 찾아서 currentIndex 업데이트
-			const clickedIndex = playlist.findIndex((item) => item.id === productId);
+			const clickedIndex = trackIds.indexOf(productId);
 			if (clickedIndex !== -1) {
 				setCurrentIndex(clickedIndex);
 			}
@@ -277,7 +265,7 @@ export const MobilePlayer = () => {
 			play(productId);
 			setShowPlaylist(false);
 		},
-		[play, playlist, setCurrentIndex],
+		[play, trackIds, setCurrentIndex],
 	);
 
 	// 이전 곡 재생 핸들러
@@ -285,16 +273,15 @@ export const MobilePlayer = () => {
 		(e: React.MouseEvent) => {
 			e.stopPropagation();
 
-			if (playlist.length <= 1) return; // 단일 곡이거나 빈 플레이리스트면 무시
+			if (trackIds.length <= 1) return; // 단일 곡이거나 빈 플레이리스트면 무시
 
-			const previousTrack = playPrevious();
-			if (previousTrack) {
+			const success = playPreviousTrack();
+			if (success) {
 				// 사용자 일시정지 상태 해제
 				setUserPausedRef(false);
-				play(previousTrack.id);
 			}
 		},
-		[playlist.length, playPrevious, play],
+		[trackIds.length, playPreviousTrack],
 	);
 
 	// 다음 곡 재생 핸들러
@@ -302,20 +289,19 @@ export const MobilePlayer = () => {
 		(e: React.MouseEvent) => {
 			e.stopPropagation();
 
-			if (playlist.length <= 1) return; // 단일 곡이거나 빈 플레이리스트면 무시
+			if (trackIds.length <= 1) return; // 단일 곡이거나 빈 플레이리스트면 무시
 
-			const nextTrack = playNext();
-			if (nextTrack) {
+			const success = playNextTrack();
+			if (success) {
 				// 사용자 일시정지 상태 해제
 				setUserPausedRef(false);
-				play(nextTrack.id);
 			}
 		},
-		[playlist.length, playNext, play],
+		[trackIds.length, playNextTrack],
 	);
 
 	// Previous/Next 버튼 사용 가능 여부
-	const canNavigate = playlist.length > 1;
+	const canNavigate = trackIds.length > 1;
 
 	// Repeat 버튼 클릭 핸들러
 	const handleRepeatToggle = useCallback(
@@ -330,48 +316,31 @@ export const MobilePlayer = () => {
 	const handleShuffleToggle = useCallback(
 		(e: React.MouseEvent) => {
 			e.stopPropagation();
-			toggleShuffleMode();
+			toggleShuffle();
 		},
-		[toggleShuffleMode],
+		[toggleShuffle],
 	);
 
 	// 곡이 끝났을 때 자동으로 다음 곡 재생
 	const handleTrackEnded = useCallback(() => {
-		if (repeatMode === "all") {
-			// 전체 반복 모드: 항상 다음 곡으로 (순환)
-			if (playlist.length > 1) {
-				const nextTrack = playNext();
-				if (nextTrack) {
-					setUserPausedRef(false);
-					play(nextTrack.id);
-				}
-			} else if (playlist.length === 1) {
-				// 단일 곡 반복
-				if (currentProductId) {
-					setUserPausedRef(false);
+		if (repeatMode === "one") {
+			if (currentProductId) {
+				setTimeout(() => {
 					play(currentProductId);
-				}
+				}, 100);
 			}
-		} else if (repeatMode === "none") {
-			// 반복 없음 모드: 마지막 곡이 아니면 다음 곡, 마지막 곡이면 정지
-			if (playlist.length > 1 && currentIndex < playlist.length - 1) {
-				// 순환하지 않는 선형 진행으로 다음 곡 재생
-				const nextIndex = currentIndex + 1;
-				const nextTrack = playlist[nextIndex];
-
-				if (nextTrack) {
-					setCurrentIndex(nextIndex);
-					setUserPausedRef(false);
-					play(nextTrack.id);
-				}
-			}
-			// 마지막 곡이거나 단일 곡이면 재생 종료 (자연스럽게 정지)
+			return;
 		}
-	}, [playlist, currentIndex, playNext, play, repeatMode, currentProductId, setCurrentIndex]);
+
+		const success = playNextTrack();
+		if (!success) {
+			// 더 이상 재생할 트랙이 없는 경우 처리할 로직이 있으면 여기에 추가
+		}
+	}, [repeatMode, currentProductId, play, playNextTrack]);
 
 	// 플레이리스트 컴포넌트
 	const PlaylistModal = useCallback(() => {
-		if (!showPlaylist || playlist.length === 0) return null;
+		if (!showPlaylist || trackIds.length === 0) return null;
 
 		return (
 			<div
@@ -379,39 +348,22 @@ export const MobilePlayer = () => {
 				className="absolute top-full right-0 mt-2 w-52 border-2 border-black bg-white p-4 z-50 max-h-96 overflow-y-auto"
 				onClick={(e) => e.stopPropagation()}
 			>
-				{playlist.slice(0, 9).map((item: PlaylistProduct, index: number) => (
+				{trackIds.slice(0, 9).map((id, index: number) => (
 					<div
-						key={item.id}
+						key={id}
 						className={`flex gap-3 mb-2.5 last:mb-0 cursor-pointer hover:bg-gray-100 p-1 rounded ${
 							currentIndex === index ? "bg-gray-200" : ""
 						}`}
-						onClick={() => handlePlaylistItemClick(item.id)}
+						onClick={() => handlePlaylistItemClick(id)}
 					>
-						<div className="w-10 h-10 relative border border-black flex-shrink-0">
-							{item.coverImage?.url ? (
-								<Image
-									src={item.coverImage.url}
-									alt="cover"
-									fill
-									className="object-cover"
-								/>
-							) : (
-								<div className="w-full h-full bg-gray-200 flex items-center justify-center">
-									<span className="text-xs text-gray-500">No Image</span>
-								</div>
-							)}
-						</div>
-						<div className="flex flex-col justify-center flex-1 min-w-0">
-							<div className="font-bold text-sm leading-4 truncate">{item.productName}</div>
-							<div className="font-medium text-xs leading-4 text-gray-600 truncate">
-								{item.seller?.stageName || "Unknown Artist"}
-							</div>
+						<div className="w-10 h-10 flex items-center justify-center border border-black flex-shrink-0">
+							<span className="text-xs text-gray-500">#{index + 1}</span>
 						</div>
 					</div>
 				))}
 			</div>
 		);
-	}, [showPlaylist, playlist, currentIndex, handlePlaylistItemClick]);
+	}, [showPlaylist, trackIds, currentIndex, handlePlaylistItemClick]);
 
 	// 시간을 mm:ss 형식으로 변환하는 함수
 	const formatTime = (seconds: number) => {
@@ -691,15 +643,15 @@ export const MobilePlayer = () => {
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {
 			// 스페이스바가 아닌 경우 무시
-			if (event.code !== 'Space') return;
+			if (event.code !== "Space") return;
 
 			// input, textarea 등에 포커스가 있을 때는 무시
 			const activeElement = document.activeElement as HTMLElement;
 			if (
 				activeElement &&
-				(activeElement.tagName === 'INPUT' ||
-					activeElement.tagName === 'TEXTAREA' ||
-					activeElement.contentEditable === 'true')
+				(activeElement.tagName === "INPUT" ||
+					activeElement.tagName === "TEXTAREA" ||
+					activeElement.contentEditable === "true")
 			) {
 				return;
 			}
@@ -711,14 +663,14 @@ export const MobilePlayer = () => {
 			}
 		};
 
-		document.addEventListener('keydown', handleKeyDown);
+		document.addEventListener("keydown", handleKeyDown);
 
 		return () => {
-			document.removeEventListener('keydown', handleKeyDown);
+			document.removeEventListener("keydown", handleKeyDown);
 		};
 	}, [currentProductId, onPlayHandler]);
 
-	if (!currentProductId || !isLoggedIn) {
+	if (!currentProductId) {
 		return null;
 	}
 
@@ -981,7 +933,7 @@ export const MobilePlayer = () => {
 					</div>
 					<div className="h-auto border-t-10px border-black px-2 py-1 flex items-center justify-between">
 						<button onClick={handleRepeatToggle}>
-							<MobileFullScreenPlayerRepeatSVG mode={repeatMode} />
+							<MobileFullScreenPlayerRepeatSVG mode={repeatMode === "all" ? "all" : "none"} />
 						</button>
 						<button
 							onClick={handlePreviousTrack}
@@ -999,7 +951,7 @@ export const MobilePlayer = () => {
 							<MobileFullScreenPlayerNextSVG />
 						</button>
 						<button onClick={handleShuffleToggle}>
-							<MobileFullScreenPlayerShuffleSVG active={isShuffleMode} />
+							<MobileFullScreenPlayerShuffleSVG active={isShuffleEnabled} />
 						</button>
 					</div>
 				</div>
