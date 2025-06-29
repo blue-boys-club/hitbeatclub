@@ -166,6 +166,7 @@ export const MobileMyCartPage = () => {
 							licenseType={item.selectedLicense.type}
 							cartItemId={item.id}
 							userId={user?.id || 0}
+							productId={item.product.id}
 						/>
 					))}
 				</div>

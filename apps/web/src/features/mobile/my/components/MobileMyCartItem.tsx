@@ -2,6 +2,10 @@ import { X } from "@/assets/svgs/X";
 import Image from "next/image";
 import { useDeleteCartItemMutation } from "@/apis/user/mutations";
 import { useToast } from "@/hooks/use-toast";
+import { usePlaylistStore } from "@/stores/playlist";
+import { usePlayTrack } from "@/hooks/use-play-track";
+import { useShallow } from "zustand/react/shallow";
+import { useCallback } from "react";
 
 export const MobileMyCartItem = ({
 	title = "La Vie En Rose",
@@ -11,6 +15,7 @@ export const MobileMyCartItem = ({
 	licenseType,
 	cartItemId,
 	userId,
+	productId,
 }: {
 	title?: string;
 	artist?: string;
@@ -19,9 +24,42 @@ export const MobileMyCartItem = ({
 	licenseType?: string;
 	cartItemId?: number;
 	userId?: number;
+	productId?: number;
 }) => {
 	const { toast } = useToast();
 	const deleteCartItemMutation = useDeleteCartItemMutation(userId || 0);
+
+	// 플레이리스트 스토어 및 재생 훅
+	const { setPlaylist } = usePlaylistStore(
+		useShallow((state) => ({
+			setPlaylist: state.setPlaylist,
+		})),
+	);
+	const { play } = usePlayTrack();
+
+	// 앨범 커버 클릭 핸들러 (재생)
+	const handleAlbumClick = useCallback((e: React.MouseEvent) => {
+		e.stopPropagation();
+		
+		if (!productId) {
+			toast({
+				description: "재생할 수 없는 항목입니다.",
+				variant: "destructive",
+			});
+			return;
+		}
+		
+		// 플레이리스트 초기화 후 해당 곡만 추가
+		const playlistProduct = {
+			id: productId,
+			productName: title,
+			coverImage: imageUrl ? { url: imageUrl } : undefined,
+			seller: { stageName: artist },
+		};
+		
+		setPlaylist([playlistProduct]);
+		play(productId);
+	}, [productId, title, imageUrl, artist, setPlaylist, play, toast]);
 
 	const handleDelete = () => {
 		if (!cartItemId || !userId) {
@@ -51,7 +89,10 @@ export const MobileMyCartItem = ({
 	return (
 		<div className="bg-[#dadada] p-2 rounded-5px flex justify-between items-center hover:bg-[#D9D9D9] cursor-pointer">
 			<div className="flex gap-2">
-				<div className="relative w-50px h-50px rounded-5px overflow-hidden">
+				<div 
+					className="relative w-50px h-50px rounded-5px overflow-hidden cursor-pointer"
+					onClick={handleAlbumClick}
+				>
 					<Image
 						alt="album image"
 						src={imageUrl}

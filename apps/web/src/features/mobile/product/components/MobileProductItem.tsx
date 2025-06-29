@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useState, useCallback } from "react";
 import Image from "next/image";
 import { Acapella, Beat, Like } from "@/assets/svgs";
 import { Heart } from "@/assets/svgs/Heart";
@@ -10,6 +10,8 @@ import { useUnlikeProductMutation } from "@/apis/product/mutations/useUnLikeProd
 import { useAuthStore } from "@/stores/auth";
 import { useShallow } from "zustand/react/shallow";
 import { ProductLikeResponse, ProductListPagingResponse } from "@hitbeatclub/shared-types";
+import { usePlaylistStore } from "@/stores/playlist";
+import { usePlayTrack } from "@/hooks/use-play-track";
 
 interface SearchProduct {
 	type: "search";
@@ -41,6 +43,14 @@ export const MobileProductItem = memo(({ type, product, onBuyClick }: MobileProd
 	// 사용자 ID 가져오기
 	const userId = useAuthStore(useShallow((state) => state.user?.userId));
 
+	// 플레이리스트 스토어 및 재생 훅
+	const { setPlaylist } = usePlaylistStore(
+		useShallow((state) => ({
+			setPlaylist: state.setPlaylist,
+		})),
+	);
+	const { play } = usePlayTrack();
+
 	// 좋아요 관련 mutations
 	const likeProductMutation = useLikeProductMutation();
 	const unlikeProductMutation = useUnlikeProductMutation();
@@ -52,6 +62,21 @@ export const MobileProductItem = memo(({ type, product, onBuyClick }: MobileProd
 	const bpmDisplay =
 		product.minBpm === product.maxBpm ? `${product.minBpm}BPM` : `${product.minBpm}BPM - ${product.maxBpm}BPM`;
 
+	// 앨범 커버 클릭 핸들러 (재생)
+	const handleAlbumClick = useCallback((e: React.MouseEvent) => {
+		e.stopPropagation();
+		
+		// 플레이리스트 초기화 후 해당 곡만 추가
+		const playlistProduct = {
+			id: product.id,
+			productName: product.productName,
+			coverImage: product.coverImage ? { url: product.coverImage.url } : undefined,
+			seller: product.seller,
+		};
+		
+		setPlaylist([playlistProduct]);
+		play(product.id);
+	}, [product, setPlaylist, play]);
 
 	// 좋아요 토글 핸들러
 	const handleLikeToggle = async () => {
@@ -77,7 +102,10 @@ export const MobileProductItem = memo(({ type, product, onBuyClick }: MobileProd
 	return (
 		<div className="bg-[#dadada] p-2 rounded-5px flex justify-between hover:bg-[#D9D9D9] cursor-pointer">
 			<div className="flex-1 flex gap-2">
-				<div className="relative w-70px h-70px rounded-5px overflow-hidden">
+				<div 
+					className="relative w-70px h-70px rounded-5px overflow-hidden cursor-pointer"
+					onClick={handleAlbumClick}
+				>
 					<Image
 						alt="album image"
 						src={product.coverImage?.url || ""}

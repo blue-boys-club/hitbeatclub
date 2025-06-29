@@ -99,6 +99,9 @@ export const MobileMyFollowPage = () => {
 						stageName={artist.stageName}
 						profileImageUrl={artist.profileImageUrl}
 						followerCount={artist.followerCount}
+						slug={artist.slug}
+						artistId={artist.artistId}
+						userId={user?.id ?? 0}
 					/>
 				))}
 				{hasNextPage && (

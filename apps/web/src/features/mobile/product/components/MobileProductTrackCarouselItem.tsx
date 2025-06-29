@@ -4,6 +4,7 @@ import Image from "next/image";
 import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
 import { usePlayTrack } from "@/hooks/use-play-track";
 import { useAudioStore } from "@/stores/audio";
+import { usePlaylistStore } from "@/stores/playlist";
 import { useShallow } from "zustand/react/shallow";
 import { useCallback, useMemo } from "react";
 import { MobilePlayCircleSVG, MobilePauseCircleSVG } from "@/features/mobile/components";
@@ -22,6 +23,12 @@ export const MobileProductTrackCarouselItem = ({ track }: MobileProductTrackCaro
 		useShallow((state) => ({
 			status: state.status,
 			currentProductId: state.productId,
+		})),
+	);
+
+	const { setPlaylist } = usePlaylistStore(
+		useShallow((state) => ({
+			setPlaylist: state.setPlaylist,
 		})),
 	);
 
@@ -59,8 +66,17 @@ export const MobileProductTrackCarouselItem = ({ track }: MobileProductTrackCaro
 	}, [status, currentProductId, track.id]);
 
 	const onPlayHandler = useCallback(() => {
+		// 플레이리스트를 초기화하고 클릭한 곡만 추가
+		setPlaylist([{
+			id: track.id,
+			productName: track.productName,
+			coverImage: track.coverImage,
+			seller: track.seller,
+		}]);
+		
+		// 곡 재생
 		play(track.id);
-	}, [play, track.id]);
+	}, [play, track.id, track.productName, track.coverImage, track.seller, setPlaylist]);
 
 	return (
 		<div

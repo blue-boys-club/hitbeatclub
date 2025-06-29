@@ -1,15 +1,11 @@
 import Image from "next/image";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { MobileAddCircleSVG } from "./MobileAddCircleSVG";
-import { MobileLikeSVG } from "./MobileLikeSVG";
 import { MobileSpeakerSVG } from "./MobileSpeakerSVG";
-import { MobilePauseCircleSVG } from "./MobilePauseCircleSVG";
-import { MobilePlayCircleSVG } from "./MobilePlayCircleSVG";
 import { MobileDownArrowSquareSVG } from "./MobileDownArrowSquareSVG";
 import { MobilePlayListSquareSVG } from "./MobilePlayListSquareSVG";
 import { MobileFullScreenPlayerBeatSVG } from "./MobileFullScreenPlayerBeatSVG";
 import { MobileFullScreenPlayerNextSVG } from "./MobileFullScreenPlayerNextSVG";
-import { MobileFullScreenPlayerPauseSVG } from "./MobileFullScreenPlayerPauseSVG";
 import { MobileFullScreenPlayerPreviousSVG } from "./MobileFullScreenPlayerPreviousSVG";
 import { MobileFullScreenPlayerRepeatSVG } from "./MobileFullScreenPlayerRepeatSVG";
 import { MobileFullScreenPlayerShuffleSVG } from "./MobileFullScreenPlayerShuffleSVG";
@@ -29,12 +25,26 @@ import { useAudioContext } from "@/contexts/AudioContext";
 import { ReactPlayer } from "@/components/layout/Footer/Player/ReactPlayer";
 import { Heart } from "@/assets/svgs/Heart";
 import { AudioBarPause, AudioBarPlay } from "@/assets/svgs";
+import { useCreateCartItemMutation } from "@/apis/user/mutations/useCreateCartItemMutation";
+import { useAuthStore } from "@/stores/auth";
+import { usePlaylistStore, PlaylistProduct } from "@/stores/playlist";
 
 export const MobilePlayer = () => {
 	// 확장/축소 상태 관리
 	const [isFullScreen, setIsFullScreen] = useState(false);
 	const [isClosing, setIsClosing] = useState(false);
 	const [showVolumeBar, setShowVolumeBar] = useState(false);
+
+	// 플레이리스트 표시 상태
+	const [showPlaylist, setShowPlaylist] = useState(false);
+
+	// 플레이리스트 스토어
+	const { playlist, currentIndex } = usePlaylistStore(
+		useShallow((state) => ({
+			playlist: state.playlist,
+			currentIndex: state.currentIndex,
+		})),
+	);
 
 	const { play } = usePlayTrack();
 	const { currentProductId, isPlaying, setIsPlaying } = useAudioStore(
@@ -58,6 +68,12 @@ export const MobilePlayer = () => {
 	// 좋아요 기능
 	const { mutate: likeMutation } = useLikeProductMutation();
 	const { mutate: unlikeProduct } = useUnlikeProductMutation();
+
+	// 사용자 ID 가져오기 (장바구니용)
+	const userId = useAuthStore(useShallow((state) => state.user?.userId));
+
+	// 장바구니 추가 mutation
+	const createCartItemMutation = useCreateCartItemMutation(userId!);
 
 	// 토스트 및 오디오 컨텍스트
 	const { toast } = useToast();
@@ -94,6 +110,7 @@ export const MobilePlayer = () => {
 	const volumeBarRef = useRef<HTMLDivElement>(null);
 	const speakerRef = useRef<HTMLDivElement>(null);
 	const progressBarRef = useRef<HTMLDivElement>(null);
+	const playlistRef = useRef<HTMLDivElement>(null);
 
 	const playIcon = useMemo(() => {
 		// AudioContext의 실제 재생 상태를 우선적으로 사용
@@ -154,6 +171,51 @@ export const MobilePlayer = () => {
 		}
 	}, [currentProductId, productData, likeMutation, unlikeProduct]);
 
+	// 장바구니 추가 핸들러
+	const handleAddToCart = useCallback(async () => {
+		if (!userId) {
+			toast({
+				description: "로그인이 필요합니다",
+				variant: "destructive",
+			});
+			return;
+		}
+
+		if (!currentProductId || !productData) {
+			toast({
+				description: "상품 정보를 불러올 수 없습니다",
+				variant: "destructive",
+			});
+			return;
+		}
+
+		// 첫 번째 라이센스를 기본값으로 사용 (MobileBuyOrCartModal과 동일한 방식)
+		const defaultLicense = productData.licenseInfo?.[0];
+		if (!defaultLicense?.id) {
+			toast({
+				description: "라이센스 정보를 찾을 수 없습니다",
+				variant: "destructive",
+			});
+			return;
+		}
+
+		try {
+			await createCartItemMutation.mutateAsync({
+				productId: currentProductId,
+				licenseId: defaultLicense.id,
+			});
+			toast({
+				description: "장바구니에 추가되었습니다",
+			});
+		} catch (error) {
+			console.error("장바구니 추가 실패:", error);
+			toast({
+				description: "장바구니 추가에 실패했습니다",
+				variant: "destructive",
+			});
+		}
+	}, [userId, currentProductId, productData, createCartItemMutation, toast]);
+
 	// 풀스크린으로 전환
 	const handleShowFullScreen = useCallback(() => {
 		setIsFullScreen(true);
@@ -169,6 +231,65 @@ export const MobilePlayer = () => {
 			setIsClosing(false);
 		}, 300);
 	}, []);
+
+	// 플레이리스트 토글 핸들러
+	const handleTogglePlaylist = useCallback((e: React.MouseEvent) => {
+		e.stopPropagation();
+		setShowPlaylist((prev) => !prev);
+	}, []);
+
+	// 플레이리스트 아이템 클릭 핸들러
+	const handlePlaylistItemClick = useCallback(
+		(productId: number) => {
+			play(productId);
+			setShowPlaylist(false);
+		},
+		[play],
+	);
+
+	// 플레이리스트 컴포넌트
+	const PlaylistModal = useCallback(() => {
+		if (!showPlaylist || playlist.length === 0) return null;
+
+		return (
+			<div
+				ref={playlistRef}
+				className="absolute top-full right-0 mt-2 w-52 border-2 border-black bg-white p-4 z-50 max-h-96 overflow-y-auto"
+				onClick={(e) => e.stopPropagation()}
+			>
+				{playlist.slice(0, 9).map((item: PlaylistProduct, index: number) => (
+					<div
+						key={item.id}
+						className={`flex gap-3 mb-2.5 last:mb-0 cursor-pointer hover:bg-gray-100 p-1 rounded ${
+							currentIndex === index ? "bg-gray-200" : ""
+						}`}
+						onClick={() => handlePlaylistItemClick(item.id)}
+					>
+						<div className="w-10 h-10 relative border border-black flex-shrink-0">
+							{item.coverImage?.url ? (
+								<Image
+									src={item.coverImage.url}
+									alt="cover"
+									fill
+									className="object-cover"
+								/>
+							) : (
+								<div className="w-full h-full bg-gray-200 flex items-center justify-center">
+									<span className="text-xs text-gray-500">No Image</span>
+								</div>
+							)}
+						</div>
+						<div className="flex flex-col justify-center flex-1 min-w-0">
+							<div className="font-bold text-sm leading-4 truncate">{item.productName}</div>
+							<div className="font-medium text-xs leading-4 text-gray-600 truncate">
+								{item.seller?.stageName || "Unknown Artist"}
+							</div>
+						</div>
+					</div>
+				))}
+			</div>
+		);
+	}, [showPlaylist, playlist, currentIndex, handlePlaylistItemClick]);
 
 	// 시간을 mm:ss 형식으로 변환하는 함수
 	const formatTime = (seconds: number) => {
@@ -280,10 +401,7 @@ export const MobilePlayer = () => {
 				onSeek(newTime); // 클릭 시 즉시 해당 지점으로 이동
 			}
 
-			let isDragging = false;
-
 			const handleMouseMove = (e: MouseEvent) => {
-				isDragging = true;
 				const rect = progressBarRef.current?.getBoundingClientRect();
 				if (!rect || duration === 0) return;
 
@@ -315,11 +433,8 @@ export const MobilePlayer = () => {
 				onSeek(newTime); // 터치 시 즉시 해당 지점으로 이동
 			}
 
-			let isDragging = false;
-
 			const handleTouchMove = (e: TouchEvent) => {
 				e.preventDefault();
-				isDragging = true;
 				const rect = progressBarRef.current?.getBoundingClientRect();
 				if (!rect || !e.touches[0] || duration === 0) return;
 
@@ -366,25 +481,48 @@ export const MobilePlayer = () => {
 		};
 	}, [showVolumeBar]);
 
-	// 음원이 변경될 때 바로 재생을 중지시켜 기존 트랙이 이어서 재생되지 않도록 처리
+	// 플레이리스트 외부 클릭 감지
+	useEffect(() => {
+		const handleClickOutside = (event: Event) => {
+			if (playlistRef.current && !playlistRef.current.contains(event.target as Node)) {
+				setShowPlaylist(false);
+			}
+		};
+
+		if (showPlaylist) {
+			document.addEventListener("mousedown", handleClickOutside);
+			document.addEventListener("touchstart", handleClickOutside);
+		}
+
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+			document.removeEventListener("touchstart", handleClickOutside);
+		};
+	}, [showPlaylist]);
+
+	// 음원이 변경될 때 처리
 	useEffect(() => {
 		if (!currentProductId) return;
-		// 현재 재생 중지 및 상태 초기화
-		stop();
-		setCurrentAudioUrl("");
-	}, [currentProductId, stop]);
+
+		// 기존 오디오 URL과 다른 경우에만 초기화
+		if (currentAudioUrl && audioFileDownloadLink?.url !== currentAudioUrl) {
+			setCurrentAudioUrl("");
+		}
+	}, [currentProductId, currentAudioUrl, audioFileDownloadLink?.url]);
 
 	// 오디오 파일 다운로드 링크가 변경될 때마다 재생
 	useEffect(() => {
-		if (audioFileDownloadLink?.url) {
+		if (audioFileDownloadLink?.url && audioFileDownloadLink.url !== currentAudioUrl) {
 			setCurrentAudioUrl(audioFileDownloadLink.url);
+
+			// 새로운 트랙이므로 stop 후 autoPlay
 			stop();
 			const timer = setTimeout(() => {
 				autoPlay();
-			}, 200);
+			}, 300); // 조금 더 여유있는 타이밍
 			return () => clearTimeout(timer);
 		}
-	}, [audioFileDownloadLink, stop, autoPlay]);
+	}, [audioFileDownloadLink, currentAudioUrl, stop, autoPlay]);
 
 	// 오디오 파일 다운로드 에러 처리
 	useEffect(() => {
@@ -402,6 +540,19 @@ export const MobilePlayer = () => {
 			setIsPlaying(contextIsPlaying);
 		}
 	}, [isPlaying, contextIsPlaying, setIsPlaying]);
+
+	// 새로운 트랙이 로드되었을 때 재생 상태 확인
+	useEffect(() => {
+		if (currentAudioUrl && currentProductId && !contextIsPlaying) {
+			// 오디오 URL이 설정되었는데 재생되지 않는 경우, 잠시 후 재생 시도
+			const timer = setTimeout(() => {
+				if (!contextIsPlaying) {
+					autoPlay();
+				}
+			}, 500);
+			return () => clearTimeout(timer);
+		}
+	}, [currentAudioUrl, currentProductId, contextIsPlaying, autoPlay]);
 
 	// 사용자가 시크바를 조작하지 않을 때만 currentTime과 동기화
 	useEffect(() => {
@@ -436,7 +587,7 @@ export const MobilePlayer = () => {
 					className="fixed bottom-72px left-0 right-0 z-40 flex gap-3 border-t-4px border-black p-2 bg-white"
 					onClick={handleShowFullScreen}
 				>
-					<div className="w-50px h-50px relative border-5px border-black">
+					<div className="shrink-0 w-50px h-50px relative border-5px border-black">
 						{productData?.coverImage?.url ? (
 							<Image
 								alt="cover image"
@@ -452,7 +603,7 @@ export const MobilePlayer = () => {
 					</div>
 					<div className="flex-1 flex flex-col justify-between">
 						<div className="flex justify-between">
-							<div className="flex-1 flex flex-col gap-3px">
+							<div className="flex-1 flex flex-col gap-3px min-w-0 w-[calc(100vw-200px)] overflow-x-auto whitespace-nowrap mr-2">
 								<div className="font-bold text-20px leading-16px">{productData?.productName || "Loading..."}</div>
 								<div className="font-bold text-14px leading-16px">
 									{productData?.seller?.stageName || "Unknown Artist"}
@@ -479,7 +630,15 @@ export const MobilePlayer = () => {
 											/>
 										</div>
 									</div>
-									<MobileAddCircleSVG />
+									<div
+										className="cursor-pointer"
+										onClick={(e) => {
+											e.stopPropagation();
+											handleAddToCart();
+										}}
+									>
+										<MobileAddCircleSVG />
+									</div>
 									<div
 										ref={speakerRef}
 										onClick={(e) => {
@@ -573,13 +732,18 @@ export const MobilePlayer = () => {
 								<button onClick={handleHideFullScreen}>
 									<MobileDownArrowSquareSVG />
 								</button>
-								<MobilePlayListSquareSVG />
+								<div className="relative">
+									<button onClick={handleTogglePlaylist}>
+										<MobilePlayListSquareSVG />
+									</button>
+									<PlaylistModal />
+								</div>
 							</div>
 						</div>
 						<div className="mt-8 flex flex-col px-4 pb-4">
 							<div className="font-bold text-32px leading-40px">{productData?.productName || "Loading..."}</div>
 							<div className="flex justify-between">
-								<span className="font-[450] text-18px leading-100%">
+								<span className="font-[450] text-18px leading-100% flex-1 mr-2">
 									{productData?.seller?.stageName || "Unknown Artist"}
 								</span>
 								<MobileFullScreenPlayerBeatSVG />
@@ -665,6 +829,17 @@ export const MobilePlayer = () => {
 					</div>
 				</div>
 			)}
+			<style jsx>
+				{`
+					* {
+						-ms-overflow-style: none;
+						scrollbar-width: none;
+					}
+					*::-webkit-scrollbar {
+						display: none;
+					}
+				`}
+			</style>
 		</>
 	);
 };
