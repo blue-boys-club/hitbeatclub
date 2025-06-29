@@ -8,6 +8,7 @@ import { ProductDetailLicenseModal } from "./modal/ProductDetailLicenseModal";
 import { LICENSE_MAP_TEMPLATE } from "@/apis/product/product.dummy";
 import { LicenseType } from "../product.constants";
 import { useUnifiedCart } from "@/hooks/use-unified-cart";
+import { cn } from "@/common/utils";
 
 interface PurchaseWithCartTriggerProps {
 	/**
@@ -147,8 +148,13 @@ export const PurchaseWithCartTrigger = memo(
 			// 기본 PurchaseButton 사용
 			return (
 				<PurchaseButton
-					iconColor="var(--hbc-white)"
-					className={`outline-4 outline-hbc-black font-suisse ${className || ""}`}
+					iconColor={isOnCart ? "var(--hbc-white)" : "var(--hbc-black)"}
+					className={cn(
+						`outline-4 outline-hbc-black font-suisse`,
+						className,
+						!isOnCart && "bg-hbc-white text-black hover:bg-hbc-white",
+					)}
+					disabled={isOnCart}
 					onClick={handleClick}
 				>
 					{cheapestLicensePrice?.toLocaleString()} KRW

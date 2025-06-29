@@ -161,7 +161,7 @@ export const ArtistProductList = memo(({ slug }: ArtistProductListProps) => {
 	return (
 		<>
 			{/* Filters / Sort / Search */}
-			<div className="mb-3">
+			<div className="flex flex-col gap-2">
 				<div className="flex justify-between items-center w-full">
 					<ArtistProductFilter onFilterChange={handleFiltersChange} />
 					<ProductSort onSortChange={handleSortChange} />

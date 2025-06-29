@@ -123,13 +123,14 @@ export const usePlaylistStore = create<PlaylistStore>()(
 						state.trackIds = trackIds.slice(0, 100); // 최대 100곡 제한
 						state.currentIndex = Math.max(0, Math.min(currentIndex, trackIds.length - 1));
 
-						// 셔플이 활성화되어 있으면 새로운 셔플 순서 생성
+						// 셔플이 활성화되어 있으면 새로운 셔플 순서 생성 (현재 트랙을 맨 앞으로 고정)
 						if (state.isShuffleEnabled && state.trackIds.length > 0) {
 							state.shuffleSeed = Date.now();
-							state.shuffledOrder = shuffleArray(
-								Array.from({ length: state.trackIds.length }, (_, i) => i),
-								state.shuffleSeed,
-							);
+
+							const currentIdx = state.currentIndex;
+							const rest = Array.from({ length: state.trackIds.length }, (_, i) => i).filter((i) => i !== currentIdx);
+							const shuffledRest = shuffleArray(rest, state.shuffleSeed);
+							state.shuffledOrder = [currentIdx, ...shuffledRest];
 						}
 					}),
 
@@ -193,12 +194,13 @@ export const usePlaylistStore = create<PlaylistStore>()(
 						state.isShuffleEnabled = !state.isShuffleEnabled;
 
 						if (state.isShuffleEnabled && state.trackIds.length > 0) {
-							// 셔플 활성화: 새로운 셔플 순서 생성
+							// 셔플 활성화: 현재 트랙을 맨 앞으로, 나머지를 셔플
 							state.shuffleSeed = Date.now();
-							state.shuffledOrder = shuffleArray(
-								Array.from({ length: state.trackIds.length }, (_, i) => i),
-								state.shuffleSeed,
-							);
+
+							const currentIdx = state.currentIndex;
+							const rest = Array.from({ length: state.trackIds.length }, (_, i) => i).filter((i) => i !== currentIdx);
+							const shuffledRest = shuffleArray(rest, state.shuffleSeed);
+							state.shuffledOrder = [currentIdx, ...shuffledRest];
 						} else {
 							// 셔플 비활성화: 셔플 순서 초기화
 							state.shuffledOrder = [];
@@ -334,12 +336,13 @@ export const usePlaylistStore = create<PlaylistStore>()(
 							state.trackIds = state.trackIds.slice(removedCount);
 							state.currentIndex = Math.max(0, state.currentIndex - removedCount);
 
-							// 셔플 순서도 업데이트
+							// 셔플 순서도 업데이트 (현재 트랙을 맨 앞으로 고정)
 							if (state.isShuffleEnabled) {
-								state.shuffledOrder = shuffleArray(
-									Array.from({ length: state.trackIds.length }, (_, i) => i),
-									state.shuffleSeed,
-								);
+								state.shuffleSeed = Date.now();
+								const currentIdx = state.currentIndex;
+								const rest = Array.from({ length: state.trackIds.length }, (_, i) => i).filter((i) => i !== currentIdx);
+								const shuffledRest = shuffleArray(rest, state.shuffleSeed);
+								state.shuffledOrder = [currentIdx, ...shuffledRest];
 							}
 						}
 					}),

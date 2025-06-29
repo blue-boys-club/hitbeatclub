@@ -48,7 +48,6 @@ interface ArtistInfoProps {
 }
 
 export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
-	const [isShuffleOn, setIsShuffleOn] = useState(false);
 	const [isOpenDropdown, setIsOpenDropdown] = useState(false);
 	const [isOpenReportModal, setIsOpenReportModal] = useState(false);
 	const { toast } = useToast();
@@ -69,7 +68,7 @@ export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 	});
 
 	// Playlist hooks
-	const { createAutoPlaylistAndPlay, toggleShuffle, isShuffleEnabled } = usePlaylist();
+	const { createAutoPlaylist, toggleShuffle, isShuffleEnabled, playTrackAtIndex } = usePlaylist();
 
 	const isFollwingArtist = followedArtistList?.some(
 		(followedArtist: UserFollowArtistListResponse) => followedArtist.artistId === artist?.id,
@@ -80,16 +79,36 @@ export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 		if (isBlockedArtist) return;
 		if (!artist?.id) return;
 		try {
-			await createAutoPlaylistAndPlay(createPlaylistConfig.artist(artist.id, { isPublic: true }), 0);
+			await createAutoPlaylist(createPlaylistConfig.artist(artist.id, { isPublic: true }));
 		} catch (error) {
-			console.error("[ArtistInfo] createAutoPlaylistAndPlay failed", error);
+			console.error("[ArtistInfo] createAutoPlaylist failed", error);
 		}
 	};
 
-	const onShuffle = () => {
+	const onShuffle = async () => {
 		if (isBlockedArtist) return;
-		toggleShuffle();
-		setIsShuffleOn((prev) => !prev);
+		if (!artist?.id) return;
+
+		try {
+			// 1) 플레이리스트 생성 (섞지 않은 상태)
+			const data = await createAutoPlaylist(createPlaylistConfig.artist(artist.id, { isPublic: true }));
+
+			// 2) 무작위 인덱스 선택
+			const trackCount = data.data.trackIds?.length ?? 0;
+			if (trackCount === 0) return;
+			const randomIndex = Math.floor(Math.random() * trackCount);
+
+			// 3) 선택된 인덱스로 재생
+			playTrackAtIndex(randomIndex);
+
+			// 4) 셔플 활성화 (이미 활성화되어 있지 않은 경우)
+			if (!isShuffleEnabled) {
+				toggleShuffle();
+			}
+		} catch (error) {
+			console.error("[ArtistInfo] shuffle play failed", error);
+			toast({ description: "셔플 재생에 실패했습니다.", variant: "destructive" });
+		}
 	};
 
 	const onOpenDropdown = () => {
@@ -108,42 +127,56 @@ export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 		});
 	};
 
-	const options: DropdownOption[] = [
-		{
-			label: "팔로잉 취소",
-			value: "unfollow",
-			onClick: () => {
-				if (!artist?.id) return;
-				deleteFollowedArtist(artist.id);
-				setIsOpenDropdown(false);
-				toast({
-					description: "팔로잉이 취소되었습니다.",
-				});
-			},
-		},
-		{
-			label: isBlockedArtist ? "차단 해제" : "차단하기",
-			value: "block",
-			onClick: () => {
-				if (!artist?.id) return;
-				if (isBlockedArtist) {
-					unblockArtist({ artistId: artist.id });
-				} else {
-					blockArtist({ artistId: artist.id });
-				}
+	const handleFollowArtist = () => {
+		if (!!!userMe?.id) {
+			toast({
+				description: "로그인 후 이용해주세요.",
+			});
+		}
 
-				setIsOpenDropdown(false);
-				toast({
-					description: isBlockedArtist ? "아티스트가 차단 해제되었습니다." : "아티스트가 차단되었습니다.",
-				});
+		if (!artist?.id) return;
+		if (isFollwingArtist) {
+			deleteFollowedArtist(artist.id);
+		} else {
+			followArtist(artist.id);
+		}
+	};
+
+	const options: DropdownOption[] = useMemo(
+		() => [
+			{
+				label: isFollwingArtist ? "팔로잉 취소" : "팔로우",
+				value: "follow",
+				onClick: () => {
+					handleFollowArtist();
+					setIsOpenDropdown(false);
+				},
 			},
-		},
-		{
-			label: "신고하기",
-			value: "report",
-			onClick: onOpenReportModal,
-		},
-	];
+			{
+				label: isBlockedArtist ? "차단 해제" : "차단하기",
+				value: "block",
+				onClick: () => {
+					if (!artist?.id) return;
+					if (isBlockedArtist) {
+						unblockArtist({ artistId: artist.id });
+					} else {
+						blockArtist({ artistId: artist.id });
+					}
+
+					setIsOpenDropdown(false);
+					toast({
+						description: isBlockedArtist ? "아티스트가 차단 해제되었습니다." : "아티스트가 차단되었습니다.",
+					});
+				},
+			},
+			{
+				label: "신고하기",
+				value: "report",
+				onClick: onOpenReportModal,
+			},
+		],
+		[artist, isBlockedArtist, isFollwingArtist, userMe?.id],
+	);
 
 	const artistProfileImage = useMemo(() => {
 		return artist?.profileImage?.url || artist?.profileImageUrl || UserProfileImage;
@@ -175,7 +208,7 @@ export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 							className="cursor-pointer"
 							onClick={onShuffle}
 						>
-							{isShuffleOn ? <ShuffleOn /> : <ShuffleOff />}
+							{isShuffleEnabled ? <ShuffleOn /> : <ShuffleOff />}
 						</div>
 						<div
 							className="cursor-pointer"
@@ -200,14 +233,7 @@ export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 					<Button
 						variant={isFollwingArtist ? "fill" : "outline"}
 						rounded="full"
-						onClick={() => {
-							if (!artist?.id) return;
-							if (isFollwingArtist) {
-								deleteFollowedArtist(artist.id);
-							} else {
-								followArtist(artist.id);
-							}
-						}}
+						onClick={handleFollowArtist}
 					>
 						{isFollwingArtist ? "Following" : "Follow"}
 					</Button>
