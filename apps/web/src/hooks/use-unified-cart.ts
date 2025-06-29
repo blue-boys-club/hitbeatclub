@@ -68,10 +68,10 @@ export const useUnifiedCart = (): UseUnifiedCartReturn => {
 	const isLoggedIn = !!user?.id;
 	const userId = user?.id;
 
-	console.log("🔍 useUnifiedCart Debug:");
-	console.log("  - isLoggedIn:", isLoggedIn);
-	console.log("  - userId:", userId);
-	console.log("  - user:", user);
+	// console.log("🔍 useUnifiedCart Debug:");
+	// console.log("  - isLoggedIn:", isLoggedIn);
+	// console.log("  - userId:", userId);
+	// console.log("  - user:", user);
 
 	// 로컬 카트 스토어
 	const {
@@ -88,7 +88,7 @@ export const useUnifiedCart = (): UseUnifiedCartReturn => {
 		})),
 	);
 
-	console.log("  - localCartItems:", localCartItems);
+	// console.log("  - localCartItems:", localCartItems);
 
 	// 서버 카트 데이터
 	const {
@@ -101,9 +101,9 @@ export const useUnifiedCart = (): UseUnifiedCartReturn => {
 		enabled: isLoggedIn && !!userId,
 	});
 
-	console.log("  - serverCartItems:", serverCartItems);
-	console.log("  - isServerCartLoading:", isServerCartLoading);
-	console.log("  - isServerCartError:", isServerCartError);
+	// console.log("  - serverCartItems:", serverCartItems);
+	// console.log("  - isServerCartLoading:", isServerCartLoading);
+	// console.log("  - isServerCartError:", isServerCartError);
 
 	// 서버 카트 뮤테이션들 (로그인된 경우에만)
 	const createCartItemMutation = useCreateCartItemMutation(userId || 0);
@@ -112,25 +112,25 @@ export const useUnifiedCart = (): UseUnifiedCartReturn => {
 
 	// 현재 활성 카트 아이템들 결정 (로그인 상태에 따라)
 	const activeCartItems: UnifiedCartItem[] = useMemo(() => {
-		console.log("🎯 activeCartItems 계산 중:");
-		console.log("  - isLoggedIn:", isLoggedIn);
-		console.log("  - isServerCartLoading:", isServerCartLoading);
-		console.log("  - serverCartItems:", serverCartItems);
-		console.log("  - localCartItems:", localCartItems);
+		// console.log("🎯 activeCartItems 계산 중:");
+		// console.log("  - isLoggedIn:", isLoggedIn);
+		// console.log("  - isServerCartLoading:", isServerCartLoading);
+		// console.log("  - serverCartItems:", serverCartItems);
+		// console.log("  - localCartItems:", localCartItems);
 
 		if (isLoggedIn) {
 			// 서버 카트가 로딩 중이면 로컬 카트를 보여줌
 			if (isServerCartLoading) {
-				console.log("  → 서버 카트 로딩 중, 로컬 카트 사용");
+				// console.log("  → 서버 카트 로딩 중, 로컬 카트 사용");
 				return localCartItems.map((item) => ({
 					productId: item.productId,
 					licenseId: item.licenseId,
 				}));
 			}
 			// 서버 카트 데이터를 UnifiedCartItem 형태로 변환
-			console.log("  → 서버 카트 사용, 변환 시작");
+			// console.log("  → 서버 카트 사용, 변환 시작");
 			const result = serverCartItems.map((item) => {
-				console.log("    - 서버 카트 아이템:", item);
+				// console.log("    - 서버 카트 아이템:", item);
 				return {
 					productId: item.product.id, // product 객체에서 id 추출
 					licenseId: item.selectedLicense.id, // selectedLicense 객체에서 id 추출
@@ -149,7 +149,7 @@ export const useUnifiedCart = (): UseUnifiedCartReturn => {
 		}
 	}, [isLoggedIn, isServerCartLoading, serverCartItems, localCartItems]);
 
-	console.log("  - activeCartItems 최종 결과:", activeCartItems);
+	// console.log("  - activeCartItems 최종 결과:", activeCartItems);
 
 	// 상품 ID 목록
 	const productIds = useMemo(
@@ -170,17 +170,17 @@ export const useUnifiedCart = (): UseUnifiedCartReturn => {
 
 	// 상품 데이터 - 로그인 상태에 따라 다르게 처리
 	const products: any = useMemo(() => {
-		console.log("🎯 products 계산 중:");
-		console.log("  - isLoggedIn:", isLoggedIn);
-		console.log("  - isServerCartLoading:", isServerCartLoading);
+		// console.log("🎯 products 계산 중:");
+		// console.log("  - isLoggedIn:", isLoggedIn);
+		// console.log("  - isServerCartLoading:", isServerCartLoading);
 
 		if (isLoggedIn) {
 			// 로그인 상태: 서버 카트에서 product 정보 추출
 			if (isServerCartLoading) {
-				console.log("  → 서버 카트 로딩 중, products = undefined");
+				// console.log("  → 서버 카트 로딩 중, products = undefined");
 				return undefined;
 			}
-			console.log("  → 서버 카트에서 products 추출");
+			// console.log("  → 서버 카트에서 products 추출");
 			const serverProducts = serverCartItems.map((item) => {
 				// 서버 카트 아이템의 product에 selectedLicense 정보 추가
 				const productWithSelectedLicense = {
@@ -199,11 +199,11 @@ export const useUnifiedCart = (): UseUnifiedCartReturn => {
 				};
 				return productWithSelectedLicense;
 			});
-			console.log("  → 서버에서 추출한 products:", serverProducts);
+			// console.log("  → 서버에서 추출한 products:", serverProducts);
 			return serverProducts;
 		} else {
 			// 비로그인 상태: products API 결과 사용
-			console.log("  → 비로그인, products API 결과 사용:", productsFromApi);
+			// console.log("  → 비로그인, products API 결과 사용:", productsFromApi);
 			return productsFromApi;
 		}
 	}, [isLoggedIn, isServerCartLoading, serverCartItems, productsFromApi]);

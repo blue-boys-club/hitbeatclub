@@ -54,13 +54,17 @@ export const FooterPlayer = () => {
 	const {
 		autoPlay,
 		stop,
-		isPlaying: contextIsPlaying,
 		setPreviousCallback,
 		setNextCallback,
 		setShuffleCallback,
 		setRepeatCallback,
 		setEndedCallback,
+		isPlaying: contextIsPlaying,
 	} = useAudioContext();
+
+	// 개별 상태 구독
+	// const contextIsPlaying = useIsPlaying();
+
 	const { toast } = useToast();
 
 	const { mutate: likeMutation } = useLikeProductMutation();

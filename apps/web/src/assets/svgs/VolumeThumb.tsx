@@ -1,6 +1,10 @@
-export const VolumeThumb = () => {
+import { forwardRef } from "react";
+
+export const VolumeThumb = forwardRef<SVGSVGElement, React.SVGProps<SVGSVGElement>>((props, ref) => {
 	return (
 		<svg
+			{...props}
+			ref={ref}
 			xmlns="http://www.w3.org/2000/svg"
 			width="15"
 			height="15"
@@ -24,4 +28,6 @@ export const VolumeThumb = () => {
 			/>
 		</svg>
 	);
-};
+});
+
+VolumeThumb.displayName = "VolumeThumb";
