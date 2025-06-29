@@ -30,11 +30,12 @@ export const usePlayTrackCore = () => {
 	);
 
 	/** 레이아웃(사이드바) 관련 상태 */
-	const { isRightSidebarOpen, setRightSidebar, setPlayer } = useLayoutStore(
+	const { isRightSidebarOpen, setRightSidebar, setPlayer, currentSidebarType } = useLayoutStore(
 		useShallow((state) => ({
 			isRightSidebarOpen: state.rightSidebar.isOpen,
 			setRightSidebar: state.setRightSidebar,
 			setPlayer: state.setPlayer,
+			currentSidebarType: state.rightSidebar.currentType,
 		})),
 	);
 
@@ -100,9 +101,12 @@ export const usePlayTrackCore = () => {
 			// - 플레이리스트가 열려있지 않거나
 			// - 비로그인 상태인 경우
 			//   => 음악 상세(MusicRightSidebar)로 전환
-			if (!isRightSidebarOpen || !isLoggedIn) {
-				setRightSidebar(true, { currentType: SidebarType.TRACK });
-			}
+			// if (!isRightSidebarOpen || !isLoggedIn) {
+			// 	setRightSidebar(true, { currentType: SidebarType.TRACK });
+			// }
+
+			const targetType = !isLoggedIn && currentSidebarType !== SidebarType.TRACK ? SidebarType.TRACK : undefined;
+			setRightSidebar(isRightSidebarOpen, { currentType: targetType });
 		},
 		[
 			currentProductId,
