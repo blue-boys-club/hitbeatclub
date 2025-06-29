@@ -6,7 +6,7 @@ import { ChevronRightSharp } from "@/assets/svgs/ChevronRightSharp";
 import { useRouter } from "next/navigation";
 import { MobileProductTrackGalleryItem } from "./MobileProductTrackGalleryItem";
 import { MobileProductTrackCarouselItem } from "./MobileProductTrackCarouselItem";
-import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
+import { ProductRowByDashboardResponse, PlaylistAutoRequest } from "@hitbeatclub/shared-types";
 
 interface MobileProductSectionProps {
 	type: "carousel" | "gallery";
@@ -14,10 +14,11 @@ interface MobileProductSectionProps {
 	href: string;
 	description?: string;
 	products: ProductRowByDashboardResponse[];
+	autoPlaylistConfig?: PlaylistAutoRequest;
 }
 
 export const MobileProductSection = memo(
-	({ type, title, href, description, products = [] }: MobileProductSectionProps) => {
+	({ type, title, href, description, products = [], autoPlaylistConfig }: MobileProductSectionProps) => {
 		// Dynamic import for client-side only
 		const [wheelPlugin, setWheelPlugin] = useState<CarouselPlugin | null>(null);
 
@@ -75,12 +76,16 @@ export const MobileProductSection = memo(
 										<span className="text-12px text-hbc-gray-300">상품이 없습니다.</span>
 									</div>
 								) : (
-									products.map((product) => (
+									products.map((product, index) => (
 										<CarouselItem
 											key={product.id}
 											className="p-0 basis-110px"
 										>
-											<MobileProductTrackCarouselItem track={product} />
+											<MobileProductTrackCarouselItem
+												track={product}
+												autoPlaylistConfig={autoPlaylistConfig}
+												trackIndex={index}
+											/>
 										</CarouselItem>
 									))
 								)}
@@ -93,10 +98,12 @@ export const MobileProductSection = memo(
 									<span className="text-12px text-hbc-gray-300">상품이 없습니다.</span>
 								</div>
 							) : (
-								products.map((product) => (
+								products.map((product, index) => (
 									<MobileProductTrackGalleryItem
 										key={product.id}
 										track={product}
+										autoPlaylistConfig={autoPlaylistConfig}
+										trackIndex={index}
 									/>
 								))
 							)}

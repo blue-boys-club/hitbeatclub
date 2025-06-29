@@ -7,6 +7,8 @@ import { assetImageLoader } from "@/common/utils/image-loader";
 import { usePlayTrack } from "@/hooks/use-play-track";
 import { useAudioStore } from "@/stores/audio";
 import { useShallow } from "zustand/react/shallow";
+import { usePlaylist } from "@/hooks/use-playlist";
+import { PlaylistManualRequest } from "@hitbeatclub/shared-types";
 
 interface CartItemProps {
 	/** 상품 ID (트랙 ID) */
@@ -17,9 +19,13 @@ interface CartItemProps {
 	imageUrl?: string;
 	/** 이미지 대체 텍스트 */
 	alt?: string;
+	/** 현재 아이템의 인덱스 (카트 전체 기준) */
+	index: number;
+	/** 카트에 포함된 모든 트랙 ID 배열 (재생목록 생성용) */
+	trackIds: number[];
 }
 
-const CartItem = memo(function CartItem({ productId, type, imageUrl, alt }: CartItemProps) {
+const CartItem = memo(function CartItem({ productId, type, imageUrl, alt, index, trackIds }: CartItemProps) {
 	// 오디오 재생 상태 조회
 	const { status, currentProductId } = useAudioStore(
 		useShallow((state) => ({
@@ -30,6 +36,7 @@ const CartItem = memo(function CartItem({ productId, type, imageUrl, alt }: Cart
 
 	// 플레이어 제어 훅
 	const { play } = usePlayTrack();
+	const { createManualPlaylistAndPlay } = usePlaylist();
 
 	// 현재 아이템의 실제 재생 상태 계산
 	const effectiveStatus: "playing" | "paused" | "default" = (() => {
@@ -41,7 +48,14 @@ const CartItem = memo(function CartItem({ productId, type, imageUrl, alt }: Cart
 		return "default";
 	})();
 
-	const togglePlay = () => {
+	const togglePlay = async () => {
+		try {
+			const manualRequest: PlaylistManualRequest = { trackIds };
+			await createManualPlaylistAndPlay(manualRequest, index);
+		} catch (error) {
+			console.error("[CartItem] playlist creation failed", error);
+		}
+		// 공통 플레이 로직
 		play(productId);
 	};
 

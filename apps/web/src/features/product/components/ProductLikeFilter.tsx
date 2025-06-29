@@ -17,6 +17,7 @@ import { useProductLikeFilterParametersStates } from "../hooks/useProductLikeFil
 import { LikeSortEnum } from "../types/productLikeFilterParsers";
 import { GenreButton } from "@/components/ui/GenreButton";
 import { CloseWhite } from "@/assets/svgs/CloseWhite";
+import { SearchTag } from "@/components/ui/SearchTag";
 
 interface ProductLikeFilterProps {
 	onFilterChange: (filters: Omit<UserLikeProductListRequest, "page" | "limit">) => void;
@@ -71,6 +72,23 @@ export const ProductLikeFilter = ({ onFilterChange, className }: ProductLikeFilt
 
 	const [keyValue, setKeyValue] = useState<KeyValue | undefined>(undefined);
 	const [scaleValue, setScaleValue] = useState<string | null>(null);
+
+	// 내부 입력값 상태를 분리하여 Enter 또는 검색 아이콘 클릭 시에만 필터에 반영합니다.
+	const [keywordInput, setKeywordInput] = useState<string>(filterParams.search);
+
+	// URL 파라미터(또는 외부) 변경 시 로컬 입력 동기화
+	useEffect(() => {
+		setKeywordInput(filterParams.search);
+	}, [filterParams.search]);
+
+	const handleKeywordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setKeywordInput(e.target.value);
+	};
+
+	const applyKeywordSearch = (value?: string) => {
+		const searchValue = (value ?? keywordInput).trim();
+		setFilterParams({ search: searchValue });
+	};
 
 	// nuqs 파라미터와 로컬 상태 동기화 (키/스케일만)
 	useEffect(() => {
@@ -406,8 +424,25 @@ export const ProductLikeFilter = ({ onFilterChange, className }: ProductLikeFilt
 				</div>
 			</div>
 
-			{/* 검색 태그 - SearchTag 트리거 사용 */}
+			{/* 키워드 검색 + 태그 입력 */}
 			<div className="flex flex-row gap-2">
+				{/* Keyword Search */}
+				<SearchTag
+					wrapperClassName="w-[146px]"
+					className="placeholder:text-[--hbc-gray] placeholder:font-medium"
+					placeholder="Search"
+					value={keywordInput}
+					onChange={handleKeywordChange}
+					onKeyDown={(e) => {
+						if (e.key === "Enter") {
+							e.preventDefault();
+							applyKeywordSearch();
+						}
+					}}
+					onSearch={applyKeywordSearch}
+				/>
+
+				{/* Tag Search */}
 				<MultiTagGenreInput
 					type="tag"
 					maxItems={5}

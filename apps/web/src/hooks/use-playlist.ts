@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useShallow } from "zustand/react/shallow";
@@ -386,6 +388,18 @@ export const usePlaylist = () => {
 		[createAutoPlaylist, playTrackAtIndex],
 	);
 
+	const createManualPlaylistAndPlay = useCallback(
+		async (request: PlaylistManualRequest, index = 0) => {
+			const data = await createManualPlaylist(request);
+			playTrackAtIndex(index);
+			if (process.env.NODE_ENV !== "production") {
+				console.debug("[Playlist] Manual playlist created & playing", { index, trackIds: data.data.trackIds });
+			}
+			return data;
+		},
+		[createManualPlaylist, playTrackAtIndex],
+	);
+
 	return {
 		// 상태
 		trackIds,
@@ -397,7 +411,7 @@ export const usePlaylist = () => {
 		isLoggedIn,
 		enforceMaxLength,
 		createAutoPlaylistAndPlay,
-
+		createManualPlaylistAndPlay,
 		// 액션
 		initializePlaylist,
 		overwriteServerWithGuestPlaylist,

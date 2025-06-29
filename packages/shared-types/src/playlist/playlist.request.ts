@@ -19,8 +19,11 @@ export const PlaylistAutoRequestSchema = z.discriminatedUnion("type", [
 		type: z.literal("ARTIST"),
 		artistId: z.coerce.number(),
 		query: ArtistProductListQuerySchema.extend({
-			isPublic: z.literal(true),
-		}).omit({}),
+			isPublic: z.literal(1),
+		}).omit({
+			page: true,
+			limit: true,
+		}),
 	}),
 	z.object({
 		type: z.literal("FOLLOWING"),

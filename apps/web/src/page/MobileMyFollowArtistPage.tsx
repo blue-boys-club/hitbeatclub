@@ -13,9 +13,8 @@ import { MobileBuyOrCartModal } from "@/features/mobile/search/modals";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 import Image from "next/image";
-import { usePlaylistStore } from "@/stores/playlist";
+import { usePlaylist } from "@/hooks/use-playlist";
 import { usePlayTrack } from "@/hooks/use-play-track";
-import { useShallow } from "zustand/react/shallow";
 import { useRouter } from "next/navigation";
 
 export const MobileMyFollowArtistPage = ({ slug }: { slug: string }) => {
@@ -28,55 +27,34 @@ export const MobileMyFollowArtistPage = ({ slug }: { slug: string }) => {
 
 	const deleteFollowedArtistMutation = useDeleteFollowedArtistMutation(user?.id ?? 0);
 
-	// 플레이리스트 스토어 및 재생 훅
-	const { setPlaylist } = usePlaylistStore(
-		useShallow((state) => ({
-			setPlaylist: state.setPlaylist,
-		})),
-	);
+	// Playlist control
+	const { setCurrentTrackIds } = usePlaylist();
 	const { play } = usePlayTrack();
 
 	// 모달 상태 관리
 	const [isOpenBuyOrCartModal, setIsOpenBuyOrCartModal] = useState(false);
 	const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
-	// products 데이터를 플레이리스트 형태로 변환
-	const convertToPlaylistProducts = useCallback((products: any[]) => {
-		return products.map((product) => ({
-			id: product.id,
-			productName: product.productName,
-			coverImage: product.coverImage,
-			seller: product.seller,
-		}));
-	}, []);
+	const extractTrackIds = useCallback((products: any[]) => products.map((p) => p.id), []);
 
 	// 순서대로 재생 핸들러 (PlayCircleBlack)
 	const handlePlayAll = useCallback(() => {
 		if (!products?.data?.length) return;
 
-		const playlistProducts = convertToPlaylistProducts(products.data);
-		setPlaylist(playlistProducts);
-
-		// 첫 번째 곡 재생
-		if (playlistProducts[0]) {
-			play(playlistProducts[0].id);
-		}
-	}, [products?.data, convertToPlaylistProducts, setPlaylist, play]);
+		const trackIds = extractTrackIds(products.data);
+		setCurrentTrackIds(trackIds, 0);
+		play(trackIds[0]);
+	}, [products?.data, extractTrackIds, setCurrentTrackIds, play]);
 
 	// 셔플 재생 핸들러 (CrossArrow)
 	const handleShufflePlay = useCallback(() => {
 		if (!products?.data?.length) return;
 
-		const playlistProducts = convertToPlaylistProducts(products.data);
-		// 배열을 무작위로 섞기
-		const shuffledProducts = [...playlistProducts].sort(() => Math.random() - 0.5);
-		setPlaylist(shuffledProducts);
-
-		// 첫 번째 곡 재생
-		if (shuffledProducts[0]) {
-			play(shuffledProducts[0].id);
-		}
-	}, [products?.data, convertToPlaylistProducts, setPlaylist, play]);
+		const trackIds = extractTrackIds(products.data);
+		const shuffledIds = [...trackIds].sort(() => Math.random() - 0.5);
+		setCurrentTrackIds(shuffledIds, 0);
+		play(shuffledIds[0]);
+	}, [products?.data, extractTrackIds, setCurrentTrackIds, play]);
 
 	// 팔로우 취소 핸들러
 	const handleUnfollow = useCallback(() => {

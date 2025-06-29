@@ -14,7 +14,7 @@ export const licenseInfo = [
 ];
 
 export const licenseTypeEnum = z.enum(["MASTER", "EXCLUSIVE"]);
-export const productSortEnum = z.enum(["RECENT", "RECOMMEND", "null"]);
+export const productSortEnum = z.enum(["RECENT", "RECOMMEND", "NAME", "POPULAR", "null"]);
 export const productCategoryEnum = z.enum(["BEAT", "ACAPELA", "null"]);
 export const musicKeyEnum = z.enum([
 	"C",

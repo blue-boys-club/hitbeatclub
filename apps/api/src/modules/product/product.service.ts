@@ -32,6 +32,21 @@ export class ProductService {
 		userId?: number,
 	) {
 		try {
+			const orderBy: Prisma.ProductOrderByWithRelationInput = (() => {
+				switch (sort) {
+					case "RECENT":
+						return { createdAt: "desc" };
+					case "RECOMMEND":
+					case "POPULAR":
+						// return { productLike: { where: { deletedAt: null }, _count: "desc" } };
+						return { productLike: { _count: "desc" } };
+					case "NAME":
+						return { productName: "asc" };
+					default:
+						return { createdAt: "desc" };
+				}
+			})();
+
 			const products = await this.prisma.product
 				.findMany({
 					where: {
@@ -79,6 +94,7 @@ export class ProductService {
 									},
 								}
 							: {}),
+
 						...(userId
 							? {
 									productLike: {
@@ -90,7 +106,7 @@ export class ProductService {
 								}
 							: {}),
 					} as any,
-					orderBy: { createdAt: sort === ENUM_PRODUCT_SORT.RECENT ? "desc" : "asc" },
+					orderBy,
 					skip: (page - 1) * limit,
 					take: limit,
 				})
@@ -98,6 +114,8 @@ export class ProductService {
 				.catch((error) => {
 					throw new BadRequestException(error);
 				});
+
+			// this.logger.log(products, "products test");
 
 			// Batch load files for all products to avoid N+1 queries
 			const productIds = products.map((p) => p.id);
@@ -207,6 +225,7 @@ export class ProductService {
 
 			return !result.length ? [] : result;
 		} catch (error) {
+			this.logger.error(error, "product service findAll error");
 			throw new BadRequestException(error);
 		}
 	}

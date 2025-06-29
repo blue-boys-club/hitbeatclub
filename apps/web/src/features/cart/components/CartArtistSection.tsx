@@ -1,12 +1,17 @@
 "use client";
 
-import { Acapella, Beat, CloseMosaic, SmallAuthBadge } from "@/assets/svgs";
+import { Acapella, Beat, CloseMosaic, SmallAuthBadge, PauseCircle, PlayCircle } from "@/assets/svgs";
 import UI from "@/components/ui";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { LicenseChangeModal } from "./modal/LicenseChangeModal";
 import UserProfileImage from "@/assets/images/user-profile.png";
 import Link from "next/link";
+import { usePlaylist } from "@/hooks/use-playlist";
+import { usePlayTrack } from "@/hooks/use-play-track";
+import { useAudioStore } from "@/stores/audio";
+import { useShallow } from "zustand/react/shallow";
+import { PlaylistManualRequest } from "@hitbeatclub/shared-types";
 
 // Combined type for cart item with product details
 export type CartItemWithProductDetails = {
@@ -35,6 +40,7 @@ interface CartArtistSectionProps {
 	items: CartItemWithProductDetails[];
 	onDeleteItem: (cartId: number) => void;
 	onUpdateItemLicense: (cartId: number, licenseId: number) => void;
+	trackIds: number[];
 }
 
 export const CartArtistSection = ({
@@ -44,6 +50,7 @@ export const CartArtistSection = ({
 	items,
 	onDeleteItem,
 	onUpdateItemLicense,
+	trackIds,
 }: CartArtistSectionProps) => {
 	const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
 	const [selectedItem, setSelectedItem] = useState<CartItemWithProductDetails | null>(null);
@@ -51,6 +58,17 @@ export const CartArtistSection = ({
 	const avatarImageUrl = useMemo(() => {
 		return artistImageUrl || UserProfileImage;
 	}, [artistImageUrl]);
+
+	const { play } = usePlayTrack();
+	const { createManualPlaylistAndPlay } = usePlaylist();
+	const { status, currentProductId } = useAudioStore(
+		useShallow((state) => ({
+			status: state.status,
+			currentProductId: state.productId,
+		})),
+	);
+
+	const firstItem = items[0]!;
 
 	const handleOpenLicenseModal = (item: CartItemWithProductDetails) => {
 		setSelectedItem(item);
@@ -73,6 +91,23 @@ export const CartArtistSection = ({
 		onDeleteItem(cartId);
 	};
 
+	const handlePlay = async (productId: number) => {
+		const index = trackIds.indexOf(productId);
+		try {
+			const manualReq: PlaylistManualRequest = { trackIds };
+			await createManualPlaylistAndPlay(manualReq, index);
+		} catch (error) {
+			console.error("[CartArtistSection] playlist create failed", error);
+		}
+		play(productId);
+	};
+
+	const getEffectiveStatus = (pid: number): "playing" | "paused" | "default" => {
+		if (currentProductId !== pid) return "default";
+		if (status === "playing" || status === "paused") return status;
+		return "default";
+	};
+
 	if (!items?.length) {
 		return null; // Don't render section if no items for this artist
 	}
@@ -83,13 +118,15 @@ export const CartArtistSection = ({
 				<div className="flex items-center self-stretch justify-between">
 					<div className="flex items-center gap-17px">
 						<Link href={`/artists/${artistSlug}`}>
-							<Image
-								className="h-51px w-51px rounded-full outline-2 outline-offset-[-1px] outline-black"
-								src={avatarImageUrl}
-								alt={artistName}
-								width={51 * 4}
-								height={51 * 4}
-							/>
+							<div className="relative group cursor-pointer">
+								<Image
+									className="h-51px w-51px rounded-full outline-2 outline-offset-[-1px] outline-black"
+									src={avatarImageUrl}
+									alt={artistName}
+									width={51 * 4}
+									height={51 * 4}
+								/>
+							</div>
 						</Link>
 						<div className="flex items-center gap-5px">
 							<Link
@@ -112,13 +149,23 @@ export const CartArtistSection = ({
 					>
 						<div className="flex items-center self-stretch justify-between h-80px">
 							<div className="flex items-center justify-start gap-13px">
-								<Image
-									className="h-80px w-80px rounded-[5px] border-black"
-									src={item.imageUrl || "/placeholder-image.png"}
-									alt={item.title}
-									width={79 * 4}
-									height={79 * 4}
-								/>
+								<div
+									className="relative group cursor-pointer"
+									onClick={() => handlePlay(item.productId)}
+								>
+									<Image
+										className="h-80px w-80px rounded-[5px] border-black"
+										src={item.imageUrl || "/placeholder-image.png"}
+										alt={item.title}
+										width={79 * 4}
+										height={79 * 4}
+									/>
+									{getEffectiveStatus(item.productId) !== "default" && (
+										<div className="absolute inset-0 flex items-center justify-center bg-black/30">
+											{getEffectiveStatus(item.productId) === "playing" ? <PauseCircle /> : <PlayCircle />}
+										</div>
+									)}
+								</div>
 								<div className="flex flex-col items-start justify-between h-20 py-1">
 									<div className="flex items-center justify-start overflow-hidden">
 										<Link
