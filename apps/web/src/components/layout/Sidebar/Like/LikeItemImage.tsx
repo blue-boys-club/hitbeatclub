@@ -24,14 +24,14 @@ const LikeItemImage = memo(function LikeItemImage({ status = "default", alt, ima
 					alt="Media thumbnail"
 					width={240}
 					height={240}
-					className="object-cover w-full h-full rounded-lg"
+					className="object-cover aspect-square w-full h-full rounded-lg"
 				/>
 			)}
 
 			{status !== "default" && (
 				<div className="absolute inset-0 rounded-lg bg-black/10">
 					<div className="absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
-						{status === "playing" ? <CartPlay /> : <CartPause />}
+						{status === "playing" ? <CartPause /> : <CartPlay />}
 					</div>
 				</div>
 			)}

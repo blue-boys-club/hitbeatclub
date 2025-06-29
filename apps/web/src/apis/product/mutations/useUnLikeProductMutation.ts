@@ -11,7 +11,7 @@ export const useUnlikeProductMutation = () => {
 		mutationFn: unlikeProduct,
 		onSuccess: (_, variable) => {
 			const id = variable;
-			void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.one(id) });
+			void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.one(id), exact: true });
 
 			// loop through list and if id is there, invalidate it
 			const lists = queryClient.getQueriesData<ProductListPagingResponse>({

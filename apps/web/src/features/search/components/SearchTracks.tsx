@@ -57,6 +57,7 @@ export const SearchTracks = () => {
 				<SearchTrackItem
 					key={`${product.id}-${index}` || index}
 					product={product}
+					index={index}
 				/>
 			))}
 

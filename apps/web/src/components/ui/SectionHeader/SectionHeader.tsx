@@ -1,6 +1,7 @@
 import { checkIsPureEnglish, cn } from "@/common/utils";
 import { cva, VariantProps } from "class-variance-authority";
 import Link from "next/link";
+import { useMemo } from "react";
 
 const sectionHeaderVariants = cva("relative w-full border-b-[6px] border-hbc-black", {
 	variants: {
@@ -62,20 +63,22 @@ export const SectionHeader = ({ title, subtitle, goTo, size }: SectionHeaderProp
 	const isGoToLabelPureEnglish = !!goTo && checkIsPureEnglish(goTo.label);
 	const isGoToLink = !!goTo && "href" in goTo;
 
+	const titleComponent = useMemo(() => {
+		if (goTo) {
+			return (
+				<Link href={goTo.href}>
+					<div className={cn(sectionHeaderTitleVariants({ size, isPureEnglish: isTitlePureEnglish }))}>{title}</div>
+				</Link>
+			);
+		}
+		return <div className={cn(sectionHeaderTitleVariants({ size, isPureEnglish: isTitlePureEnglish }))}>{title}</div>;
+	}, [title, size, isTitlePureEnglish, goTo]);
+
 	return (
 		<div className={cn(sectionHeaderVariants({ size }))}>
 			<div className="inline-flex items-end justify-between w-full">
 				<div className="flex items-end justify-start gap-10px pl-2px">
-					<div
-						className={cn(
-							sectionHeaderTitleVariants({
-								size,
-								isPureEnglish: isTitlePureEnglish,
-							}),
-						)}
-					>
-						{title}
-					</div>
+					{titleComponent}
 					{subtitle && (
 						<div
 							className={cn(

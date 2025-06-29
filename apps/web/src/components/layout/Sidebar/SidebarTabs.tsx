@@ -71,8 +71,6 @@ export const SidebarTabs = memo(() => {
 							value="like"
 							onClick={() => {
 								if (currentTab === "like") {
-									/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
-									/* @ts-ignore TODO: Implement navigation to /like */
 									if (!userMe) {
 										router.push("/auth/login");
 										return;
@@ -87,8 +85,6 @@ export const SidebarTabs = memo(() => {
 							value="follow"
 							onClick={() => {
 								if (currentTab === "follow") {
-									/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
-									/* @ts-ignore TODO: Implement navigation to /follow */
 									if (!userMe) {
 										router.push("/auth/login");
 										return;

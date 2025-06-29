@@ -95,6 +95,11 @@
 			"types": "./dist/search/index.d.ts",
 			"import": "./dist/search/index.mjs",
 			"require": "./dist/search/index.js"
+		},
+		"./playlist": {
+			"types": "./dist/playlist/index.d.ts",
+			"import": "./dist/playlist/index.mjs",
+			"require": "./dist/playlist/index.js"
 		}
 	},
 	"files": [

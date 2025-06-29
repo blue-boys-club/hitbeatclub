@@ -1,237 +1,368 @@
 import { create } from "zustand";
-import { devtools } from "zustand/middleware";
-
-// 플레이리스트용 Product 타입
-export interface PlaylistProduct {
-	id: number;
-	productName: string;
-	coverImage?: { url: string };
-	seller?: { stageName: string };
-}
+import { createJSONStorage, devtools, persist } from "zustand/middleware";
+import { immer } from "zustand/middleware/immer";
 
 export interface PlaylistActions {
-	/** 플레이리스트 전체 교체 */
-	setPlaylist: (products: PlaylistProduct[]) => void;
+	/** 현재 재생 중인 상품 ID 설정 */
+	setCurrentTrackIds: (trackIds: number[], currentIndex?: number) => void;
 
-	/** 플레이리스트에 곡 추가 */
-	addToPlaylist: (product: PlaylistProduct) => void;
+	/** 현재 재생 중인 트랙 인덱스 설정 */
+	setCurrentIndex: (currentIndex: number) => void;
 
-	/** 플레이리스트에서 곡 제거 */
-	removeFromPlaylist: (index: number) => void;
+	/** 현재 재생 중인 트랙 인덱스 증가 (Next) */
+	increaseCurrentIndex: () => void;
 
-	/** 현재 재생 중인 곡의 인덱스 설정 */
-	setCurrentIndex: (index: number) => void;
+	/** 현재 재생 중인 트랙 인덱스 감소 (Previous) */
+	decreaseCurrentIndex: () => void;
 
-	/** 플레이리스트 초기화 */
-	clearPlaylist: () => void;
+	/** 재생 불가 트랙 추가 */
+	addUnplayableTrack: (trackId: number) => void;
 
-	/** 현재 재생 중인 곡 가져오기 */
-	getCurrentTrack: () => PlaylistProduct | null;
+	/** 재생 불가 트랙 제거 */
+	removeUnplayableTrack: (trackId: number) => void;
 
-	/** 다음 곡으로 이동 */
-	playNext: () => PlaylistProduct | null;
+	/** 재생 불가 트랙 목록 초기화 */
+	clearUnplayableTracks: () => void;
 
-	/** 이전 곡으로 이동 */
-	playPrevious: () => PlaylistProduct | null;
+	/** 서버 동기화 상태 설정 */
+	setSyncStatus: (status: "idle" | "syncing" | "error") => void;
 
-	/** 반복 모드 토글 */
-	toggleRepeatMode: () => void;
+	/** 마지막 동기화 시간 설정 */
+	setLastSyncTime: (time: number) => void;
 
 	/** 셔플 모드 토글 */
-	toggleShuffleMode: () => void;
+	toggleShuffle: () => void;
+
+	/** 반복 모드 변경 */
+	setRepeatMode: (mode: "none" | "one" | "all") => void;
+
+	/** 반복 모드 토글 (none -> one -> all -> none) */
+	toggleRepeatMode: () => void;
+
+	/** 현재 플레이 가능한 트랙 ID 가져오기 */
+	getCurrentPlayableTrackId: () => number | null;
+
+	/** 다음 플레이 가능한 트랙 인덱스 가져오기 (셔플/반복 모드 고려) */
+	getNextPlayableIndex: () => number | null;
+
+	/** 이전 플레이 가능한 트랙 인덱스 가져오기 (셔플/반복 모드 고려) */
+	getPreviousPlayableIndex: () => number | null;
+
+	/** 플레이리스트 길이 제한 (최대 100곡) */
+	enforceMaxLength: () => void;
+
+	/** 초기화 */
+	init: () => void;
 }
 
 export interface PlaylistState {
-	/** 플레이리스트 배열 */
-	playlist: PlaylistProduct[];
-
-	/** 현재 재생 중인 곡의 인덱스 (-1이면 없음) */
+	trackIds: number[];
 	currentIndex: number;
-
-	/** 반복 모드 */
-	repeatMode: 'none' | 'all';
-
+	/** 재생 불가 트랙 ID 집합 (세션 단위) */
+	unplayableTrackIds: Set<number>;
+	/** 서버 동기화 상태 */
+	syncStatus: "idle" | "syncing" | "error";
+	/** 마지막 동기화 시간 (timestamp) */
+	lastSyncTime: number;
 	/** 셔플 모드 활성화 여부 */
-	isShuffleMode: boolean;
-
-	/** 셔플 전 원본 플레이리스트 순서 */
-	originalPlaylist: PlaylistProduct[];
+	isShuffleEnabled: boolean;
+	/** 반복 모드 */
+	repeatMode: "none" | "one" | "all";
+	/** 셔플된 트랙 순서 (셔플 모드에서 사용) */
+	shuffledOrder: number[];
+	/** 셔플 시드 (셔플 순서 재현을 위한 시드) */
+	shuffleSeed: number;
 }
 
 export type PlaylistStore = PlaylistState & PlaylistActions;
 
 const initialState: PlaylistState = {
-	playlist: [],
-	currentIndex: -1,
-	repeatMode: 'none',
-	isShuffleMode: false,
-	originalPlaylist: [],
+	trackIds: [],
+	currentIndex: 0,
+	unplayableTrackIds: new Set(),
+	syncStatus: "idle",
+	lastSyncTime: 0,
+	isShuffleEnabled: false,
+	repeatMode: "none",
+	shuffledOrder: [],
+	shuffleSeed: 0,
+};
+
+/** 시드를 기반으로 한 Fisher-Yates 셔플 알고리즘 */
+const shuffleArray = (array: number[], seed: number): number[] => {
+	const shuffled = [...array];
+	let random = seed;
+
+	for (let i = shuffled.length - 1; i > 0; i--) {
+		// 간단한 LCG (Linear Congruential Generator)
+		random = (random * 1664525 + 1013904223) % Math.pow(2, 32);
+		const j = Math.floor((random / Math.pow(2, 32)) * (i + 1));
+
+		// 배열 범위 확인 후 안전하게 스왑
+		if (j >= 0 && j < shuffled.length && i >= 0 && i < shuffled.length) {
+			const temp = shuffled[i]!;
+			shuffled[i] = shuffled[j]!;
+			shuffled[j] = temp;
+		}
+	}
+
+	return shuffled;
 };
 
 const name = "PlaylistStore";
 
 export const usePlaylistStore = create<PlaylistStore>()(
 	devtools(
-		(set, get) => ({
-			...initialState,
+		persist(
+			immer((set, get) => ({
+				...initialState,
 
-			/** 플레이리스트 전체 교체 */
-			setPlaylist: (products: PlaylistProduct[]) =>
-				set((state) => ({
-					playlist: products,
-					currentIndex: products.length > 0 ? 0 : -1,
-					originalPlaylist: state.isShuffleMode ? products : state.originalPlaylist,
-				})),
+				/** trackIds와 currentIndex를 함께 업데이트 */
+				setCurrentTrackIds: (trackIds: number[], currentIndex = 0) =>
+					set((state) => {
+						state.trackIds = trackIds.slice(0, 100); // 최대 100곡 제한
+						state.currentIndex = Math.max(0, Math.min(currentIndex, trackIds.length - 1));
 
-			/** 플레이리스트에 곡 추가 */
-			addToPlaylist: (product: PlaylistProduct) =>
-				set((state) => {
-					const existingIndex = state.playlist.findIndex(item => item.id === product.id);
-					if (existingIndex !== -1) {
-						// 이미 존재하는 경우 현재 인덱스만 업데이트
-						return {
-							...state,
-							currentIndex: existingIndex,
-						};
+						// 셔플이 활성화되어 있으면 새로운 셔플 순서 생성
+						if (state.isShuffleEnabled && state.trackIds.length > 0) {
+							state.shuffleSeed = Date.now();
+							state.shuffledOrder = shuffleArray(
+								Array.from({ length: state.trackIds.length }, (_, i) => i),
+								state.shuffleSeed,
+							);
+						}
+					}),
+
+				/** currentIndex 값을 업데이트 */
+				setCurrentIndex: (currentIndex: number) =>
+					set((state) => {
+						const maxIndex = state.trackIds.length - 1;
+						state.currentIndex = Math.max(0, Math.min(currentIndex, maxIndex));
+					}),
+
+				/** 현재 재생 중인 트랙 인덱스 증가 (Next) */
+				increaseCurrentIndex: () =>
+					set((state) => {
+						const maxIndex = state.trackIds.length - 1;
+						if (state.currentIndex < maxIndex) {
+							state.currentIndex += 1;
+						}
+					}),
+
+				/** 현재 재생 중인 트랙 인덱스 감소 (Previous) */
+				decreaseCurrentIndex: () =>
+					set((state) => {
+						if (state.currentIndex > 0) {
+							state.currentIndex -= 1;
+						}
+					}),
+
+				/** 재생 불가 트랙 추가 */
+				addUnplayableTrack: (trackId: number) =>
+					set((state) => {
+						state.unplayableTrackIds.add(trackId);
+					}),
+
+				/** 재생 불가 트랙 제거 */
+				removeUnplayableTrack: (trackId: number) =>
+					set((state) => {
+						state.unplayableTrackIds.delete(trackId);
+					}),
+
+				/** 재생 불가 트랙 목록 초기화 */
+				clearUnplayableTracks: () =>
+					set((state) => {
+						state.unplayableTrackIds.clear();
+					}),
+
+				/** 서버 동기화 상태 설정 */
+				setSyncStatus: (status: "idle" | "syncing" | "error") =>
+					set((state) => {
+						state.syncStatus = status;
+					}),
+
+				/** 마지막 동기화 시간 설정 */
+				setLastSyncTime: (time: number) =>
+					set((state) => {
+						state.lastSyncTime = time;
+					}),
+
+				/** 셔플 모드 토글 */
+				toggleShuffle: () =>
+					set((state) => {
+						state.isShuffleEnabled = !state.isShuffleEnabled;
+
+						if (state.isShuffleEnabled && state.trackIds.length > 0) {
+							// 셔플 활성화: 새로운 셔플 순서 생성
+							state.shuffleSeed = Date.now();
+							state.shuffledOrder = shuffleArray(
+								Array.from({ length: state.trackIds.length }, (_, i) => i),
+								state.shuffleSeed,
+							);
+						} else {
+							// 셔플 비활성화: 셔플 순서 초기화
+							state.shuffledOrder = [];
+						}
+					}),
+
+				/** 반복 모드 설정 */
+				setRepeatMode: (mode: "none" | "one" | "all") =>
+					set((state) => {
+						state.repeatMode = mode;
+					}),
+
+				/** 반복 모드 토글 */
+				toggleRepeatMode: () =>
+					set((state) => {
+						switch (state.repeatMode) {
+							case "none":
+								state.repeatMode = "one";
+								break;
+							case "one":
+								state.repeatMode = "all";
+								break;
+							case "all":
+								state.repeatMode = "none";
+								break;
+						}
+					}),
+
+				/** 현재 플레이 가능한 트랙 ID 가져오기 */
+				getCurrentPlayableTrackId: () => {
+					const state = get();
+					const currentTrackId = state.trackIds[state.currentIndex];
+					if (currentTrackId && !state.unplayableTrackIds.has(currentTrackId)) {
+						return currentTrackId;
 					}
-					// 새로운 곡을 플레이리스트에 추가
-					const newPlaylist = [...state.playlist, product];
-					return {
-						...state,
-						playlist: newPlaylist,
-						currentIndex: newPlaylist.length - 1,
-					};
-				}),
+					return null;
+				},
 
-			/** 플레이리스트에서 곡 제거 */
-			removeFromPlaylist: (index: number) =>
-				set((state) => {
-					const newPlaylist = state.playlist.filter((_, i) => i !== index);
-					let newCurrentIndex = state.currentIndex;
+				/** 다음 플레이 가능한 트랙 인덱스 가져오기 (셔플/반복 모드 고려) */
+				getNextPlayableIndex: () => {
+					const state = get();
 
-					if (index === state.currentIndex) {
-						// 현재 재생 중인 곡이 제거된 경우
-						newCurrentIndex = newPlaylist.length > 0 ? Math.min(state.currentIndex, newPlaylist.length - 1) : -1;
-					} else if (index < state.currentIndex) {
-						// 현재 곡보다 앞의 곡이 제거된 경우 인덱스 조정
-						newCurrentIndex = state.currentIndex - 1;
+					// 반복 모드가 "one"이면 현재 인덱스 반환
+					if (state.repeatMode === "one") {
+						const currentTrackId = state.trackIds[state.currentIndex];
+						if (currentTrackId && !state.unplayableTrackIds.has(currentTrackId)) {
+							return state.currentIndex;
+						}
 					}
 
-					return {
-						...state,
-						playlist: newPlaylist,
-						currentIndex: newCurrentIndex,
-					};
-				}),
+					const playOrder = state.isShuffleEnabled
+						? state.shuffledOrder
+						: Array.from({ length: state.trackIds.length }, (_, i) => i);
 
-			/** 현재 재생 중인 곡의 인덱스 설정 */
-			setCurrentIndex: (index: number) =>
-				set((state) => ({
-					...state,
-					currentIndex: Math.max(-1, Math.min(index, state.playlist.length - 1)),
-				})),
+					const currentOrderIndex = playOrder.indexOf(state.currentIndex);
+					if (currentOrderIndex === -1) return null;
 
-			/** 플레이리스트 초기화 */
-			clearPlaylist: () =>
-				set({
-					playlist: [],
-					currentIndex: -1,
-				}),
-
-			/** 현재 재생 중인 곡 가져오기 */
-			getCurrentTrack: () => {
-				const { playlist, currentIndex } = get();
-				if (currentIndex >= 0 && currentIndex < playlist.length) {
-					return playlist[currentIndex];
-				}
-				return null;
-			},
-
-			/** 다음 곡으로 이동 */
-			playNext: () => {
-				const { playlist, currentIndex } = get();
-				if (playlist.length === 0) return null;
-				
-				// 다음 인덱스 계산 (순환)
-				const nextIndex = (currentIndex + 1) % playlist.length;
-				
-				set((state) => ({
-					...state,
-					currentIndex: nextIndex,
-				}));
-				
-				return playlist[nextIndex];
-			},
-
-			/** 이전 곡으로 이동 */
-			playPrevious: () => {
-				const { playlist, currentIndex } = get();
-				if (playlist.length === 0) return null;
-				
-				// 이전 인덱스 계산 (순환)
-				const previousIndex = currentIndex <= 0 ? playlist.length - 1 : currentIndex - 1;
-				
-				set((state) => ({
-					...state,
-					currentIndex: previousIndex,
-				}));
-				
-				return playlist[previousIndex];
-			},
-
-			/** 반복 모드 토글 */
-			toggleRepeatMode: () =>
-				set((state) => {
-					const modes: Array<'none' | 'all'> = ['none', 'all'];
-					const currentIndex = modes.indexOf(state.repeatMode);
-					const nextIndex = (currentIndex + 1) % modes.length;
-					return {
-						...state,
-						repeatMode: modes[nextIndex],
-					};
-				}),
-
-			/** 셔플 모드 토글 */
-			toggleShuffleMode: () =>
-				set((state) => {
-					const newShuffleMode = !state.isShuffleMode;
-					
-					if (newShuffleMode) {
-						// 셔플 모드 켜기: 원본 순서 저장 후 섞기
-						const originalPlaylist = [...state.playlist];
-						const currentTrack = state.playlist[state.currentIndex];
-						
-						// 현재 곡을 제외한 나머지 곡들을 섞기
-						const otherTracks = state.playlist.filter((_, index) => index !== state.currentIndex);
-						const shuffledOthers = [...otherTracks].sort(() => Math.random() - 0.5);
-						
-						// 현재 곡을 맨 앞에 두고 나머지는 섞인 순서로
-						const shuffledPlaylist = currentTrack ? [currentTrack, ...shuffledOthers] : shuffledOthers;
-						
-						return {
-							...state,
-							isShuffleMode: true,
-							originalPlaylist,
-							playlist: shuffledPlaylist,
-							currentIndex: currentTrack ? 0 : -1,
-						};
-					} else {
-						// 셔플 모드 끄기: 원본 순서로 복원
-						const currentTrack = state.playlist[state.currentIndex];
-						const originalIndex = currentTrack 
-							? state.originalPlaylist.findIndex(track => track.id === currentTrack.id)
-							: -1;
-						
-						return {
-							...state,
-							isShuffleMode: false,
-							playlist: [...state.originalPlaylist],
-							currentIndex: originalIndex,
-							originalPlaylist: [],
-						};
+					// 현재 인덱스 이후부터 찾기
+					for (let i = currentOrderIndex + 1; i < playOrder.length; i++) {
+						const trackIndex = playOrder[i];
+						if (trackIndex === undefined) continue;
+						const trackId = state.trackIds[trackIndex];
+						if (trackId && !state.unplayableTrackIds.has(trackId)) {
+							return trackIndex;
+						}
 					}
+
+					// 반복 모드가 "all"이면 처음부터 다시 찾기
+					if (state.repeatMode === "all") {
+						for (let i = 0; i <= currentOrderIndex; i++) {
+							const trackIndex = playOrder[i];
+							if (trackIndex === undefined) continue;
+							const trackId = state.trackIds[trackIndex];
+							if (trackId && !state.unplayableTrackIds.has(trackId)) {
+								return trackIndex;
+							}
+						}
+					}
+
+					return null;
+				},
+
+				/** 이전 플레이 가능한 트랙 인덱스 가져오기 (셔플/반복 모드 고려) */
+				getPreviousPlayableIndex: () => {
+					const state = get();
+
+					// 반복 모드가 "one"이면 현재 인덱스 반환
+					if (state.repeatMode === "one") {
+						const currentTrackId = state.trackIds[state.currentIndex];
+						if (currentTrackId && !state.unplayableTrackIds.has(currentTrackId)) {
+							return state.currentIndex;
+						}
+					}
+
+					const playOrder = state.isShuffleEnabled
+						? state.shuffledOrder
+						: Array.from({ length: state.trackIds.length }, (_, i) => i);
+
+					const currentOrderIndex = playOrder.indexOf(state.currentIndex);
+					if (currentOrderIndex === -1) return null;
+
+					// 현재 인덱스 이전부터 찾기
+					for (let i = currentOrderIndex - 1; i >= 0; i--) {
+						const trackIndex = playOrder[i];
+						if (trackIndex === undefined) continue;
+						const trackId = state.trackIds[trackIndex];
+						if (trackId && !state.unplayableTrackIds.has(trackId)) {
+							return trackIndex;
+						}
+					}
+
+					// 반복 모드가 "all"이면 끝에서부터 다시 찾기
+					if (state.repeatMode === "all") {
+						for (let i = playOrder.length - 1; i >= currentOrderIndex; i--) {
+							const trackIndex = playOrder[i];
+							if (trackIndex === undefined) continue;
+							const trackId = state.trackIds[trackIndex];
+							if (trackId && !state.unplayableTrackIds.has(trackId)) {
+								return trackIndex;
+							}
+						}
+					}
+
+					return null;
+				},
+
+				/** 플레이리스트 길이 제한 (최대 100곡) */
+				enforceMaxLength: () =>
+					set((state) => {
+						if (state.trackIds.length > 100) {
+							// FIFO: 앞에서부터 제거
+							const removedCount = state.trackIds.length - 100;
+							state.trackIds = state.trackIds.slice(removedCount);
+							state.currentIndex = Math.max(0, state.currentIndex - removedCount);
+
+							// 셔플 순서도 업데이트
+							if (state.isShuffleEnabled) {
+								state.shuffledOrder = shuffleArray(
+									Array.from({ length: state.trackIds.length }, (_, i) => i),
+									state.shuffleSeed,
+								);
+							}
+						}
+					}),
+
+				/** 초기화 */
+				init: () => set(initialState),
+			})),
+			{
+				name,
+				storage: createJSONStorage(() => localStorage),
+				// unplayableTrackIds는 세션 단위이므로 localStorage에 저장하지 않음
+				partialize: (state) => ({
+					trackIds: state.trackIds,
+					currentIndex: state.currentIndex,
+					syncStatus: state.syncStatus,
+					lastSyncTime: state.lastSyncTime,
+					isShuffleEnabled: state.isShuffleEnabled,
+					repeatMode: state.repeatMode,
+					shuffledOrder: state.shuffledOrder,
+					shuffleSeed: state.shuffleSeed,
 				}),
-		}),
+			},
+		),
 		{ name },
 	),
 );

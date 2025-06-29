@@ -11,11 +11,13 @@ import { Toaster } from "@/components/ui/Toast/toaster";
 import { AudioProvider } from "@/contexts/AudioContext";
 import { DndContext } from "@/features/dnd/components/DndContext";
 import { useAuthStore } from "@/stores/auth";
-import { SidebarType, useLayoutStore } from "@/stores/layout";
+import { useLayoutStore } from "@/stores/layout";
+import { useAudioStore } from "@/stores/audio";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { usePlaylist } from "@/hooks/use-playlist";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
 	const router = useRouter();
@@ -25,13 +27,31 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 	const { setPhoneNumber, userPhoneNumber } = useAuthStore(
 		useShallow((state) => ({ setPhoneNumber: state.setPhoneNumber, userPhoneNumber: state.user?.phoneNumber })),
 	);
-	const { isLeftSidebarOpen, isRightSidebarOpen, rightSidebarType } = useLayoutStore(
+	const { isLeftSidebarOpen, isRightSidebarOpen } = useLayoutStore(
 		useShallow((state) => ({
 			isLeftSidebarOpen: state.leftSidebar.isOpen,
 			isRightSidebarOpen: state.rightSidebar.isOpen,
-			rightSidebarType: state.rightSidebar.currentType,
 		})),
 	);
+
+	// 플레이어 노출 여부: 플레이리스트에 트랙이 있고, 현재 재생 중인 트랙 ID가 존재할 때
+	const { trackIds } = usePlaylist();
+	const { productId } = useAudioStore(useShallow((state) => ({ productId: state.productId })));
+	const isPlayerVisible = useMemo(() => trackIds.length > 0 && productId !== null, [trackIds.length, productId]);
+
+	// 사이드바 표시 여부(실제 너비 반영)는 열려 있고, 플레이리스트가 있으며, 트랙이 선택된 경우만 true
+	const isRightSidebarVisible = useMemo(
+		() => isRightSidebarOpen && trackIds.length > 0 && productId !== null,
+		[isRightSidebarOpen, trackIds.length, productId],
+	);
+
+	// 레이아웃 관련 동적 클래스 계산
+	const sidebarHeightClass = useMemo(() => (isPlayerVisible ? "h-[calc(100vh-92px)]" : "h-screen"), [isPlayerVisible]);
+	const mainHeightClass = useMemo(
+		() => (isPlayerVisible ? "h-[calc(100vh-72px-92px)]" : "h-[calc(100vh-72px)]"),
+		[isPlayerVisible],
+	);
+	const toasterBottomClass = useMemo(() => (isPlayerVisible ? "bottom-92px" : "bottom-0"), [isPlayerVisible]);
 
 	useEffect(() => {
 		if (isSuccess) {
@@ -49,7 +69,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 			<DndContext>
 				<div className="h-screen overflow-hidden">
 					{/* Fixed Sidebar - 100vh - footer size */}
-					<div className={cn("fixed left-0 top-0 h-[calc(100vh-92px)]", isLeftSidebarOpen ? "w-305px" : "w-150px")}>
+					<div className={cn("fixed left-0 top-0", sidebarHeightClass, isLeftSidebarOpen ? "w-305px" : "w-150px")}>
 						<Sidebar />
 					</div>
 
@@ -61,17 +81,17 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 						className={cn(
 							"absolute top-[72px] right-0 pt-15px overflow-auto",
 							"transition-all duration-500",
-							"h-[calc(100vh-72px-92px)]", // 100vh - header size - footer
+							mainHeightClass,
 							isLeftSidebarOpen ? "left-[305px] pl-11px" : "left-[150px] pl-83px",
-							isRightSidebarOpen ? "pr-[329px]" : "pr-[40px]",
+							isRightSidebarVisible ? "pr-[329px]" : "pr-[40px]",
 						)}
 					>
 						{children}
 					</main>
 
 					<div className="fixed right-0">
-						{rightSidebarType === SidebarType.TRACK && <MusicRightSidebar />}
-						{rightSidebarType === SidebarType.PLAYLIST && <PlaylistRightSidebar />}
+						<MusicRightSidebar />
+						<PlaylistRightSidebar />
 					</div>
 
 					{/* Fixed Footer */}
@@ -80,7 +100,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 						<FooterPlayer />
 					</div>
 
-					<Toaster viewportClassName="bottom-92px" />
+					<Toaster viewportClassName={toasterBottomClass} />
 				</div>
 			</DndContext>
 		</AudioProvider>

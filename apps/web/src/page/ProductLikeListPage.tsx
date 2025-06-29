@@ -9,8 +9,7 @@ import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
 import type { UserLikeProductListRequest } from "@hitbeatclub/shared-types/user";
 import { ProductItem } from "@/features/product/components";
 import { useUnlikeProductMutation } from "@/apis/product/mutations";
-import { useAudioStore } from "@/stores/audio";
-import { useShallow } from "zustand/react/shallow";
+import { createPlaylistConfig } from "@/components/layout/PlaylistProvider";
 
 /**
  * 좋아요 페이지의 메인 컴포넌트
@@ -95,6 +94,9 @@ const ProductLikeListPage = memo(() => {
 		});
 	}, []);
 
+	// 현재 필터 기준 자동 플레이리스트 설정
+	const playlistConfig = useMemo(() => createPlaylistConfig.liked(filters), [filters]);
+
 	// 사용자 정보가 없으면 null 반환
 	if (!isUserMeSuccess || !userMe?.id) {
 		return null;
@@ -125,7 +127,7 @@ const ProductLikeListPage = memo(() => {
 				) : likedProducts.length === 0 ? (
 					<div className="text-center py-8 text-gray-500">좋아요한 트랙이 없습니다.</div>
 				) : (
-					likedProducts.map((product) => (
+					likedProducts.map((product, index) => (
 						<ProductItem
 							key={product.id}
 							type={"BEAT"} // TODO: 타입 추가
@@ -136,6 +138,8 @@ const ProductLikeListPage = memo(() => {
 							tags={product.tags}
 							// genres={product.genres}
 							isLiked={true}
+							autoPlaylistConfig={playlistConfig}
+							trackIndex={index}
 							onLike={() => handleLike(product.id)}
 						/>
 					))

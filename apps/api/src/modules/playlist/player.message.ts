@@ -1,4 +1,4 @@
-export const playerMessage = {
+export const playlistMessage = {
 	savePlayRecord: {
 		success: "플레이 기록 저장 성공",
 	},

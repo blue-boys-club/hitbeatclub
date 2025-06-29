@@ -11,6 +11,8 @@ import { PurchaseWithCartTrigger } from "./PurchaseWithCartTrigger";
 import { usePlayTrack } from "@/hooks/use-play-track";
 import { useAudioStore } from "@/stores/audio";
 import { useShallow } from "zustand/react/shallow";
+import { usePlaylist } from "@/hooks/use-playlist";
+import { PlaylistAutoRequest } from "@hitbeatclub/shared-types";
 
 interface ProductItemProps {
 	productId?: number;
@@ -22,6 +24,10 @@ interface ProductItemProps {
 	isLiked?: boolean;
 	onPlay?: () => void;
 	onLike?: () => void;
+	/** 컨텍스트 기반 자동 플레이리스트 설정 (옵션) */
+	autoPlaylistConfig?: PlaylistAutoRequest;
+	/** 원본 리스트상의 인덱스 (옵션) */
+	trackIndex?: number;
 }
 
 /**
@@ -32,7 +38,19 @@ interface ProductItemProps {
  * - 트랙 관련 태그 표시
  */
 export const ProductItem = memo(
-	({ productId, title, artist, albumImgSrc, tags = [], type, isLiked = false, onPlay, onLike }: ProductItemProps) => {
+	({
+		productId,
+		title,
+		artist,
+		albumImgSrc,
+		tags = [],
+		type,
+		isLiked = false,
+		onPlay,
+		onLike,
+		autoPlaylistConfig,
+		trackIndex,
+	}: ProductItemProps) => {
 		const router = useRouter();
 		const { status, currentProductId } = useAudioStore(
 			useShallow((state) => ({
@@ -42,6 +60,7 @@ export const ProductItem = memo(
 		);
 
 		const { play } = usePlayTrack();
+		const { createAutoPlaylistAndPlay } = usePlaylist();
 
 		const effectiveStatus = currentProductId === productId ? status : "paused";
 
@@ -53,7 +72,20 @@ export const ProductItem = memo(
 			onLike?.();
 		};
 
-		const togglePlay = () => {
+		const togglePlay = async () => {
+			if (autoPlaylistConfig) {
+				try {
+					await createAutoPlaylistAndPlay(autoPlaylistConfig, trackIndex ?? 0);
+					play(productId);
+					onPlay?.();
+					return;
+				} catch (error) {
+					// 실패 시 기본 재생 로직으로 폴백
+					console.error("[ProductItem] createAutoPlaylistAndPlay failed", error);
+				}
+			}
+
+			// 기본 재생 로직
 			play(productId);
 			onPlay?.();
 		};

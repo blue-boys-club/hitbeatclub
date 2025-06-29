@@ -77,6 +77,15 @@ export const getProductFileDownloadLinkQueryOption = (productId: number, type: P
 		queryKey: QUERY_KEYS.products.fileDownloadLink(productId, type),
 		queryFn: () => getProductFileDownloadLink(productId, type),
 		select: (response) => response.data,
+		// 오디오 파일 URL은 1시간 만료 서명 URL이다.
+		// 1시간보다 약간 짧은 50분을 staleTime 으로 두어 만료 직전에만 새로고침할 수 있도록 하고,
+		// 포커스 전환/재연결/마운트 시점의 자동 refetch 는 모두 막는다.
+		staleTime: 50 * 60 * 1000, // 50 minutes
+		gcTime: 55 * 60 * 1000, // 55 minutes (before 1 hour)
+		// do not refetch via automatic refetching
+		refetchOnWindowFocus: false,
+		refetchOnReconnect: false,
+		refetchOnMount: false,
 	});
 };
 

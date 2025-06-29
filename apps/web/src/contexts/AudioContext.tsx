@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useCallback, useRef, useState, useEffect } from "react";
+import React, { createContext, useContext, useCallback, useRef, useState, useEffect, useMemo } from "react";
 import ReactPlayer from "react-player";
+import { useAudioStore } from "@/stores/audio";
 
 interface AudioState {
 	isPlaying: boolean;
@@ -9,8 +10,6 @@ interface AudioState {
 	duration: number;
 	volume: number;
 	isMuted: boolean;
-	repeatMode: "none" | "one" | "all";
-	shuffle: boolean;
 	isUserSeeking: boolean;
 }
 
@@ -20,7 +19,7 @@ interface AudioContextValue extends AudioState {
 	togglePlay: () => void;
 	stop: () => void;
 	autoPlay: () => void;
-	// 탐색 컨트롤
+	// 탐색 컨트롤 - 외부에서 제공되는 콜백
 	onPrevious: () => void;
 	onNext: () => void;
 	onSeek: (seconds: number) => void;
@@ -29,13 +28,19 @@ interface AudioContextValue extends AudioState {
 	// 볼륨 컨트롤
 	onVolumeChange: (volume: number) => void;
 	onMuteToggle: () => void;
-	// 모드 컨트롤
+	// 모드 컨트롤 - 외부에서 제공되는 콜백
 	toggleRepeatMode: () => void;
 	toggleShuffle: () => void;
 	// ReactPlayer 이벤트 핸들러
 	onProgress: (playedSeconds: number) => void;
 	onDuration: (duration: number) => void;
 	onEnded: () => void;
+	// 외부 콜백 설정
+	setPreviousCallback: (callback: () => void) => void;
+	setNextCallback: (callback: () => void) => void;
+	setShuffleCallback: (callback: () => void) => void;
+	setRepeatCallback: (callback: () => void) => void;
+	setEndedCallback: (callback: () => void) => void;
 }
 
 const AudioContext = createContext<AudioContextValue | null>(null);
@@ -55,15 +60,38 @@ interface AudioProviderProps {
 export const AudioProvider = ({ children }: AudioProviderProps) => {
 	const playerRef = useRef<ReactPlayer>(null);
 
-	const [state, setState] = useState<AudioState>({
-		isPlaying: false,
-		currentTime: 0,
-		duration: 0,
-		volume: 0.5,
-		isMuted: false,
-		repeatMode: "none",
-		shuffle: false,
-		isUserSeeking: false, // 사용자가 시크바를 조작 중인지 여부
+	const [state, setState] = useState<AudioState>(() => {
+		const storeState = useAudioStore.getState();
+		return {
+			isPlaying: false,
+			currentTime: 0,
+			duration: 0,
+			volume: storeState.volume,
+			isMuted: storeState.isMuted,
+			isUserSeeking: false,
+		};
+	});
+
+	// zustand store에서 volume, isMuted 값을 구독합니다.
+	const volume = useAudioStore((s) => s.volume);
+	const isMuted = useAudioStore((s) => s.isMuted);
+
+	const setVolume = useAudioStore((s) => s.setVolume);
+	const toggleMute = useAudioStore((s) => s.toggleMute);
+
+	// 외부에서 주입되는 콜백들을 ref에 저장하여 불필요한 리렌더를 방지
+	const callbacksRef = useRef<{
+		onPrevious: () => void;
+		onNext: () => void;
+		onShuffle: () => void;
+		onRepeat: () => void;
+		onEnded: () => void;
+	}>({
+		onPrevious: () => console.log("Previous track"),
+		onNext: () => console.log("Next track"),
+		onShuffle: () => console.log("Toggle shuffle"),
+		onRepeat: () => console.log("Toggle repeat"),
+		onEnded: () => console.log("Track ended"),
 	});
 
 	// 1초마다 진행 시간 업데이트 (사용자가 시크바 조작 중이 아닐 때만)
@@ -105,17 +133,13 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
 		}
 	}, []);
 
-	// 탐색 컨트롤 - 플레이리스트 연동을 위한 콜백 함수들
+	// 탐색 컨트롤 - 외부 콜백 호출
 	const onPrevious = useCallback(() => {
-		// FooterPlayer에서 playNextTrack 로직 사용
-		// 실제 구현은 AudioProvider를 사용하는 상위 컴포넌트에서 처리
-		console.log("Previous track");
+		callbacksRef.current.onPrevious();
 	}, []);
 
 	const onNext = useCallback(() => {
-		// FooterPlayer에서 playNextTrack 로직 사용
-		// 실제 구현은 AudioProvider를 사용하는 상위 컴포넌트에서 처리
-		console.log("Next track");
+		callbacksRef.current.onNext();
 	}, []);
 
 	const onSeek = useCallback((seconds: number) => {
@@ -133,35 +157,34 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
 		setState((prev) => ({ ...prev, isUserSeeking: false }));
 	}, []);
 
-	// 볼륨 컨트롤
-	const onVolumeChange = useCallback((volume: number) => {
+	// 볼륨 컨트롤 -> zustand store 로 위임
+	const onVolumeChange = useCallback(
+		(volumeValue: number) => {
+			setVolume(volumeValue);
+		},
+		[setVolume],
+	);
+
+	const onMuteToggle = useCallback(() => {
+		toggleMute();
+	}, [toggleMute]);
+
+	// store 의 volume, isMuted 변경 시 state 와 동기화하여 컨텍스트에 반영
+	useEffect(() => {
 		setState((prev) => ({
 			...prev,
 			volume,
-			isMuted: volume === 0,
+			isMuted,
 		}));
-	}, []);
+	}, [volume, isMuted]);
 
-	const onMuteToggle = useCallback(() => {
-		setState((prev) => {
-			if (prev.isMuted) {
-				return { ...prev, isMuted: false, volume: prev.volume || 0.5 };
-			} else {
-				return { ...prev, isMuted: true, volume: 0 };
-			}
-		});
-	}, []);
-
-	// 모드 컨트롤
+	// 모드 컨트롤 - 외부 콜백 호출
 	const toggleRepeatMode = useCallback(() => {
-		setState((prev) => ({
-			...prev,
-			repeatMode: prev.repeatMode === "none" ? "one" : prev.repeatMode === "one" ? "all" : "none",
-		}));
+		callbacksRef.current.onRepeat();
 	}, []);
 
 	const toggleShuffle = useCallback(() => {
-		setState((prev) => ({ ...prev, shuffle: !prev.shuffle }));
+		callbacksRef.current.onShuffle();
 	}, []);
 
 	// ReactPlayer 이벤트 핸들러
@@ -180,39 +203,90 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
 	}, []);
 
 	const onEnded = useCallback(() => {
-		setState((prev) => {
-			if (prev.repeatMode === "one") {
-				// 한 곡 반복
-				if (playerRef.current) {
-					playerRef.current.seekTo(0);
-				}
-				return { ...prev, currentTime: 0 };
-			} else {
-				// TODO: 플레이리스트 다음 곡 재생 or 정지
-				return { ...prev, isPlaying: false };
-			}
-		});
+		// 재생이 종료되면 내부 상태를 "isPlaying: false" 로 업데이트하여 외부 스토어와 동기화합니다.
+		setState((prev) => ({ ...prev, isPlaying: false }));
+		callbacksRef.current.onEnded();
 	}, []);
 
-	const contextValue: AudioContextValue = {
-		...state,
-		playerRef,
-		togglePlay,
-		stop,
-		autoPlay,
-		onPrevious,
-		onNext,
-		onSeek,
-		onSeekStart,
-		onSeekEnd,
-		onVolumeChange,
-		onMuteToggle,
-		toggleRepeatMode,
-		toggleShuffle,
-		onProgress,
-		onDuration,
-		onEnded,
-	};
+	// 외부 콜백 설정 함수들
+	const setPreviousCallback = useCallback((callback: () => void) => {
+		callbacksRef.current.onPrevious = callback;
+	}, []);
+
+	const setNextCallback = useCallback((callback: () => void) => {
+		callbacksRef.current.onNext = callback;
+	}, []);
+
+	const setShuffleCallback = useCallback((callback: () => void) => {
+		callbacksRef.current.onShuffle = callback;
+	}, []);
+
+	const setRepeatCallback = useCallback((callback: () => void) => {
+		callbacksRef.current.onRepeat = callback;
+	}, []);
+
+	const setEndedCallback = useCallback((callback: () => void) => {
+		callbacksRef.current.onEnded = callback;
+	}, []);
+
+	// Memoize context value to avoid unnecessary re-renders in consumers
+	const contextValue: AudioContextValue = useMemo(
+		() => ({
+			...state,
+			playerRef,
+			togglePlay,
+			stop,
+			autoPlay,
+			onPrevious,
+			onNext,
+			onSeek,
+			onSeekStart,
+			onSeekEnd,
+			onVolumeChange,
+			onMuteToggle,
+			toggleRepeatMode,
+			toggleShuffle,
+			onProgress,
+			onDuration,
+			onEnded,
+			setPreviousCallback,
+			setNextCallback,
+			setShuffleCallback,
+			setRepeatCallback,
+			setEndedCallback,
+		}),
+		[
+			state,
+			togglePlay,
+			stop,
+			autoPlay,
+			onPrevious,
+			onNext,
+			onSeek,
+			onSeekStart,
+			onSeekEnd,
+			onVolumeChange,
+			onMuteToggle,
+			toggleRepeatMode,
+			toggleShuffle,
+			onProgress,
+			onDuration,
+			onEnded,
+			setPreviousCallback,
+			setNextCallback,
+			setShuffleCallback,
+			setRepeatCallback,
+			setEndedCallback,
+		],
+	);
 
 	return <AudioContext.Provider value={contextValue}>{children}</AudioContext.Provider>;
 };
+
+// Hook helpers to access slices of the state
+export const useIsPlaying = () => useAudioContext().isPlaying;
+export const useCurrentTime = () => useAudioContext().currentTime;
+export const useDuration = () => useAudioContext().duration;
+export const useVolume = () => useAudioContext().volume;
+export const useIsMuted = () => useAudioContext().isMuted;
+export const useIsUserSeeking = () => useAudioContext().isUserSeeking;

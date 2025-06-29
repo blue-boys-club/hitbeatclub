@@ -1,0 +1,243 @@
+import { BadRequestException, Injectable, Logger, NotFoundException, forwardRef } from "@nestjs/common";
+import { PrismaService } from "~/common/prisma/prisma.service";
+import { ProductService } from "../product/product.service";
+import { UserService } from "../user/user.service";
+import { CartService } from "../cart/cart.service";
+import { ENUM_PRODUCT_CATEGORY, ENUM_PRODUCT_SORT } from "../product/product.enum";
+
+// TODO: Replace 'any' with actual imports when shared-types export is available
+type PlaylistAutoRequest = any;
+type PlaylistManualRequest = { trackIds: number[] };
+
+@Injectable()
+export class PlaylistService {
+	private readonly logger = new Logger(PlaylistService.name);
+
+	constructor(
+		private readonly prisma: PrismaService,
+		// circular dependencies 방지를 위해 forwardRef 사용
+		private readonly productService: ProductService,
+		private readonly userService: UserService,
+		private readonly cartService: CartService,
+	) {}
+
+	/**
+	 * 자동 재생목록 (컨텍스트 기반)
+	 * @param userId 로그인 사용자 ID(optional)
+	 * @param payload PlaylistAutoRequest
+	 */
+	async createAutoPlaylist(userId: number | undefined, payload: PlaylistAutoRequest) {
+		const { type } = payload;
+		let trackIds: number[] = [];
+
+		try {
+			switch (type) {
+				case "MAIN": {
+					const { category } = payload;
+					const where: any = { isPublic: 1 };
+
+					if (category === "BEAT") {
+						where.category = ENUM_PRODUCT_CATEGORY.BEAT;
+					} else if (category === "ACAPELLA") {
+						where.category = ENUM_PRODUCT_CATEGORY.ACAPELA;
+					}
+
+					const items = await this.productService.findAll(
+						where,
+						{ page: 1, limit: 100, sort: ENUM_PRODUCT_SORT.RECENT },
+						["id"],
+					);
+					trackIds = items.map((p: any) => Number(p.id));
+					break;
+				}
+				case "SEARCH": {
+					// payload.query 는 ProductSearchQuerySchema 기반 (page, limit 제거됨)
+					const items = await this.productService.findAll(
+						{ isPublic: 1, ...payload.query },
+						{
+							page: 1,
+							limit: 100,
+							sort: ENUM_PRODUCT_SORT.RECENT,
+						},
+						["id"],
+					);
+					trackIds = items.map((p: any) => Number(p.id));
+					break;
+				}
+				case "ARTIST": {
+					const { artistId, query } = payload;
+					const where: any = {
+						isPublic: 1,
+						sellerId: BigInt(artistId),
+						...(query || {}),
+					};
+					const items = await this.productService.findAll(
+						where,
+						{ page: 1, limit: 100, sort: ENUM_PRODUCT_SORT.RECENT },
+						["id"],
+					);
+					trackIds = items.map((p: any) => Number(p.id));
+					break;
+				}
+				case "FOLLOWING": {
+					if (!userId) {
+						throw new BadRequestException("로그인 필요");
+					}
+					const followed = await this.userService.findFollowedArtists(userId, {
+						page: 1,
+						limit: 100,
+					});
+					const artistIds = followed.data.map((a: any) => Number(a.artistId));
+					if (artistIds.length === 0) break;
+
+					const items = await this.productService.findAll(
+						{ isPublic: 1, sellerId: { in: artistIds } },
+						{ page: 1, limit: 100, sort: ENUM_PRODUCT_SORT.RECENT },
+						["id"],
+					);
+					trackIds = items.map((p: any) => Number(p.id));
+					break;
+				}
+				case "LIKED": {
+					if (!userId) {
+						throw new BadRequestException("로그인 필요");
+					}
+					const liked = await this.productService.findLikedProducts(userId, { page: 1, limit: 100, sort: "RECENT" });
+					trackIds = liked.data.map((p: any) => Number(p.id));
+					break;
+				}
+				case "CART": {
+					if (!userId) {
+						throw new BadRequestException("로그인 필요");
+					}
+					const cartItems = await this.cartService.findAll(userId);
+					trackIds = cartItems.map((item: any) => Number(item.product.id));
+					break;
+				}
+				default:
+					trackIds = [];
+			}
+		} catch (e) {
+			this.logger.error(e);
+			throw new BadRequestException(e);
+		}
+
+		trackIds = trackIds.slice(0, 100);
+
+		if (userId) {
+			await this.savePlaylist(userId, trackIds, payload.type, payload);
+		}
+
+		return { trackIds };
+	}
+
+	/**
+	 * 수동 재생목록 - 클라이언트에서 전달된 trackIds 기반
+	 */
+	async createManualPlaylist(userId: number | undefined, payload: PlaylistManualRequest) {
+		let trackIds = payload.trackIds.slice(0, 100);
+
+		if (userId) {
+			await this.savePlaylist(userId, trackIds, "MANUAL", { trackIds });
+		}
+
+		return { trackIds };
+	}
+
+	/**
+	 * DB에 Playlist 저장 (있으면 update, 없으면 create)
+	 */
+	private async savePlaylist(userId: number, trackIds: number[], sourceContext: string, contextData: any) {
+		// BigInt 변환
+		const userIdBig = BigInt(userId);
+
+		const existing = await this.prisma.playlist
+			.findFirst({
+				where: { userId: userIdBig, deletedAt: null },
+			})
+			.then((playlist) => this.prisma.serializeBigIntTyped(playlist));
+
+		if (existing) {
+			await this.prisma.playlist.update({
+				where: { id: existing.id },
+				data: {
+					trackIds: trackIds,
+					currentIndex: 0,
+					sourceContext,
+					contextData,
+				} as any,
+			});
+		} else {
+			await this.prisma.playlist.create({
+				data: {
+					userId: userIdBig,
+					trackIds: trackIds,
+					currentIndex: 0,
+					sourceContext,
+					contextData,
+				} as any,
+			});
+		}
+	}
+
+	/**
+	 * 사용자가 현재 재생목록을 덮어쓰는 PUT /users/me/playlist 용 메서드
+	 */
+	async overwritePlaylist(userId: number, payload: { trackIds: number[]; currentIndex: number }) {
+		let { trackIds, currentIndex } = payload;
+		trackIds = (trackIds || []).slice(0, 100);
+		if (currentIndex < 0) currentIndex = 0;
+		if (currentIndex >= trackIds.length) currentIndex = trackIds.length - 1;
+
+		const userIdBig = BigInt(userId);
+
+		const existing = await this.prisma.playlist
+			.findFirst({
+				where: { userId: userIdBig, deletedAt: null },
+			})
+			.then((playlist) => this.prisma.serializeBigIntTyped(playlist));
+
+		if (existing) {
+			await this.prisma.playlist.update({
+				where: { id: existing.id },
+				data: {
+					trackIds,
+					currentIndex,
+					updatedAt: new Date(),
+				} as any,
+			});
+		} else {
+			await this.prisma.playlist.create({
+				data: {
+					userId: userIdBig,
+					trackIds,
+					currentIndex,
+					sourceContext: "MANUAL", // overwrite는 컨텍스트 의미 없음 → MANUAL 지정
+				} as any,
+			});
+		}
+
+		return { trackIds, currentIndex };
+	}
+
+	/**
+	 * GET /users/me/playlist 저장된 재생목록 반환
+	 */
+	async findPlaylist(userId: number) {
+		const playlist = await this.prisma.playlist
+			.findFirst({
+				where: { userId: BigInt(userId), deletedAt: null },
+			})
+			.then((playlist) => this.prisma.serializeBigIntTyped(playlist));
+
+		if (!playlist) {
+			return { trackIds: [], currentIndex: 0 };
+		}
+
+		const pl: any = playlist;
+		return {
+			trackIds: pl?.trackIds ?? [],
+			currentIndex: pl?.currentIndex ?? 0,
+		};
+	}
+}

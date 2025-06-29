@@ -23,7 +23,7 @@ export const SearchHeader = () => {
 			<button
 				className={cn(isLoading || isRefetching ? "[animation:spin_1s_linear_infinite_reverse]" : "", "cursor-pointer")}
 				onClick={() => {
-					refetch();
+					// TODO: 검색 설정 초기화
 				}}
 			>
 				<Replay />

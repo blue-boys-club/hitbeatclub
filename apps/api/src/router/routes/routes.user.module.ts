@@ -13,7 +13,7 @@ import { AccountTokenModule } from "~/modules/account-token/account-token.module
 import { CouponModule } from "~/modules/coupon/coupon.module";
 import { PaymentModule } from "~/modules/payment/payment.module";
 import { SearchModule } from "~/modules/search/search.module";
-import { PlayerModule } from "~/modules/player/player.module";
+import { PlaylistModule } from "~/modules/playlist/playlist.module";
 
 @Module({
 	controllers: [],
@@ -34,7 +34,7 @@ import { PlayerModule } from "~/modules/player/player.module";
 		GenreModule,
 		CouponModule,
 		SearchModule,
-		PlayerModule,
+		PlaylistModule,
 	],
 })
 export class RoutesUserModule {}

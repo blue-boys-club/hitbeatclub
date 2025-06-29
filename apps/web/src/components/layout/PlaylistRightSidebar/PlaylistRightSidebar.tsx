@@ -1,108 +1,172 @@
 "use client";
-import { CloseMosaic, ArrowLeftMosaic } from "@/assets/svgs";
+import { CloseMosaic, CartPause, CartPlay } from "@/assets/svgs";
 import { cn } from "@/common/utils";
 import Image from "next/image";
-import React, { useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useEffect, useRef, useState } from "react";
 import PlaylistItem from "./PlaylistItem";
-import { useLayoutStore } from "@/stores/layout";
+import { SidebarType, useLayoutStore } from "@/stores/layout";
 import { useShallow } from "zustand/react/shallow";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { getPlayerListInfiniteQueryOptions } from "@/apis/player/query/player.query-options";
-import { PlayerListResponse } from "@hitbeatclub/shared-types";
+import { useQuery } from "@tanstack/react-query";
 import { DropContentWrapper } from "@/features/dnd/components/DropContentWrapper";
 import blankCdImage from "@/assets/images/blank-cd.png";
 import { usePlayTrack } from "@/hooks/use-play-track";
-import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { usePlaylist } from "@/hooks/use-playlist";
+import { getProductsByIdsQueryOption } from "@/apis/product/query/product.query-option";
+import { useAudioStore } from "@/stores/audio";
+import Link from "next/link";
 
 const PlaylistRightSidebar = () => {
-	const { data: userMe } = useQuery({ ...getUserMeQueryOption(), retry: false });
-
-	const { isOpen, setRightSidebar, currentTrackId } = useLayoutStore(
+	const { isOpen, currentType, setRightSidebar, currentTrackId } = useLayoutStore(
 		useShallow((state) => ({
 			isOpen: state.rightSidebar.isOpen,
+			currentType: state.rightSidebar.currentType,
 			setRightSidebar: state.setRightSidebar,
 			currentTrackId: state.player.trackId,
 		})),
 	);
 
-	const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } = useInfiniteQuery({
-		...getPlayerListInfiniteQueryOptions(),
-		enabled: !!userMe?.id,
+	// 플레이리스트 사이드바가 열려있는지 여부 (트랙이 있고 현재 선택된 트랙이 있을 때만 노출)
+	// usePlaylist import moved above for visibility logic
+	const { trackIds } = usePlaylist();
+	const isPlaylistOpen =
+		isOpen && currentType === SidebarType.PLAYLIST && trackIds.length > 0 && currentTrackId !== null;
+
+	// 플레이리스트의 각 트랙에 대한 상품 정보를 한 번에 조회
+	const {
+		data: products = [],
+		isLoading,
+		isError,
+	} = useQuery({
+		...getProductsByIdsQueryOption(trackIds),
+		enabled: trackIds.length > 0,
 	});
 
-	// 무한 스크롤을 위한 ref와 observer 설정
-	const observerRef = useRef<HTMLDivElement>(null);
-
-	const handleObserver = useCallback(
-		(entries: IntersectionObserverEntry[]) => {
-			const target = entries[0];
-			if (target?.isIntersecting && hasNextPage && !isFetchingNextPage) {
-				fetchNextPage();
-			}
-		},
-		[fetchNextPage, hasNextPage, isFetchingNextPage],
-	);
-
-	useEffect(() => {
-		const element = observerRef.current;
-		if (!element) return;
-
-		const observer = new IntersectionObserver(handleObserver, {
-			threshold: 0.1,
-		});
-
-		observer.observe(element);
-		return () => observer.disconnect();
-	}, [handleObserver]);
-
-	const handleToggleOpen = useCallback(() => {
-		setRightSidebar(!isOpen);
-	}, [setRightSidebar, isOpen]);
+	const handleClose = useCallback(() => {
+		setRightSidebar(false);
+	}, [setRightSidebar]);
 
 	// 재생 훅: { play }
 	const { play } = usePlayTrack();
 
-	// 모든 페이지의 플레이리스트 데이터를 평탄화 - useMemo로 최적화
-	const allPlaylists: PlayerListResponse[] = useMemo(() => {
-		return data?.pages.flat() ?? [];
-	}, [data?.pages]);
+	// 오디오 상태 가져오기
+	const { status } = useAudioStore(useShallow((state) => ({ status: state.status })));
+
+	const effectiveStatus: "playing" | "paused" | "default" = (() => {
+		if (currentTrackId == null || currentTrackId === 0) return "default";
+		if (status === "playing" || status === "paused") return status;
+		return "default";
+	})();
+
+	// 플레이리스트 데이터를 PlayerListResponse 형태로 변환
+	const allPlaylists = useMemo(() => {
+		// trackIds 순서를 유지하기 위해 Map 으로 정렬
+		const productMap = new Map(products.map((p) => [p.id, p]));
+		return trackIds
+			.map((trackId) => {
+				const product = productMap.get(trackId);
+				if (!product) return null;
+				return {
+					id: product.id,
+					productId: product.id,
+					productName: product.productName,
+					seller: {
+						id: product.seller?.id || 0,
+						stageName: product.seller?.stageName || "",
+						profileImageUrl: product.seller?.profileImageUrl || "",
+						slug: product.seller?.slug || "",
+					},
+					coverImage: {
+						id: product.coverImage?.id || 0,
+						url: product.coverImage?.url || "",
+						originName: product.coverImage?.originName || "",
+					},
+					audioFile: {
+						id: product.audioFile?.id || 0,
+						url: product.audioFile?.url || "",
+						originName: product.audioFile?.originName || "",
+					},
+				};
+			})
+			.filter(Boolean);
+	}, [products, trackIds]);
 
 	// 현재 선택된 플레이리스트 찾기 - useMemo로 최적화
 	const selectedPlaylist = useMemo(() => {
-		return allPlaylists.find((playlist) => playlist.productId === currentTrackId);
+		return allPlaylists.find((playlist) => playlist?.productId === currentTrackId);
 	}, [allPlaylists, currentTrackId]);
 
 	const albumImage = useMemo(() => {
 		return selectedPlaylist?.coverImage?.url || blankCdImage;
 	}, [selectedPlaylist]);
 
+	// ====== Title marquee animation ======
+	const titleRef = useRef<HTMLDivElement>(null);
+	const titleContainerRef = useRef<HTMLDivElement>(null);
+	const [shouldAnimate, setShouldAnimate] = useState(false);
+
+	useEffect(() => {
+		// when selected playlist or its name changes, decide animation
+		const checkAndSetAnimation = () => {
+			const titleElement = titleRef.current;
+			const containerElement = titleContainerRef.current;
+
+			if (titleElement && containerElement && selectedPlaylist?.productName) {
+				// temporarily remove animation class to measure
+				titleElement.classList.remove("animate-marquee");
+
+				// create temp span to measure single text width
+				const tempSpan = document.createElement("span");
+				tempSpan.textContent = selectedPlaylist.productName;
+				tempSpan.style.visibility = "hidden";
+				tempSpan.style.position = "absolute";
+				tempSpan.style.whiteSpace = "nowrap";
+				tempSpan.style.fontSize = "24px"; // matches text-[24px]
+				tempSpan.style.fontWeight = "bold";
+				containerElement.appendChild(tempSpan);
+
+				const textWidth = tempSpan.offsetWidth;
+				const containerWidth = containerElement.clientWidth;
+
+				containerElement.removeChild(tempSpan);
+
+				if (textWidth > containerWidth) {
+					const scrollDistance = textWidth + 32; // 32px gap same as mr-8
+					const duration = Math.max(6, Math.min(15, scrollDistance / 40));
+					titleElement.style.setProperty("--scroll-distance", `-${scrollDistance}px`);
+					titleElement.style.setProperty("--marquee-duration", `${duration}s`);
+					setShouldAnimate(true);
+					requestAnimationFrame(() => {
+						titleElement.classList.add("animate-marquee");
+					});
+				} else {
+					setShouldAnimate(false);
+				}
+			}
+		};
+
+		const timeoutId = setTimeout(checkAndSetAnimation, 50);
+		return () => clearTimeout(timeoutId);
+	}, [selectedPlaylist?.productName]);
+
 	return (
 		<>
 			<div
 				className={cn(
 					"fixed right-0 top-87px h-[calc(100vh-92px-72px-15px)] transition-all duration-500 ease-in-out",
-					isOpen ? "w-[275px]" : "w-0",
+					isPlaylistOpen ? "w-[275px]" : "w-0",
 				)}
 			>
-				{/* 열기 버튼 - 닫혀있을 때만 보임 */}
-				{!isOpen && (
-					<button
-						onClick={handleToggleOpen}
-						className="absolute top-0 -left-8 cursor-pointer hover:opacity-80 transition-opacity"
-					>
-						<ArrowLeftMosaic />
-					</button>
-				)}
+				{/* 플레이리스트 사이드바는 FooterPlayer의 플레이리스트 버튼으로만 열립니다. */}
 
 				<DropContentWrapper
 					id={"player"}
 					asChild
 				>
 					<div className="flex flex-col h-full overflow-hidden border-l-2 border-black w-[275px] pb-15 bg-white">
-						{/* 닫기 버튼 - 열려있을 때만 보임 */}
-						{isOpen && (
+						{/* 닫기 버튼 */}
+						{isPlaylistOpen && (
 							<button
-								onClick={handleToggleOpen}
+								onClick={handleClose}
 								className="absolute top-0 right-0 cursor-pointer border p-[2px]"
 							>
 								<CloseMosaic />
@@ -116,22 +180,69 @@ const PlaylistRightSidebar = () => {
 
 							{selectedPlaylist ? (
 								<div className="flex gap-4 mb-7">
-									<div className="w-54px h-54px">
+									<div
+										className="relative w-[54px] h-[54px] flex-shrink-0 cursor-pointer"
+										onClick={() => {
+											if (selectedPlaylist) {
+												play(selectedPlaylist.productId);
+											}
+										}}
+									>
 										<Image
 											src={albumImage}
 											alt="앨범 표지"
 											width={54}
 											height={54}
-											className="object-cover rounded-[8px] w-full h-full"
+											className="object-cover aspect-square rounded-[8px] w-full h-full"
 										/>
+
+										{effectiveStatus !== "default" && (
+											<div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-[8px]">
+												{effectiveStatus === "playing" ? <CartPause /> : <CartPlay />}
+											</div>
+										)}
 									</div>
-									<div className="pt-1 flex flex-col gap-[2px]">
-										<div className="text-black font-bold text-[24px] leading-[28px] tracking-[0.24px] truncate w-[155px]">
-											{selectedPlaylist.productName}
+									<div className="pt-1 flex flex-col gap-[2px] w-[155px]">
+										{/* Title with marquee animation */}
+										<div
+											ref={titleContainerRef}
+											className="w-full overflow-hidden"
+										>
+											<div
+												ref={titleRef}
+												className="whitespace-nowrap"
+											>
+												{shouldAnimate ? (
+													<>
+														<Link
+															href={`/product/${selectedPlaylist.id}`}
+															className="text-black font-bold text-[24px] leading-[28px] tracking-[0.24px] hover:underline mr-8"
+														>
+															{selectedPlaylist.productName}
+														</Link>
+														<Link
+															href={`/product/${selectedPlaylist.id}`}
+															className="text-black font-bold text-[24px] leading-[28px] tracking-[0.24px] hover:underline mr-8"
+														>
+															{selectedPlaylist.productName}
+														</Link>
+													</>
+												) : (
+													<Link
+														href={`/product/${selectedPlaylist.id}`}
+														className="text-black font-bold text-[24px] leading-[28px] tracking-[0.24px] hover:underline"
+													>
+														{selectedPlaylist.productName}
+													</Link>
+												)}
+											</div>
 										</div>
-										<div className="text-black font-bold text-[16px] leading-[16px] tracking-[-0.32px] w-[155px]">
+										<Link
+											href={`/artists/${selectedPlaylist.seller.slug}`}
+											className="text-black font-bold text-[16px] leading-[16px] tracking-[-0.32px] w-[155px] hover:underline"
+										>
 											{selectedPlaylist.seller.stageName}
-										</div>
+										</Link>
 									</div>
 								</div>
 							) : (
@@ -142,45 +253,31 @@ const PlaylistRightSidebar = () => {
 						<div className="flex-1 min-h-0 px-6">
 							<h3 className="py-[6px] border-y-[3px] text-black font-bold text-[20px] leading-[20px] mb-5">Recent</h3>
 
-							{!userMe?.id ? (
-								<div className="flex justify-center items-center h-20">
-									<div className="text-gray-500">로그인 후 이용해주세요.</div>
-								</div>
-							) : isLoading ? (
+							{isLoading ? (
 								<div className="flex justify-center items-center h-20">
 									<div className="text-gray-500">로딩 중...</div>
 								</div>
 							) : isError ? (
 								<div className="flex justify-center items-center h-20">
-									<div className="text-red-500">데이터를 불러오는데 실패했습니다.</div>
+									<div className="text-red-500">플레이리스트를 불러오는데 실패했습니다.</div>
 								</div>
 							) : allPlaylists.length > 0 ? (
 								<div className="overflow-auto h-full">
 									<ul className="flex flex-col gap-[10px]">
-										{allPlaylists.map((playlist) => (
-											<PlaylistItem
-												key={playlist.id}
-												{...playlist}
-												isSelected={playlist.productId === currentTrackId}
-												onClick={play}
-											/>
-										))}
-									</ul>
-
-									{/* 무한 스크롤 트리거 */}
-									<div
-										ref={observerRef}
-										className="h-4"
-									>
-										{isFetchingNextPage && (
-											<div className="flex justify-center py-4">
-												<div className="text-gray-500 text-sm">더 많은 플레이리스트를 불러오는 중...</div>
-											</div>
+										{allPlaylists.map((playlist, index) =>
+											playlist ? (
+												<PlaylistItem
+													key={playlist.id}
+													{...playlist}
+													// isSelected={playlist.productId === currentTrackId}
+													onClick={play}
+												/>
+											) : null,
 										)}
-									</div>
+									</ul>
 								</div>
 							) : (
-								<p className="text-center pt-10">곡 목록이 없습니다.</p>
+								<p className="text-center pt-10">플레이리스트가 비어있습니다.</p>
 							)}
 						</div>
 					</div>

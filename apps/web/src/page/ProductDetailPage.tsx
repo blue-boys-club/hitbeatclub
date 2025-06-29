@@ -2,7 +2,7 @@
 
 import { memo, useMemo, useState, useCallback } from "react";
 import Image from "next/image";
-import { Acapella, Beat, Like, RedPlayCircle } from "@/assets/svgs";
+import { Acapella, Beat, Like, RedPlayCircle, PauseCircle } from "@/assets/svgs";
 import { AlbumAvatar, FreeDownloadButton, UserAvatar } from "@/components/ui";
 import { GenreButton } from "@/components/ui/GenreButton";
 import { TagButton } from "@/components/ui/TagButton";
@@ -10,8 +10,11 @@ import { LicenseNote, ProductDetailLicense, PurchaseWithCartTrigger } from "../f
 import { LicenseColor, LicenseType } from "../features/product/product.constants";
 import { LICENSE_MAP_TEMPLATE } from "@/apis/product/product.dummy";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { getProductQueryOption } from "@/apis/product/query/product.query-option";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	getProductFileDownloadLinkQueryOption,
+	getProductQueryOption,
+} from "@/apis/product/query/product.query-option";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { useToast } from "@/hooks/use-toast";
 import { useLikeProductMutation } from "@/apis/product/mutations/useLikeProductMutation";
@@ -21,6 +24,9 @@ import { cn } from "@/common/utils";
 import Link from "next/link";
 import { useAudioStore } from "@/stores/audio";
 import { useShallow } from "zustand/react/shallow";
+import { getProductFileDownloadLink } from "@/apis/product/product.api";
+import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
+import { usePlayTrack } from "@/hooks/use-play-track";
 
 interface ProductDetailPageProps {
 	trackId: number;
@@ -37,10 +43,18 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 	const unlikeProductMutation = useUnlikeProductMutation();
 
 	const { data: user } = useQuery(getUserMeQueryOption());
-	const { setProductId } = useAudioStore(
+	const { productId: currentProductId, isPlaying } = useAudioStore(
 		useShallow((state) => ({
-			setProductId: state.setProductId,
+			productId: state.productId,
+			isPlaying: state.isPlaying,
 		})),
+	);
+
+	const { play } = usePlayTrack();
+
+	const isCurrentTrackPlaying = useMemo(
+		() => product?.id === currentProductId && isPlaying,
+		[product?.id, currentProductId, isPlaying],
 	);
 
 	const isSubscribed = useMemo(() => {
@@ -49,8 +63,8 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 
 	const onPlay = useCallback(() => {
 		if (!product) return;
-		setProductId(product.id);
-	}, [product]);
+		play(product.id);
+	}, [product, play]);
 
 	const onLikeClick = () => {
 		if (!user) {
@@ -88,13 +102,40 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 		}
 	};
 
-	const onClickFreeDownload = () => {
-		if (!isSubscribed) {
-			router.push("/subscribe");
+	const queryClient = useQueryClient();
+	const onClickFreeDownload = useCallback(async () => {
+		if (!user) {
+			toast({
+				description: "로그인 후 이용해주세요.",
+			});
+			return;
+		}
+
+		if (isSubscribed && product?.id) {
+			const downloadUrl = await queryClient.fetchQuery(
+				// getProductFileDownloadLinkQueryOption(product.id, ENUM_FILE_TYPE.PRODUCT_AUDIO_FILE),
+				getProductFileDownloadLinkQueryOption(product.id, ENUM_FILE_TYPE.PRODUCT_ZIP_FILE),
+			);
+			if (downloadUrl) {
+				const link = document.createElement("a");
+				link.href = downloadUrl.data.url;
+				// link.download = downloadUrl.data.originalName || `${product?.productName}.zip`;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+			} else {
+				toast({
+					description: "다운로드 링크를 가져오는데 실패했습니다.",
+					variant: "destructive",
+				});
+			}
 		} else {
+			toast({
+				description: "구독 후 이용가능합니다.",
+			});
 			// alert("준비중입니다.");
 		}
-	};
+	}, [isSubscribed, product?.id, queryClient, toast]);
 
 	// 라이센스 정보 처리 (라이센스 표시용)
 	const licenses = useMemo(() => {
@@ -120,7 +161,11 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 			<main className="px-9 pt-10">
 				<article className="flex gap-10">
 					<aside>
-						<AlbumAvatar src={product?.coverImage?.url || "https://placehold.co/192x192"} />
+						<AlbumAvatar
+							src={product?.coverImage?.url || "https://placehold.co/192x192"}
+							isPlaying={isCurrentTrackPlaying}
+							onClick={onPlay}
+						/>
 					</aside>
 
 					<section className="flex flex-col gap-5 w-full">
@@ -139,10 +184,16 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 
 							<button
 								className="cursor-pointer"
-								aria-label="재생하기"
+								aria-label={isCurrentTrackPlaying ? "일시정지" : "재생하기"}
 								onClick={onPlay}
 							>
-								<RedPlayCircle />
+								{isCurrentTrackPlaying ? (
+									<div className="[&_g_path]:fill-black">
+										<PauseCircle />
+									</div>
+								) : (
+									<RedPlayCircle />
+								)}
 							</button>
 						</header>
 
@@ -186,6 +237,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 									<GenreButton
 										name={`${product?.musicKey || ""} ${(product?.scaleType || "").toLowerCase()}`}
 										showDeleteButton={false}
+										readOnly
 									/>
 									<GenreButton
 										name={
@@ -194,6 +246,7 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 												: `BPM ${product?.minBpm || 0} - ${product?.maxBpm || 0}`
 										}
 										showDeleteButton={false}
+										readOnly
 									/>
 								</nav>
 
@@ -206,13 +259,14 @@ const ProductDetailPage = memo(({ trackId }: ProductDetailPageProps) => {
 											key={genre.name}
 											name={genre.name}
 											showDeleteButton={false}
+											readOnly
 										/>
 									))}
 								</nav>
 							</div>
 
 							<div className="flex flex-col gap-0.5">
-								{user?.subscribedAt && !!product?.isFreeDownload && (
+								{!!product?.isFreeDownload && (
 									<FreeDownloadButton
 										variant="secondary"
 										className="outline-4 outline-hbc-black px-2.5 font-suisse"

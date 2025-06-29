@@ -4,7 +4,6 @@ import { memo, useMemo } from "react";
 import { useInView } from "react-intersection-observer";
 import LikeItem from "./LikeItem";
 import { getLikedProductsInfiniteListQueryOption, getUserMeQueryOption } from "@/apis/user/query/user.query-option";
-import { useAuthStore } from "@/stores/auth";
 import { useShallow } from "zustand/react/shallow";
 import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
 import { DropContentWrapper } from "@/features/dnd/components/DropContentWrapper";
@@ -137,10 +136,12 @@ const LikeItems = memo(({ search, sort }: LikeItemsProps) => {
 
 	return (
 		<div className={containerClassName}>
-			{likedProducts.map((item) => (
+			{likedProducts.map((item, index) => (
 				<LikeItem
 					key={item.id}
 					track={item}
+					index={index}
+					sort={sort || "RECENT"}
 				/>
 			))}
 

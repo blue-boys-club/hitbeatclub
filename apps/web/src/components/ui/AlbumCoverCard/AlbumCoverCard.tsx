@@ -9,6 +9,8 @@ import { StaticImageData } from "next/image";
 import Image from "next/image";
 import React, { useCallback, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { usePlaylist } from "@/hooks/use-playlist";
+import { PlaylistAutoRequest } from "@hitbeatclub/shared-types";
 
 export interface AlbumCoverCardProps
 	extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onClick">,
@@ -19,6 +21,10 @@ export interface AlbumCoverCardProps
 	onClick?: () => void;
 	AlbumCoverCardWrapperClassName?: string;
 	AlbumCoverCardInnerClassName?: string;
+	/** 컨텍스트 기반 자동 플레이리스트 설정 (옵션) */
+	autoPlaylistConfig?: PlaylistAutoRequest;
+	/** 원본 리스트상의 인덱스 (옵션) */
+	trackIndex?: number;
 }
 
 const AlbumCoverCardWrapper = cva("relative inline-block cursor-pointer group flex w-fit", {
@@ -75,9 +81,12 @@ export const AlbumCoverCard = ({
 	productId,
 	AlbumCoverCardWrapperClassName,
 	AlbumCoverCardInnerClassName,
+	autoPlaylistConfig,
+	trackIndex,
 	...props
 }: AlbumCoverCardProps) => {
 	const { play } = usePlayTrack();
+	const { createAutoPlaylistAndPlay } = usePlaylist();
 	const { status, currentProductId } = useAudioStore(
 		useShallow((state) => ({
 			status: state.status,
@@ -100,9 +109,28 @@ export const AlbumCoverCard = ({
 		}
 	}, [status, currentProductId, productId]);
 
-	const onClickHandler = useCallback(() => {
+	const onClickHandler = useCallback(async () => {
+		if (autoPlaylistConfig) {
+			try {
+				if (process.env.NODE_ENV !== "production") {
+					console.debug("[AlbumCoverCard] click with autoPlaylistConfig", {
+						productId,
+						trackIndex,
+						autoPlaylistConfig,
+					});
+				}
+				await createAutoPlaylistAndPlay(autoPlaylistConfig, trackIndex ?? 0);
+				// 플레이리스트가 설정된 이후 공통 play 로직도 호출하여 사이드바/레이아웃 상태 반영
+				play(productId);
+				return;
+			} catch (error) {
+				// 실패 시 기본 재생 로직으로 폴백
+				console.error("[AlbumCoverCard] createAutoPlaylistAndPlay failed", error);
+			}
+		}
+		// 기본 재생 로직
 		play(productId);
-	}, [play, productId]);
+	}, [autoPlaylistConfig, trackIndex, createAutoPlaylistAndPlay, play, productId]);
 
 	return (
 		<button

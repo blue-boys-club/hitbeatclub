@@ -5,8 +5,10 @@ import { useUpdateFollowedArtistMutation } from "@/apis/user/mutations";
 import { useQuery } from "@tanstack/react-query";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { useToast } from "@/hooks/use-toast";
-import { useStartPlayerMutation } from "@/apis/player/mutations";
+import { usePlaylist } from "@/hooks/use-playlist";
+import { usePlayTrack } from "@/hooks/use-play-track";
 import { AxiosError } from "axios";
+import { PlaylistAutoRequest } from "@hitbeatclub/shared-types";
 
 /**
  * 드래그 앤 드롭 핸들러를 관리하는 커스텀 훅
@@ -17,9 +19,10 @@ export const useDragDropHandler = () => {
 	const { data: user } = useQuery(getUserMeQueryOption());
 	const { mutateAsync: likeProduct } = useLikeProductMutation();
 	const { mutateAsync: followArtist } = useUpdateFollowedArtistMutation(user?.id ?? 0);
-	const { mutateAsync: startPlayer } = useStartPlayerMutation();
-	// const { mutate: followArtist } = useFollowArtistMutation();
-	// const { mutate: addToCart } = useAddToCartMutation();
+
+	// 새로운 플레이리스트 시스템 사용
+	const { addTrackToPlaylist, playTrackAtIndex, trackIds, createAutoPlaylistAndPlay } = usePlaylist();
+	const { play } = usePlayTrack();
 
 	// 라이센스 모달 상태 관리
 	const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
@@ -30,8 +33,8 @@ export const useDragDropHandler = () => {
 		console.log(event.active?.data.current);
 		const { active } = event;
 		if (active?.data.current?.type === "PRODUCT") {
-			const { productName, sellerStageName } = active.data.current.meta;
-			console.log(productName, sellerStageName);
+			const { productName, seller } = active.data.current.meta;
+			console.log(productName, seller?.stageName);
 		}
 	}, []);
 
@@ -41,9 +44,12 @@ export const useDragDropHandler = () => {
 
 			// PRODUCT 드래그 처리
 			if (event?.active?.data.current?.type === "PRODUCT") {
+				const productId = event.active?.data.current?.productId;
+				const originalIndex: number | undefined = event.active?.data.current?.index;
+				const playlistConfig: PlaylistAutoRequest | undefined = event.active?.data.current?.playlistConfig;
+
 				if (event.over?.id === "cart") {
 					// 비회원도 라이센스 모달을 열 수 있다.
-					const productId = event.active?.data.current?.productId;
 					if (productId) {
 						setSelectedProductId(productId);
 						setIsLicenseModalOpen(true);
@@ -58,7 +64,7 @@ export const useDragDropHandler = () => {
 				}
 
 				if (event.over?.id === "like-follow") {
-					likeProduct(event.active?.data.current?.productId)
+					likeProduct(productId)
 						.then(() => {
 							toast({ description: "좋아요가 완료되었습니다." });
 						})
@@ -67,17 +73,32 @@ export const useDragDropHandler = () => {
 							toast({ description: message });
 						});
 				} else if (event.over?.id === "player") {
-					startPlayer({
-						userId: user?.id ?? 0,
-						productId: event.active?.data.current?.productId,
-					})
-						.then(() => {
+					// 컨텍스트 인식 재생 로직
+					(async () => {
+						try {
+							if (playlistConfig) {
+								await createAutoPlaylistAndPlay(playlistConfig, originalIndex ?? 0);
+								toast({ description: "재생이 시작되었습니다." });
+								return;
+							}
+
+							// 기존 로직 유지
+							const existingIndex = trackIds.indexOf(productId);
+
+							if (existingIndex !== -1) {
+								playTrackAtIndex(existingIndex);
+							} else {
+								addTrackToPlaylist(productId);
+								const newIndex = trackIds.length;
+								playTrackAtIndex(newIndex);
+							}
+
 							toast({ description: "재생이 시작되었습니다." });
-						})
-						.catch((error: Error) => {
-							const message = error instanceof AxiosError ? error.response?.data.detail : "재생에 실패했습니다.";
-							toast({ description: message });
-						});
+						} catch (error) {
+							const message = error instanceof Error ? error.message : "재생에 실패했습니다.";
+							toast({ description: message, variant: "destructive" });
+						}
+					})();
 				}
 			}
 
@@ -99,7 +120,7 @@ export const useDragDropHandler = () => {
 				}
 			}
 		},
-		[likeProduct, followArtist, user, toast, startPlayer],
+		[likeProduct, followArtist, user, toast, addTrackToPlaylist, playTrackAtIndex, trackIds, createAutoPlaylistAndPlay],
 	);
 
 	// 라이센스 모달 닫기 핸들러

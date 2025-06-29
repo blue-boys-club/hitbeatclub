@@ -47,7 +47,7 @@ const CartItem = memo(function CartItem({ productId, type, imageUrl, alt }: Cart
 
 	return (
 		<div
-			className={cn("relative @200px/sidebar:h-66px @200px/sidebar:w-66px w-62px h-62px")}
+			className={cn("relative @200px/sidebar:h-66px @200px/sidebar:w-66px w-62px h-62px cursor-pointer")}
 			role="button"
 			tabIndex={0}
 			aria-label={`Media control - ${effectiveStatus}`}
@@ -89,7 +89,7 @@ const CartItem = memo(function CartItem({ productId, type, imageUrl, alt }: Cart
 						)}
 					>
 						<div className="absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
-							{effectiveStatus === "playing" ? <CartPlay /> : <CartPause />}
+							{effectiveStatus === "playing" ? <CartPause /> : <CartPlay />}
 						</div>
 					</div>
 				)}
