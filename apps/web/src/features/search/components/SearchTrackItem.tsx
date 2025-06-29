@@ -131,14 +131,14 @@ export const SearchTrackItem = memo(({ product, onPlay, onLike, onAddToCart }: T
 					<div className="flex flex-col">
 						<Link
 							href={`/products/${product.id}`}
-							className="flex items-center gap-2.5 text-16px font-bold"
+							className="flex items-center gap-2.5 text-16px font-bold hover:underline"
 						>
 							{product.productName}
 							<Beat />
 						</Link>
 						<Link
 							href={`/artists/${product.seller?.slug || product.seller?.id}`}
-							className="text-16px"
+							className="text-16px hover:underline"
 						>
 							{product.seller?.stageName}
 						</Link>

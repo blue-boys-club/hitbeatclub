@@ -21,12 +21,17 @@ export const LikeItem = ({ track }: LikeItemProps) => {
 			<div className="flex flex-row w-full h-full gap-3px">
 				<div className="hidden @200px/sidebar:flex flex-col items-start justify-center h-full font-suit text-16px text-hbc-black leading-100% max-w-200px">
 					<Link
-						className="w-full font-bold truncate cursor-pointer"
+						className="w-full font-bold truncate cursor-pointer hover:underline"
 						href={`/products/${track.id}`}
 					>
 						{track.productName}
 					</Link>
-					<div className="w-full font-normal truncate">{track.seller.stageName}</div>
+					<Link
+						className="w-full font-normal truncate hover:underline"
+						href={`/artists/${track.seller.slug}`}
+					>
+						{track.seller.stageName}
+					</Link>
 				</div>
 				{/* TODO: remove this and connect to the audio player */}
 				{/* {track.productId % 3 === 0 && (
