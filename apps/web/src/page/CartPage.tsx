@@ -88,13 +88,14 @@ const CartPage = () => {
 		useUnifiedCart();
 
 	// 카트 데이터를 변환하여 UI에 필요한 형태로 만들기
-	const { artistsWithItems, checkoutItems, subtotal, total } = useMemo(() => {
+	const { artistsWithItems, checkoutItems, subtotal, total, trackIds } = useMemo(() => {
 		if (!products || products.length === 0 || !cartItems || cartItems.length === 0) {
 			return {
 				artistsWithItems: [],
 				checkoutItems: [],
 				subtotal: 0,
 				total: 0,
+				trackIds: [],
 			};
 		}
 
@@ -207,6 +208,7 @@ const CartPage = () => {
 			checkoutItems: preparedCheckoutItems,
 			subtotal: calculatedSubtotal,
 			total: calculatedTotal,
+			trackIds: detailedCartItems.map((i) => i.productId),
 		};
 	}, [products, cartItems, isLoggedIn]);
 
@@ -276,6 +278,7 @@ const CartPage = () => {
 								items={artistData.items}
 								onDeleteItem={handleDeleteItem}
 								onUpdateItemLicense={handleUpdateItemLicense}
+								trackIds={trackIds}
 							/>
 						))
 					)}
