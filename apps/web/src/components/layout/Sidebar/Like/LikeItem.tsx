@@ -1,6 +1,4 @@
 import LikeItemImage from "./LikeItemImage";
-import { SmallEqualizer } from "@/assets/svgs";
-import { useRouter } from "next/navigation";
 import { ProductRowByDashboardResponse } from "@hitbeatclub/shared-types";
 import Link from "next/link";
 

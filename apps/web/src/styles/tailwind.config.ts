@@ -44,6 +44,17 @@ const config = {
 				...px0_500,
 				...px500_1000_10,
 			},
+
+			// 마퀴 애니메이션 (동적 스크롤)
+			animation: {
+				marquee: "marquee var(--marquee-duration, 8s) linear infinite",
+			},
+			keyframes: {
+				marquee: {
+					"0%": { transform: "translateX(0)" },
+					"100%": { transform: "translateX(var(--scroll-distance, -50%))" },
+				},
+			},
 		},
 	},
 };

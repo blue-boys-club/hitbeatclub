@@ -13,7 +13,7 @@ interface LikeItemImageProps {
 const LikeItemImage = memo(function LikeItemImage({ status = "default", alt, imageUrl }: LikeItemImageProps) {
 	return (
 		<div
-			className="relative w-full h-full"
+			className="relative w-[40px] h-[40px]"
 			role="button"
 			tabIndex={0}
 			aria-label={alt || `Media control - ${status}`}
