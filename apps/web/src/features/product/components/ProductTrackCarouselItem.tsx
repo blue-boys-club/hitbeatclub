@@ -44,7 +44,7 @@ export const ProductTrackCarouselItem = ({ track, index, playlistConfig }: Produ
 						<Link
 							href={`/products/${track.id}`}
 							className={cn(
-								"justify-start text-hbc-black text-18px font-semibold leading-24px tracking-018px",
+								"justify-start text-hbc-black text-18px font-semibold leading-24px tracking-018px hover:underline",
 								isTitlePureEnglish ? "font-suisse" : "font-suit",
 							)}
 						>
@@ -55,7 +55,7 @@ export const ProductTrackCarouselItem = ({ track, index, playlistConfig }: Produ
 					<Link
 						href={`/artists/${track.seller?.slug || track.seller?.id}`}
 						className={cn(
-							"w-48 justify-start text-zinc-500 text-16px font-normal leading-18px tracking-016px",
+							"w-48 justify-start text-zinc-500 text-16px font-normal leading-18px tracking-016px hover:underline",
 							isArtistPureEnglish ? "font-suisse" : "font-suit",
 						)}
 					>

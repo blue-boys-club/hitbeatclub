@@ -4,7 +4,9 @@ const MobileAcapellaPage = () => {
 	return (
 		<MobileProductListPage
 			title="Acapella"
+			category="ACAPELA"
 			filter
+			sort="null"
 		/>
 	);
 };

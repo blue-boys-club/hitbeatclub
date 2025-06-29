@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useMemo } from "react";
+import { memo, useEffect, useState, useRef } from "react";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import Image from "next/image";
 import { cn } from "@/common/utils";
@@ -34,6 +34,10 @@ export const MusicRightSidebar = memo(() => {
 	const router = useRouter();
 	const { data: user } = useQuery(getUserMeQueryOption());
 
+	const titleRef = useRef<HTMLDivElement>(null);
+	const titleContainerRef = useRef<HTMLDivElement>(null);
+	const [shouldAnimate, setShouldAnimate] = useState(false);
+
 	const { toast } = useToast();
 	const likeProductMutation = useLikeProductMutation();
 	const unlikeProductMutation = useUnlikeProductMutation();
@@ -61,10 +65,6 @@ export const MusicRightSidebar = memo(() => {
 		select: (data) => data.data,
 	});
 
-	const isLiked = useMemo(() => {
-		return productId === Number(currentTrackId) && currentTrack?.isLiked;
-	}, [productId, currentTrackId, currentTrack?.isLiked]);
-
 	const { play } = usePlayTrack();
 
 	// 트랙 존재 여부
@@ -72,6 +72,58 @@ export const MusicRightSidebar = memo(() => {
 
 	// 현재 사이드바가 음악 정보용으로 열려있는지 여부
 	const isTrackOpen = hasTrack && isOpen && currentType === SidebarType.TRACK;
+	// 제목 텍스트가 컨테이너를 넘어가는지 확인하고 애니메이션 설정
+	useEffect(() => {
+		const checkAndSetAnimation = () => {
+			const titleElement = titleRef.current;
+			const containerElement = titleContainerRef.current;
+
+			if (titleElement && containerElement && currentTrack?.productName) {
+				// 임시로 애니메이션을 제거하고 실제 너비 측정
+				titleElement.classList.remove("animate-marquee");
+
+				// 한 개의 텍스트만으로 너비 측정을 위해 임시 span 생성
+				const tempSpan = document.createElement("span");
+				tempSpan.textContent = currentTrack.productName;
+				tempSpan.style.visibility = "hidden";
+				tempSpan.style.position = "absolute";
+				tempSpan.style.whiteSpace = "nowrap";
+				tempSpan.style.fontSize = "32px";
+				tempSpan.style.fontFamily = "inherit";
+				tempSpan.style.fontWeight = "bold";
+				containerElement.appendChild(tempSpan);
+
+				const textWidth = tempSpan.offsetWidth;
+				const containerWidth = containerElement.clientWidth;
+
+				containerElement.removeChild(tempSpan);
+
+				if (textWidth > containerWidth) {
+					// 스크롤해야 할 거리 계산 (텍스트 전체 길이 + 여백)
+					const scrollDistance = textWidth + 32; // 32px는 mr-8 (2rem)
+
+					// 애니메이션 지속 시간을 텍스트 길이에 비례해서 계산 (적절한 속도 유지)
+					const duration = Math.max(6, Math.min(15, scrollDistance / 40)); // 6초~15초 사이
+
+					titleElement.style.setProperty("--scroll-distance", `-${scrollDistance}px`);
+					titleElement.style.setProperty("--marquee-duration", `${duration}s`);
+
+					setShouldAnimate(true);
+
+					// 다음 프레임에서 애니메이션 클래스 추가
+					requestAnimationFrame(() => {
+						titleElement.classList.add("animate-marquee");
+					});
+				} else {
+					setShouldAnimate(false);
+				}
+			}
+		};
+
+		// DOM이 업데이트된 후에 실행
+		const timeoutId = setTimeout(checkAndSetAnimation, 100);
+		return () => clearTimeout(timeoutId);
+	}, [currentTrack?.productName]);
 
 	const handleToggleOpen = () => {
 		if (!hasTrack) return; // 트랙 없으면 동작하지 않음
@@ -97,7 +149,7 @@ export const MusicRightSidebar = memo(() => {
 		}
 
 		// 현재 좋아요 상태에 따라 적절한 mutation 실행
-		if (isLiked) {
+		if (currentTrack?.isLiked) {
 			unlikeProductMutation.mutate(currentTrack.id, {
 				onSuccess: () => {},
 				onError: () => {
@@ -153,24 +205,43 @@ export const MusicRightSidebar = memo(() => {
 				<div className="flex items-center justify-center mt-12 mb-6">
 					{currentTrack && (
 						<AlbumAvatar
-							src={currentTrack.coverImage.url || "https://placehold.co/360x360.png"}
+							src={currentTrack?.coverImage?.url || "https://placehold.co/360x360.png"}
 							onClick={() => play(currentTrack.id)}
-							className={cn(
-								"cursor-pointer",
-								// 현재 재생 중인 트랙이면 회전 애니메이션 적용
-								isPlaying && productId === currentTrack.id && "animate-spin",
-							)}
+							className="cursor-pointer"
+							isPlaying={isPlaying}
 						/>
 					)}
 				</div>
 
 				<div className="px-6">
-					<div className="w-full mb-2 text-hbc-black text-[32px] font-suisse font-bold tracking-[0.32px] leading-[40px]">
-						{currentTrack?.productName}
+					<div
+						ref={titleContainerRef}
+						className="w-full mb-2 text-hbc-black text-[32px] font-suisse font-bold tracking-[0.32px] leading-[40px] overflow-hidden"
+					>
+						<div
+							ref={titleRef}
+							className="whitespace-nowrap"
+						>
+							{shouldAnimate ? (
+								<>
+									<span className="whitespace-nowrap mr-8">{currentTrack?.productName}</span>
+									<span className="whitespace-nowrap mr-8">{currentTrack?.productName}</span>
+								</>
+							) : (
+								<span className="whitespace-nowrap">{currentTrack?.productName}</span>
+							)}
+						</div>
 					</div>
 
 					<div className="flex items-center justify-between gap-2 mb-4">
-						<div className="text-lg font-suisse">{currentTrack?.seller.stageName}</div>
+						<div
+							className="text-lg font-suisse cursor-pointer"
+							onClick={() => {
+								router.push(`/artists/${currentTrack?.seller.id}`);
+							}}
+						>
+							{currentTrack?.seller.stageName}
+						</div>
 						<div>
 							{currentTrack?.category === "BEAT" && <Beat className="w-16 h-4" />}
 							{currentTrack?.category === "ACAPELA" && <Acapella className="w-16 h-4" />}
@@ -260,7 +331,7 @@ export const MusicRightSidebar = memo(() => {
 							onClick={onLikeClick}
 							className="flex items-center justify-center w-8 h-8 transition-opacity cursor-pointer hover:opacity-80"
 						>
-							{isLiked ? (
+							{currentTrack?.isLiked ? (
 								<Image
 									src="/assets/ActiveLike.png"
 									alt="active like"

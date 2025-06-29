@@ -90,7 +90,7 @@ export const ProductItem = memo(
 						className="flex flex-col"
 						onClick={onClickProduct}
 					>
-						<p className="flex items-center gap-2.5 text-16px font-bold">
+						<p className="flex items-center gap-2.5 text-16px font-bold hover:underline">
 							{title}
 							{type === "BEAT" ? <Beat /> : <Acapella />}
 						</p>

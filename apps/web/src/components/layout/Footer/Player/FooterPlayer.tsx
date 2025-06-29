@@ -18,6 +18,7 @@ import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
 import { useQuery } from "@tanstack/react-query";
 import { getProductFileDownloadLinkQueryOption } from "@/apis/product/query/product.query-option";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
+import { SidebarType, useLayoutStore } from "@/stores/layout";
 import { cn } from "@/common/utils/tailwind";
 
 /**
@@ -52,6 +53,13 @@ export const FooterPlayer = () => {
 		toggleShuffle,
 		toggleRepeatMode,
 	} = usePlaylist();
+	const { isOpen, setRightSidebar, setPlayer } = useLayoutStore(
+		useShallow((state) => ({
+			isOpen: state.rightSidebar.isOpen,
+			setRightSidebar: state.setRightSidebar,
+			setPlayer: state.setPlayer,
+		})),
+	);
 
 	// Audio player state and controls - Context를 통해 깔끔하게 관리
 	const {
@@ -298,9 +306,17 @@ export const FooterPlayer = () => {
 											width={60}
 											height={60}
 											alt="track-image"
-											className="border-black w-14 h-14"
+											className="border-black w-14 h-14 cursor-pointer"
 											src={productData.coverImage.url}
 											loader={assetImageLoader}
+											onClick={() => {
+												setPlayer({
+													trackId: productId,
+												});
+												setRightSidebar(true, {
+													currentType: SidebarType.TRACK,
+												});
+											}}
 										/>
 									) : (
 										<div className="w-14 h-14 bg-gray-200 border border-black flex items-center justify-center">

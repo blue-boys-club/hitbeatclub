@@ -103,6 +103,7 @@ import { ArrowLeftShort } from "./ArrowLeftShort";
 import { ArrowDown } from "./ArrowDown";
 import { Outlink } from "./Outlink";
 import { Apple } from "./Apple";
+import { Equalizer } from "./Equalizer";
 
 export {
 	AddCircle,
@@ -210,4 +211,5 @@ export {
 	ArrowDown,
 	Outlink,
 	Apple,
+	Equalizer,
 };

@@ -30,7 +30,7 @@ const MobileLoginPage = () => {
 		},
 		onSuccess: () => {
 			setLoginError("");
-			// router.push("/");
+			// router.push("/mobile");
 		},
 	});
 
@@ -75,22 +75,35 @@ const MobileLoginPage = () => {
 			>
 				<div className="flex flex-col">
 					<div>
-						<div className="flex items-center gap-2 h-36px border-b-4px border-black">
+						<div
+							className={cn(
+								"flex items-center gap-2 h-36px border-b-[4px]",
+								errors.email ? "border-red-500" : "border-black",
+							)}
+						>
 							<label
-								htmlFor="id"
+								htmlFor="email"
 								className="text-18px leading-32px font-semibold text-hbc-gray-300"
 							>
 								ID
 							</label>
 							<input
-								id="id"
+								{...register("email")}
+								id="email"
+								type="email"
 								className="w-full h-full focus:outline-none"
+								placeholder="이메일을 입력하세요"
 							/>
 						</div>
 						{errors.email && <div className="text-red-500 text-sm mt-1">{errors.email.message}</div>}
 					</div>
 					<div className="mt-7">
-						<div className="flex items-center gap-2 h-36px border-b-4px border-black">
+						<div
+							className={cn(
+								"flex items-center gap-2 h-36px border-b-[4px]",
+								errors.password ? "border-red-500" : "border-black",
+							)}
+						>
 							<label
 								htmlFor="password"
 								className="text-18px leading-32px font-semibold text-hbc-gray-300"
@@ -98,8 +111,11 @@ const MobileLoginPage = () => {
 								PW
 							</label>
 							<input
+								{...register("password")}
 								id="password"
+								type="password"
 								className="w-full h-full focus:outline-none"
+								placeholder="비밀번호를 입력하세요"
 							/>
 						</div>
 						{errors.password && <div className="text-red-500 text-sm mt-1">{errors.password.message}</div>}

@@ -72,7 +72,7 @@ export const MobileProductSection = memo(
 							<CarouselContent className="space-x-6px">
 								{products.length === 0 ? (
 									<div className="w-full h-110px flex justify-center items-center">
-										<span className="text-hbc-gray-300">상품이 없습니다.</span>
+										<span className="text-12px text-hbc-gray-300">상품이 없습니다.</span>
 									</div>
 								) : (
 									products.map((product) => (
@@ -90,7 +90,7 @@ export const MobileProductSection = memo(
 						<div className="grid grid-cols-3 gap-x-6px gap-y-4 w-full">
 							{products.length === 0 ? (
 								<div className="w-full h-110px flex justify-center items-center">
-									<span className="text-hbc-gray-300">상품이 없습니다.</span>
+									<span className="text-12px text-hbc-gray-300">상품이 없습니다.</span>
 								</div>
 							) : (
 								products.map((product) => (
