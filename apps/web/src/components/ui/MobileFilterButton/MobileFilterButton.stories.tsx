@@ -6,10 +6,10 @@ const meta: Meta<typeof MobileFilterButton> = {
 	component: MobileFilterButton,
 	tags: ["autodocs"],
 	argTypes: {
-		onFilterChange: {
-			description: "필터 상태 변경 시 호출되는 콜백 함수",
-			action: "filter changed",
-		},
+		// onFilterChange: {
+		// 	description: "필터 상태 변경 시 호출되는 콜백 함수",
+		// 	action: "filter changed",
+		// },
 		className: {
 			description: "추가적인 스타일링을 위한 클래스",
 			control: "text",
