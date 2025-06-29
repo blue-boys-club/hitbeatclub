@@ -94,6 +94,7 @@ export class ArtistPublicController {
 
 		try {
 			artist = await this.artistService.findBySlug(slug);
+
 			await this.artistService.incrementViewCount(artist.id);
 		} catch (error) {
 			throw new NotFoundException(ARTIST_NOT_FOUND_ERROR);
