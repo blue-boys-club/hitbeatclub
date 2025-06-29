@@ -687,6 +687,37 @@ export const MobilePlayer = () => {
 		}
 	}, [currentTime, isUserSeeking]);
 
+	// 스페이스바로 재생/일시정지 토글
+	useEffect(() => {
+		const handleKeyDown = (event: KeyboardEvent) => {
+			// 스페이스바가 아닌 경우 무시
+			if (event.code !== 'Space') return;
+
+			// input, textarea 등에 포커스가 있을 때는 무시
+			const activeElement = document.activeElement as HTMLElement;
+			if (
+				activeElement &&
+				(activeElement.tagName === 'INPUT' ||
+					activeElement.tagName === 'TEXTAREA' ||
+					activeElement.contentEditable === 'true')
+			) {
+				return;
+			}
+
+			// 현재 플레이어가 활성화되어 있고 currentProductId가 있을 때만 동작
+			if (currentProductId) {
+				event.preventDefault(); // 페이지 스크롤 방지
+				onPlayHandler();
+			}
+		};
+
+		document.addEventListener('keydown', handleKeyDown);
+
+		return () => {
+			document.removeEventListener('keydown', handleKeyDown);
+		};
+	}, [currentProductId, onPlayHandler]);
+
 	if (!currentProductId || !isLoggedIn) {
 		return null;
 	}
