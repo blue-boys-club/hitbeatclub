@@ -7,14 +7,15 @@ import {
 	PlaylistFullResponse,
 	PlaylistUpdateRequest,
 } from "@hitbeatclub/shared-types";
+import { CommonResponse } from "@/apis/api.type";
 
 /**
  * 플레이리스트 자동 생성 API
  * @param data 플레이리스트 생성 컨텍스트 정보
  * @returns 플레이리스트 트랙 정보
  */
-export const getPlaylistAuto = async (data: PlaylistAutoRequest): Promise<PlaylistTracksResponse> => {
-	const response = await axiosInstance.get<PlaylistTracksResponse>(`/playlists/auto`, {
+export const getPlaylistAuto = async (data: PlaylistAutoRequest): Promise<CommonResponse<PlaylistTracksResponse>> => {
+	const response = await axiosInstance.get<CommonResponse<PlaylistTracksResponse>>(`/playlists/auto`, {
 		params: data,
 	});
 	return response.data;
@@ -25,8 +26,10 @@ export const getPlaylistAuto = async (data: PlaylistAutoRequest): Promise<Playli
  * @param data 플레이리스트 트랙 정보
  * @returns 플레이리스트 트랙 정보
  */
-export const getPlaylistManual = async (data: PlaylistManualRequest): Promise<PlaylistTracksResponse> => {
-	const response = await axiosInstance.post<PlaylistTracksResponse>(`/playlists/manual`, data);
+export const getPlaylistManual = async (
+	data: PlaylistManualRequest,
+): Promise<CommonResponse<PlaylistTracksResponse>> => {
+	const response = await axiosInstance.post<CommonResponse<PlaylistTracksResponse>>(`/playlists/manual`, data);
 	return response.data;
 };
 
@@ -34,8 +37,8 @@ export const getPlaylistManual = async (data: PlaylistManualRequest): Promise<Pl
  * 내 플레이리스트 조회 API
  * @returns 플레이리스트 정보
  */
-export const getPlaylist = async (): Promise<PlaylistFullResponse> => {
-	const response = await axiosInstance.get<PlaylistFullResponse>(`/users/me/playlist`);
+export const getPlaylist = async (): Promise<CommonResponse<PlaylistFullResponse>> => {
+	const response = await axiosInstance.get<CommonResponse<PlaylistFullResponse>>(`/users/me/playlist`);
 	return response.data;
 };
 
@@ -44,7 +47,7 @@ export const getPlaylist = async (): Promise<PlaylistFullResponse> => {
  * @param data 플레이리스트 정보
  * @returns 플레이리스트 정보
  */
-export const updatePlaylist = async (data: PlaylistUpdateRequest): Promise<CommonResponseId> => {
-	const response = await axiosInstance.put<CommonResponseId>(`/users/me/playlist`, data);
+export const updatePlaylist = async (data: PlaylistUpdateRequest): Promise<CommonResponse<PlaylistFullResponse>> => {
+	const response = await axiosInstance.put<CommonResponse<PlaylistFullResponse>>(`/users/me/playlist`, data);
 	return response.data;
 };

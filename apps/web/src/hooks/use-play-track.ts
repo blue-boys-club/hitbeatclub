@@ -7,6 +7,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useToast } from "@/hooks/use-toast";
 import { useAudioContext } from "@/contexts/AudioContext";
 import { usePlaylist } from "@/hooks/use-playlist";
+import { usePlaylistStore } from "@/stores/playlist";
 
 /**
  * 재생(플레이어 시작) 로직을 공통 Hook 으로 분리합니다.
@@ -68,8 +69,9 @@ export const usePlayTrackCore = () => {
 					} else {
 						// 플레이리스트에 없으면 추가하고 재생
 						addTrackToPlaylist(productId);
-						// 새로 추가된 트랙은 마지막 인덱스에 위치
-						const newIndex = trackIds.length;
+						// Zustand 스토어에서 최신 인덱스를 가져와 재생
+						const { trackIds: updatedTrackIds } = usePlaylistStore.getState();
+						const newIndex = updatedTrackIds.length - 1;
 						playTrackAtIndex(newIndex);
 					}
 

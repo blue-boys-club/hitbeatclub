@@ -151,9 +151,11 @@ export class PlaylistService {
 		// BigInt 변환
 		const userIdBig = BigInt(userId);
 
-		const existing = await this.prisma.playlist.findFirst({
-			where: { userId: userIdBig, deletedAt: null },
-		});
+		const existing = await this.prisma.playlist
+			.findFirst({
+				where: { userId: userIdBig, deletedAt: null },
+			})
+			.then((playlist) => this.prisma.serializeBigIntTyped(playlist));
 
 		if (existing) {
 			await this.prisma.playlist.update({
@@ -189,9 +191,11 @@ export class PlaylistService {
 
 		const userIdBig = BigInt(userId);
 
-		const existing = await this.prisma.playlist.findFirst({
-			where: { userId: userIdBig, deletedAt: null },
-		});
+		const existing = await this.prisma.playlist
+			.findFirst({
+				where: { userId: userIdBig, deletedAt: null },
+			})
+			.then((playlist) => this.prisma.serializeBigIntTyped(playlist));
 
 		if (existing) {
 			await this.prisma.playlist.update({
@@ -220,9 +224,11 @@ export class PlaylistService {
 	 * GET /users/me/playlist 저장된 재생목록 반환
 	 */
 	async findPlaylist(userId: number) {
-		const playlist = await this.prisma.playlist.findFirst({
-			where: { userId: BigInt(userId), deletedAt: null },
-		});
+		const playlist = await this.prisma.playlist
+			.findFirst({
+				where: { userId: BigInt(userId), deletedAt: null },
+			})
+			.then((playlist) => this.prisma.serializeBigIntTyped(playlist));
 
 		if (!playlist) {
 			return { trackIds: [], currentIndex: 0 };

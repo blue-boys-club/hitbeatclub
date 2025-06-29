@@ -34,6 +34,7 @@ export default function ProductMainPage() {
 						href: "/search",
 					},
 				}}
+				category="ALL"
 				products={data?.all || []}
 			/>
 
@@ -45,6 +46,7 @@ export default function ProductMainPage() {
 						href: "/search?category=BEAT",
 					},
 				}}
+				category="BEAT"
 				products={data?.beat || []}
 			/>
 
@@ -56,6 +58,7 @@ export default function ProductMainPage() {
 						href: "/search?category=ACAPELA",
 					},
 				}}
+				category="ACAPELLA"
 				products={data?.acappella || []}
 			/>
 
@@ -64,6 +67,7 @@ export default function ProductMainPage() {
 					title: "Recommended",
 					subtitle: "당신을 위한 오늘의 추천곡",
 				}}
+				category="RECOMMEND"
 				products={data?.recommended || []}
 			/>
 
@@ -72,6 +76,7 @@ export default function ProductMainPage() {
 					title: "Recent",
 					subtitle: "최근 재생한 항목",
 				}}
+				category="RECENT"
 				products={data?.recent || []}
 			/>
 

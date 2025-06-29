@@ -99,8 +99,17 @@ export const usePlaylist = () => {
 		syncTimeoutRef.current = setTimeout(() => {
 			setSyncStatus("syncing");
 
+			// 항상 최신 상태를 사용하기 위해 스토어에서 직접 가져옴
+			const { trackIds: latestTrackIds, currentIndex: latestCurrentIndex } = usePlaylistStore.getState();
+			if (process.env.NODE_ENV !== "production") {
+				console.debug("[Playlist] Debounced Sync", {
+					trackIds: latestTrackIds,
+					currentIndex: latestCurrentIndex,
+				});
+			}
+
 			updatePlaylistMutation.mutate(
-				{ trackIds, currentIndex },
+				{ trackIds: latestTrackIds, currentIndex: latestCurrentIndex },
 				{
 					onSuccess: () => {
 						setSyncStatus("idle");
@@ -116,7 +125,7 @@ export const usePlaylist = () => {
 				},
 			);
 		}, 200);
-	}, [isLoggedIn, trackIds, currentIndex, setSyncStatus, setLastSyncTime, updatePlaylistMutation, toast]);
+	}, [isLoggedIn, setSyncStatus, setLastSyncTime, updatePlaylistMutation, toast]);
 
 	/**
 	 * 플레이리스트 초기화
@@ -126,7 +135,7 @@ export const usePlaylist = () => {
 	const initializePlaylist = useCallback(() => {
 		if (isLoggedIn && userPlaylist) {
 			// 서버 데이터로 덮어쓰기
-			setCurrentTrackIds(userPlaylist.trackIds || [], userPlaylist.currentIndex || 0);
+			setCurrentTrackIds(userPlaylist.data.trackIds || [], userPlaylist.data.currentIndex || 0);
 		}
 		// 비로그인 상태에서는 localStorage에서 자동으로 복원됨
 	}, [isLoggedIn, userPlaylist, setCurrentTrackIds]);
@@ -162,8 +171,14 @@ export const usePlaylist = () => {
 		async (request: PlaylistAutoRequest) => {
 			try {
 				const data = await queryClient.fetchQuery(playlistAutoQueryOptions(request));
-				setCurrentTrackIds(data.trackIds || [], 0);
+				setCurrentTrackIds(data.data.trackIds || [], 0);
 				enforceMaxLength();
+				if (process.env.NODE_ENV !== "production") {
+					console.debug("[Playlist] Auto playlist created", {
+						request,
+						trackIds: data.data.trackIds,
+					});
+				}
 
 				if (isLoggedIn) {
 					debouncedSync();
@@ -188,7 +203,7 @@ export const usePlaylist = () => {
 		async (request: PlaylistManualRequest) => {
 			try {
 				const data = await queryClient.fetchQuery(playlistManualQueryOptions(request));
-				setCurrentTrackIds(data.trackIds || [], 0);
+				setCurrentTrackIds(data.data.trackIds || [], 0);
 				enforceMaxLength();
 
 				if (isLoggedIn) {
@@ -342,6 +357,22 @@ export const usePlaylist = () => {
 		};
 	}, []);
 
+	/**
+	 * 자동 플레이리스트 생성 후 지정 인덱스 재생 (유틸)
+	 */
+	const createAutoPlaylistAndPlay = useCallback(
+		async (request: PlaylistAutoRequest, index = 0) => {
+			const data = await createAutoPlaylist(request);
+			// 플레이리스트가 저장된 직후 상태가 이미 업데이트되어 있으므로 바로 호출 가능
+			playTrackAtIndex(index);
+			if (process.env.NODE_ENV !== "production") {
+				console.debug("[Playlist] Auto playlist created & playing", { index, trackIds: data.data.trackIds });
+			}
+			return data;
+		},
+		[createAutoPlaylist, playTrackAtIndex],
+	);
+
 	return {
 		// 상태
 		trackIds,
@@ -351,6 +382,8 @@ export const usePlaylist = () => {
 		repeatMode,
 		currentPlayableTrackId,
 		isLoggedIn,
+		enforceMaxLength,
+		createAutoPlaylistAndPlay,
 
 		// 액션
 		initializePlaylist,

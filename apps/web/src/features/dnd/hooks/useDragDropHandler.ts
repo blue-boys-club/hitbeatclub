@@ -21,7 +21,7 @@ export const useDragDropHandler = () => {
 	const { mutateAsync: followArtist } = useUpdateFollowedArtistMutation(user?.id ?? 0);
 
 	// 새로운 플레이리스트 시스템 사용
-	const { addTrackToPlaylist, playTrackAtIndex, trackIds, createAutoPlaylist } = usePlaylist();
+	const { addTrackToPlaylist, playTrackAtIndex, trackIds, createAutoPlaylistAndPlay } = usePlaylist();
 	const { play } = usePlayTrack();
 
 	// 라이센스 모달 상태 관리
@@ -77,12 +77,7 @@ export const useDragDropHandler = () => {
 					(async () => {
 						try {
 							if (playlistConfig) {
-								// 컨텍스트(리스트) 기반 자동 플레이리스트 생성
-								await createAutoPlaylist(playlistConfig);
-								// 상태가 업데이트된 이후 인덱스로 이동 (마이크로 딜레이 활용)
-								setTimeout(() => {
-									playTrackAtIndex(originalIndex ?? 0);
-								}, 0);
+								await createAutoPlaylistAndPlay(playlistConfig, originalIndex ?? 0);
 								toast({ description: "재생이 시작되었습니다." });
 								return;
 							}
@@ -125,7 +120,7 @@ export const useDragDropHandler = () => {
 				}
 			}
 		},
-		[likeProduct, followArtist, user, toast, addTrackToPlaylist, playTrackAtIndex, trackIds, createAutoPlaylist],
+		[likeProduct, followArtist, user, toast, addTrackToPlaylist, playTrackAtIndex, trackIds, createAutoPlaylistAndPlay],
 	);
 
 	// 라이센스 모달 닫기 핸들러

@@ -11,9 +11,11 @@ import { useDndContext } from "@dnd-kit/core";
 interface ShopSectionProps {
 	sectionHeader: Omit<SectionHeaderProps, "size">;
 	products: ProductRowByDashboardResponse[];
+	/** 플레이리스트 카테고리 (MAIN 컨텍스트) */
+	category: "ALL" | "BEAT" | "ACAPELLA" | "RECOMMEND" | "RECENT";
 }
 
-export const ProductSection = memo(({ sectionHeader, products }: ShopSectionProps) => {
+export const ProductSection = memo(({ sectionHeader, products, category }: ShopSectionProps) => {
 	// Dynamic import for client-side only
 	const [wheelPlugin, setWheelPlugin] = useState<CarouselPlugin | null>(null);
 
@@ -52,12 +54,16 @@ export const ProductSection = memo(({ sectionHeader, products }: ShopSectionProp
 							<span className="text-hbc-gray-300">상품이 없습니다.</span>
 						</div>
 					) : (
-						products.map((product) => (
+						products.map((product, index) => (
 							<CarouselItem
 								key={product.id}
 								className="p-1 pr-8px basis-auto"
 							>
-								<ProductTrackCarouselItem track={product} />
+								<ProductTrackCarouselItem
+									track={product}
+									index={index}
+									playlistConfig={{ type: "MAIN", category }}
+								/>
 							</CarouselItem>
 						))
 					)}

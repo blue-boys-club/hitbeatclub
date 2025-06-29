@@ -1,0 +1,92 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# **Playlist 시스템 개발 계획서 (v0.3)**
+(outdated, use as basis. not match for all)
+
+---
+
+## **1. 개요**
+
+- **목적**: 페이지 컨텍스트에 맞춰 최대 100곡의 재생목록을 생성하고, 로그인 사용자의 재생목록을 서버와 동기화한다.
+- **범위**: 프론트엔드(React + Zustand + TanStack Query) 및 백엔드(NestJS + Prisma + MySQL) 전반의 데이터 모델·API·동기화 흐름 정의.
+
+## **2. 확정 요구사항**
+
+| **코드** | **기능** | **비고** |
+| --- | --- | --- |
+| A1 | 메인 페이지 카테고리 기반 자동 재생 | 로그인/비로그인 공통 |
+| A2 | 검색 결과 기반 자동 재생 | “” |
+| A3 | 아티스트 페이지 자동 재생 | “” |
+| A4 | **(Au)** 팔로우 아티스트 곡 자동 재생 | 로그인 전용 |
+| A5 | **(Au)** 좋아요한 곡 자동 재생 | 로그인 전용 |
+| A6 | **(Au/B)** 장바구니 상품 곡 자동 재생 | 로그인(A) / 비로그인(B) |
+| B1 | ID 목록 직접 재생 | 공유 링크 등 |
+| S1 | 트랙 변경 시 서버 동기화 | 로그인 상태 |
+| S2 | Guest → Login 시 게스트 재생목록으로 **덮어쓰기** | 병합 없음 |
+| P1 | 재생목록 최대 100곡 | 초과 시 FIFO 제거 |
+| P2 | 재생 불가 트랙은 클라이언트가 자동 건너뜀 | 파일 URL 요청 실패 시 판단 |
+
+## **3. 데이터 모델 (단일 테이블)**
+
+```
+erDiagram
+    user ||--|| playlist : "1:1"
+
+    user {
+        bigint id PK
+        varchar email
+        ...
+    }
+    playlist {
+        bigint user_id PK           "User Primary Key = Playlist PK"
+        json track_ids              "bigint[] 최대 100개, 순서 유지"
+        int  current_index          "현재 재생 순번"
+        enum source_context         "MAIN | SEARCH | ARTIST | ..."
+        varchar context_hash        "검색어·아티스트 ID 등"
+        datetime updated_at
+    }
+```
+
+- **게스트**: DB 저장 없음 → localStorage 유지.
+- **로그인 후**: 클라이언트 재생목록을 서버로 **overwrite**(PUT /users/me/playlist).
+
+## **4. 동기화 프로토콜**
+
+| **트리거** | **요청** | **내용** |
+| --- | --- | --- |
+| 트랙 변경(Next/Prev/Skip) | PUT /users/me/playlist | track_ids, current_index 전체 전송 |
+| 페이지 새로고침 | GET /users/me/playlist | 서버 버전 로드 → Zustand 초기화 |
+
+> 재생 위치(seconds)는 저장하지 않음
+> 
+
+## **5. API 설계 (MVP)**
+
+| **Method** | **Path** | **Auth** | **Description** |
+| --- | --- | --- | --- |
+| GET | /playlists/auto | optional | 컨텍스트 기반 100곡 이하 추천 |
+| POST | /playlists/manual | - | (B) 전달된 trackIds[] 재생목록 반환 |
+| PUT | /users/me/playlist | Bearer | 현 재생목록 overwrite 저장 |
+| GET | /users/me/playlist | Bearer | 저장된 재생목록 반환 |
+
+(※ 별도 “재생 가능 여부” 엔드포인트는 사용하지 않음.)
+
+## **6. 클라이언트 상태·재생 흐름**
+
+1. **Zustand Store** ↔ localStorage persister.
+2. 진입 시
+    - 로그인 O → 서버 fetch → Store 초기화
+    - 로그인 X → /auto 호출 → Store 초기화
+3. **트랙 변경 시** (200 ms Debounce) → PUT /users/me/playlist 호출
+4. **재생 불가 트랙 처리**
+    - 오디오/비디오 태그의 onerror 혹은 canplay 실패 발생 시 해당 트랙 ID를 unplayableSet에 등록
+    - 즉시 다음 트랙으로 이동 후 동기화 호출
+    - unplayableSet은 세션 단위 캐시, UI 토스트로 “재생할 수 없는 곡을 건너뛰었습니다” 안내
+
+## **7. 성능·제한 사항**
+
+- track_ids 최대 100개 → JSON 800 B 수준
+- updated_at 기준 90일 이상 미사용 playlist 삭제(배치)
