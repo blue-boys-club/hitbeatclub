@@ -24,6 +24,8 @@ import { getArtistDetailBySlugQueryOption } from "@/apis/artist/query/artist.que
 import UserProfileImage from "@/assets/images/user-profile.png";
 import { useDeleteFollowedArtistMutation, useUpdateFollowedArtistMutation } from "@/apis/user/mutations";
 import { UserFollowArtistListResponse } from "@hitbeatclub/shared-types";
+import { usePlaylist } from "@/hooks/use-playlist";
+import { createPlaylistConfig } from "@/components/layout/PlaylistProvider";
 
 interface DropdownOption {
 	label: string;
@@ -66,19 +68,27 @@ export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 		...getArtistDetailBySlugQueryOption(slug),
 	});
 
+	// Playlist hooks
+	const { createAutoPlaylistAndPlay, toggleShuffle, isShuffleEnabled } = usePlaylist();
+
 	const isFollwingArtist = followedArtistList?.some(
 		(followedArtist: UserFollowArtistListResponse) => followedArtist.artistId === artist?.id,
 	);
 	const isBlockedArtist = userMe?.blockArtistList.some((blockedArtist) => blockedArtist.artistId === artist?.id);
 
-	const onPlay = () => {
+	const onPlay = async () => {
 		if (isBlockedArtist) return;
-		// TODO: 플레이 기능 구현
-		console.log("play");
+		if (!artist?.id) return;
+		try {
+			await createAutoPlaylistAndPlay(createPlaylistConfig.artist(artist.id, { isPublic: true }), 0);
+		} catch (error) {
+			console.error("[ArtistInfo] createAutoPlaylistAndPlay failed", error);
+		}
 	};
 
 	const onShuffle = () => {
 		if (isBlockedArtist) return;
+		toggleShuffle();
 		setIsShuffleOn((prev) => !prev);
 	};
 

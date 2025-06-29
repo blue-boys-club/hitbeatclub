@@ -4,6 +4,7 @@ import { ProductService } from "../product/product.service";
 import { UserService } from "../user/user.service";
 import { CartService } from "../cart/cart.service";
 import { ENUM_PRODUCT_CATEGORY, ENUM_PRODUCT_SORT } from "../product/product.enum";
+import { UserLikeProductListRequest } from "@hitbeatclub/shared-types";
 
 // TODO: Replace 'any' with actual imports when shared-types export is available
 type PlaylistAutoRequest = any;
@@ -52,31 +53,13 @@ export class PlaylistService {
 				}
 				case "SEARCH": {
 					// payload.query 는 ProductSearchQuerySchema 기반 (page, limit 제거됨)
-					const items = await this.productService.findAll(
-						{ isPublic: 1, ...payload.query },
-						{
-							page: 1,
-							limit: 100,
-							sort: ENUM_PRODUCT_SORT.RECENT,
-						},
-						["id"],
-					);
-					trackIds = items.map((p: any) => Number(p.id));
+					const items = await this.createSearchPlaylist(payload);
+					trackIds = items.trackIds;
 					break;
 				}
 				case "ARTIST": {
-					const { artistId, query } = payload;
-					const where: any = {
-						isPublic: 1,
-						sellerId: BigInt(artistId),
-						...(query || {}),
-					};
-					const items = await this.productService.findAll(
-						where,
-						{ page: 1, limit: 100, sort: ENUM_PRODUCT_SORT.RECENT },
-						["id"],
-					);
-					trackIds = items.map((p: any) => Number(p.id));
+					const items = await this.createArtistPlaylist(userId, payload);
+					trackIds = items.trackIds;
 					break;
 				}
 				case "FOLLOWING": {
@@ -102,7 +85,12 @@ export class PlaylistService {
 					if (!userId) {
 						throw new BadRequestException("로그인 필요");
 					}
-					const liked = await this.productService.findLikedProducts(userId, { page: 1, limit: 100, sort: "RECENT" });
+					const likedProductsPayload: UserLikeProductListRequest = {
+						...payload,
+						page: 1,
+						limit: 100,
+					};
+					const liked = await this.productService.findLikedProducts(userId, likedProductsPayload);
 					trackIds = liked.data.map((p: any) => Number(p.id));
 					break;
 				}
@@ -128,6 +116,87 @@ export class PlaylistService {
 			await this.savePlaylist(userId, trackIds, payload.type, payload);
 		}
 
+		return { trackIds };
+	}
+
+	private async createSearchPlaylist(payload: Extract<PlaylistAutoRequest, { type: "SEARCH" }>) {
+		const { query } = payload;
+		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds } = query;
+
+		const where = {
+			...(category === "null" ? {} : { category }),
+			...(musicKey === "null" ? {} : { musicKey }),
+			...(scaleType === "null" ? {} : { scaleType }),
+			...(minBpm ? { minBpm: { lte: minBpm }, maxBpm: { gte: minBpm } } : {}),
+			...(maxBpm ? { minBpm: { lte: maxBpm }, maxBpm: { gte: maxBpm } } : {}),
+			...(genreIds && genreIds.length > 0
+				? {
+						productGenre: {
+							some: {
+								deletedAt: null,
+								genreId: { in: genreIds },
+							},
+						},
+					}
+				: {}),
+			...(tagIds && tagIds.length > 0
+				? {
+						productTag: {
+							some: {
+								deletedAt: null,
+								tagId: { in: tagIds },
+							},
+						},
+					}
+				: {}),
+			isPublic: 1,
+		};
+
+		const items = await this.productService.findAll(where, { page: 1, limit: 100, sort: ENUM_PRODUCT_SORT.RECENT }, [
+			"id",
+		]);
+		const trackIds = items.map((p: any) => Number(p.id));
+		return { trackIds };
+	}
+
+	private async createArtistPlaylist(userId: number, payload: Extract<PlaylistAutoRequest, { type: "ARTIST" }>) {
+		const { artistId, query } = payload;
+		const { category, musicKey, scaleType, minBpm, maxBpm, genreIds, tagIds } = query;
+
+		const where = {
+			sellerId: artistId,
+			isPublic: 1, // 공개된 제품만 조회
+			...(category === "null" || category === undefined ? {} : { category }),
+			...(musicKey === "null" || musicKey === undefined ? {} : { musicKey }),
+			...(scaleType === "null" || scaleType === undefined ? {} : { scaleType }),
+			...(minBpm ? { minBpm: { lte: minBpm }, maxBpm: { gte: minBpm } } : {}),
+			...(maxBpm ? { minBpm: { lte: maxBpm }, maxBpm: { gte: maxBpm } } : {}),
+			...(genreIds && genreIds.length > 0
+				? {
+						productGenre: {
+							some: {
+								deletedAt: null,
+								genreId: { in: genreIds },
+							},
+						},
+					}
+				: {}),
+			...(tagIds && tagIds.length > 0
+				? {
+						productTag: {
+							some: {
+								deletedAt: null,
+								tagId: { in: tagIds },
+							},
+						},
+					}
+				: {}),
+		};
+
+		const items = await this.productService.findAll(where, { page: 1, limit: 100, sort: ENUM_PRODUCT_SORT.RECENT }, [
+			"id",
+		]);
+		const trackIds = items.map((p: any) => Number(p.id));
 		return { trackIds };
 	}
 

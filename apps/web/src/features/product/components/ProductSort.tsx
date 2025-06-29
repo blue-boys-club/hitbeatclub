@@ -14,9 +14,9 @@ interface TrackSortProps {
  */
 export const ProductSort = memo(({ onSortChange }: TrackSortProps) => {
 	const sortOptions = [
-		{ label: "Recent", value: "recent" },
-		{ label: "A - Z", value: "alphabetical" },
-		{ label: "Popular", value: "popular" },
+		{ label: "Recent", value: "RECENT" },
+		{ label: "A - Z", value: "NAME" },
+		{ label: "Popular", value: "RECOMMEND" },
 	];
 
 	return (

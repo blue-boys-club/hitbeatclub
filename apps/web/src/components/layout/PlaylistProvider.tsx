@@ -88,7 +88,7 @@ export const createPlaylistConfig = {
 	artist: (artistId: number, query: any = {}): PlaylistAutoRequest => ({
 		type: "ARTIST",
 		artistId,
-		query: { ...query, isPublic: true },
+		query: { ...query, isPublic: 1 },
 	}),
 
 	/**

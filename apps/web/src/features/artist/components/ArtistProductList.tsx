@@ -8,6 +8,7 @@ import type { ArtistProductListQueryRequest } from "@hitbeatclub/shared-types/ar
 import type { ProductListItem } from "@/features/product/product.types";
 import { useLikeProductMutation, useUnlikeProductMutation } from "@/apis/product/mutations";
 import blankCdImage from "@/assets/images/blank-cd.png";
+import { createPlaylistConfig } from "@/components/layout/PlaylistProvider";
 
 interface ArtistProductListProps {
 	slug: string;
@@ -116,6 +117,20 @@ export const ArtistProductList = memo(({ slug }: ArtistProductListProps) => {
 		}
 	}, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+	// artistId set once products loaded
+	const [artistId, setArtistId] = useState<number | null>(null);
+
+	useEffect(() => {
+		if (!artistId && products.length > 0) {
+			setArtistId(products[0]?.seller?.id ?? null);
+		}
+	}, [products, artistId]);
+
+	const playlistConfig = useMemo(() => {
+		if (!artistId) return undefined;
+		return createPlaylistConfig.artist(artistId, filters);
+	}, [artistId, filters]);
+
 	// Skeleton UI
 	const renderSkeleton = useMemo(
 		() => (
@@ -163,13 +178,15 @@ export const ArtistProductList = memo(({ slug }: ArtistProductListProps) => {
 				) : filteredProducts.length === 0 ? (
 					<div className="text-center py-8 text-gray-500">검색 결과가 없습니다.</div>
 				) : (
-					filteredProducts.map((product) => (
+					filteredProducts.map((product, index) => (
 						<ProductItem
 							key={product.id}
 							productId={product.id}
 							title={product.productName}
-							artist={product.seller?.stageName}
+							artist={product.seller?.stageName || ""}
 							albumImgSrc={product.coverImage?.url || blankCdImage.src}
+							autoPlaylistConfig={playlistConfig}
+							trackIndex={index}
 							tags={product.tags ? (product.tags as any).map((t: any) => (typeof t === "string" ? t : t.name)) : []}
 							type={product.category as any}
 							isLiked={!!product.isLiked}
