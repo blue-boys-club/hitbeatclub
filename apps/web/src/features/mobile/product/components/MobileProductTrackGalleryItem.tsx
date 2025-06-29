@@ -8,6 +8,7 @@ import { usePlaylistStore } from "@/stores/playlist";
 import { useShallow } from "zustand/react/shallow";
 import { useCallback, useMemo } from "react";
 import { MobilePlayCircleSVG, MobilePauseCircleSVG } from "@/features/mobile/components";
+import { AudioBarPause, AudioBarPlay } from "@/assets/svgs";
 
 interface MobileProductTrackGalleryItemProps {
 	track: ProductRowByDashboardResponse;
@@ -37,23 +38,43 @@ export const MobileProductTrackGalleryItem = ({ track }: MobileProductTrackGalle
 
 		switch (status) {
 			case "playing":
-				return <MobilePauseCircleSVG />;
+				return (
+					<AudioBarPause
+						width={20}
+						height={20}
+						fill={"white"}
+					/>
+				);
 			case "paused":
-				return <MobilePlayCircleSVG />;
+				return (
+					<AudioBarPlay
+						width={20}
+						height={20}
+						fill={"white"}
+					/>
+				);
 			default:
-				return <MobilePlayCircleSVG />;
+				return (
+					<AudioBarPlay
+						width={20}
+						height={20}
+						fill={"white"}
+					/>
+				);
 		}
 	}, [status, currentProductId, track.id]);
 
 	const onPlayHandler = useCallback(() => {
 		// 플레이리스트를 초기화하고 클릭한 곡만 추가
-		setPlaylist([{
-			id: track.id,
-			productName: track.productName,
-			coverImage: track.coverImage,
-			seller: track.seller,
-		}]);
-		
+		setPlaylist([
+			{
+				id: track.id,
+				productName: track.productName,
+				coverImage: track.coverImage,
+				seller: track.seller,
+			},
+		]);
+
 		// 곡 재생
 		play(track.id);
 	}, [play, track.id, track.productName, track.coverImage, track.seller, setPlaylist]);
@@ -76,9 +97,7 @@ export const MobileProductTrackGalleryItem = ({ track }: MobileProductTrackGalle
 						currentProductId === track.id ? "opacity-100" : "opacity-0 group-hover:opacity-100",
 					)}
 				>
-					<div className="flex items-center justify-center">
-						{statusIcon}
-					</div>
+					<div className="flex items-center justify-center">{statusIcon}</div>
 				</div>
 			</div>
 			<div className="flex flex-col items-start justify-start gap-3px w-full">

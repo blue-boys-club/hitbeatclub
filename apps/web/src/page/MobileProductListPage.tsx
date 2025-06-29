@@ -4,7 +4,7 @@ import { Plus } from "@/assets/svgs";
 import { MobileProductListFilter } from "@/features/mobile/product/components/MobileProductListFilter";
 import { MobileProductList } from "@/features/mobile/product/components/MobileProductList";
 import { memo, useState } from "react";
-import { getSearchQueryOption } from "@/apis/search/query/product.query-option";
+import { getSearchQueryOption } from "@/apis/search/query/search.query-option";
 import { useQuery } from "@tanstack/react-query";
 import { ProductSearchQuery } from "@/apis/search/search.type";
 

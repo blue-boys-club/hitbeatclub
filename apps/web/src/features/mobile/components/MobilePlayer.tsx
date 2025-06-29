@@ -39,7 +39,17 @@ export const MobilePlayer = () => {
 	const [showPlaylist, setShowPlaylist] = useState(false);
 
 	// 플레이리스트 스토어
-	const { playlist, currentIndex, playNext, playPrevious, repeatMode, isShuffleMode, toggleRepeatMode, toggleShuffleMode, setCurrentIndex } = usePlaylistStore(
+	const {
+		playlist,
+		currentIndex,
+		playNext,
+		playPrevious,
+		repeatMode,
+		isShuffleMode,
+		toggleRepeatMode,
+		toggleShuffleMode,
+		setCurrentIndex,
+	} = usePlaylistStore(
 		useShallow((state) => ({
 			playlist: state.playlist,
 			currentIndex: state.currentIndex,
@@ -259,11 +269,11 @@ export const MobilePlayer = () => {
 	const handlePlaylistItemClick = useCallback(
 		(productId: number) => {
 			// 클릭한 곡의 인덱스를 찾아서 currentIndex 업데이트
-			const clickedIndex = playlist.findIndex(item => item.id === productId);
+			const clickedIndex = playlist.findIndex((item) => item.id === productId);
 			if (clickedIndex !== -1) {
 				setCurrentIndex(clickedIndex);
 			}
-			
+
 			play(productId);
 			setShowPlaylist(false);
 		},
@@ -308,20 +318,26 @@ export const MobilePlayer = () => {
 	const canNavigate = playlist.length > 1;
 
 	// Repeat 버튼 클릭 핸들러
-	const handleRepeatToggle = useCallback((e: React.MouseEvent) => {
-		e.stopPropagation();
-		toggleRepeatMode();
-	}, [toggleRepeatMode]);
+	const handleRepeatToggle = useCallback(
+		(e: React.MouseEvent) => {
+			e.stopPropagation();
+			toggleRepeatMode();
+		},
+		[toggleRepeatMode],
+	);
 
 	// Shuffle 버튼 클릭 핸들러
-	const handleShuffleToggle = useCallback((e: React.MouseEvent) => {
-		e.stopPropagation();
-		toggleShuffleMode();
-	}, [toggleShuffleMode]);
+	const handleShuffleToggle = useCallback(
+		(e: React.MouseEvent) => {
+			e.stopPropagation();
+			toggleShuffleMode();
+		},
+		[toggleShuffleMode],
+	);
 
 	// 곡이 끝났을 때 자동으로 다음 곡 재생
 	const handleTrackEnded = useCallback(() => {
-		if (repeatMode === 'all') {
+		if (repeatMode === "all") {
 			// 전체 반복 모드: 항상 다음 곡으로 (순환)
 			if (playlist.length > 1) {
 				const nextTrack = playNext();
@@ -336,13 +352,13 @@ export const MobilePlayer = () => {
 					play(currentProductId);
 				}
 			}
-		} else if (repeatMode === 'none') {
+		} else if (repeatMode === "none") {
 			// 반복 없음 모드: 마지막 곡이 아니면 다음 곡, 마지막 곡이면 정지
 			if (playlist.length > 1 && currentIndex < playlist.length - 1) {
 				// 순환하지 않는 선형 진행으로 다음 곡 재생
 				const nextIndex = currentIndex + 1;
 				const nextTrack = playlist[nextIndex];
-				
+
 				if (nextTrack) {
 					setCurrentIndex(nextIndex);
 					setUserPausedRef(false);
@@ -856,7 +872,7 @@ export const MobilePlayer = () => {
 								<span className="font-[450] text-18px leading-100% flex-1 mr-2">
 									{productData?.seller?.stageName || "Unknown Artist"}
 								</span>
-								{productData?.category !== "BEAT" ? <MobileFullScreenPlayerBeatSVG /> : <Acapella />}
+								{productData?.category === "BEAT" ? <MobileFullScreenPlayerBeatSVG /> : <Acapella />}
 							</div>
 						</div>
 						<div className="px-4 flex flex-col">
@@ -909,12 +925,14 @@ export const MobilePlayer = () => {
 					</div>
 					<div className="fixed bg-white bottom-72px left-0 right-0 px-4 py-6 flex justify-between">
 						<div className="flex flex-col">
-							<button className="h-30px font-bold text-16px leading-16px text-black border-4px border-black rounded-40px">
+							{/* <button className="h-30px font-bold text-16px leading-16px text-black border-4px border-black rounded-40px">
 								Free Download
-							</button>
+							</button> */}
 							<button className="font-bold text-16px leading-16px text-white bg-black h-30px px-2 border-4px border-black rounded-40px flex items-center gap-2">
 								<MobileAddCircleSVG fill="white" />
-								15,000 KRW
+								{productData?.licenseInfo?.find((license) => license.type === "EXCLUSIVE")?.price?.toLocaleString() ||
+									0}{" "}
+								KRW
 							</button>
 						</div>
 						<div className="self-end">

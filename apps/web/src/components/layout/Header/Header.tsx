@@ -53,9 +53,9 @@ const MobileHeader = () => {
 				</button>
 			</div>
 			<div className="flex gap-4 items-center">
-				<button className="flex justify-center items-center w-30px h-30px">
+				{/* <button className="flex justify-center items-center w-30px h-30px">
 					<Bell />
-				</button>
+				</button> */}
 				<button className="flex justify-center items-center w-30px h-30px">
 					<UserProfile />
 				</button>
