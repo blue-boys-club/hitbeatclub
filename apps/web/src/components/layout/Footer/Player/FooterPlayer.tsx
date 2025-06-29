@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAudioContext, useCurrentTime } from "@/contexts/AudioContext";
 import { Like, ShoppingBag } from "@/assets/svgs";
 import { AudioPlayer } from "./AudioPlayer";
@@ -86,6 +86,16 @@ export const FooterPlayer = () => {
 	// 현재 트랙 재생 시간 (초)
 	const currentTime = useCurrentTime();
 
+	// currentTime 을 ref 에 저장하여 최신 값을 유지하지만, 다운로드 링크 재검색 시 effect 재실행을 막습니다.
+	const lastPlayedTimeRef = useRef<number>(0);
+	const lastPlayedProductIdRef = useRef<number | null>(null);
+	useEffect(() => {
+		lastPlayedTimeRef.current = currentTime;
+	}, [currentTime]);
+	useEffect(() => {
+		lastPlayedProductIdRef.current = productId;
+	}, [productId]);
+
 	// 플레이리스트에 트랙이 하나라도 있으면 플레이어를 표시한다.
 	const isVisible = trackIds.length > 0;
 
@@ -120,20 +130,36 @@ export const FooterPlayer = () => {
 		stop();
 		setIsPlaying(false);
 		setCurrentAudioUrl("");
+		// 다른 트랙으로 변경될 때 이전 재생 위치를 초기화하여 잘못된 시크 방지
+		lastPlayedTimeRef.current = 0;
 	}, [productId, stop, setIsPlaying]);
 
 	// 오디오 파일 다운로드 링크가 변경될 때마다 재생
 	useEffect(() => {
 		if (audioFileDownloadLink?.url) {
+			// 현재 재생 중이던 위치를 보존합니다.
+			const prevTime = lastPlayedTimeRef.current;
+			const prevProductId = lastPlayedProductIdRef.current;
+
+			// 새로 받은 URL 을 설정합니다.
 			setCurrentAudioUrl(audioFileDownloadLink.url);
+
+			// 플레이어를 초기화합니다.
 			stop();
+
+			// 약간의 지연 후 자동 재생 및 이전 위치로 시크합니다.
 			const timer = setTimeout(() => {
 				autoPlay();
+				// 이전에 재생 중이던 위치가 존재하면 해당 위치로 이동합니다.
+				if (prevTime > 0 && prevProductId === productId) {
+					onSeek(prevTime);
+				}
 				setIsPlaying(true);
 			}, 200);
+
 			return () => clearTimeout(timer);
 		}
-	}, [audioFileDownloadLink, stop, autoPlay, setIsPlaying]);
+	}, [audioFileDownloadLink, stop, autoPlay, onSeek, setIsPlaying, productId]);
 
 	// 오디오 파일 다운로드 에러 처리 - 재생 불가 트랙으로 처리
 	useEffect(() => {

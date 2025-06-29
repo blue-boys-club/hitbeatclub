@@ -11,7 +11,7 @@ import { Toaster } from "@/components/ui/Toast/toaster";
 import { AudioProvider } from "@/contexts/AudioContext";
 import { DndContext } from "@/features/dnd/components/DndContext";
 import { useAuthStore } from "@/stores/auth";
-import { SidebarType, useLayoutStore } from "@/stores/layout";
+import { useLayoutStore } from "@/stores/layout";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
@@ -26,11 +26,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 	const { setPhoneNumber, userPhoneNumber } = useAuthStore(
 		useShallow((state) => ({ setPhoneNumber: state.setPhoneNumber, userPhoneNumber: state.user?.phoneNumber })),
 	);
-	const { isLeftSidebarOpen, isRightSidebarOpen, rightSidebarType } = useLayoutStore(
+	const { isLeftSidebarOpen, isRightSidebarOpen } = useLayoutStore(
 		useShallow((state) => ({
 			isLeftSidebarOpen: state.leftSidebar.isOpen,
 			isRightSidebarOpen: state.rightSidebar.isOpen,
-			rightSidebarType: state.rightSidebar.currentType,
 		})),
 	);
 
@@ -83,8 +82,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 					</main>
 
 					<div className="fixed right-0">
-						{rightSidebarType === SidebarType.TRACK && <MusicRightSidebar />}
-						{rightSidebarType === SidebarType.PLAYLIST && <PlaylistRightSidebar />}
+						<MusicRightSidebar />
+						<PlaylistRightSidebar />
 					</div>
 
 					{/* Fixed Footer */}

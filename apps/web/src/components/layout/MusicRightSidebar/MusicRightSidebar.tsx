@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useMemo, useState } from "react";
+import { memo, useMemo } from "react";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import Image from "next/image";
 import { cn } from "@/common/utils";
@@ -8,7 +8,7 @@ import { cn } from "@/common/utils";
 import { Acapella, ArrowLeftMosaic, ArrowRightMosaic, Beat, Like } from "@/assets/svgs";
 import { FreeDownloadButton } from "@/components/ui/FreeDownloadButton";
 import { useShallow } from "zustand/react/shallow";
-import { useLayoutStore } from "@/stores/layout";
+import { SidebarType, useLayoutStore } from "@/stores/layout";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
@@ -38,20 +38,18 @@ export const MusicRightSidebar = memo(() => {
 	const likeProductMutation = useLikeProductMutation();
 	const unlikeProductMutation = useUnlikeProductMutation();
 
-	const { productId } = useAudioStore(
+	// 오디오 스토어에서 현재 재생 중인 상품 ID와 재생 상태를 가져온다.
+	const { productId, isPlaying } = useAudioStore(
 		useShallow((state) => ({
 			productId: state.productId,
 			isPlaying: state.isPlaying,
 		})),
 	);
 
-	const {
-		isOpen,
-		setRightSidebar,
-		currentTrackId = 12,
-	} = useLayoutStore(
+	const { isOpen, currentType, setRightSidebar, currentTrackId } = useLayoutStore(
 		useShallow((state) => ({
 			isOpen: state.rightSidebar.isOpen,
+			currentType: state.rightSidebar.currentType,
 			setRightSidebar: state.setRightSidebar,
 			currentTrackId: state.player.trackId,
 		})),
@@ -69,8 +67,21 @@ export const MusicRightSidebar = memo(() => {
 
 	const { play } = usePlayTrack();
 
+	// 트랙 존재 여부
+	const hasTrack = Boolean(currentTrackId);
+
+	// 현재 사이드바가 음악 정보용으로 열려있는지 여부
+	const isTrackOpen = hasTrack && isOpen && currentType === SidebarType.TRACK;
+
 	const handleToggleOpen = () => {
-		setRightSidebar(!isOpen);
+		if (!hasTrack) return; // 트랙 없으면 동작하지 않음
+
+		// 트랙 사이드바가 열려있으면 닫고, 그렇지 않다면 트랙 타입으로 연다.
+		if (isTrackOpen) {
+			setRightSidebar(false);
+		} else {
+			setRightSidebar(true, { currentType: SidebarType.TRACK });
+		}
 	};
 
 	const onLikeClick = () => {
@@ -122,26 +133,33 @@ export const MusicRightSidebar = memo(() => {
 		<div
 			className={cn(
 				"fixed right-0 top-87px h-[calc(100vh-92px-72px-15px)] transition-all duration-500 ease-in-out",
-				isOpen ? "w-80" : "w-0",
+				isTrackOpen ? "w-80" : "w-0",
+				!hasTrack && "pointer-events-none", // disable pointer events when no track
 			)}
 		>
 			<div className="flex flex-col h-full overflow-hidden border-l-2 border-black w-80 pb-15 bg-hbc-white">
-				<button
-					onClick={handleToggleOpen}
-					className={cn(
-						"absolute top-0 cursor-pointer hover:opacity-80 transition-opacity",
-						isOpen ? "left-0" : "-left-8",
-					)}
-				>
-					{isOpen ? <ArrowRightMosaic /> : <ArrowLeftMosaic />}
-				</button>
+				{hasTrack && (
+					<button
+						onClick={handleToggleOpen}
+						className={cn(
+							"absolute top-0 cursor-pointer hover:opacity-80 transition-opacity",
+							isTrackOpen ? "left-0" : "-left-8",
+						)}
+					>
+						{isTrackOpen ? <ArrowRightMosaic /> : <ArrowLeftMosaic />}
+					</button>
+				)}
 
 				<div className="flex items-center justify-center mt-12 mb-6">
 					{currentTrack && (
 						<AlbumAvatar
-							src={(currentTrack as any)?.albumImgSrc || "https://placehold.co/360x360.png"}
+							src={currentTrack.coverImage.url || "https://placehold.co/360x360.png"}
 							onClick={() => play(currentTrack.id)}
-							className="cursor-pointer"
+							className={cn(
+								"cursor-pointer",
+								// 현재 재생 중인 트랙이면 회전 애니메이션 적용
+								isPlaying && productId === currentTrack.id && "animate-spin",
+							)}
 						/>
 					)}
 				</div>

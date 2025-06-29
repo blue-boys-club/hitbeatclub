@@ -2,9 +2,9 @@
 import { CloseMosaic, ArrowLeftMosaic } from "@/assets/svgs";
 import { cn } from "@/common/utils";
 import Image from "next/image";
-import React, { useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import PlaylistItem from "./PlaylistItem";
-import { useLayoutStore } from "@/stores/layout";
+import { SidebarType, useLayoutStore } from "@/stores/layout";
 import { useShallow } from "zustand/react/shallow";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { DropContentWrapper } from "@/features/dnd/components/DropContentWrapper";
@@ -17,13 +17,17 @@ import { getProductQueryOption } from "@/apis/product/query/product.query-option
 const PlaylistRightSidebar = () => {
 	const { data: userMe } = useQuery({ ...getUserMeQueryOption(), retry: false });
 
-	const { isOpen, setRightSidebar, currentTrackId } = useLayoutStore(
+	const { isOpen, currentType, setRightSidebar, currentTrackId } = useLayoutStore(
 		useShallow((state) => ({
 			isOpen: state.rightSidebar.isOpen,
+			currentType: state.rightSidebar.currentType,
 			setRightSidebar: state.setRightSidebar,
 			currentTrackId: state.player.trackId,
 		})),
 	);
+
+	// 플레이리스트 사이드바가 열려있는지 여부
+	const isPlaylistOpen = isOpen && currentType === SidebarType.PLAYLIST;
 
 	// 새로운 플레이리스트 시스템 사용
 	const { trackIds, currentIndex, isLoggedIn } = usePlaylist();
@@ -36,9 +40,9 @@ const PlaylistRightSidebar = () => {
 		})),
 	});
 
-	const handleToggleOpen = useCallback(() => {
-		setRightSidebar(!isOpen);
-	}, [setRightSidebar, isOpen]);
+	const handleClose = useCallback(() => {
+		setRightSidebar(false);
+	}, [setRightSidebar]);
 
 	// 재생 훅: { play }
 	const { play } = usePlayTrack();
@@ -92,28 +96,20 @@ const PlaylistRightSidebar = () => {
 			<div
 				className={cn(
 					"fixed right-0 top-87px h-[calc(100vh-92px-72px-15px)] transition-all duration-500 ease-in-out",
-					isOpen ? "w-[275px]" : "w-0",
+					isPlaylistOpen ? "w-[275px]" : "w-0",
 				)}
 			>
-				{/* 열기 버튼 - 닫혀있을 때만 보임 */}
-				{!isOpen && (
-					<button
-						onClick={handleToggleOpen}
-						className="absolute top-0 -left-8 cursor-pointer hover:opacity-80 transition-opacity"
-					>
-						<ArrowLeftMosaic />
-					</button>
-				)}
+				{/* 플레이리스트 사이드바는 FooterPlayer의 플레이리스트 버튼으로만 열립니다. */}
 
 				<DropContentWrapper
 					id={"player"}
 					asChild
 				>
 					<div className="flex flex-col h-full overflow-hidden border-l-2 border-black w-[275px] pb-15 bg-white">
-						{/* 닫기 버튼 - 열려있을 때만 보임 */}
-						{isOpen && (
+						{/* 닫기 버튼 */}
+						{isPlaylistOpen && (
 							<button
-								onClick={handleToggleOpen}
+								onClick={handleClose}
 								className="absolute top-0 right-0 cursor-pointer border p-[2px]"
 							>
 								<CloseMosaic />

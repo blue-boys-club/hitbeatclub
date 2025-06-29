@@ -12,6 +12,7 @@ import {
 } from "@/apis/playlist/query/playlist.query-options";
 import { useToast } from "@/hooks/use-toast";
 import { PlaylistAutoRequest, PlaylistManualRequest } from "@hitbeatclub/shared-types";
+import { useLayoutStore } from "@/stores/layout";
 
 /**
  * 플레이리스트 관리 훅
@@ -73,6 +74,13 @@ export const usePlaylist = () => {
 
 	// 오디오 상태
 	const { setProductId } = useAudioStore(useShallow((state) => ({ setProductId: state.setProductId })));
+
+	// Layout store to synchronize currently playing track id
+	const { setPlayer } = useLayoutStore(
+		useShallow((state) => ({
+			setPlayer: state.setPlayer,
+		})),
+	);
 
 	// 서버 동기화 뮤테이션
 	const updatePlaylistMutation = useUpdatePlaylistMutation();
@@ -232,6 +240,7 @@ export const usePlaylist = () => {
 			const nextTrackId = trackIds[nextIndex];
 			if (nextTrackId) {
 				setProductId(nextTrackId);
+				setPlayer({ trackId: nextTrackId });
 			}
 
 			if (isLoggedIn) {
@@ -240,7 +249,7 @@ export const usePlaylist = () => {
 			return true;
 		}
 		return false;
-	}, [getNextPlayableIndex, setCurrentIndex, trackIds, setProductId, isLoggedIn, debouncedSync]);
+	}, [getNextPlayableIndex, setCurrentIndex, trackIds, setProductId, isLoggedIn, debouncedSync, setPlayer]);
 
 	/**
 	 * 이전 트랙으로 이동
@@ -252,6 +261,7 @@ export const usePlaylist = () => {
 			const previousTrackId = trackIds[previousIndex];
 			if (previousTrackId) {
 				setProductId(previousTrackId);
+				setPlayer({ trackId: previousTrackId });
 			}
 
 			if (isLoggedIn) {
@@ -260,7 +270,7 @@ export const usePlaylist = () => {
 			return true;
 		}
 		return false;
-	}, [getPreviousPlayableIndex, setCurrentIndex, trackIds, setProductId, isLoggedIn, debouncedSync]);
+	}, [getPreviousPlayableIndex, setCurrentIndex, trackIds, setProductId, isLoggedIn, debouncedSync, setPlayer]);
 
 	/**
 	 * 특정 인덱스로 이동
@@ -273,6 +283,7 @@ export const usePlaylist = () => {
 
 				if (trackId) {
 					setProductId(trackId);
+					setPlayer({ trackId });
 				}
 
 				if (isLoggedIn) {
@@ -282,7 +293,7 @@ export const usePlaylist = () => {
 			}
 			return false;
 		},
-		[trackIds, setCurrentIndex, setProductId, isLoggedIn, debouncedSync],
+		[trackIds, setCurrentIndex, setProductId, isLoggedIn, debouncedSync, setPlayer],
 	);
 
 	/**
@@ -303,6 +314,7 @@ export const usePlaylist = () => {
 				const nextTrackId = trackIds[nextIndex];
 				if (nextTrackId) {
 					setProductId(nextTrackId);
+					setPlayer({ trackId: nextTrackId });
 				}
 
 				if (isLoggedIn) {
@@ -319,6 +331,7 @@ export const usePlaylist = () => {
 			setProductId,
 			isLoggedIn,
 			debouncedSync,
+			setPlayer,
 		],
 	);
 
