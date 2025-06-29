@@ -190,6 +190,8 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
 	}, []);
 
 	const onEnded = useCallback(() => {
+		// 재생이 종료되면 내부 상태를 "isPlaying: false" 로 업데이트하여 외부 스토어와 동기화합니다.
+		setState((prev) => ({ ...prev, isPlaying: false }));
 		callbacksRef.current.onEnded();
 	}, []);
 

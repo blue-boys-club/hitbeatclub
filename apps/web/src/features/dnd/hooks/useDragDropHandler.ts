@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usePlaylist } from "@/hooks/use-playlist";
 import { usePlayTrack } from "@/hooks/use-play-track";
 import { AxiosError } from "axios";
+import { PlaylistAutoRequest } from "@hitbeatclub/shared-types";
 
 /**
  * 드래그 앤 드롭 핸들러를 관리하는 커스텀 훅
@@ -20,7 +21,7 @@ export const useDragDropHandler = () => {
 	const { mutateAsync: followArtist } = useUpdateFollowedArtistMutation(user?.id ?? 0);
 
 	// 새로운 플레이리스트 시스템 사용
-	const { addTrackToPlaylist, playTrackAtIndex, trackIds } = usePlaylist();
+	const { addTrackToPlaylist, playTrackAtIndex, trackIds, createAutoPlaylist } = usePlaylist();
 	const { play } = usePlayTrack();
 
 	// 라이센스 모달 상태 관리
@@ -44,6 +45,8 @@ export const useDragDropHandler = () => {
 			// PRODUCT 드래그 처리
 			if (event?.active?.data.current?.type === "PRODUCT") {
 				const productId = event.active?.data.current?.productId;
+				const originalIndex: number | undefined = event.active?.data.current?.index;
+				const playlistConfig: PlaylistAutoRequest | undefined = event.active?.data.current?.playlistConfig;
 
 				if (event.over?.id === "cart") {
 					// 비회원도 라이센스 모달을 열 수 있다.
@@ -70,27 +73,37 @@ export const useDragDropHandler = () => {
 							toast({ description: message });
 						});
 				} else if (event.over?.id === "player") {
-					// 새로운 플레이리스트 시스템 사용
-					try {
-						// 트랙이 이미 플레이리스트에 있는지 확인
-						const existingIndex = trackIds.indexOf(productId);
+					// 컨텍스트 인식 재생 로직
+					(async () => {
+						try {
+							if (playlistConfig) {
+								// 컨텍스트(리스트) 기반 자동 플레이리스트 생성
+								await createAutoPlaylist(playlistConfig);
+								// 상태가 업데이트된 이후 인덱스로 이동 (마이크로 딜레이 활용)
+								setTimeout(() => {
+									playTrackAtIndex(originalIndex ?? 0);
+								}, 0);
+								toast({ description: "재생이 시작되었습니다." });
+								return;
+							}
 
-						if (existingIndex !== -1) {
-							// 이미 플레이리스트에 있으면 해당 인덱스로 이동
-							playTrackAtIndex(existingIndex);
-						} else {
-							// 플레이리스트에 없으면 추가하고 재생
-							addTrackToPlaylist(productId);
-							// 새로 추가된 트랙은 마지막 인덱스에 위치
-							const newIndex = trackIds.length;
-							playTrackAtIndex(newIndex);
+							// 기존 로직 유지
+							const existingIndex = trackIds.indexOf(productId);
+
+							if (existingIndex !== -1) {
+								playTrackAtIndex(existingIndex);
+							} else {
+								addTrackToPlaylist(productId);
+								const newIndex = trackIds.length;
+								playTrackAtIndex(newIndex);
+							}
+
+							toast({ description: "재생이 시작되었습니다." });
+						} catch (error) {
+							const message = error instanceof Error ? error.message : "재생에 실패했습니다.";
+							toast({ description: message, variant: "destructive" });
 						}
-
-						toast({ description: "재생이 시작되었습니다." });
-					} catch (error) {
-						const message = error instanceof Error ? error.message : "재생에 실패했습니다.";
-						toast({ description: message, variant: "destructive" });
-					}
+					})();
 				}
 			}
 
@@ -112,7 +125,7 @@ export const useDragDropHandler = () => {
 				}
 			}
 		},
-		[likeProduct, followArtist, user, toast, addTrackToPlaylist, playTrackAtIndex, trackIds],
+		[likeProduct, followArtist, user, toast, addTrackToPlaylist, playTrackAtIndex, trackIds, createAutoPlaylist],
 	);
 
 	// 라이센스 모달 닫기 핸들러

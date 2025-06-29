@@ -14,8 +14,9 @@ import { useAuthStore } from "@/stores/auth";
 import { SidebarType, useLayoutStore } from "@/stores/layout";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { usePlaylist } from "@/hooks/use-playlist";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
 	const router = useRouter();
@@ -33,6 +34,18 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 		})),
 	);
 
+	// 플레이어 노출 여부 (플레이리스트에 트랙 존재 여부)
+	const { trackIds } = usePlaylist();
+	const isPlayerVisible = useMemo(() => trackIds.length > 0, [trackIds.length]);
+
+	// 레이아웃 관련 동적 클래스 계산
+	const sidebarHeightClass = useMemo(() => (isPlayerVisible ? "h-[calc(100vh-92px)]" : "h-screen"), [isPlayerVisible]);
+	const mainHeightClass = useMemo(
+		() => (isPlayerVisible ? "h-[calc(100vh-72px-92px)]" : "h-[calc(100vh-72px)]"),
+		[isPlayerVisible],
+	);
+	const toasterBottomClass = useMemo(() => (isPlayerVisible ? "bottom-92px" : "bottom-0"), [isPlayerVisible]);
+
 	useEffect(() => {
 		if (isSuccess) {
 			const phoneNumber = userMe.phoneNumber;
@@ -49,7 +62,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 			<DndContext>
 				<div className="h-screen overflow-hidden">
 					{/* Fixed Sidebar - 100vh - footer size */}
-					<div className={cn("fixed left-0 top-0 h-[calc(100vh-92px)]", isLeftSidebarOpen ? "w-305px" : "w-150px")}>
+					<div className={cn("fixed left-0 top-0", sidebarHeightClass, isLeftSidebarOpen ? "w-305px" : "w-150px")}>
 						<Sidebar />
 					</div>
 
@@ -61,7 +74,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 						className={cn(
 							"absolute top-[72px] right-0 pt-15px overflow-auto",
 							"transition-all duration-500",
-							"h-[calc(100vh-72px-92px)]", // 100vh - header size - footer
+							mainHeightClass,
 							isLeftSidebarOpen ? "left-[305px] pl-11px" : "left-[150px] pl-83px",
 							isRightSidebarOpen ? "pr-[329px]" : "pr-[40px]",
 						)}
@@ -80,7 +93,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 						<FooterPlayer />
 					</div>
 
-					<Toaster viewportClassName="bottom-92px" />
+					<Toaster viewportClassName={toasterBottomClass} />
 				</div>
 			</DndContext>
 		</AudioProvider>

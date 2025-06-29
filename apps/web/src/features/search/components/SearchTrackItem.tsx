@@ -23,6 +23,7 @@ import { useShallow } from "zustand/react/shallow";
 
 interface TrackItemProps {
 	product: ProductResponse;
+	index?: number;
 	onPlay?: () => void;
 	onLike?: () => void;
 	onAddToCart?: (id: number) => void;
@@ -35,7 +36,7 @@ interface TrackItemProps {
  * - 장바구니 담기 기능
  * - 트랙 관련 태그 표시
  */
-export const SearchTrackItem = memo(({ product, onPlay, onLike, onAddToCart }: TrackItemProps) => {
+export const SearchTrackItem = memo(({ product, index, onPlay, onLike, onAddToCart }: TrackItemProps) => {
 	const { status, currentProductId } = useAudioStore(
 		useShallow((state) => ({
 			status: state.status,
@@ -98,6 +99,7 @@ export const SearchTrackItem = memo(({ product, onPlay, onLike, onAddToCart }: T
 		<DraggableProductWrapper
 			productId={product.id}
 			meta={product}
+			index={index}
 		>
 			<div className="flex justify-between items-center hover:bg-[#D9D9D9] rounded-lg cursor-pointer">
 				<div className="flex items-center gap-5">
