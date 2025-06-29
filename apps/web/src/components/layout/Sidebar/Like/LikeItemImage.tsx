@@ -31,7 +31,7 @@ const LikeItemImage = memo(function LikeItemImage({ status = "default", alt, ima
 			{status !== "default" && (
 				<div className="absolute inset-0 rounded-lg bg-black/10">
 					<div className="absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
-						{status === "playing" ? <CartPlay /> : <CartPause />}
+						{status === "playing" ? <CartPause /> : <CartPlay />}
 					</div>
 				</div>
 			)}

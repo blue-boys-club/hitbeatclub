@@ -136,7 +136,7 @@ export const ArtistInfo = memo(({ slug }: ArtistInfoProps) => {
 	];
 
 	const artistProfileImage = useMemo(() => {
-		return artist?.profileImage?.url || UserProfileImage;
+		return artist?.profileImage?.url || artist?.profileImageUrl || UserProfileImage;
 	}, [artist]);
 
 	return (

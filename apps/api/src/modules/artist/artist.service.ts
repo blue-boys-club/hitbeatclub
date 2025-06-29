@@ -205,7 +205,6 @@ export class ArtistService {
 
 			// 팔로워 수 조회
 			const followerCount = await this.getFollowerCount(artist.id);
-			console.log("followerCount", followerCount);
 
 			// 트랙 수 조회
 			const trackCount = await this.getTrackCount(artist.id);

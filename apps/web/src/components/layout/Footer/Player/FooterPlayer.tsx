@@ -106,7 +106,7 @@ export const FooterPlayer = () => {
 	}, [productId]);
 
 	// 플레이리스트에 트랙이 하나라도 있으면 플레이어를 표시한다.
-	const isVisible = trackIds.length > 0;
+	const isVisible = trackIds.length > 0 && productId !== null;
 
 	const onClickLike = () => {
 		if (!productId || !productData) return;
@@ -289,7 +289,7 @@ export const FooterPlayer = () => {
 			<div
 				className={cn(
 					"w-full h-20 bg-white border-t-8 border-black transition-transform duration-300",
-					isVisible ? "translate-y-0" : "translate-y-full",
+					isVisible ? "translate-y-0" : "translate-y-[calc(100%+20px)]",
 				)}
 			>
 				<div className="flex items-center justify-between w-full p-2">

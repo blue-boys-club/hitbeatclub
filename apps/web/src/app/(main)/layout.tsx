@@ -12,6 +12,7 @@ import { AudioProvider } from "@/contexts/AudioContext";
 import { DndContext } from "@/features/dnd/components/DndContext";
 import { useAuthStore } from "@/stores/auth";
 import { useLayoutStore } from "@/stores/layout";
+import { useAudioStore } from "@/stores/audio";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
@@ -33,9 +34,16 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 		})),
 	);
 
-	// 플레이어 노출 여부 (플레이리스트에 트랙 존재 여부)
+	// 플레이어 노출 여부: 플레이리스트에 트랙이 있고, 현재 재생 중인 트랙 ID가 존재할 때
 	const { trackIds } = usePlaylist();
-	const isPlayerVisible = useMemo(() => trackIds.length > 0, [trackIds.length]);
+	const { productId } = useAudioStore(useShallow((state) => ({ productId: state.productId })));
+	const isPlayerVisible = useMemo(() => trackIds.length > 0 && productId !== null, [trackIds.length, productId]);
+
+	// 사이드바 표시 여부(실제 너비 반영)는 열려 있고, 플레이리스트가 있으며, 트랙이 선택된 경우만 true
+	const isRightSidebarVisible = useMemo(
+		() => isRightSidebarOpen && trackIds.length > 0 && productId !== null,
+		[isRightSidebarOpen, trackIds.length, productId],
+	);
 
 	// 레이아웃 관련 동적 클래스 계산
 	const sidebarHeightClass = useMemo(() => (isPlayerVisible ? "h-[calc(100vh-92px)]" : "h-screen"), [isPlayerVisible]);
@@ -75,7 +83,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 							"transition-all duration-500",
 							mainHeightClass,
 							isLeftSidebarOpen ? "left-[305px] pl-11px" : "left-[150px] pl-83px",
-							isRightSidebarOpen ? "pr-[329px]" : "pr-[40px]",
+							isRightSidebarVisible ? "pr-[329px]" : "pr-[40px]",
 						)}
 					>
 						{children}

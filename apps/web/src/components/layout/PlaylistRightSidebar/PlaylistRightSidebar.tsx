@@ -25,11 +25,11 @@ const PlaylistRightSidebar = () => {
 		})),
 	);
 
-	// 플레이리스트 사이드바가 열려있는지 여부
-	const isPlaylistOpen = isOpen && currentType === SidebarType.PLAYLIST;
-
-	// 새로운 플레이리스트 시스템 사용 (guest 지원)
+	// 플레이리스트 사이드바가 열려있는지 여부 (트랙이 있고 현재 선택된 트랙이 있을 때만 노출)
+	// usePlaylist import moved above for visibility logic
 	const { trackIds } = usePlaylist();
+	const isPlaylistOpen =
+		isOpen && currentType === SidebarType.PLAYLIST && trackIds.length > 0 && currentTrackId !== null;
 
 	// 플레이리스트의 각 트랙에 대한 상품 정보를 한 번에 조회
 	const {
