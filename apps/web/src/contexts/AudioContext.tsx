@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useCallback, useRef, useState, useEffect } from "react";
+import React, { createContext, useContext, useCallback, useRef, useState, useEffect, useMemo } from "react";
 import ReactPlayer from "react-player";
 
 interface AudioState {
@@ -68,8 +68,8 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
 		isUserSeeking: false, // 사용자가 시크바를 조작 중인지 여부
 	});
 
-	// 외부 콜백 함수들 저장
-	const [callbacks, setCallbacks] = useState<{
+	// 외부에서 주입되는 콜백들을 ref에 저장하여 불필요한 리렌더를 방지
+	const callbacksRef = useRef<{
 		onPrevious: () => void;
 		onNext: () => void;
 		onShuffle: () => void;
@@ -124,12 +124,12 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
 
 	// 탐색 컨트롤 - 외부 콜백 호출
 	const onPrevious = useCallback(() => {
-		callbacks.onPrevious();
-	}, [callbacks.onPrevious]);
+		callbacksRef.current.onPrevious();
+	}, []);
 
 	const onNext = useCallback(() => {
-		callbacks.onNext();
-	}, [callbacks.onNext]);
+		callbacksRef.current.onNext();
+	}, []);
 
 	const onSeek = useCallback((seconds: number) => {
 		if (playerRef.current) {
@@ -167,12 +167,12 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
 
 	// 모드 컨트롤 - 외부 콜백 호출
 	const toggleRepeatMode = useCallback(() => {
-		callbacks.onRepeat();
-	}, [callbacks.onRepeat]);
+		callbacksRef.current.onRepeat();
+	}, []);
 
 	const toggleShuffle = useCallback(() => {
-		callbacks.onShuffle();
-	}, [callbacks.onShuffle]);
+		callbacksRef.current.onShuffle();
+	}, []);
 
 	// ReactPlayer 이벤트 핸들러
 	const onProgress = useCallback((playedSeconds: number) => {
@@ -190,54 +190,88 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
 	}, []);
 
 	const onEnded = useCallback(() => {
-		callbacks.onEnded();
-	}, [callbacks.onEnded]);
+		callbacksRef.current.onEnded();
+	}, []);
 
 	// 외부 콜백 설정 함수들
 	const setPreviousCallback = useCallback((callback: () => void) => {
-		setCallbacks((prev) => ({ ...prev, onPrevious: callback }));
+		callbacksRef.current.onPrevious = callback;
 	}, []);
 
 	const setNextCallback = useCallback((callback: () => void) => {
-		setCallbacks((prev) => ({ ...prev, onNext: callback }));
+		callbacksRef.current.onNext = callback;
 	}, []);
 
 	const setShuffleCallback = useCallback((callback: () => void) => {
-		setCallbacks((prev) => ({ ...prev, onShuffle: callback }));
+		callbacksRef.current.onShuffle = callback;
 	}, []);
 
 	const setRepeatCallback = useCallback((callback: () => void) => {
-		setCallbacks((prev) => ({ ...prev, onRepeat: callback }));
+		callbacksRef.current.onRepeat = callback;
 	}, []);
 
 	const setEndedCallback = useCallback((callback: () => void) => {
-		setCallbacks((prev) => ({ ...prev, onEnded: callback }));
+		callbacksRef.current.onEnded = callback;
 	}, []);
 
-	const contextValue: AudioContextValue = {
-		...state,
-		playerRef,
-		togglePlay,
-		stop,
-		autoPlay,
-		onPrevious,
-		onNext,
-		onSeek,
-		onSeekStart,
-		onSeekEnd,
-		onVolumeChange,
-		onMuteToggle,
-		toggleRepeatMode,
-		toggleShuffle,
-		onProgress,
-		onDuration,
-		onEnded,
-		setPreviousCallback,
-		setNextCallback,
-		setShuffleCallback,
-		setRepeatCallback,
-		setEndedCallback,
-	};
+	// Memoize context value to avoid unnecessary re-renders in consumers
+	const contextValue: AudioContextValue = useMemo(
+		() => ({
+			...state,
+			playerRef,
+			togglePlay,
+			stop,
+			autoPlay,
+			onPrevious,
+			onNext,
+			onSeek,
+			onSeekStart,
+			onSeekEnd,
+			onVolumeChange,
+			onMuteToggle,
+			toggleRepeatMode,
+			toggleShuffle,
+			onProgress,
+			onDuration,
+			onEnded,
+			setPreviousCallback,
+			setNextCallback,
+			setShuffleCallback,
+			setRepeatCallback,
+			setEndedCallback,
+		}),
+		[
+			state,
+			togglePlay,
+			stop,
+			autoPlay,
+			onPrevious,
+			onNext,
+			onSeek,
+			onSeekStart,
+			onSeekEnd,
+			onVolumeChange,
+			onMuteToggle,
+			toggleRepeatMode,
+			toggleShuffle,
+			onProgress,
+			onDuration,
+			onEnded,
+			setPreviousCallback,
+			setNextCallback,
+			setShuffleCallback,
+			setRepeatCallback,
+			setEndedCallback,
+		],
+	);
 
 	return <AudioContext.Provider value={contextValue}>{children}</AudioContext.Provider>;
 };
+
+// Hook helpers to access slices of the state
+export const useIsPlaying = () => useAudioContext().isPlaying;
+export const useCurrentTime = () => useAudioContext().currentTime;
+export const useDuration = () => useAudioContext().duration;
+export const useVolume = () => useAudioContext().volume;
+export const useIsMuted = () => useAudioContext().isMuted;
+export const useIsUserSeeking = () => useAudioContext().isUserSeeking;
