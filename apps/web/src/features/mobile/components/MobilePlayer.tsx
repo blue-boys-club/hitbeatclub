@@ -24,7 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAudioContext } from "@/contexts/AudioContext";
 import { ReactPlayer } from "@/components/layout/Footer/Player/ReactPlayer";
 import { Heart } from "@/assets/svgs/Heart";
-import { AudioBarPause, AudioBarPlay } from "@/assets/svgs";
+import { Acapella, AudioBarPause, AudioBarPlay } from "@/assets/svgs";
 import { useCreateCartItemMutation } from "@/apis/user/mutations/useCreateCartItemMutation";
 import { useAuthStore } from "@/stores/auth";
 import { usePlaylistStore, PlaylistProduct } from "@/stores/playlist";
@@ -39,10 +39,17 @@ export const MobilePlayer = () => {
 	const [showPlaylist, setShowPlaylist] = useState(false);
 
 	// 플레이리스트 스토어
-	const { playlist, currentIndex } = usePlaylistStore(
+	const { playlist, currentIndex, playNext, playPrevious, repeatMode, isShuffleMode, toggleRepeatMode, toggleShuffleMode, setCurrentIndex } = usePlaylistStore(
 		useShallow((state) => ({
 			playlist: state.playlist,
 			currentIndex: state.currentIndex,
+			playNext: state.playNext,
+			playPrevious: state.playPrevious,
+			repeatMode: state.repeatMode,
+			isShuffleMode: state.isShuffleMode,
+			toggleRepeatMode: state.toggleRepeatMode,
+			toggleShuffleMode: state.toggleShuffleMode,
+			setCurrentIndex: state.setCurrentIndex,
 		})),
 	);
 
@@ -84,7 +91,6 @@ export const MobilePlayer = () => {
 		isPlaying: contextIsPlaying,
 		onProgress,
 		onDuration,
-		onEnded,
 		volume,
 		onVolumeChange,
 		currentTime,
@@ -100,6 +106,9 @@ export const MobilePlayer = () => {
 
 	// 현재 오디오 URL 상태
 	const [currentAudioUrl, setCurrentAudioUrl] = useState<string>("");
+
+	// 사용자의 명시적인 일시정지 액션 추적
+	const [userPausedRef, setUserPausedRef] = useState(false);
 
 	// 오디오 파일 다운로드 링크 조회
 	const { data: audioFileDownloadLink, error: audioFileError } = useQuery({
@@ -149,9 +158,17 @@ export const MobilePlayer = () => {
 
 	const onPlayHandler = useCallback(() => {
 		if (currentProductId) {
+			// 현재 재생 중인 트랙과 같은 트랙을 클릭한 경우
+			if (contextIsPlaying) {
+				// 일시정지 -> 사용자 액션으로 기록
+				setUserPausedRef(true);
+			} else {
+				// 재생 -> 사용자 일시정지 상태 해제
+				setUserPausedRef(false);
+			}
 			play(currentProductId);
 		}
-	}, [play, currentProductId]);
+	}, [play, currentProductId, contextIsPlaying]);
 
 	const onClickLike = useCallback(() => {
 		if (!currentProductId || !productData) return;
@@ -241,11 +258,100 @@ export const MobilePlayer = () => {
 	// 플레이리스트 아이템 클릭 핸들러
 	const handlePlaylistItemClick = useCallback(
 		(productId: number) => {
+			// 클릭한 곡의 인덱스를 찾아서 currentIndex 업데이트
+			const clickedIndex = playlist.findIndex(item => item.id === productId);
+			if (clickedIndex !== -1) {
+				setCurrentIndex(clickedIndex);
+			}
+			
 			play(productId);
 			setShowPlaylist(false);
 		},
-		[play],
+		[play, playlist, setCurrentIndex],
 	);
+
+	// 이전 곡 재생 핸들러
+	const handlePreviousTrack = useCallback(
+		(e: React.MouseEvent) => {
+			e.stopPropagation();
+
+			if (playlist.length <= 1) return; // 단일 곡이거나 빈 플레이리스트면 무시
+
+			const previousTrack = playPrevious();
+			if (previousTrack) {
+				// 사용자 일시정지 상태 해제
+				setUserPausedRef(false);
+				play(previousTrack.id);
+			}
+		},
+		[playlist.length, playPrevious, play],
+	);
+
+	// 다음 곡 재생 핸들러
+	const handleNextTrack = useCallback(
+		(e: React.MouseEvent) => {
+			e.stopPropagation();
+
+			if (playlist.length <= 1) return; // 단일 곡이거나 빈 플레이리스트면 무시
+
+			const nextTrack = playNext();
+			if (nextTrack) {
+				// 사용자 일시정지 상태 해제
+				setUserPausedRef(false);
+				play(nextTrack.id);
+			}
+		},
+		[playlist.length, playNext, play],
+	);
+
+	// Previous/Next 버튼 사용 가능 여부
+	const canNavigate = playlist.length > 1;
+
+	// Repeat 버튼 클릭 핸들러
+	const handleRepeatToggle = useCallback((e: React.MouseEvent) => {
+		e.stopPropagation();
+		toggleRepeatMode();
+	}, [toggleRepeatMode]);
+
+	// Shuffle 버튼 클릭 핸들러
+	const handleShuffleToggle = useCallback((e: React.MouseEvent) => {
+		e.stopPropagation();
+		toggleShuffleMode();
+	}, [toggleShuffleMode]);
+
+	// 곡이 끝났을 때 자동으로 다음 곡 재생
+	const handleTrackEnded = useCallback(() => {
+		if (repeatMode === 'all') {
+			// 전체 반복 모드: 항상 다음 곡으로 (순환)
+			if (playlist.length > 1) {
+				const nextTrack = playNext();
+				if (nextTrack) {
+					setUserPausedRef(false);
+					play(nextTrack.id);
+				}
+			} else if (playlist.length === 1) {
+				// 단일 곡 반복
+				if (currentProductId) {
+					setUserPausedRef(false);
+					play(currentProductId);
+				}
+			}
+		} else if (repeatMode === 'none') {
+			// 반복 없음 모드: 마지막 곡이 아니면 다음 곡, 마지막 곡이면 정지
+			if (playlist.length > 1 && currentIndex < playlist.length - 1) {
+				// 순환하지 않는 선형 진행으로 다음 곡 재생
+				const nextIndex = currentIndex + 1;
+				const nextTrack = playlist[nextIndex];
+				
+				if (nextTrack) {
+					setCurrentIndex(nextIndex);
+					setUserPausedRef(false);
+					play(nextTrack.id);
+				}
+			}
+			// 마지막 곡이거나 단일 곡이면 재생 종료 (자연스럽게 정지)
+		}
+	}, [playlist, currentIndex, playNext, play, repeatMode, currentProductId, setCurrentIndex]);
 
 	// 플레이리스트 컴포넌트
 	const PlaylistModal = useCallback(() => {
@@ -515,6 +621,9 @@ export const MobilePlayer = () => {
 		if (audioFileDownloadLink?.url && audioFileDownloadLink.url !== currentAudioUrl) {
 			setCurrentAudioUrl(audioFileDownloadLink.url);
 
+			// 새로운 트랙이 시작되므로 사용자 일시정지 상태 초기화
+			setUserPausedRef(false);
+
 			// 새로운 트랙이므로 stop 후 autoPlay
 			stop();
 			const timer = setTimeout(() => {
@@ -543,16 +652,17 @@ export const MobilePlayer = () => {
 
 	// 새로운 트랙이 로드되었을 때 재생 상태 확인
 	useEffect(() => {
-		if (currentAudioUrl && currentProductId && !contextIsPlaying) {
+		if (currentAudioUrl && currentProductId && !contextIsPlaying && !userPausedRef) {
 			// 오디오 URL이 설정되었는데 재생되지 않는 경우, 잠시 후 재생 시도
+			// 단, 사용자가 명시적으로 일시정지한 경우에는 자동 재생하지 않음
 			const timer = setTimeout(() => {
-				if (!contextIsPlaying) {
+				if (!contextIsPlaying && !userPausedRef) {
 					autoPlay();
 				}
 			}, 500);
 			return () => clearTimeout(timer);
 		}
-	}, [currentAudioUrl, currentProductId, contextIsPlaying, autoPlay]);
+	}, [currentAudioUrl, currentProductId, contextIsPlaying, userPausedRef, autoPlay]);
 
 	// 사용자가 시크바를 조작하지 않을 때만 currentTime과 동기화
 	useEffect(() => {
@@ -576,7 +686,7 @@ export const MobilePlayer = () => {
 				width="0"
 				height="0"
 				volume={volume}
-				onEnded={onEnded}
+				onEnded={handleTrackEnded}
 				onProgress={({ playedSeconds }) => onProgress(playedSeconds)}
 				onDuration={(duration) => onDuration(duration)}
 			/>
@@ -746,7 +856,7 @@ export const MobilePlayer = () => {
 								<span className="font-[450] text-18px leading-100% flex-1 mr-2">
 									{productData?.seller?.stageName || "Unknown Artist"}
 								</span>
-								<MobileFullScreenPlayerBeatSVG />
+								{productData?.category !== "BEAT" ? <MobileFullScreenPlayerBeatSVG /> : <Acapella />}
 							</div>
 						</div>
 						<div className="px-4 flex flex-col">
@@ -821,11 +931,27 @@ export const MobilePlayer = () => {
 						</div>
 					</div>
 					<div className="h-auto border-t-10px border-black px-2 py-1 flex items-center justify-between">
-						<MobileFullScreenPlayerRepeatSVG />
-						<MobileFullScreenPlayerPreviousSVG />
+						<button onClick={handleRepeatToggle}>
+							<MobileFullScreenPlayerRepeatSVG mode={repeatMode} />
+						</button>
+						<button
+							onClick={handlePreviousTrack}
+							disabled={!canNavigate}
+							className="disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
+						>
+							<MobileFullScreenPlayerPreviousSVG />
+						</button>
 						<button onClick={onPlayHandler}>{playIcon}</button>
-						<MobileFullScreenPlayerNextSVG />
-						<MobileFullScreenPlayerShuffleSVG />
+						<button
+							onClick={handleNextTrack}
+							disabled={!canNavigate}
+							className="disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
+						>
+							<MobileFullScreenPlayerNextSVG />
+						</button>
+						<button onClick={handleShuffleToggle}>
+							<MobileFullScreenPlayerShuffleSVG active={isShuffleMode} />
+						</button>
 					</div>
 				</div>
 			)}

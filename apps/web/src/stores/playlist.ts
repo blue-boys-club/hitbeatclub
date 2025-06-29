@@ -27,6 +27,18 @@ export interface PlaylistActions {
 
 	/** 현재 재생 중인 곡 가져오기 */
 	getCurrentTrack: () => PlaylistProduct | null;
+
+	/** 다음 곡으로 이동 */
+	playNext: () => PlaylistProduct | null;
+
+	/** 이전 곡으로 이동 */
+	playPrevious: () => PlaylistProduct | null;
+
+	/** 반복 모드 토글 */
+	toggleRepeatMode: () => void;
+
+	/** 셔플 모드 토글 */
+	toggleShuffleMode: () => void;
 }
 
 export interface PlaylistState {
@@ -35,6 +47,15 @@ export interface PlaylistState {
 
 	/** 현재 재생 중인 곡의 인덱스 (-1이면 없음) */
 	currentIndex: number;
+
+	/** 반복 모드 */
+	repeatMode: 'none' | 'all';
+
+	/** 셔플 모드 활성화 여부 */
+	isShuffleMode: boolean;
+
+	/** 셔플 전 원본 플레이리스트 순서 */
+	originalPlaylist: PlaylistProduct[];
 }
 
 export type PlaylistStore = PlaylistState & PlaylistActions;
@@ -42,6 +63,9 @@ export type PlaylistStore = PlaylistState & PlaylistActions;
 const initialState: PlaylistState = {
 	playlist: [],
 	currentIndex: -1,
+	repeatMode: 'none',
+	isShuffleMode: false,
+	originalPlaylist: [],
 };
 
 const name = "PlaylistStore";
@@ -53,10 +77,11 @@ export const usePlaylistStore = create<PlaylistStore>()(
 
 			/** 플레이리스트 전체 교체 */
 			setPlaylist: (products: PlaylistProduct[]) =>
-				set({
+				set((state) => ({
 					playlist: products,
 					currentIndex: products.length > 0 ? 0 : -1,
-				}),
+					originalPlaylist: state.isShuffleMode ? products : state.originalPlaylist,
+				})),
 
 			/** 플레이리스트에 곡 추가 */
 			addToPlaylist: (product: PlaylistProduct) =>
@@ -121,6 +146,91 @@ export const usePlaylistStore = create<PlaylistStore>()(
 				}
 				return null;
 			},
+
+			/** 다음 곡으로 이동 */
+			playNext: () => {
+				const { playlist, currentIndex } = get();
+				if (playlist.length === 0) return null;
+				
+				// 다음 인덱스 계산 (순환)
+				const nextIndex = (currentIndex + 1) % playlist.length;
+				
+				set((state) => ({
+					...state,
+					currentIndex: nextIndex,
+				}));
+				
+				return playlist[nextIndex];
+			},
+
+			/** 이전 곡으로 이동 */
+			playPrevious: () => {
+				const { playlist, currentIndex } = get();
+				if (playlist.length === 0) return null;
+				
+				// 이전 인덱스 계산 (순환)
+				const previousIndex = currentIndex <= 0 ? playlist.length - 1 : currentIndex - 1;
+				
+				set((state) => ({
+					...state,
+					currentIndex: previousIndex,
+				}));
+				
+				return playlist[previousIndex];
+			},
+
+			/** 반복 모드 토글 */
+			toggleRepeatMode: () =>
+				set((state) => {
+					const modes: Array<'none' | 'all'> = ['none', 'all'];
+					const currentIndex = modes.indexOf(state.repeatMode);
+					const nextIndex = (currentIndex + 1) % modes.length;
+					return {
+						...state,
+						repeatMode: modes[nextIndex],
+					};
+				}),
+
+			/** 셔플 모드 토글 */
+			toggleShuffleMode: () =>
+				set((state) => {
+					const newShuffleMode = !state.isShuffleMode;
+					
+					if (newShuffleMode) {
+						// 셔플 모드 켜기: 원본 순서 저장 후 섞기
+						const originalPlaylist = [...state.playlist];
+						const currentTrack = state.playlist[state.currentIndex];
+						
+						// 현재 곡을 제외한 나머지 곡들을 섞기
+						const otherTracks = state.playlist.filter((_, index) => index !== state.currentIndex);
+						const shuffledOthers = [...otherTracks].sort(() => Math.random() - 0.5);
+						
+						// 현재 곡을 맨 앞에 두고 나머지는 섞인 순서로
+						const shuffledPlaylist = currentTrack ? [currentTrack, ...shuffledOthers] : shuffledOthers;
+						
+						return {
+							...state,
+							isShuffleMode: true,
+							originalPlaylist,
+							playlist: shuffledPlaylist,
+							currentIndex: currentTrack ? 0 : -1,
+						};
+					} else {
+						// 셔플 모드 끄기: 원본 순서로 복원
+						const currentTrack = state.playlist[state.currentIndex];
+						const originalIndex = currentTrack 
+							? state.originalPlaylist.findIndex(track => track.id === currentTrack.id)
+							: -1;
+						
+						return {
+							...state,
+							isShuffleMode: false,
+							playlist: [...state.originalPlaylist],
+							currentIndex: originalIndex,
+							originalPlaylist: [],
+						};
+					}
+				}),
 		}),
 		{ name },
 	),
