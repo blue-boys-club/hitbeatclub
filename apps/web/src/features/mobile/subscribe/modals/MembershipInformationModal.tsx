@@ -1,15 +1,20 @@
 "use client";
 
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { Checkbox } from "@/components/ui";
 import { Popup, PopupContent, PopupHeader, PopupTitle } from "@/components/ui/Popup";
+import { useQuery } from "@tanstack/react-query";
 import { memo } from "react";
 
 interface MembershipInformationModalProps {
 	isOpen: boolean;
 	onClose: () => void;
+	plan: "YEAR" | "MONTH";
 }
 
-export const MembershipInformationModal = memo(({ isOpen, onClose }: MembershipInformationModalProps) => {
+export const MembershipInformationModal = memo(({ isOpen, onClose, plan }: MembershipInformationModalProps) => {
+	const { data: user } = useQuery(getUserMeQueryOption());
+
 	return (
 		<Popup
 			open={isOpen}
@@ -22,23 +27,25 @@ export const MembershipInformationModal = memo(({ isOpen, onClose }: MembershipI
 					<div className="flex flex-col gap-3">
 						<div className="flex flex-col gap-2px">
 							<span className="font-extrabold text-10px leading-160%">구독 정보</span>
-							<span className="font-semibold text-8px leading-140%">히트비트클럽 멤버쉽 연간 결제</span>
-							<span className="font-semibold text-8px leading-140%">240,000 KRW</span>
+							<span className="font-semibold text-8px leading-140%">
+								히트비트클럽 멤버쉽 {plan === "YEAR" ? "연간" : "월간"} 결제
+							</span>
+							<span className="font-semibold text-8px leading-140%">{plan === "YEAR" ? "240,000" : "25,000"} KRW</span>
 						</div>
 						<div className="flex flex-col gap-2px">
 							<span className="font-extrabold text-10px leading-160%">결제 정보</span>
 							<span className="font-semibold text-8px leading-140%">
-								김일상
+								{user?.name || "사용자"}
 								<br />
-								00000
+								{user?.phoneNumber || "전화번호 없음"}
 								<br />
-								서울특별시 종로구 자하문로7길 13 서울특별시 종로구
+								{user?.region || "지역 정보 없음"}
 								<br />
-								자하문로7길 13
+								{user?.country === "KR" ? "대한민국" : user?.country || "국가 정보 없음"}
 							</span>
 						</div>
 						<div className="font-semibold text-8px leading-160%">
-							결제를 진행하는 결제 정보로 매월 (또는 매년) 자동
+							결제를 진행하는 결제 정보로 {plan === "YEAR" ? "매년" : "매월"} 자동
 							<br />
 							결제되오니, 이점 확인 후 진행 부탁드립니다.
 							<br />

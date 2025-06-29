@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { cn } from "@/common/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
@@ -20,25 +19,26 @@ const mobileFilterButtonVariants = cva(
 );
 
 interface MobileFilterButtonProps
-	extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onClick">,
+	extends React.ButtonHTMLAttributes<HTMLButtonElement>,
 		VariantProps<typeof mobileFilterButtonVariants> {
 	children: React.ReactNode;
-	onFilterChange?: () => void;
+	isActive?: boolean;
 }
 
-export const MobileFilterButton = ({ className, children, onFilterChange, ...props }: MobileFilterButtonProps) => {
-	const [isSelected, setIsSelected] = useState(false);
-
-	const handleClick = () => {
-		setIsSelected((prev) => !prev);
-		onFilterChange?.();
-	};
+export const MobileFilterButton = ({
+	className,
+	children,
+	isActive = false,
+	isSelected,
+	...props
+}: MobileFilterButtonProps) => {
+	// isActive가 제공되면 그것을 사용하고, 그렇지 않으면 isSelected를 사용
+	const selected = isActive !== undefined ? isActive : isSelected;
 
 	return (
 		<button
 			{...props}
-			onClick={handleClick}
-			className={cn(mobileFilterButtonVariants({ isSelected }), className)}
+			className={cn(mobileFilterButtonVariants({ isSelected: selected }), className)}
 		>
 			{children}
 		</button>

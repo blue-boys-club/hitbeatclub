@@ -45,11 +45,21 @@ const config = {
 				...px500_1000_10,
 			},
 
-			// 마퀴 애니메이션 (동적 스크롤)
+			// Mobile Player Animations
 			animation: {
+				slideUp: "slideUp 150ms ease-out forwards",
+				slideDown: "slideDown 150ms ease-out forwards",
 				marquee: "marquee var(--marquee-duration, 8s) linear infinite",
 			},
 			keyframes: {
+				slideUp: {
+					from: { transform: "translateY(100%)" },
+					to: { transform: "translateY(0)" },
+				},
+				slideDown: {
+					from: { transform: "translateY(0)" },
+					to: { transform: "translateY(100%)" },
+				},
 				marquee: {
 					"0%": { transform: "translateX(0)" },
 					"100%": { transform: "translateX(var(--scroll-distance, -50%))" },

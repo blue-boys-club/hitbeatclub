@@ -5,7 +5,7 @@ import { useState, forwardRef } from "react";
 
 interface MobileSettingsSelectProps {
 	label: string;
-	options: string[];
+	options: { value: string; label: string }[];
 	value?: string;
 	onChange?: (value: string) => void;
 	placeholder?: string;
@@ -16,8 +16,8 @@ export const MobileSettingsSelect = forwardRef<HTMLDivElement, MobileSettingsSel
 	({ label, options, value, onChange, placeholder = "선택하세요", className = "" }, ref) => {
 		const [isOpen, setIsOpen] = useState(false);
 
-		const handleSelect = (option: string) => {
-			onChange?.(option);
+		const handleSelect = (option: { value: string; label: string }) => {
+			onChange?.(option.value);
 			setIsOpen(false);
 		};
 
@@ -45,7 +45,7 @@ export const MobileSettingsSelect = forwardRef<HTMLDivElement, MobileSettingsSel
 									className="px-3 py-2 text-12px font-semibold cursor-pointer hover:bg-gray-100 first:rounded-t-8px last:rounded-b-8px"
 									onClick={() => handleSelect(option)}
 								>
-									{option}
+									{option.label}
 								</div>
 							))}
 						</div>

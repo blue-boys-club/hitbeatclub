@@ -1,19 +1,40 @@
 "use client";
 
-import React, { memo } from "react";
+import React, { memo, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useShallow } from "zustand/react/shallow";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/common/utils";
 import { Home } from "@/assets/svgs/Home";
 import { SearchBar } from "./SearchBar";
 import { HeaderNav } from "./HeaderNav";
-import { useDevice } from "@/hooks/use-device";
 import { UserProfile } from "@/assets/svgs";
-import { Bell } from "@/assets/svgs/Bell";
 import { ArrowLeftShort } from "@/assets/svgs/ArrowLeftShort";
+import { TagDropdown, UserAvatar } from "@/components/ui";
+import { useAuthStore } from "@/stores/auth";
+import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { useToast } from "@/hooks/use-toast";
+import { QUERY_KEYS } from "@/apis/query-keys";
 
-const Header = memo(() => {
-	const { isPC } = useDevice();
-	return isPC ? <PCHeader /> : <MobileHeader />;
+interface MobileHeaderNavOption {
+	label: string;
+	value: string;
+}
+
+const mobileHeaderNavOptions: MobileHeaderNavOption[] = [
+	{
+		label: "구독정보",
+		value: "subscribe",
+	},
+	{
+		label: "로그아웃",
+		value: "logout",
+	},
+];
+
+const Header = memo(({ mobile }: { mobile?: boolean }) => {
+	return mobile ? <MobileHeader /> : <PCHeader />;
 });
 
 Header.displayName = "Header";
@@ -42,21 +63,91 @@ const PCHeader = () => {
 };
 
 const MobileHeader = () => {
+	const router = useRouter();
+	const { toast } = useToast();
+	const { isLoggedIn, logout } = useAuthStore(
+		useShallow((state) => ({
+			isLoggedIn: !!state.user?.userId,
+			logout: state.makeLogout,
+		})),
+	);
+	const { data: user } = useQuery(getUserMeQueryOption());
+	const queryClient = useQueryClient();
+
+	const signOut = useCallback(() => {
+		logout();
+		queryClient.removeQueries({ queryKey: QUERY_KEYS.user._key });
+		toast({
+			description: "로그아웃 되었습니다.",
+		});
+	}, [logout, toast, queryClient]);
+
+	const handleDropdownOptionSelect = useCallback(
+		(value: string) => {
+			switch (value) {
+				case "subscribe":
+					void router.push("/mobile/subscribe");
+					break;
+				case "logout":
+					signOut();
+					void router.push("/mobile/login");
+					break;
+			}
+		},
+		[router, signOut],
+	);
+
+	const handleUserProfileClick = useCallback(() => {
+		if (!isLoggedIn) {
+			void router.push("/mobile/login");
+		}
+	}, [isLoggedIn, router]);
+
 	return (
 		<header className={cn("bg-white px-4 w-full h-62px flex justify-between items-center")}>
 			<div className="relative border-3px border-hbc-red rounded-40px pl-10px pr-30px py-6px">
 				<span className="block text-hbc-red font-bold leading-14px">ARTIST STUDIO</span>
-				<button className="absolute top-1/2 right-2px -translate-y-1/2 w-6 h-6 flex justify-center items-center">
+				<button
+					className="absolute top-1/2 right-2px w-6 h-6 flex justify-center items-center"
+					style={{ transform: "translateY(-50%)" }}
+				>
 					<ArrowLeftShort fill="red" />
 				</button>
 			</div>
 			<div className="flex gap-4 items-center">
-				<button className="flex justify-center items-center w-30px h-30px">
-					<Bell />
-				</button>
-				<button className="flex justify-center items-center w-30px h-30px">
-					<UserProfile />
-				</button>
+				{isLoggedIn ? (
+					<TagDropdown
+						wrapperClassName="flex"
+						optionsClassName="absolute top-[40px]"
+						optionsPosition="right-0"
+						showChevron={false}
+						options={mobileHeaderNavOptions.map((option) => ({
+							...option,
+							className: "rounded-[5px] text-base font-bold leading-4",
+						}))}
+						onSelect={handleDropdownOptionSelect}
+					>
+						{user?.profileUrl ? (
+							<UserAvatar
+								src={user.profileUrl}
+								alt="사용자 프로필 이미지"
+								className="w-30px h-30px"
+							/>
+						) : (
+							<UserProfile
+								aria-label="프로필"
+								className="w-30px h-30px"
+							/>
+						)}
+					</TagDropdown>
+				) : (
+					<button
+						className="flex justify-center items-center w-30px h-30px"
+						onClick={handleUserProfileClick}
+					>
+						<UserProfile />
+					</button>
+				)}
 			</div>
 		</header>
 	);
