@@ -15,9 +15,7 @@ import { CommonResponse } from "@/apis/api.type";
  * @returns 플레이리스트 트랙 정보
  */
 export const getPlaylistAuto = async (data: PlaylistAutoRequest): Promise<CommonResponse<PlaylistTracksResponse>> => {
-	const response = await axiosInstance.get<CommonResponse<PlaylistTracksResponse>>(`/playlists/auto`, {
-		params: data,
-	});
+	const response = await axiosInstance.post<CommonResponse<PlaylistTracksResponse>>(`/playlists/auto`, data);
 	return response.data;
 };
 

@@ -17,15 +17,15 @@ import { PlaylistManualRequestDto } from "./dto/request/playlist.manual.request.
 export class PlaylistController {
 	constructor(private readonly playlistService: PlaylistService) {}
 
-	@Get("auto")
+	@Post("auto")
 	@ApiOperation({ summary: "컨텍스트 기반 자동 재생목록" })
 	@AuthJwtAccessOptional()
 	@DocResponse<PlaylistTracksResponseDto>("success", { dto: PlaylistTracksResponseDto })
-	async getAutoPlaylist(
+	async postGetAutoPlaylist(
 		@Req() req: AuthenticatedRequest,
-		@Query(new ZodValidationPipe(PlaylistAutoRequestSchema)) query: PlaylistAutoRequestDto,
+		@Body(new ZodValidationPipe(PlaylistAutoRequestSchema)) body: PlaylistAutoRequestDto,
 	): Promise<IResponse<{ trackIds: number[] }>> {
-		const result = await this.playlistService.createAutoPlaylist(req?.user?.id, query);
+		const result = await this.playlistService.createAutoPlaylist(req?.user?.id, body);
 		return {
 			statusCode: 200,
 			message: "success",
@@ -37,7 +37,7 @@ export class PlaylistController {
 	@ApiOperation({ summary: "수동 재생목록 생성" })
 	@AuthenticationDoc({ optional: true })
 	@DocResponse<PlaylistTracksResponseDto>("success", { dto: PlaylistTracksResponseDto })
-	async postManualPlaylist(
+	async postGetManualPlaylist(
 		@Req() req: AuthenticatedRequest,
 		@Body(new ZodValidationPipe(PlaylistManualRequestSchema)) body: PlaylistManualRequestDto,
 	): Promise<IResponse<{ trackIds: number[] }>> {

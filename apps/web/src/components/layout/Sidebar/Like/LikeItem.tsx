@@ -5,14 +5,22 @@ import { usePlayTrack } from "@/hooks/use-play-track";
 import { useAudioStore } from "@/stores/audio";
 import { useShallow } from "zustand/react/shallow";
 import { SmallEqualizer } from "@/assets/svgs";
+import { usePlaylist } from "@/hooks/use-playlist";
+import { createPlaylistConfig } from "@/components/layout/PlaylistProvider";
 
 export interface LikeItemProps {
 	track: ProductRowByDashboardResponse;
+	/** 리스트 내 트랙의 인덱스 */
+	index: number;
+	/** 정렬 기준 - Sidebar 에서는 sort 만 필요 */
+	sort: "RECENT" | "NAME";
 }
 
-export const LikeItem = ({ track }: LikeItemProps) => {
+export const LikeItem = ({ track, index, sort }: LikeItemProps) => {
 	// Hook to trigger playback
 	const { play } = usePlayTrack();
+	const { createAutoPlaylistAndPlay } = usePlaylist();
+	const playlistConfig = createPlaylistConfig.liked({ sort });
 
 	// Get current audio status to decide overlay state
 	const { status, productId: currentProductId } = useAudioStore(
@@ -29,6 +37,22 @@ export const LikeItem = ({ track }: LikeItemProps) => {
 		return "default";
 	})();
 
+	/**
+	 * 클릭 핸들러
+	 * 1. 현재 컨텍스트(좋아요, 정렬 기준) 기반 자동 플레이리스트를 생성 후 인덱스 위치에서 재생
+	 * 2. 공통 play 로직을 호출하여 플레이어/사이드바 상태를 동기화
+	 */
+	const handleClick = async () => {
+		try {
+			await createAutoPlaylistAndPlay(playlistConfig, index);
+			play(track.id);
+		} catch (error) {
+			// 실패 시 기본 재생 로직으로 폴백
+			console.error("[LikeItem] createAutoPlaylistAndPlay failed", error);
+			play(track.id);
+		}
+	};
+
 	return (
 		<div
 			className="flex items-center justify-start gap-16px w-52px h-52px @200px/sidebar:w-280px @200px/sidebar:h-42px rounded-5px @200px/sidebar:hover:bg-hbc-gray"
@@ -37,7 +61,7 @@ export const LikeItem = ({ track }: LikeItemProps) => {
 		>
 			<div
 				className="flex-shrink-0 w-52px @200px/sidebar:w-40px cursor-pointer"
-				onClick={() => play(track.id)}
+				onClick={handleClick}
 			>
 				<LikeItemImage
 					status={effectiveStatus}
