@@ -49,6 +49,7 @@ const config = {
 			animation: {
 				slideUp: "slideUp 150ms ease-out forwards",
 				slideDown: "slideDown 150ms ease-out forwards",
+				marquee: "marquee var(--marquee-duration, 8s) linear infinite",
 			},
 			keyframes: {
 				slideUp: {
@@ -58,6 +59,10 @@ const config = {
 				slideDown: {
 					from: { transform: "translateY(0)" },
 					to: { transform: "translateY(100%)" },
+				},
+				marquee: {
+					"0%": { transform: "translateX(0)" },
+					"100%": { transform: "translateX(var(--scroll-distance, -50%))" },
 				},
 			},
 		},
