@@ -68,8 +68,8 @@ const ArtistCardSection = ({
 
 	const router = useRouter();
 
-	const onClickArtist = (artistId: number) => {
-		router.push(`/artists/${artistId}`);
+	const onClickArtist = (slug: string) => {
+		router.push(`/artists/${slug}`);
 	};
 
 	return (
@@ -92,7 +92,7 @@ const ArtistCardSection = ({
 									activeView === ViewType.GRID && "flex flex-col items-center justify-center gap-2 cursor-pointer",
 									activeView === ViewType.LIST && "flex items-center justify-between border-t-4px py-2 cursor-pointer",
 								)}
-								onClick={() => onClickArtist(artist.artistId)}
+								onClick={() => artist.slug && onClickArtist(artist.slug)}
 							>
 								<div
 									className={cn(
