@@ -216,8 +216,8 @@ export class ArtistService {
 
 			return {
 				...artist,
-				id: Number(artist.id),
-				userId: Number(artist.userId),
+				id: artist.id,
+				userId: artist.userId,
 				profileImageUrl: profileImageFile[0]?.url || null,
 				followerCount,
 				trackCount,

@@ -23,6 +23,7 @@ export default defineConfig({
 		"playlist/index": "src/playlist/index.ts",
 		"question/index": "src/question/index.ts",
 		"inquiry/index": "src/inquiry/index.ts",
+		"notification/index": "src/notification/index.ts",
 	},
 	format: ["cjs", "esm"],
 	dts: true,

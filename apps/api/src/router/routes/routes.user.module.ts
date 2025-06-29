@@ -14,6 +14,7 @@ import { CouponModule } from "~/modules/coupon/coupon.module";
 import { PaymentModule } from "~/modules/payment/payment.module";
 import { SearchModule } from "~/modules/search/search.module";
 import { PlaylistModule } from "~/modules/playlist/playlist.module";
+import { NotificationModule } from "~/modules/notification/notification.module";
 
 @Module({
 	controllers: [],
@@ -35,6 +36,7 @@ import { PlaylistModule } from "~/modules/playlist/playlist.module";
 		CouponModule,
 		SearchModule,
 		PlaylistModule,
+		NotificationModule,
 	],
 })
 export class RoutesUserModule {}

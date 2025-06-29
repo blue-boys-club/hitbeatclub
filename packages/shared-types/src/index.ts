@@ -18,3 +18,4 @@ export * from "./payment";
 export * from "./question";
 export * from "./inquiry";
 export * from "./playlist";
+export * from "./notification";
