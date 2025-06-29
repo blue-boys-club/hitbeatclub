@@ -285,14 +285,14 @@ export class UserService {
 					a.stage_name as "stageName", 
 					a.slug as "slug",
 					f.url as "profileImageUrl",
-					(SELECT COUNT(*) FROM user_artist_follow WHERE artist_id = a.id) as "followerCount"
+					(SELECT COUNT(*) FROM user_artist_follow WHERE artist_id = a.id AND deleted_at IS NULL) as "followerCount"
 				FROM user_artist_follow uaf
-				INNER JOIN artist a ON a.id = uaf.artist_id 
+				INNER JOIN artist a ON a.id = uaf.artist_id
 				LEFT JOIN file f ON f.target_table = 'artist'
 					AND f.target_id = a.id
 					AND f.type = ${ENUM_FILE_TYPE.ARTIST_PROFILE_IMAGE}
 					AND f.is_enabled = 1
-				WHERE uaf.user_id = ${BigInt(userId)}
+				WHERE uaf.user_id = ${userId}
 					AND uaf.deleted_at IS NULL
 					${search ? Prisma.sql`AND a.stage_name LIKE ${`%${search}%`}` : Prisma.empty}
 				${
