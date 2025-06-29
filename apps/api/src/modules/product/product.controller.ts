@@ -458,9 +458,10 @@ export class ProductController {
 			}
 		})();
 
-		// 압축 파일인 경우 Downloadable - Content-Disposition 헤더 설정
+		// 압축 파일 / 음원 파일인 경우 Downloadable - Content-Disposition 헤더 설정
 		const contentDisposition =
-			productUploadFileRequestDto.type === ENUM_FILE_TYPE.PRODUCT_ZIP_FILE
+			productUploadFileRequestDto.type === ENUM_FILE_TYPE.PRODUCT_ZIP_FILE ||
+			productUploadFileRequestDto.type === ENUM_FILE_TYPE.PRODUCT_AUDIO_FILE
 				? `attachment; filename="${file.originalname}"`
 				: undefined;
 
@@ -548,7 +549,7 @@ export class ProductController {
 		return {
 			statusCode: 200,
 			message: productMessage.find.success,
-			data: { id: Number(file.id), url },
+			data: { id: Number(file.id), url, originalName: file.originName },
 		};
 	}
 }

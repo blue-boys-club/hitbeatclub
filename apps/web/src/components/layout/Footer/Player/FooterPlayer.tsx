@@ -20,6 +20,7 @@ import { getProductFileDownloadLinkQueryOption } from "@/apis/product/query/prod
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 import { SidebarType, useLayoutStore } from "@/stores/layout";
 import { cn } from "@/common/utils/tailwind";
+import Link from "next/link";
 
 /**
  * 푸터 플레이어 컴포넌트
@@ -324,12 +325,18 @@ export const FooterPlayer = () => {
 										</div>
 									)}
 									<div className="flex flex-col gap-1">
-										<div className="text-xl font-bold leading-none text-black w-40 truncate">
+										<Link
+											href={`/products/${productData.id}`}
+											className="text-xl font-bold leading-none text-black w-40 truncate"
+										>
 											{productData.productName}
-										</div>
-										<div className="text-base font-bold leading-none w-36 text-black/70 truncate">
+										</Link>
+										<Link
+											href={`/artists/${productData.seller?.slug}`}
+											className="text-base font-bold leading-none w-36 text-black/70 truncate"
+										>
 											{productData.seller?.stageName}
-										</div>
+										</Link>
 									</div>
 								</div>
 

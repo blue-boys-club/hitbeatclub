@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useCallback, useRef, useState, useEffect, useMemo } from "react";
 import ReactPlayer from "react-player";
+import { useAudioStore } from "@/stores/audio";
 
 interface AudioState {
 	isPlaying: boolean;
@@ -59,14 +60,24 @@ interface AudioProviderProps {
 export const AudioProvider = ({ children }: AudioProviderProps) => {
 	const playerRef = useRef<ReactPlayer>(null);
 
-	const [state, setState] = useState<AudioState>({
-		isPlaying: false,
-		currentTime: 0,
-		duration: 0,
-		volume: 0.5,
-		isMuted: false,
-		isUserSeeking: false, // 사용자가 시크바를 조작 중인지 여부
+	const [state, setState] = useState<AudioState>(() => {
+		const storeState = useAudioStore.getState();
+		return {
+			isPlaying: false,
+			currentTime: 0,
+			duration: 0,
+			volume: storeState.volume,
+			isMuted: storeState.isMuted,
+			isUserSeeking: false,
+		};
 	});
+
+	// zustand store에서 volume, isMuted 값을 구독합니다.
+	const volume = useAudioStore((s) => s.volume);
+	const isMuted = useAudioStore((s) => s.isMuted);
+
+	const setVolume = useAudioStore((s) => s.setVolume);
+	const toggleMute = useAudioStore((s) => s.toggleMute);
 
 	// 외부에서 주입되는 콜백들을 ref에 저장하여 불필요한 리렌더를 방지
 	const callbacksRef = useRef<{
@@ -146,24 +157,26 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
 		setState((prev) => ({ ...prev, isUserSeeking: false }));
 	}, []);
 
-	// 볼륨 컨트롤
-	const onVolumeChange = useCallback((volume: number) => {
+	// 볼륨 컨트롤 -> zustand store 로 위임
+	const onVolumeChange = useCallback(
+		(volumeValue: number) => {
+			setVolume(volumeValue);
+		},
+		[setVolume],
+	);
+
+	const onMuteToggle = useCallback(() => {
+		toggleMute();
+	}, [toggleMute]);
+
+	// store 의 volume, isMuted 변경 시 state 와 동기화하여 컨텍스트에 반영
+	useEffect(() => {
 		setState((prev) => ({
 			...prev,
 			volume,
-			isMuted: volume === 0,
+			isMuted,
 		}));
-	}, []);
-
-	const onMuteToggle = useCallback(() => {
-		setState((prev) => {
-			if (prev.isMuted) {
-				return { ...prev, isMuted: false, volume: prev.volume || 0.5 };
-			} else {
-				return { ...prev, isMuted: true, volume: 0 };
-			}
-		});
-	}, []);
+	}, [volume, isMuted]);
 
 	// 모드 컨트롤 - 외부 콜백 호출
 	const toggleRepeatMode = useCallback(() => {
