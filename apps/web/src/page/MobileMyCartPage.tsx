@@ -161,7 +161,7 @@ export const MobileMyCartPage = () => {
 							key={item.id}
 							title={item.product.productName}
 							artist={item.product.seller?.stageName || "Unknown Artist"}
-							imageUrl={item.product.coverImage?.url || "https://street-h.com/wp-content/uploads/2023/03/hanroro.jpg"}
+							imageUrl={item.product.coverImage?.url || ""}
 							price={item.selectedLicense.price}
 							licenseType={item.selectedLicense.type}
 							cartItemId={item.id}

@@ -67,13 +67,15 @@ export const MobileProductTrackCarouselItem = ({ track }: MobileProductTrackCaro
 
 	const onPlayHandler = useCallback(() => {
 		// 플레이리스트를 초기화하고 클릭한 곡만 추가
-		setPlaylist([{
-			id: track.id,
-			productName: track.productName,
-			coverImage: track.coverImage,
-			seller: track.seller,
-		}]);
-		
+		setPlaylist([
+			{
+				id: track.id,
+				productName: track.productName,
+				coverImage: track.coverImage,
+				seller: track.seller,
+			},
+		]);
+
 		// 곡 재생
 		play(track.id);
 	}, [play, track.id, track.productName, track.coverImage, track.seller, setPlaylist]);

@@ -10,7 +10,7 @@ import { useCallback } from "react";
 export const MobileMyCartItem = ({
 	title = "La Vie En Rose",
 	artist = "Moon River",
-	imageUrl = "https://street-h.com/wp-content/uploads/2023/03/hanroro.jpg",
+	imageUrl = "",
 	price,
 	licenseType,
 	cartItemId,
@@ -38,28 +38,31 @@ export const MobileMyCartItem = ({
 	const { play } = usePlayTrack();
 
 	// 앨범 커버 클릭 핸들러 (재생)
-	const handleAlbumClick = useCallback((e: React.MouseEvent) => {
-		e.stopPropagation();
-		
-		if (!productId) {
-			toast({
-				description: "재생할 수 없는 항목입니다.",
-				variant: "destructive",
-			});
-			return;
-		}
-		
-		// 플레이리스트 초기화 후 해당 곡만 추가
-		const playlistProduct = {
-			id: productId,
-			productName: title,
-			coverImage: imageUrl ? { url: imageUrl } : undefined,
-			seller: { stageName: artist },
-		};
-		
-		setPlaylist([playlistProduct]);
-		play(productId);
-	}, [productId, title, imageUrl, artist, setPlaylist, play, toast]);
+	const handleAlbumClick = useCallback(
+		(e: React.MouseEvent) => {
+			e.stopPropagation();
+
+			if (!productId) {
+				toast({
+					description: "재생할 수 없는 항목입니다.",
+					variant: "destructive",
+				});
+				return;
+			}
+
+			// 플레이리스트 초기화 후 해당 곡만 추가
+			const playlistProduct = {
+				id: productId,
+				productName: title,
+				coverImage: imageUrl ? { url: imageUrl } : undefined,
+				seller: { stageName: artist },
+			};
+
+			setPlaylist([playlistProduct]);
+			play(productId);
+		},
+		[productId, title, imageUrl, artist, setPlaylist, play, toast],
+	);
 
 	const handleDelete = () => {
 		if (!cartItemId || !userId) {
@@ -89,7 +92,7 @@ export const MobileMyCartItem = ({
 	return (
 		<div className="bg-[#dadada] p-2 rounded-5px flex justify-between items-center hover:bg-[#D9D9D9] cursor-pointer">
 			<div className="flex gap-2">
-				<div 
+				<div
 					className="relative w-50px h-50px rounded-5px overflow-hidden cursor-pointer"
 					onClick={handleAlbumClick}
 				>
