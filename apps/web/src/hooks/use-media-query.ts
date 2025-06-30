@@ -8,7 +8,10 @@ import { useState, useEffect } from "react";
  * @returns 미디어 쿼리 일치 여부
  */
 export const useMediaQuery = (query: string): boolean => {
-	const [matches, setMatches] = useState<boolean>(false);
+	const [matches, setMatches] = useState<boolean>(() => {
+		if (typeof window === "undefined") return false;
+		return window.matchMedia(query).matches;
+	});
 
 	useEffect(() => {
 		if (typeof window === "undefined") return;

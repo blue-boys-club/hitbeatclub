@@ -18,8 +18,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { usePlaylist } from "@/hooks/use-playlist";
+import { useResponsiveRouting } from "@/hooks/use-responsive-routing";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
+	// 모바일 기기에서 접근 시 '/mobile' 경로로 자동 리다이렉트
+	useResponsiveRouting("pc");
 	const router = useRouter();
 
 	const { data: userMe, isSuccess } = useQuery({ ...getUserMeQueryOption(), retry: false });

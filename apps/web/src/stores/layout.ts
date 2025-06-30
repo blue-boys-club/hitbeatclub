@@ -39,7 +39,7 @@ const initialState: LayoutState = {
 		isOpen: true,
 	},
 	rightSidebar: {
-		isOpen: true,
+		isOpen: false,
 		currentType: SidebarType.PLAYLIST,
 	},
 	player: {

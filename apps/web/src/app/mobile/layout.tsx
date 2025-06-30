@@ -12,8 +12,11 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useMobilePlayerVisibility } from "@/hooks/use-mobile-player-visibility";
+import { useResponsiveRouting } from "@/hooks/use-responsive-routing";
 
 export default function MobileMainLayout({ children }: { children: React.ReactNode }) {
+	// PC 환경에서 접근 시 PC 레이아웃으로 자동 리다이렉트
+	useResponsiveRouting("mobile");
 	const router = useRouter();
 	const pathname = usePathname();
 	const { isMobilePlayerVisible } = useMobilePlayerVisibility();

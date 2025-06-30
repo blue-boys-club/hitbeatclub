@@ -281,6 +281,16 @@ export const FooterPlayer = () => {
 		setStatus,
 	]);
 
+	/*
+	 * FooterPlayer 가 보이지 않으면 (재생할 트랙이 없는 경우)
+	 * 우측 플레이리스트 사이드바를 자동으로 닫는다.
+	 */
+	useEffect(() => {
+		if (!isVisible && isOpen) {
+			setRightSidebar(false);
+		}
+	}, [isVisible, isOpen, setRightSidebar]);
+
 	return (
 		<DropContentWrapper
 			id={"player"}
