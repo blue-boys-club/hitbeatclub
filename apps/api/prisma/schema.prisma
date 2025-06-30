@@ -35,7 +35,6 @@ model User {
   file                   File[]
   cart                   Cart[]
   order                  Order[]
-  payments               Payments[]
   userSocialAccount      UserSocialAccount[]
   tag                    Tag[]
   accountToken           AccountToken[]
@@ -121,29 +120,13 @@ model Order {
   updatedAt        DateTime?     @default(now()) @map("updated_at") @db.Timestamp(0)
   deletedAt        DateTime?     @map("deleted_at") @db.Timestamp(0)
   user             User          @relation(fields: [buyerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_TO_order_1")
-  orderDetail      OrderDetail[]
   orderItems       OrderItem[]
-  payments         Payments[]
 
   @@index([buyerId], map: "FK_user_TO_order_1")
   @@index([paymentId], map: "idx_order_payment_id")
   @@index([uuid], map: "idx_order_uuid")
   @@index([orderNumber], map: "idx_order_number")
   @@map("order")
-}
-
-model OrderDetail {
-  id        BigInt    @id @default(autoincrement())
-  orderId   BigInt    @map("order_id")
-  quantity  Int?      @db.TinyInt
-  unitPrice Int?      @map("unit_price")
-  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
-  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamp(0)
-  order     Order     @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_order_TO_order_detail_1")
-
-  @@index([orderId], map: "FK_order_TO_order_detail_1")
-  @@map("order_detail")
 }
 
 model OrderItem {
@@ -166,25 +149,6 @@ model OrderItem {
   @@map("order_item")
 }
 
-model Payments {
-  id            BigInt    @id @default(autoincrement())
-  orderId       BigInt    @map("order_id")
-  userId        BigInt    @map("user_id")
-  paymentMethod String?   @map("payment_method") @db.VarChar(50)
-  paymentKey    String?   @map("payment_key") @db.VarChar(255)
-  amount        Int?
-  status        String?   @db.VarChar(50)
-  paidAt        DateTime? @map("paid_at") @db.Timestamp(0)
-  createdAt     DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
-  updatedAt     DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
-  deletedAt     DateTime? @map("deleted_at") @db.Timestamp(0)
-  order         Order     @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_order_TO_payments_1")
-  user          User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_order_TO_payments_2")
-
-  @@index([orderId], map: "FK_order_TO_payments_1")
-  @@index([userId], map: "FK_order_TO_payments_2")
-  @@map("payments")
-}
 
 model Product {
   id                        BigInt    @id @default(autoincrement())
