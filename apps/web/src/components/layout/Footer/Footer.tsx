@@ -107,7 +107,7 @@ export const Footer = () => {
 				</div>
 				<div className="flex flex-col">
 					<Link
-						href="/notices"
+						href="/mobile/notice"
 						className="flex items-center gap-3px"
 					>
 						공지사항
