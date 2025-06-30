@@ -22,6 +22,7 @@ import { GenreButton } from "@/components/ui/GenreButton";
 import { TagButton } from "@/components/ui/TagButton";
 import { AlbumAvatar } from "@/components/ui/Avatar/AlbumAvatar";
 import { usePlayTrack } from "@/hooks/use-play-track";
+import Link from "next/link";
 
 /**
  * 음악 상세 정보를 보여주는 우측 사이드바 컴포넌트
@@ -35,7 +36,7 @@ export const MusicRightSidebar = memo(() => {
 	const pathname = usePathname();
 	const { data: user } = useQuery(getUserMeQueryOption());
 
-	const titleRef = useRef<HTMLDivElement>(null);
+	const titleRef = useRef<HTMLAnchorElement>(null);
 	const titleContainerRef = useRef<HTMLDivElement>(null);
 	const [shouldAnimate, setShouldAnimate] = useState(false);
 
@@ -227,11 +228,12 @@ export const MusicRightSidebar = memo(() => {
 				<div className="px-6">
 					<div
 						ref={titleContainerRef}
-						className="w-full mb-2 text-hbc-black text-[32px] font-suisse font-bold tracking-[0.32px] leading-[40px] overflow-hidden"
+						className="w-full mb-2 text-hbc-black text-[32px] font-suisse font-bold tracking-[0.32px] leading-[40px] overflow-hidden cursor-pointer"
 					>
-						<div
+						<Link
 							ref={titleRef}
-							className="whitespace-nowrap"
+							href={`/products/${currentTrack?.id}`}
+							className="whitespace-nowrap hover:underline inline-block"
 						>
 							{shouldAnimate ? (
 								<>
@@ -241,18 +243,16 @@ export const MusicRightSidebar = memo(() => {
 							) : (
 								<span className="whitespace-nowrap">{currentTrack?.productName}</span>
 							)}
-						</div>
+						</Link>
 					</div>
 
 					<div className="flex items-center justify-between gap-2 mb-4">
-						<div
-							className="text-lg font-suisse cursor-pointer"
-							onClick={() => {
-								router.push(`/artists/${currentTrack?.seller.id}`);
-							}}
+						<Link
+							href={`/artists/${currentTrack?.seller.id}`}
+							className="text-lg font-suisse cursor-pointer hover:underline"
 						>
 							{currentTrack?.seller.stageName}
-						</div>
+						</Link>
 						<div>
 							{currentTrack?.category === "BEAT" && <Beat className="w-16 h-4" />}
 							{currentTrack?.category === "ACAPELA" && <Acapella className="w-16 h-4" />}
@@ -276,6 +276,7 @@ export const MusicRightSidebar = memo(() => {
 									<GenreButton
 										name={`${currentTrack?.musicKey || ""} ${(currentTrack?.scaleType || "").toLowerCase()}`}
 										showDeleteButton={false}
+										readOnly
 									/>
 								)}
 								{currentTrack?.minBpm && (
@@ -285,6 +286,7 @@ export const MusicRightSidebar = memo(() => {
 												? `BPM ${currentTrack?.minBpm || 0}`
 												: `BPM ${currentTrack?.minBpm || 0} - ${currentTrack?.maxBpm || 0}`
 										}
+										readOnly
 										showDeleteButton={false}
 									/>
 								)}
@@ -294,6 +296,7 @@ export const MusicRightSidebar = memo(() => {
 									<GenreButton
 										key={genre.id}
 										name={genre.name}
+										readOnly
 									/>
 								))}
 							</div>
