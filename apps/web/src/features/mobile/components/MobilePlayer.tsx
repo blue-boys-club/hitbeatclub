@@ -87,6 +87,7 @@ export const MobilePlayer = () => {
 		autoPlay,
 		stop,
 		isPlaying: contextIsPlaying,
+		togglePlay,
 		onProgress,
 		onDuration,
 		volume,
@@ -107,6 +108,9 @@ export const MobilePlayer = () => {
 
 	// 사용자의 명시적인 일시정지 액션 추적
 	const [userPausedRef, setUserPausedRef] = useState(false);
+
+	// 이전 재생 상태를 추적하여 외부 토글(예: 트랙 리스트 클릭)에 의한 일시정지를 감지
+	const prevContextPlayingRef = useRef(contextIsPlaying);
 
 	// 오디오 파일 다운로드 링크 조회
 	const { data: audioFileDownloadLink, error: audioFileError } = useQuery({
@@ -155,18 +159,19 @@ export const MobilePlayer = () => {
 	}, [contextIsPlaying, isFullScreen]);
 
 	const onPlayHandler = useCallback(() => {
-		if (currentProductId) {
-			// 현재 재생 중인 트랙과 같은 트랙을 클릭한 경우
-			if (contextIsPlaying) {
-				// 일시정지 -> 사용자 액션으로 기록
-				setUserPausedRef(true);
-			} else {
-				// 재생 -> 사용자 일시정지 상태 해제
-				setUserPausedRef(false);
-			}
-			play(currentProductId);
+		if (!currentProductId) return;
+
+		if (contextIsPlaying) {
+			// 일시정지 -> 사용자 액션으로 기록
+			setUserPausedRef(true);
+		} else {
+			// 재생 -> 사용자 일시정지 상태 해제
+			setUserPausedRef(false);
 		}
-	}, [play, currentProductId, contextIsPlaying]);
+
+		// 같은 트랙일 경우 AudioContext 토글만 수행
+		togglePlay();
+	}, [currentProductId, contextIsPlaying, togglePlay]);
 
 	const onClickLike = useCallback(() => {
 		if (!currentProductId || !productData) return;
@@ -669,6 +674,18 @@ export const MobilePlayer = () => {
 			document.removeEventListener("keydown", handleKeyDown);
 		};
 	}, [currentProductId, onPlayHandler]);
+
+	// 이전 재생 상태를 추적하여 외부 토글(예: 트랙 리스트 클릭)에 의한 일시정지를 감지
+	useEffect(() => {
+		if (prevContextPlayingRef.current && !contextIsPlaying) {
+			// 재생 → 일시정지 로 변경됨: 사용자가 일시정지했다고 간주
+			setUserPausedRef(true);
+		} else if (!prevContextPlayingRef.current && contextIsPlaying) {
+			// 일시정지 → 재생 로 변경됨: 사용자 일시정지 상태 해제
+			setUserPausedRef(false);
+		}
+		prevContextPlayingRef.current = contextIsPlaying;
+	}, [contextIsPlaying]);
 
 	if (!currentProductId) {
 		return null;

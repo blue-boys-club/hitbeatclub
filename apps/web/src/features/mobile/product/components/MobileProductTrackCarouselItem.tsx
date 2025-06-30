@@ -68,6 +68,15 @@ export const MobileProductTrackCarouselItem = ({
 	}, [status, currentProductId, track.id]);
 
 	const onPlayHandler = useCallback(async () => {
+		const isCurrentTrack = currentProductId === track.id;
+
+		// 현재 재생 중인 트랙을 다시 클릭한 경우 → 토글만 수행
+		if (isCurrentTrack) {
+			play(track.id); // 내부에서 togglePlay 실행
+			return;
+		}
+
+		// 자동 플레이리스트 설정이 있는 경우
 		if (autoPlaylistConfig) {
 			try {
 				await createAutoPlaylistAndPlay(autoPlaylistConfig, trackIndex);
@@ -77,10 +86,11 @@ export const MobileProductTrackCarouselItem = ({
 				console.error("auto playlist failed", e);
 			}
 		}
-		// fallback single
+
+		// 일반 단일 트랙 재생 (새 플레이리스트 구성)
 		setCurrentTrackIds([track.id], 0);
 		play(track.id);
-	}, [autoPlaylistConfig, trackIndex, createAutoPlaylistAndPlay, setCurrentTrackIds, play, track.id]);
+	}, [autoPlaylistConfig, trackIndex, createAutoPlaylistAndPlay, setCurrentTrackIds, play, track.id, currentProductId]);
 
 	return (
 		<div
