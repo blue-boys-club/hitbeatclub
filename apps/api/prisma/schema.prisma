@@ -77,7 +77,8 @@ model Artist {
   userArtistFollow           UserArtistFollow[]
   userArtistBlock            UserArtistBlock[]
   artistReport               ArtistReport[]
-
+  orderItems                 OrderItem[]
+  
   @@unique([slug, deletedAt], map: "ux_artist_slug")
   @@index([userId], map: "FK_user_TO_artist_1")
   @@map("artist")
@@ -133,6 +134,7 @@ model OrderItem {
   id          BigInt    @id @default(autoincrement())
   orderId     BigInt    @map("order_id")
   productId   BigInt    @map("product_id")
+  sellerId    BigInt?    @map("seller_id")
   licenseId   BigInt    @map("license_id")
   productName String    @map("product_name") @db.VarChar(255)
   price       Int
@@ -142,7 +144,9 @@ model OrderItem {
   order       Order     @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_order_TO_order_item_1")
   product     Product   @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_product_TO_order_item_1")
   license     License   @relation(fields: [licenseId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_license_TO_order_item_1")
+  artist      Artist?    @relation(fields: [sellerId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_artist_TO_order_item_1")
 
+  @@index([sellerId], map: "FK_artist_TO_order_item_1")
   @@index([orderId], map: "FK_order_TO_order_item_1")
   @@index([productId], map: "FK_product_TO_order_item_1")
   @@index([licenseId], map: "FK_license_TO_order_item_1")

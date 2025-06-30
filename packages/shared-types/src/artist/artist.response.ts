@@ -9,6 +9,7 @@ export const ArtistResponseSchema = z.object({
 	viewCount: z.number().describe("조회수").default(0),
 	followerCount: z.number().describe("팔로워 수").default(0),
 	trackCount: z.number().describe("트랙 수").default(0),
+	soldTrackCount: z.number().describe("판매한 트랙 수").default(0),
 	isVerified: z.coerce.boolean().nullable().describe("인증 여부").default(false),
 	description: z.string().nullable().describe("아티스트 설명").default("한국의 유명 DJ이자 프로듀서"),
 	profileImageUrl: z.string().nullable().describe("프로필 이미지 URL").default("https://example.com/profile.jpg"),
@@ -33,6 +34,23 @@ export const ArtistResponseSchema = z.object({
 	createdAt: z.date().nullable().describe("생성일").default(new Date("2024-01-01")),
 	updatedAt: z.date().nullable().describe("수정일").default(new Date("2024-01-01")),
 	deletedAt: z.date().nullable().describe("삭제일").default(null),
+	subscribe: z
+		.object({
+			id: z.number().describe("구독 ID").default(1),
+			userId: z.number().describe("사용자 ID").default(1),
+			couponId: z.number().nullable().describe("쿠폰 ID").default(null),
+			subscriptionPlan: z.string().describe("구독 플랜").default("YEAR"),
+			productType: z.string().describe("상품 타입").default("MEMBERSHIP"),
+			price: z.number().describe("가격").default(239880),
+			nextPaymentDate: z.date().nullable().describe("다음 결제일").default(null),
+			status: z.string().describe("상태").default("ACTIVE"),
+			cancelledAt: z.date().nullable().describe("취소일").default(null),
+			createdAt: z.date().describe("생성일").default(new Date("2025-06-26T11:22:12.000Z")),
+			updatedAt: z.date().describe("수정일").default(new Date("2025-06-26T11:22:12.000Z")),
+			deletedAt: z.date().nullable().describe("삭제일").default(null),
+		})
+		.nullable()
+		.describe("구독 정보"),
 });
 
 export const ArtistListResponseSchema = z.object({

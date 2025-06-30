@@ -109,6 +109,30 @@ export class ArtistService {
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
 
+		// subscribe 조회
+		const subscribe = await this.prisma.subscribe
+			.findFirst({
+				where: {
+					userId,
+					deletedAt: null,
+					cancelledAt: null,
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+
+		const soldTrackCount = await this.prisma.orderItem
+			.count({
+				where: {
+					sellerId: artist.id,
+					deletedAt: null,
+					order: {
+						status: "COMPLETED",
+						deletedAt: null,
+					},
+				},
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
+
 		if (!artist) {
 			throw new NotFoundException("Artist not found");
 		}
@@ -121,6 +145,8 @@ export class ArtistService {
 
 		return {
 			...artist,
+			subscribe: subscribe || null,
+			soldTrackCount,
 			id: Number(artist.id),
 			userId: Number(artist.userId),
 			profileImage: profileImageFile[0] || null,

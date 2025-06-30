@@ -112,7 +112,7 @@ export class PaymentService {
 		try {
 			// 주문에 포함될 아이템 목록
 			let selectedItems: Array<{
-				product: { id: number; productName: string };
+				product: { id: number; productName: string; sellerId: number };
 				selectedLicense: { id: number; type: string; price: number };
 			}> = [];
 
@@ -129,7 +129,7 @@ export class PaymentService {
 				// 선택된 아이템들만 필터링 (dto.cartItemIds가 제공된 경우)
 				const cartSelected =
 					dto.cartItemIds && dto.cartItemIds.length > 0
-						? cartItems.filter((item) => dto.cartItemIds!.includes(Number(item.id)))
+						? cartItems.filter((item) => dto.cartItemIds.includes(Number(item.id)))
 						: cartItems;
 
 				if (cartSelected.length === 0) {
@@ -141,6 +141,7 @@ export class PaymentService {
 					product: {
 						id: Number(item.product.id),
 						productName: item.product.productName,
+						sellerId: Number(item.product.seller?.id),
 					},
 					selectedLicense: {
 						id: Number(item.selectedLicense.id),
@@ -174,6 +175,7 @@ export class PaymentService {
 							product: {
 								id: product.id,
 								productName: product.productName,
+								sellerId: product.seller.id,
 							},
 							selectedLicense: {
 								id: licenseInfo.id,
@@ -222,6 +224,7 @@ export class PaymentService {
 			await this.prisma.orderItem.createMany({
 				data: selectedItems.map((item) => ({
 					orderId: order.id,
+					sellerId: BigInt(item.product.sellerId),
 					productId: BigInt(item.product.id),
 					licenseId: BigInt(item.selectedLicense.id),
 					price: item.selectedLicense.price,
