@@ -16,7 +16,7 @@ interface AuthLoginButtonWrapperProps {
  * OAuth URL을 동적으로 생성하여 SSR 문제를 해결합니다.
  */
 export const AuthLoginButtonWrapper = ({ className }: AuthLoginButtonWrapperProps) => {
-	const { handleGoogleLogin, isReady: isGoogleReady } = useGoogleAuth();
+	const { handleGoogleLogin, isReady: isGoogleReady } = useGoogleAuth("pc");
 	const [kakaoUrl, setKakaoUrl] = useState<string>("");
 	const [naverUrl, setNaverUrl] = useState<string>("");
 	const [isOAuthUrlsReady, setIsOAuthUrlsReady] = useState<boolean>(false);
@@ -24,8 +24,8 @@ export const AuthLoginButtonWrapper = ({ className }: AuthLoginButtonWrapperProp
 	useEffect(() => {
 		// 클라이언트 사이드에서만 OAuth URL 생성
 		try {
-			const kakaoOAuthUrl = generateKakaoOAuthURL();
-			const naverOAuthUrl = generateNaverOAuthURL();
+			const kakaoOAuthUrl = generateKakaoOAuthURL("pc");
+			const naverOAuthUrl = generateNaverOAuthURL("pc");
 
 			setKakaoUrl(kakaoOAuthUrl);
 			setNaverUrl(naverOAuthUrl);

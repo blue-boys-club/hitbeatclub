@@ -13,9 +13,10 @@ const DEBUG = process.env.NODE_ENV === "development";
 
 interface AuthCallbackHandlerPageProps {
 	authType: string;
+	type: string;
 }
 
-export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPageProps): React.ReactNode => {
+export const AuthCallbackHandlerPage = ({ authType, type }: AuthCallbackHandlerPageProps): React.ReactNode => {
 	const loginAttempted = useRef(false);
 	const [authCompleted, setAuthCompleted] = useState(false);
 	const [authNeedSignup, setAuthNeedSignup] = useState(false);
@@ -138,9 +139,10 @@ export const AuthCallbackHandlerPage = ({ authType }: AuthCallbackHandlerPagePro
 			console.log("authNeedSignup", authNeedSignup);
 			router.push("/auth/signup");
 		} else {
-			router.push("/");
+			const redirectPath = type === "mobile" ? "/mobile" : "/";
+			router.push(redirectPath);
 		}
-	}, [authCompleted, authNeedSignup, router]);
+	}, [authCompleted, authNeedSignup, router, type]);
 
 	return (
 		<div className="flex flex-col items-center justify-center min-h-screen">

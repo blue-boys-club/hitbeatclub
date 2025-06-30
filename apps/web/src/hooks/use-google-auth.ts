@@ -10,7 +10,7 @@ const GOOGLE_SCOPES = [
 	"https://www.googleapis.com/auth/userinfo.profile",
 ];
 
-export const useGoogleAuth = () => {
+export const useGoogleAuth = (type: "pc" | "mobile" = "pc") => {
 	const router = useRouter();
 	const [isReady, setIsReady] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
@@ -38,12 +38,12 @@ export const useGoogleAuth = () => {
 			const client = window.google?.accounts.oauth2.initCodeClient({
 				client_id: process.env.NEXT_PUBLIC_AUTH_SOCIAL_GOOGLE_CLIENT_ID || "",
 				scope: GOOGLE_SCOPES.join(" "),
-				redirect_uri: `${window.location.origin}/auth/google/callback`,
+				redirect_uri: `${window.location.origin}/auth/google/callback/${type}`,
 				callback: (response) => {
 					try {
 						if (response && response.code) {
 							setGoogleAuth(response.code);
-							router.push(`/auth/google/callback`);
+							router.push(`/auth/google/callback/${type}`);
 						}
 					} catch (error) {
 						console.error(error);
@@ -58,7 +58,7 @@ export const useGoogleAuth = () => {
 			setError("Google 로그인 준비가 아직 안됐어요.");
 			setIsLoading(false);
 		}
-	}, [scriptStatus, router, setGoogleAuth]);
+	}, [scriptStatus, router, setGoogleAuth, type]);
 
 	return { isReady, isLoading, error, handleGoogleLogin };
 };

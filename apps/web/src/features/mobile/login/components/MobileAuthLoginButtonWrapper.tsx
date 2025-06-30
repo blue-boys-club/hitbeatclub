@@ -17,7 +17,7 @@ interface MobileAuthLoginButtonWrapperProps {
  * 모바일에 최적화된 작은 크기와 스타일을 적용합니다.
  */
 export const MobileAuthLoginButtonWrapper = ({ className }: MobileAuthLoginButtonWrapperProps) => {
-	const { handleGoogleLogin, isReady: isGoogleReady } = useGoogleAuth();
+	const { handleGoogleLogin, isReady: isGoogleReady } = useGoogleAuth("mobile");
 	const [kakaoUrl, setKakaoUrl] = useState<string>("");
 	const [naverUrl, setNaverUrl] = useState<string>("");
 	const [isOAuthUrlsReady, setIsOAuthUrlsReady] = useState<boolean>(false);
@@ -25,8 +25,8 @@ export const MobileAuthLoginButtonWrapper = ({ className }: MobileAuthLoginButto
 	useEffect(() => {
 		// 클라이언트 사이드에서만 OAuth URL 생성
 		try {
-			const kakaoOAuthUrl = generateKakaoOAuthURL();
-			const naverOAuthUrl = generateNaverOAuthURL();
+			const kakaoOAuthUrl = generateKakaoOAuthURL("mobile");
+			const naverOAuthUrl = generateNaverOAuthURL("mobile");
 
 			setKakaoUrl(kakaoOAuthUrl);
 			setNaverUrl(naverOAuthUrl);
