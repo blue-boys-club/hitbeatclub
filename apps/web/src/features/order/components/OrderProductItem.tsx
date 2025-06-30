@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Acapella, Beat, Download } from "@/assets/svgs";
 import { cn } from "@/common/utils";
 import { type ClassValue } from "clsx";
@@ -14,6 +14,7 @@ import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
 import { AxiosError } from "axios";
 import { getProductFileDownloadLinkQueryOption } from "@/apis/product/query/product.query-option";
 import { useQueryClient } from "@tanstack/react-query";
+import { LicenseViewModal } from "./modal/LicenseViewModal";
 
 type OrderProductItemProps = {
 	item: PaymentOrderItem;
@@ -28,6 +29,7 @@ export const OrderProductItem = ({ item, className }: OrderProductItemProps) => 
 	const [isDownloading, setIsDownloading] = useState(false);
 	const { toast } = useToast();
 	const queryClient = useQueryClient();
+	const [isLicenseModalOpen, setIsLicenseModalOpen] = useState(false);
 
 	const handleDownload = async () => {
 		setIsDownloading(true);
@@ -78,6 +80,10 @@ export const OrderProductItem = ({ item, className }: OrderProductItemProps) => 
 
 	const handleConfirmDownload = () => {
 		handleDownload();
+	};
+
+	const handleLicenseViewClick = () => {
+		setIsLicenseModalOpen(true);
 	};
 
 	// Determine product type from category (스키마에서 ACAPELA로 정의되어 있음)
@@ -156,6 +162,7 @@ export const OrderProductItem = ({ item, className }: OrderProductItemProps) => 
 							<div className={cn("rounded-5px inline-flex justify-center items-center gap-2.5 overflow-hidden")}>
 								<button
 									className={"text-hbc-blue text-12px font-bold font-suit leading-16px tracking-012px cursor-pointer"}
+									onClick={handleLicenseViewClick}
 								>
 									라이센스 보기
 								</button>
@@ -212,6 +219,12 @@ export const OrderProductItem = ({ item, className }: OrderProductItemProps) => 
 				onClose={() => setIsDownloadModalOpen(false)}
 				onConfirmDownload={handleConfirmDownload}
 				links={artistLinks}
+			/>
+
+			<LicenseViewModal
+				isOpen={isLicenseModalOpen}
+				onClose={() => setIsLicenseModalOpen(false)}
+				licenseType={item.licenseType}
 			/>
 		</>
 	);
