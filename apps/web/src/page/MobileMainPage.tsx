@@ -98,7 +98,10 @@ export default function MobileMainPage() {
 						<Button
 							size={"sm"}
 							variant={"outline"}
-							className={cn("rounded-none border-4 px-2", currentTab === "ALL" && "bg-black text-white")}
+							className={cn(
+								"bg-white hover:bg-white rounded-none border-4 px-2",
+								currentTab === "ALL" && "bg-black hover:bg-black text-white",
+							)}
 							onClick={() => setCurrentTab("ALL")}
 						>
 							ALL
@@ -107,7 +110,10 @@ export default function MobileMainPage() {
 							size={"sm"}
 							variant={"outline"}
 							rounded={"full"}
-							className={cn("border-4 px-2", currentTab === "BEAT" && "bg-black text-white")}
+							className={cn(
+								"bg-white hover:bg-white border-4 px-2",
+								currentTab === "BEAT" && "bg-black hover:bg-black text-white",
+							)}
 							onClick={() => setCurrentTab("BEAT")}
 						>
 							BEAT
@@ -116,7 +122,10 @@ export default function MobileMainPage() {
 							size={"sm"}
 							variant={"outline"}
 							rounded={"full"}
-							className={cn("border-4 px-2", currentTab === "ACAPELLA" && "bg-black text-white")}
+							className={cn(
+								"bg-white hover:bg-white border-4 px-2",
+								currentTab === "ACAPELLA" && "bg-black hover:bg-black text-white",
+							)}
 							onClick={() => setCurrentTab("ACAPELLA")}
 						>
 							ACAPELLA

@@ -24,6 +24,10 @@ interface MobileHeaderNavOption {
 
 const mobileHeaderNavOptions: MobileHeaderNavOption[] = [
 	{
+		label: "내 프로필",
+		value: "profile",
+	},
+	{
 		label: "구독정보",
 		value: "subscribe",
 	},
@@ -85,6 +89,9 @@ const MobileHeader = () => {
 	const handleDropdownOptionSelect = useCallback(
 		(value: string) => {
 			switch (value) {
+				case "profile":
+					void router.push("/mobile/settings");
+					break;
 				case "subscribe":
 					void router.push("/mobile/subscribe");
 					break;
