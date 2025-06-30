@@ -164,6 +164,7 @@ model Product {
   currency                  String?   @db.VarChar(10)
   isFreeDownload            Int?      @map("is_free_download") @db.TinyInt
   isPublic                  Int?      @map("is_public") @db.TinyInt
+  viewCount                 BigInt?   @map("view_count") @db.UnsignedBigInt
   createdAt                 DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt                 DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
   deletedAt                 DateTime? @map("deleted_at") @db.Timestamp(0)
@@ -501,7 +502,7 @@ model Notice {
   id          BigInt    @id @default(autoincrement())
   title       String    @db.VarChar(255)
   content     String    @db.Text
-  viewCount   Int       @default(0) @map("view_count")
+  viewCount   BigInt    @default(0) @map("view_count") @db.UnsignedBigInt
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
   deletedAt   DateTime? @map("deleted_at") @db.Timestamp(0)
