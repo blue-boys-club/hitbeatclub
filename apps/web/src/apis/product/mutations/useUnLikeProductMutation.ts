@@ -35,6 +35,11 @@ export const useUnlikeProductMutation = () => {
 			void queryClient.invalidateQueries({
 				queryKey: QUERY_KEYS.user._likedProducts,
 			});
+
+			// invalidate artist product lists
+			void queryClient.invalidateQueries({
+				queryKey: QUERY_KEYS.artist._key,
+			});
 		},
 	});
 };
