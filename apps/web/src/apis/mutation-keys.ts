@@ -27,6 +27,9 @@ export const MUTATION_KEYS = {
 		delete: (productId: number) => ["product", "delete", productId],
 		uploadFile: ["product", "uploadFile"],
 
+		like: ["product", "like"],
+		unlike: ["product", "unlike"],
+		increaseViewCount: ["product", "increaseViewCount"],
 		getFileDownloadLink: ["product", "getFileDownloadLink"],
 	},
 	artist: {

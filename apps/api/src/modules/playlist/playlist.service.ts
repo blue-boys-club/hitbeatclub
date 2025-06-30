@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException, forwardRef } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "~/common/prisma/prisma.service";
 import { ProductService } from "../product/product.service";
 import { UserService } from "../user/user.service";
@@ -16,7 +16,6 @@ export class PlaylistService {
 
 	constructor(
 		private readonly prisma: PrismaService,
-		// circular dependencies 방지를 위해 forwardRef 사용
 		private readonly productService: ProductService,
 		private readonly userService: UserService,
 		private readonly cartService: CartService,
@@ -260,6 +259,9 @@ export class PlaylistService {
 
 		const userIdBig = BigInt(userId);
 
+		// 최신 플레이리스트 정보를 담기 위한 변수
+		let playlistRecord: any;
+
 		const existing = await this.prisma.playlist
 			.findFirst({
 				where: { userId: userIdBig, deletedAt: null },
@@ -267,26 +269,104 @@ export class PlaylistService {
 			.then((playlist) => this.prisma.serializeBigIntTyped(playlist));
 
 		if (existing) {
-			await this.prisma.playlist.update({
-				where: { id: existing.id },
-				data: {
-					trackIds,
-					currentIndex,
-					updatedAt: new Date(),
-				} as any,
-			});
+			playlistRecord = await this.prisma.playlist
+				.update({
+					where: { id: existing.id },
+					data: {
+						trackIds,
+						currentIndex,
+						updatedAt: new Date(),
+					} as any,
+				})
+				.then((pl) => this.prisma.serializeBigIntTyped(pl));
 		} else {
-			await this.prisma.playlist.create({
-				data: {
-					userId: userIdBig,
-					trackIds,
-					currentIndex,
-					sourceContext: "MANUAL", // overwrite는 컨텍스트 의미 없음 → MANUAL 지정
-				} as any,
-			});
+			playlistRecord = await this.prisma.playlist
+				.create({
+					data: {
+						userId: userIdBig,
+						trackIds,
+						currentIndex,
+						sourceContext: "MANUAL", // overwrite는 컨텍스트 의미 없음 → MANUAL 지정
+					} as any,
+				})
+				.then((pl) => this.prisma.serializeBigIntTyped(pl));
+		}
+
+		// ───────── 최근 재생 트랙 관리 ─────────
+		if (trackIds.length > 0 && currentIndex >= 0) {
+			const playedTrackId = trackIds[currentIndex];
+			await this.recordRecentTrack(userId, BigInt(playlistRecord.id), playedTrackId);
 		}
 
 		return { trackIds, currentIndex };
+	}
+
+	/**
+	 * 최근 재생 트랙 저장 / 업데이트 (중복 제거, 최대 100개 유지)
+	 */
+	private async recordRecentTrack(userId: number, playlistId: bigint, playedTrackId: number) {
+		try {
+			const userIdBig = BigInt(userId);
+			const existing = await this.prisma.playedTracks
+				.findFirst({
+					where: { userId: userIdBig, deletedAt: null },
+				})
+				.then((pt) => this.prisma.serializeBigIntTyped(pt));
+
+			if (existing) {
+				let trackIds: number[] = (existing.trackIds ?? []) as number[];
+				// 중복 제거 후 맨 앞에 추가
+				trackIds = trackIds.filter((id) => id !== playedTrackId);
+				trackIds.unshift(playedTrackId);
+				trackIds = trackIds.slice(0, 100);
+
+				await this.prisma.playedTracks.update({
+					where: { id: BigInt(existing.id) },
+					data: {
+						trackIds,
+						playlistId,
+						updatedAt: new Date(),
+					} as any,
+				});
+			} else {
+				await this.prisma.playedTracks.create({
+					data: {
+						userId: userIdBig,
+						playlistId,
+						trackIds: [playedTrackId],
+					} as any,
+				});
+			}
+		} catch (e) {
+			this.logger.error(e);
+		}
+	}
+
+	/**
+	 * 최근 재생목록 조회 (GET /users/me/playlist/recent)
+	 */
+	async findRecentPlaylist(userId: number) {
+		const userIdBig = BigInt(userId);
+		const played = await this.prisma.playedTracks
+			.findFirst({
+				where: { userId: userIdBig, deletedAt: null },
+				orderBy: { updatedAt: "desc" },
+			})
+			.then((pt) => this.prisma.serializeBigIntTyped(pt));
+
+		if (!played) {
+			return { trackIds: [], tracks: [] };
+		}
+
+		const trackIds: number[] = (played.trackIds ?? []) as number[];
+		if (trackIds.length === 0) {
+			return { trackIds: [], tracks: [] };
+		}
+
+		// Product 상세 정보 병합 (order 유지)
+		const tracks = await Promise.all(trackIds.map((id) => this.productService.findOne(id, userId)));
+
+		return { trackIds, tracks };
 	}
 
 	/**

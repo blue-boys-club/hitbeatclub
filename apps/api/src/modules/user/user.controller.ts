@@ -7,7 +7,6 @@ import {
 	Body,
 	Req,
 	Post,
-	NotFoundException,
 	Query,
 	BadRequestException,
 	Put,
@@ -39,9 +38,9 @@ import { UserDeleteDto } from "./dto/request/user.delete.request.dto";
 import { UserPasswordResetDto } from "./dto/request/user.password-reset.request.dto";
 import { USER_RESET_PASSWORD_ID_MISMATCH_ERROR } from "./user.error";
 import { PlaylistFullResponseDto } from "../playlist/dto/response/playlist.full.response.dto";
-import { playlistMessage } from "../playlist/player.message";
 import { PlaylistService } from "../playlist/playlist.service";
 import { PlaylistUpdateRequestDto } from "../playlist/dto/request/playlist.update.request.dto";
+import { PlaylistRecentResponseDto } from "../playlist/dto/response/playlist.recent.response.dto";
 
 @Controller("users")
 @ApiTags("user")
@@ -387,6 +386,21 @@ export class UserController {
 		return {
 			statusCode: 200,
 			message: "재생목록 조회 성공",
+			data: result,
+		};
+	}
+
+	@Get("me/playlist/recent")
+	@ApiOperation({ summary: "최근 재생목록 조회" })
+	@AuthenticationDoc()
+	@DocResponse<PlaylistRecentResponseDto>("최근 재생목록 조회 성공", {
+		dto: PlaylistRecentResponseDto,
+	})
+	async getRecentPlaylist(@Req() req: AuthenticatedRequest): Promise<IResponse<PlaylistRecentResponseDto>> {
+		const result = await this.playlistService.findRecentPlaylist(req.user.id);
+		return {
+			statusCode: 200,
+			message: "최근 재생목록 조회 성공",
 			data: result,
 		};
 	}

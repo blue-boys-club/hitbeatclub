@@ -6,6 +6,7 @@ import {
 	PlaylistTracksResponse,
 	PlaylistFullResponse,
 	PlaylistUpdateRequest,
+	PlaylistRecentResponse,
 } from "@hitbeatclub/shared-types";
 import { CommonResponse } from "@/apis/api.type";
 
@@ -47,5 +48,14 @@ export const getPlaylist = async (): Promise<CommonResponse<PlaylistFullResponse
  */
 export const updatePlaylist = async (data: PlaylistUpdateRequest): Promise<CommonResponse<PlaylistFullResponse>> => {
 	const response = await axiosInstance.put<CommonResponse<PlaylistFullResponse>>(`/users/me/playlist`, data);
+	return response.data;
+};
+
+/**
+ * 최근 재생 목록 조회 API
+ * @returns 최근 재생 목록 정보
+ */
+export const getRecentPlaylist = async (): Promise<CommonResponse<PlaylistRecentResponse>> => {
+	const response = await axiosInstance.get<CommonResponse<PlaylistRecentResponse>>(`/users/me/playlist/recent`);
 	return response.data;
 };

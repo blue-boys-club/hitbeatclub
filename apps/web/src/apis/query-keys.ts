@@ -149,6 +149,7 @@ const QUERY_KEYS = {
 		userPlaylist: ["playlist", "userPlaylist"],
 		auto: (data: PlaylistAutoRequest) => ["playlist", "auto", data],
 		manual: (data: PlaylistManualRequest) => ["playlist", "manual", data],
+		recent: ["playlist", "recent"],
 	},
 };
 

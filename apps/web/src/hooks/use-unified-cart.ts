@@ -141,7 +141,7 @@ export const useUnifiedCart = (): UseUnifiedCartReturn => {
 			return result;
 		} else {
 			// 로컬 카트 데이터 사용
-			console.log("  → 비로그인, 로컬 카트 사용");
+			// console.log("  → 비로그인, 로컬 카트 사용");
 			return localCartItems.map((item) => ({
 				productId: item.productId,
 				licenseId: item.licenseId,

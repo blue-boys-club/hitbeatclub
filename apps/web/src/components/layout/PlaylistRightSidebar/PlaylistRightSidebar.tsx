@@ -6,14 +6,17 @@ import React, { useCallback, useMemo, useEffect, useRef, useState } from "react"
 import PlaylistItem from "./PlaylistItem";
 import { SidebarType, useLayoutStore } from "@/stores/layout";
 import { useShallow } from "zustand/react/shallow";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { DropContentWrapper } from "@/features/dnd/components/DropContentWrapper";
 import blankCdImage from "@/assets/images/blank-cd.png";
 import { usePlayTrack } from "@/hooks/use-play-track";
 import { usePlaylist } from "@/hooks/use-playlist";
-import { getProductsByIdsQueryOption } from "@/apis/product/query/product.query-option";
 import { useAudioStore } from "@/stores/audio";
 import Link from "next/link";
+import { playlistRecentQueryOptions } from "@/apis/playlist/query/playlist.query-options";
+import { useAuthStore } from "@/stores/auth";
+import { getProductsByIdsQueryOption } from "@/apis/product/query/product.query-option";
+import { usePlaylistStore } from "@/stores/playlist";
 
 const PlaylistRightSidebar = () => {
 	const { isOpen, currentType, setRightSidebar, currentTrackId } = useLayoutStore(
@@ -25,25 +28,11 @@ const PlaylistRightSidebar = () => {
 		})),
 	);
 
-	// 플레이리스트 사이드바가 열려있는지 여부 (트랙이 있고 현재 선택된 트랙이 있을 때만 노출)
-	// usePlaylist import moved above for visibility logic
-	const { trackIds } = usePlaylist();
-	const isPlaylistOpen =
-		isOpen && currentType === SidebarType.PLAYLIST && trackIds.length > 0 && currentTrackId !== null;
+	usePlaylist(); // initialize playlist hook to keep syncing logic
 
-	// 플레이리스트의 각 트랙에 대한 상품 정보를 한 번에 조회
-	const {
-		data: products = [],
-		isLoading,
-		isError,
-	} = useQuery({
-		...getProductsByIdsQueryOption(trackIds),
-		enabled: trackIds.length > 0,
-	});
-
-	const handleClose = useCallback(() => {
-		setRightSidebar(false);
-	}, [setRightSidebar]);
+	// Authentication status
+	const { user } = useAuthStore(useShallow((state) => ({ user: state.user })));
+	const isLoggedIn = Boolean(user?.userId);
 
 	// 재생 훅: { play }
 	const { play } = usePlayTrack();
@@ -57,13 +46,41 @@ const PlaylistRightSidebar = () => {
 		return "default";
 	})();
 
-	// 플레이리스트 데이터를 PlayerListResponse 형태로 변환
-	const allPlaylists = useMemo(() => {
-		// trackIds 순서를 유지하기 위해 Map 으로 정렬
-		const productMap = new Map(products.map((p) => [p.id, p]));
-		return trackIds
-			.map((trackId) => {
-				const product = productMap.get(trackId);
+	// 최근 재생목록 데이터 (로그인 사용자 전용)
+	const {
+		data: recentData,
+		isLoading: recentLoading,
+		isError: recentError,
+	} = useQuery({
+		...playlistRecentQueryOptions(),
+		enabled: isLoggedIn,
+		retry: false,
+		placeholderData: keepPreviousData,
+	});
+
+	const { recentTrackIds: recentTrackIdsStore } = usePlaylistStore(
+		useShallow((state) => ({ recentTrackIds: state.recentTrackIds })),
+	);
+
+	// Guest products fetch
+	const {
+		data: guestProducts = [],
+		isLoading: guestLoading,
+		isError: guestError,
+	} = useQuery({
+		...getProductsByIdsQueryOption(recentTrackIdsStore),
+		enabled: recentTrackIdsStore.length > 0,
+		placeholderData: keepPreviousData,
+	});
+
+	const recentTrackIds = recentData?.data.trackIds ?? [];
+	const recentTracksRaw = recentData?.data.tracks ?? [];
+
+	const guestRecentPlaylists = useMemo(() => {
+		const productMap = new Map(guestProducts.map((p: any) => [p.id, p]));
+		return recentTrackIdsStore
+			.map((id) => {
+				const product = productMap.get(id);
 				if (!product) return null;
 				return {
 					id: product.id,
@@ -75,25 +92,85 @@ const PlaylistRightSidebar = () => {
 						profileImageUrl: product.seller?.profileImageUrl || "",
 						slug: product.seller?.slug || "",
 					},
-					coverImage: {
-						id: product.coverImage?.id || 0,
-						url: product.coverImage?.url || "",
-						originName: product.coverImage?.originName || "",
-					},
-					audioFile: {
-						id: product.audioFile?.id || 0,
-						url: product.audioFile?.url || "",
-						originName: product.audioFile?.originName || "",
-					},
+					coverImage: product.coverImage,
+					audioFile: product.audioFile,
 				};
 			})
 			.filter(Boolean);
-	}, [products, trackIds]);
+	}, [guestProducts, recentTrackIdsStore]);
 
-	// 현재 선택된 플레이리스트 찾기 - useMemo로 최적화
+	const loggedInRecentPlaylists = useMemo(() => {
+		const trackMap = new Map(recentTracksRaw.map((p: any) => [p.id, p]));
+		return recentTrackIds
+			.map((id) => {
+				const product = trackMap.get(id);
+				if (!product) return null;
+				return {
+					id: product.id,
+					productId: product.id,
+					productName: product.productName,
+					seller: {
+						id: product.seller?.id || 0,
+						stageName: product.seller?.stageName || "",
+						profileImageUrl: product.seller?.profileImageUrl || "",
+						slug: product.seller?.slug || "",
+					},
+					coverImage: product.coverImage,
+					audioFile: product.audioFile,
+				};
+			})
+			.filter(Boolean);
+	}, [recentTrackIds, recentTracksRaw]);
+
+	// Combine IDs (store first to include newly played track instantly)
+	const combinedIds = isLoggedIn
+		? Array.from(new Set([...recentTrackIdsStore, ...recentTrackIds]))
+		: recentTrackIdsStore;
+
+	// Build unified productMap
+	const productMap = new Map<
+		number,
+		{
+			id: number;
+			productId: number;
+			productName: string;
+			seller: any;
+			coverImage: any;
+			audioFile: any;
+		}
+	>();
+
+	[...guestProducts, ...recentTracksRaw].forEach((p: any) => {
+		if (p) productMap.set(p.id, p);
+	});
+
+	const displayPlaylists = combinedIds
+		.map((id) => {
+			const product = productMap.get(id);
+			if (!product) return null;
+			return {
+				id: product.id,
+				productId: product.id,
+				productName: product.productName,
+				seller: {
+					id: product.seller?.id || 0,
+					stageName: product.seller?.stageName || "",
+					profileImageUrl: product.seller?.profileImageUrl || "",
+					slug: product.seller?.slug || "",
+				},
+				coverImage: product.coverImage,
+				audioFile: product.audioFile,
+			};
+		})
+		.filter(Boolean);
+
+	const displayLoading = isLoggedIn ? recentLoading && !recentData : guestLoading;
+	const displayError = isLoggedIn ? recentError : guestError;
+
+	// 선택된 플레이리스트 (from RECENT list)
 	const selectedPlaylist = useMemo(() => {
-		return allPlaylists.find((playlist) => playlist?.productId === currentTrackId);
-	}, [allPlaylists, currentTrackId]);
+		return displayPlaylists.find((pl) => pl?.productId === currentTrackId);
+	}, [displayPlaylists, currentTrackId]);
 
 	const albumImage = useMemo(() => {
 		return selectedPlaylist?.coverImage?.url || blankCdImage;
@@ -148,6 +225,8 @@ const PlaylistRightSidebar = () => {
 		return () => clearTimeout(timeoutId);
 	}, [selectedPlaylist?.productName]);
 
+	const isPlaylistOpen = isOpen && currentType === SidebarType.PLAYLIST;
+
 	return (
 		<>
 			<div
@@ -166,7 +245,9 @@ const PlaylistRightSidebar = () => {
 						{/* 닫기 버튼 */}
 						{isPlaylistOpen && (
 							<button
-								onClick={handleClose}
+								onClick={() => {
+									setRightSidebar(false);
+								}}
 								className="absolute top-0 right-0 cursor-pointer border p-[2px]"
 							>
 								<CloseMosaic />
@@ -253,23 +334,22 @@ const PlaylistRightSidebar = () => {
 						<div className="flex-1 min-h-0 px-6">
 							<h3 className="py-[6px] border-y-[3px] text-black font-bold text-[20px] leading-[20px] mb-5">Recent</h3>
 
-							{isLoading ? (
+							{displayLoading ? (
 								<div className="flex justify-center items-center h-20">
 									<div className="text-gray-500">로딩 중...</div>
 								</div>
-							) : isError ? (
+							) : displayError ? (
 								<div className="flex justify-center items-center h-20">
 									<div className="text-red-500">플레이리스트를 불러오는데 실패했습니다.</div>
 								</div>
-							) : allPlaylists.length > 0 ? (
+							) : displayPlaylists.length > 0 ? (
 								<div className="overflow-auto h-full">
 									<ul className="flex flex-col gap-[10px]">
-										{allPlaylists.map((playlist, index) =>
+										{displayPlaylists.map((playlist) =>
 											playlist ? (
 												<PlaylistItem
 													key={playlist.id}
 													{...playlist}
-													// isSelected={playlist.productId === currentTrackId}
 													onClick={play}
 												/>
 											) : null,
@@ -277,7 +357,7 @@ const PlaylistRightSidebar = () => {
 									</ul>
 								</div>
 							) : (
-								<p className="text-center pt-10">플레이리스트가 비어있습니다.</p>
+								<p className="text-center pt-10">최근 재생목록이 비어있습니다.</p>
 							)}
 						</div>
 					</div>

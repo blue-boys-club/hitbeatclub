@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useCallback, useRef, useState, useEffect, useMemo } from "react";
 import ReactPlayer from "react-player";
 import { useAudioStore } from "@/stores/audio";
+import { useIncreaseProductViewCountMutation } from "@/apis/product/mutations/useIncreaseProductViewCountMutation";
 
 interface AudioState {
 	isPlaying: boolean;
@@ -228,6 +229,44 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
 	const setEndedCallback = useCallback((callback: () => void) => {
 		callbacksRef.current.onEnded = callback;
 	}, []);
+
+	// 추가: 30초 이상 재생 시 조회수 증가 로직에 사용할 커스텀 훅 및 레퍼런스들
+	const { mutate: increaseViewCount } = useIncreaseProductViewCountMutation();
+	const lastProductIdRef = useRef<number | null>(null);
+	const listenedSecondsRef = useRef<number>(0);
+	const prevTimeRef = useRef<number>(0);
+
+	// 30초 이상 연속 재생(시킹 제외) 시 조회수 증가 처리
+	useEffect(() => {
+		const currentProductId = useAudioStore.getState().productId;
+
+		// 상품이 변경되면 카운터 초기화
+		if (currentProductId !== lastProductIdRef.current) {
+			lastProductIdRef.current = currentProductId;
+			listenedSecondsRef.current = 0;
+			prevTimeRef.current = state.currentTime;
+			return; // 초기화 시 즉시 종료하여 불필요한 로직 수행 방지
+		}
+
+		// 재생 중이 아니거나, 사용자가 시킹 중이면 카운팅하지 않음
+		if (!state.isPlaying || state.isUserSeeking || currentProductId == null) {
+			prevTimeRef.current = state.currentTime;
+			return;
+		}
+
+		// 이전 측정 시점과의 차이를 계산하여 실제 재생 시간을 누적 (시킹으로 인한 큰 점프는 무시)
+		const delta = state.currentTime - prevTimeRef.current;
+		if (delta > 0 && delta < 5) {
+			listenedSecondsRef.current += delta;
+			if (listenedSecondsRef.current >= 30) {
+				// 이미 호출했는지 여부를 listenedSecondsRef로 판단 (-1 로 마킹)
+				increaseViewCount(currentProductId);
+				listenedSecondsRef.current = -Infinity; // 중복 호출 방지
+			}
+		}
+
+		prevTimeRef.current = state.currentTime;
+	}, [state.currentTime, state.isPlaying, state.isUserSeeking, increaseViewCount]);
 
 	// Memoize context value to avoid unnecessary re-renders in consumers
 	const contextValue: AudioContextValue = useMemo(

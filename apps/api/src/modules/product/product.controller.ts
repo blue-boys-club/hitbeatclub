@@ -552,4 +552,20 @@ export class ProductController {
 			data: { id: Number(file.id), url, originalName: file.originName },
 		};
 	}
+
+	@Post(":id/view-count")
+	@ApiOperation({ summary: "상품 조회수 증가" })
+	@AuthenticationDoc()
+	@DocResponse<DatabaseIdResponseDto>(productMessage.find.success, {
+		dto: DatabaseIdResponseDto,
+	})
+	async increaseViewCount(@Param("id") id: number): Promise<DatabaseIdResponseDto> {
+		const product = await this.productService.increaseViewCount(id);
+
+		return {
+			statusCode: 200,
+			message: productMessage.find.success,
+			data: { id: Number(product.id) },
+		};
+	}
 }

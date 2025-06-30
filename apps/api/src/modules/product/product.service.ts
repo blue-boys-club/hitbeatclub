@@ -1194,4 +1194,24 @@ export class ProductService {
 			throw new BadRequestException(error);
 		}
 	}
+
+	/**
+	 * 상품 조회수 증가
+	 * @param id
+	 * @returns
+	 */
+	async increaseViewCount(id: number) {
+		const product = await this.prisma.product
+			.update({
+				where: { id: BigInt(id) },
+				data: {
+					viewCount: {
+						increment: 1,
+					},
+				},
+			})
+			.then((data) => this.prisma.serializeBigIntTyped(data));
+
+		return product;
+	}
 }

@@ -243,6 +243,7 @@ export const usePlaylist = () => {
 			if (nextTrackId) {
 				setProductId(nextTrackId);
 				setPlayer({ trackId: nextTrackId });
+				usePlaylistStore.getState().addRecentTrack(nextTrackId);
 			}
 
 			if (isLoggedIn) {
@@ -264,6 +265,7 @@ export const usePlaylist = () => {
 			if (previousTrackId) {
 				setProductId(previousTrackId);
 				setPlayer({ trackId: previousTrackId });
+				usePlaylistStore.getState().addRecentTrack(previousTrackId);
 			}
 
 			if (isLoggedIn) {
@@ -286,6 +288,7 @@ export const usePlaylist = () => {
 				if (trackId) {
 					setProductId(trackId);
 					setPlayer({ trackId });
+					usePlaylistStore.getState().addRecentTrack(trackId);
 				}
 
 				if (isLoggedIn) {
@@ -317,6 +320,7 @@ export const usePlaylist = () => {
 				if (nextTrackId) {
 					setProductId(nextTrackId);
 					setPlayer({ trackId: nextTrackId });
+					usePlaylistStore.getState().addRecentTrack(nextTrackId);
 				}
 
 				if (isLoggedIn) {

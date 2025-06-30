@@ -1,5 +1,5 @@
 import { QUERY_KEYS } from "@/apis/query-keys";
-import { getPlaylist, getPlaylistAuto, getPlaylistManual } from "../playlist.api";
+import { getPlaylist, getPlaylistAuto, getPlaylistManual, getRecentPlaylist } from "../playlist.api";
 import { queryOptions } from "@tanstack/react-query";
 import { PlaylistAutoRequest, PlaylistManualRequest } from "@hitbeatclub/shared-types";
 
@@ -32,4 +32,14 @@ export const playlistManualQueryOptions = (data: PlaylistManualRequest) =>
 	queryOptions({
 		queryKey: [QUERY_KEYS.playlist.manual(data)],
 		queryFn: () => getPlaylistManual(data),
+	});
+
+/**
+ * 최근 플레이리스트 조회 옵션
+ * @returns 최근 플레이리스트 정보
+ */
+export const playlistRecentQueryOptions = () =>
+	queryOptions({
+		queryKey: [QUERY_KEYS.playlist.recent],
+		queryFn: getRecentPlaylist,
 	});

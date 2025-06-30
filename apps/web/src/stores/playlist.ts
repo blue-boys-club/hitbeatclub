@@ -53,6 +53,9 @@ export interface PlaylistActions {
 
 	/** 초기화 */
 	init: () => void;
+
+	/** 최근 트랙 기록 */
+	addRecentTrack: (trackId: number) => void;
 }
 
 export interface PlaylistState {
@@ -72,6 +75,8 @@ export interface PlaylistState {
 	shuffledOrder: number[];
 	/** 셔플 시드 (셔플 순서 재현을 위한 시드) */
 	shuffleSeed: number;
+	/** 최근 재생 트랙 ID 배열 (최대 30곡) */
+	recentTrackIds: number[];
 }
 
 export type PlaylistStore = PlaylistState & PlaylistActions;
@@ -86,6 +91,7 @@ const initialState: PlaylistState = {
 	repeatMode: "none",
 	shuffledOrder: [],
 	shuffleSeed: 0,
+	recentTrackIds: [],
 };
 
 /** 시드를 기반으로 한 Fisher-Yates 셔플 알고리즘 */
@@ -349,6 +355,13 @@ export const usePlaylistStore = create<PlaylistStore>()(
 
 				/** 초기화 */
 				init: () => set(initialState),
+
+				/** 최근 트랙 추가 (중복 제거, 최대 30곡 유지) */
+				addRecentTrack: (trackId: number) =>
+					set((state) => {
+						// 앞에서 중복 제거하고 맨 앞에 삽입
+						state.recentTrackIds = [trackId, ...state.recentTrackIds.filter((id) => id !== trackId)].slice(0, 30);
+					}),
 			})),
 			{
 				name,
@@ -363,6 +376,7 @@ export const usePlaylistStore = create<PlaylistStore>()(
 					repeatMode: state.repeatMode,
 					shuffledOrder: state.shuffledOrder,
 					shuffleSeed: state.shuffleSeed,
+					recentTrackIds: state.recentTrackIds,
 				}),
 			},
 		),

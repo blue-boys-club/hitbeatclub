@@ -140,3 +140,13 @@ export const getProductsByIds = async (productIds: number[]) => {
 	});
 	return response.data;
 };
+
+/**
+ * 상품 조회수 증가
+ * @param productId 상품 ID
+ * @returns 상품 조회수 증가 정보
+ */
+export const increaseProductViewCount = async (productId: number) => {
+	const response = await client.post<CommonResponseId>(`/products/${productId}/view-count`);
+	return response.data;
+};

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ProductResponseSchema } from "../product/product.response";
 
 /**
  * trackIds 만 반환하는 단순 재생목록 응답 (GET /playlists/auto, POST /playlists/manual)
@@ -14,5 +15,11 @@ export const PlaylistFullResponseSchema = PlaylistTracksResponseSchema.extend({
 	currentIndex: z.number().min(0).max(99).describe("현재 재생 인덱스").default(0),
 });
 
+export const PlaylistRecentResponseSchema = z.object({
+	trackIds: z.array(z.number()),
+	tracks: z.array(ProductResponseSchema),
+});
+
 export type PlaylistTracksResponse = z.infer<typeof PlaylistTracksResponseSchema>;
 export type PlaylistFullResponse = z.infer<typeof PlaylistFullResponseSchema>;
+export type PlaylistRecentResponse = z.infer<typeof PlaylistRecentResponseSchema>;

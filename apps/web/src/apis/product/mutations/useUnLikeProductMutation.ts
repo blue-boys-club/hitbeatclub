@@ -3,11 +3,13 @@ import { unlikeProduct } from "../product.api";
 import { useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/apis/query-keys";
 import { ProductListPagingResponse } from "@hitbeatclub/shared-types";
+import { MUTATION_KEYS } from "@/apis/mutation-keys";
 
 export const useUnlikeProductMutation = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
+		mutationKey: [MUTATION_KEYS.product.unlike],
 		mutationFn: unlikeProduct,
 		onSuccess: (_, variable) => {
 			const id = variable;
