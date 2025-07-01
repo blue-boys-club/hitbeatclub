@@ -15,6 +15,7 @@ import {
 	Logger,
 	BadRequestException,
 	ForbiddenException,
+	Headers,
 } from "@nestjs/common";
 import { ProductService } from "./product.service";
 import { ApiOperation, ApiTags, ApiConsumes } from "@nestjs/swagger";
@@ -60,6 +61,7 @@ import { FileUrlRequestDto } from "./dto/request/product.file-url.request.dto";
 import { PaymentService } from "../payment/payment.service";
 import { AwsCloudfrontService } from "~/common/aws/services/aws.cloudfront.service";
 import { ProductIdsRequestDto } from "./dto/request/product.ids.request.dto";
+import { PlaylistService } from "../playlist/playlist.service";
 
 @Controller("products")
 @ApiTags("product")
@@ -76,6 +78,7 @@ export class ProductController {
 		@Inject(forwardRef(() => PaymentService))
 		private readonly paymentService: PaymentService,
 		private readonly cloudFrontService: AwsCloudfrontService,
+		private readonly playlistService: PlaylistService,
 	) {}
 
 	@Get()
@@ -555,12 +558,20 @@ export class ProductController {
 
 	@Post(":id/view-count")
 	@ApiOperation({ summary: "상품 조회수 증가" })
-	@AuthenticationDoc()
+	@AuthenticationDoc({ optional: true })
 	@DocResponse<DatabaseIdResponseDto>(productMessage.find.success, {
 		dto: DatabaseIdResponseDto,
 	})
-	async increaseViewCount(@Param("id") id: number): Promise<DatabaseIdResponseDto> {
+	async increaseViewCount(
+		@Req() req: AuthenticatedRequest,
+		@Param("id") id: number,
+		@Headers("CloudFront-Viewer-Country-Region") countryRegion?: string,
+	): Promise<DatabaseIdResponseDto> {
 		const product = await this.productService.increaseViewCount(id);
+
+		if (req?.user?.id) {
+			await this.playlistService.savePlaylistLog(req.user.id, product.sellerId, product.id, countryRegion || null);
+		}
 
 		return {
 			statusCode: 200,

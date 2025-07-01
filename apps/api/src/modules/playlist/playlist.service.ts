@@ -203,7 +203,7 @@ export class PlaylistService {
 	 * 수동 재생목록 - 클라이언트에서 전달된 trackIds 기반
 	 */
 	async createManualPlaylist(userId: number | undefined, payload: PlaylistManualRequest) {
-		let trackIds = payload.trackIds.slice(0, 100);
+		const trackIds = payload.trackIds.slice(0, 100);
 
 		if (userId) {
 			await this.savePlaylist(userId, trackIds, "MANUAL", { trackIds });
@@ -227,7 +227,7 @@ export class PlaylistService {
 
 		if (existing) {
 			await this.prisma.playlist.update({
-				where: { id: existing.id },
+				where: { id: BigInt(existing.id) },
 				data: {
 					trackIds: trackIds,
 					currentIndex: 0,
@@ -271,7 +271,7 @@ export class PlaylistService {
 		if (existing) {
 			playlistRecord = await this.prisma.playlist
 				.update({
-					where: { id: existing.id },
+					where: { id: BigInt(existing.id) },
 					data: {
 						trackIds,
 						currentIndex,
@@ -388,5 +388,24 @@ export class PlaylistService {
 			trackIds: pl?.trackIds ?? [],
 			currentIndex: pl?.currentIndex ?? 0,
 		};
+	}
+
+	/**
+	 * playlist log 저장
+	 */
+	async savePlaylistLog(
+		userId: number | bigint,
+		sellerId: number | bigint,
+		productId: number | bigint,
+		cloudfrontCountryRegion: string | null,
+	) {
+		return await this.prisma.playlistLog.create({
+			data: { userId, sellerId, productId, cloudfrontCountryRegion },
+			include: {
+				user: true,
+				seller: true,
+				product: true,
+			},
+		});
 	}
 }
