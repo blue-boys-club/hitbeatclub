@@ -1,10 +1,11 @@
 import { Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NestApplication } from "@nestjs/core";
+import { NestExpressApplication } from "@nestjs/platform-express";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { patchNestJsSwagger } from "nestjs-zod";
 
-export default function (app: NestApplication) {
+export default function (app: NestApplication | NestExpressApplication) {
 	const configService = app.get(ConfigService);
 	const env: string = configService.get<string>("app.env");
 	const logger = new Logger();

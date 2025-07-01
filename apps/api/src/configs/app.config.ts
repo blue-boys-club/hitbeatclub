@@ -2,6 +2,8 @@ import { registerAs } from "@nestjs/config";
 // import { version } from "package.json";
 import { ENUM_APP_ENVIRONMENT, ENUM_APP_TIMEZONE } from "~/app/constants/app.enum.constant";
 
+const isDeployed = !!process.env.AWS_LAMBDA_FUNCTION_NAME || !!process.env.ECS_CONTAINER_METADATA_URI;
+
 export default registerAs(
 	"app",
 	(): Record<string, any> => ({
@@ -15,5 +17,8 @@ export default registerAs(
 			prefix: "v",
 			version: process.env.URL_VERSION ?? "1",
 		},
+		deployed: isDeployed,
+
+		enableTrustProxy: process.env.ENABLE_TRUST_PROXY === "true" || isDeployed,
 	}),
 );

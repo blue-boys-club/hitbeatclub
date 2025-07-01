@@ -7,10 +7,11 @@ import swaggerInit from "~/swagger";
 import { ConfigService } from "@nestjs/config";
 import { Logger as PinoLogger } from "nestjs-pino";
 import { ZodValidationPipe } from "nestjs-zod";
+import { NestExpressApplication } from "@nestjs/platform-express";
 
 async function bootstrap() {
 	const logger = new Logger();
-	const app: NestApplication = await NestFactory.create(AppModule, {
+	const app = await NestFactory.create<NestExpressApplication>(AppModule, {
 		bufferLogs: true,
 		rawBody: true,
 	});
@@ -48,7 +49,7 @@ async function bootstrap() {
 		});
 	}
 
-	swaggerInit(app);
+	swaggerInit(app as unknown as NestApplication);
 
 	useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
@@ -56,6 +57,12 @@ async function bootstrap() {
 	app.useGlobalPipes(new ZodValidationPipe());
 
 	app.useLogger(app.get(PinoLogger));
+
+	// Set trust proxy if it is explictly enabled or it is deployed to ECS/Lambda
+	const enableTrustProxy = configService.get<boolean>("app.enableTrustProxy");
+	if (enableTrustProxy) {
+		app.set("trust proxy", "true");
+	}
 
 	await app.listen(4000);
 
