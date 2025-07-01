@@ -45,6 +45,7 @@ model User {
   playlist               Playlist[]
   playedTracks           PlayedTracks[]
   notification           Notification[]
+  playlistLog            PlaylistLog[]
 
   @@map("user")
 }
@@ -78,6 +79,7 @@ model Artist {
   userArtistBlock            UserArtistBlock[]
   artistReport               ArtistReport[]
   orderItems                 OrderItem[]
+  playlistLog                PlaylistLog[]
   
   @@unique([slug, deletedAt], map: "ux_artist_slug")
   @@index([userId], map: "FK_user_TO_artist_1")
@@ -179,6 +181,7 @@ model Product {
   productTag                ProductTag[]
   productLike               ProductLike[]
   orderItems                OrderItem[]
+  playlistLog               PlaylistLog[]
 
   @@index([sellerId], map: "FK_artist_TO_product_1")
   @@map("product")
@@ -686,4 +689,25 @@ model Notification {
   @@index([receiverId, isRead], map: "idx_notification_user_read")
   @@index([createdAt], map: "idx_notification_created")
   @@map("notification")
+}
+
+model PlaylistLog {
+  id        BigInt    @id @default(autoincrement())
+  userId    BigInt    @map("user_id")
+  sellerId  BigInt    @map("seller_id")
+  productId BigInt    @map("product_id")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime  @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamp(0)
+  
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_user_TO_playlist_log_1")
+  seller    Artist    @relation(fields: [sellerId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_artist_TO_playlist_log_1")
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_product_TO_playlist_log_1")
+
+  @@unique([userId, createdAt], map: "ux_playlist_log_user_created")
+  @@index([userId], map: "FK_user_TO_playlist_log_1")
+  @@index([sellerId], map: "FK_artist_TO_playlist_log_1")
+  @@index([productId], map: "FK_product_TO_playlist_log_1")
+  @@index([createdAt], map: "idx_playlist_log_created")
+  @@map("playlist_log")
 }
