@@ -8,6 +8,7 @@ import { GenreModule } from "../genre/genre.module";
 import { ArtistModule } from "../artist/artist.module";
 import { PaymentModule } from "../payment/payment.module";
 import { AwsModule } from "~/common/aws/aws.module";
+import { PlaylistModule } from "../playlist/playlist.module";
 
 @Module({
 	imports: [
@@ -15,9 +16,10 @@ import { AwsModule } from "~/common/aws/aws.module";
 		PrismaModule,
 		TagModule,
 		GenreModule,
+		AwsModule,
 		forwardRef(() => ArtistModule),
 		forwardRef(() => PaymentModule),
-		AwsModule,
+		forwardRef(() => PlaylistModule),
 	],
 	controllers: [ProductController],
 	providers: [ProductService],
