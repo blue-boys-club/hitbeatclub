@@ -296,6 +296,10 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 					},
 					{
 						onSuccess: () => {
+							// Remove pending form stored in sessionStorage if exists
+							if (typeof window !== "undefined") {
+								window.sessionStorage.removeItem("pending-subscribe-form");
+							}
 							openModal("success");
 						},
 					},

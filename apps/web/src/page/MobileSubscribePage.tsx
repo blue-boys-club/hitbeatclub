@@ -8,13 +8,32 @@ import { LogoGray } from "@/assets/svgs/LogoGray";
 import { MembershipInformationModal, UnsubscribeModal } from "@/features/mobile/subscribe/modals";
 import { useQuery } from "@tanstack/react-query";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { SubscriptionProvider, useSubscription } from "@/features/subscribe/hooks/useSubscription";
+import { SubscribePrice } from "@/features/subscribe/components";
 
 export const MobileSubscribePage = () => {
+	return (
+		<SubscriptionProvider>
+			<MobileSubscribeContent />
+		</SubscriptionProvider>
+	);
+};
+
+// ----- Inner content component -----
+
+const MobileSubscribeContent = () => {
 	const [isMonthly, setIsMonthly] = useState(false); // false: 연간구독, true: 월간구독
 	const [isMembershipInformationModalOpen, setIsMembershipInformationModalOpen] = useState(false);
 	const [isUnsubscribeModalOpen, setIsUnsubscribeModalOpen] = useState(false);
+
 	const { data: user } = useQuery(getUserMeQueryOption());
 	const isSubscribed = user?.subscribedAt !== null;
+
+	// 구독 가격 / 할인 정보 가져오기 (same as PC)
+	const { subscribePlans, isLoadingSubscribePlans } = useSubscription();
+
+	const subscriptionPlan = isMonthly ? "MONTH" : "YEAR";
+	const yearDiscountRate = subscribePlans?.YEAR?.discountRate ?? 0;
 
 	return (
 		<div className="flex flex-col">
@@ -59,7 +78,11 @@ export const MobileSubscribePage = () => {
 					</div>
 					<div className="flex flex-col">
 						<span className="font-semibold text-12px leading-150%">수수료 0%, 업로드 무제한, 그리고 수익의 시작!</span>
-						<span className="font-semibold text-18px leading-28px text-hbc-red">20% 할인 혜택 적용 중</span>
+						{yearDiscountRate > 0 && (
+							<span className="font-semibold text-18px leading-28px text-hbc-red">
+								{yearDiscountRate}% 할인 혜택 적용 중
+							</span>
+						)}
 					</div>
 					<LogoGray className="w-full" />
 				</div>
@@ -100,10 +123,12 @@ export const MobileSubscribePage = () => {
 						</div>
 					</div>
 					<div className="flex flex-col">
-						<span className="font-semibold text-12px leading-150%">월간 결제 시, 매월 25,000원</span>
-						<span className="font-semibold text-18px leading-28px text-hbc-red">
-							매월 20,000원&nbsp;&nbsp;<span className="text-12px leading-150%">(20% 할인)</span>
-						</span>
+						<SubscribePrice
+							isSubscribed={false}
+							subscriptionPlan={subscriptionPlan as any}
+							subscribePlans={subscribePlans}
+							isLoading={isLoadingSubscribePlans}
+						/>
 						<div className="mt-20px flex flex-col">
 							<button
 								className="w-full bg-black rounded-30px h-27px text-white font-extrabold text-12px leading-100%"
@@ -125,7 +150,7 @@ export const MobileSubscribePage = () => {
 			<MembershipInformationModal
 				isOpen={isMembershipInformationModalOpen}
 				onClose={() => setIsMembershipInformationModalOpen(false)}
-				plan={isMonthly ? "MONTH" : "YEAR"}
+				plan={subscriptionPlan}
 			/>
 			<UnsubscribeModal
 				isOpen={isUnsubscribeModalOpen}
