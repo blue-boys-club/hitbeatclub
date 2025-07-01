@@ -9,6 +9,7 @@ import { ArtistModule } from "../artist/artist.module";
 import { PaymentModule } from "../payment/payment.module";
 import { AwsModule } from "~/common/aws/aws.module";
 import { PlaylistModule } from "../playlist/playlist.module";
+import { NotificationModule } from "../notification/notification.module";
 
 @Module({
 	imports: [
@@ -20,6 +21,7 @@ import { PlaylistModule } from "../playlist/playlist.module";
 		forwardRef(() => ArtistModule),
 		forwardRef(() => PaymentModule),
 		forwardRef(() => PlaylistModule),
+		forwardRef(() => NotificationModule),
 	],
 	controllers: [ProductController],
 	providers: [ProductService],

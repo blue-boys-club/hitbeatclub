@@ -16,6 +16,7 @@ import {
 } from "./product.error";
 import { Logger } from "@nestjs/common";
 import { UserLikeProductListRequest } from "@hitbeatclub/shared-types/user";
+import { NotificationService } from "../notification/notification.service";
 
 @Injectable()
 export class ProductService {
@@ -23,6 +24,7 @@ export class ProductService {
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly fileService: FileService,
+		private readonly notificationService: NotificationService,
 	) {}
 
 	async findAll(
@@ -877,7 +879,7 @@ export class ProductService {
 			throw new BadRequestException(PRODUCT_ALREADY_LIKED_ERROR);
 		}
 
-		return await this.prisma.productLike
+		const productLike = await this.prisma.productLike
 			.create({
 				data: {
 					userId: BigInt(userId),
@@ -886,6 +888,35 @@ export class ProductService {
 				},
 			})
 			.then((data) => this.prisma.serializeBigInt(data));
+
+		/**
+		 * 알림 생성
+		 */
+		try {
+			const product = await this.prisma.product
+				.findUnique({
+					where: { id: productId },
+				})
+				.then((data) => this.prisma.serializeBigInt(data));
+
+			const receiverUser = await this.prisma.user
+				.findUnique({
+					where: { id: product.sellerId },
+				})
+				.then((data) => this.prisma.serializeBigInt(data));
+
+			await this.notificationService.create(userId, {
+				type: "SELLER_FOLLOW_BEAT_LIKE",
+				receiverId: receiverUser.id,
+				templateData: {
+					beatName: product.productName,
+				},
+			});
+		} catch (e) {
+			console.error(e);
+		}
+
+		return productLike;
 	}
 
 	async unlike(userId: number, productId: number) {

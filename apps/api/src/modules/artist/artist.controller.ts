@@ -414,10 +414,11 @@ export class ArtistController {
 		dto: ArtistReportResponseDto,
 	})
 	async reportArtist(
+		@Req() req: AuthenticatedRequest,
 		@Param("artistId", ParseIntPipe) artistId: number,
 		@Body() reportData: ArtistReportRequestDto,
 	): Promise<IResponse<ArtistReportResponseDto>> {
-		const report = await this.artistService.reportArtist(artistId, reportData);
+		const report = await this.artistService.reportArtist(req.user.id, artistId, reportData);
 
 		return {
 			statusCode: 200,

@@ -20,12 +20,14 @@ import {
 } from "./user.error";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
 import { UserProfileUpdatePayload } from "@hitbeatclub/shared-types/user";
+import { NotificationService } from "../notification/notification.service";
 
 @Injectable()
 export class UserService {
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly helperHashService: HelperHashService,
+		private readonly notificationService: NotificationService,
 	) {}
 
 	async findAll(): Promise<User[]> {
@@ -341,9 +343,11 @@ export class UserService {
 		}
 
 		// 아티스트가 존재하는지 확인
-		const artist = await this.prisma.artist.findFirst({
-			where: { id: artistId, deletedAt: null },
-		});
+		const artist = await this.prisma.artist
+			.findFirst({
+				where: { id: artistId, deletedAt: null },
+			})
+			.then((data) => this.prisma.serializeBigInt(data));
 
 		if (!artist) {
 			throw new BadRequestException(ARTIST_NOT_FOUND_ERROR);
@@ -355,6 +359,27 @@ export class UserService {
 				artistId: artistId,
 			},
 		});
+
+		/**
+		 * 알림 생성
+		 */
+		try {
+			const user = await this.prisma.user
+				.findUnique({
+					where: { id: userId },
+				})
+				.then((data) => this.prisma.serializeBigInt(data));
+
+			await this.notificationService.create(userId, {
+				type: "SELLER_FOLLOW_NEW",
+				receiverId: artist.userId,
+				templateData: {
+					userName: user.name,
+				},
+			});
+		} catch (e) {
+			console.error(e);
+		}
 
 		return this.prisma.serializeBigInt(follow);
 	}

@@ -14,12 +14,14 @@ import {
 	ARTIST_REPORT_FAILED_ERROR,
 } from "./artist.error";
 import { ArtistReportRequestDto } from "./dto/request/artist.report.request.dto";
+import { NotificationService } from "../notification/notification.service";
 
 @Injectable()
 export class ArtistService {
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly fileService: FileService,
+		private readonly notificationService: NotificationService,
 	) {}
 
 	async findAll(): Promise<ArtistListResponse[]> {
@@ -465,7 +467,7 @@ export class ArtistService {
 		}
 	}
 
-	async reportArtist(artistId: number, reportData: ArtistReportRequestDto) {
+	async reportArtist(reqUserId: number, artistId: number, reportData: ArtistReportRequestDto) {
 		try {
 			// 아티스트가 존재하는지 확인
 			const artist = await this.prisma.artist.findFirst({
@@ -479,6 +481,7 @@ export class ArtistService {
 			// 신고 레코드 생성
 			const report = await this.prisma.artistReport.create({
 				data: {
+					userId: reqUserId,
 					artistId,
 					reporterName: reportData.reporterName,
 					reporterPhone: reportData.reporterPhone,
@@ -487,6 +490,18 @@ export class ArtistService {
 					agreedPrivacyPolicy: reportData.agreedPrivacyPolicy,
 				},
 			});
+
+			try {
+				await this.notificationService.create(reqUserId, {
+					type: "REPORT_PROCESSED",
+					receiverId: reqUserId,
+					templateData: {
+						beatName: artist.stageName,
+					},
+				});
+			} catch (e) {
+				console.error(e);
+			}
 
 			return this.prisma.serializeBigInt(report);
 		} catch (error) {

@@ -64,6 +64,7 @@ import { AwsCloudfrontService } from "~/common/aws/services/aws.cloudfront.servi
 import { ProductIdsRequestDto } from "./dto/request/product.ids.request.dto";
 import { PlaylistService } from "../playlist/playlist.service";
 import { Throttle } from "@nestjs/throttler";
+import { NotificationService } from "../notification/notification.service";
 
 @Controller("products")
 @ApiTags("product")
@@ -81,6 +82,7 @@ export class ProductController {
 		private readonly paymentService: PaymentService,
 		private readonly cloudFrontService: AwsCloudfrontService,
 		private readonly playlistService: PlaylistService,
+		private readonly notificationService: NotificationService,
 	) {}
 
 	@Get()
@@ -350,6 +352,18 @@ export class ProductController {
 				productId: product.id,
 				fileIds,
 			});
+		}
+
+		try {
+			await this.notificationService.create(req.user.id, {
+				type: "UPLOAD_BEAT_SUCCESS",
+				receiverId: req.user.id,
+				templateData: {
+					beatName: product.productName,
+				},
+			});
+		} catch (e) {
+			console.error(e);
 		}
 
 		return {

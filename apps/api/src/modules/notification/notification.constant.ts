@@ -14,18 +14,18 @@ export const NOTIFICATION_MESSAGE_TEMPLATE: Record<NotificationType, string> = {
 	NEXT_MONTH_SUBSCRIPTION_PAYMENT_UPCOMING: "다음 달 구독 결제가 {daysLeft}일 후에 진행됩니다.",
 
 	// 3. 팔로우 & 좋아요
-	SELLER_FOLLOW_NEW: "{userName}님이 당신을 팔로우했습니다.",
-	SELLER_FOLLOW_BEAT_LIKE: "당신의 비트 '{beatName}'에 좋아요가 달렸어요!",
+	SELLER_FOLLOW_NEW: "{userName}님이 당신을 팔로우했습니다.", // 완료
+	SELLER_FOLLOW_BEAT_LIKE: "당신의 비트 '{beatName}'에 좋아요가 달렸어요!", // 완료
 
 	// 4. 업로드 관련 알림
-	UPLOAD_BEAT_SUCCESS: "업로드한 비트 '{beatName}'가 정상 등록되었습니다.",
+	UPLOAD_BEAT_SUCCESS: "업로드한 비트 '{beatName}'가 정상 등록되었습니다.", // 완료
 
 	// 5. 공지 및 이벤트
 	COMMON_EVENT_BEAT_UPLOAD: "신규 등록 이벤트 안내: 비트 업로드 판매가 가능해졌어요!",
 	COMMON_EVENT_SOUND_BLOCK: "이벤트 알림: 커뮤니티 참가 접수 중!",
 
 	// 6. 신고 및 차단 관련
-	REPORT_PROCESSED: "귀하의 콘텐츠에 대한 신고가 접수되었습니다. 현재 검토 중입니다.",
+	REPORT_PROCESSED: "귀하의 콘텐츠에 대한 신고가 접수되었습니다. 현재 검토 중입니다.", // 완료
 	REPORT_RESOLVED: "콘텐츠 이의제기 및 표절 의심 콘텐츠로 분류되었습니다.",
 
 	// 7. 보상 및 챌린지 알림
