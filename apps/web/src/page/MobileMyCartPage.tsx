@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCartListQueryOptions, getUserMeQueryOption } from "@/apis/user/query/user.query-option";
-import { useDeleteCartItemMutation } from "@/apis/user/mutations";
+import { Checkbox } from "@/components/ui";
 
 // 로딩 스켈레톤 컴포넌트
 const CartItemSkeleton = () => (
@@ -32,6 +32,7 @@ const CartItemSkeleton = () => (
 
 export const MobileMyCartPage = () => {
 	const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+	const [isAgreed, setIsAgreed] = useState(false);
 	const { toast } = useToast();
 
 	// 사용자 정보 가져오기
@@ -184,7 +185,10 @@ export const MobileMyCartPage = () => {
 							한해 구매일로부터 7일 이내 환불 요청이 가능합니다.
 						</span>
 						<div className="flex gap-6px items-center">
-							<div className="w-11px h-11px rounded-2px bg-hbc-gray-400" />
+							<Checkbox
+								checked={isAgreed}
+								onChange={() => setIsAgreed((prev) => !prev)}
+							/>
 							<span className="font-semibold text-9px leading-16px">
 								결제 관련 이용약관을 확인하였으며, 이에 동의합니다.
 							</span>
