@@ -231,7 +231,7 @@ const PlaylistRightSidebar = () => {
 		<>
 			<div
 				className={cn(
-					"fixed right-0 top-87px h-[calc(100vh-92px-72px-15px)] transition-all duration-500 ease-in-out",
+					"fixed right-0 top-72px h-[calc(100vh-92px-72px)] pt-15px transition-all duration-500 ease-in-out bg-hbc-white",
 					isPlaylistOpen ? "w-[275px]" : "w-0",
 				)}
 			>
@@ -248,7 +248,7 @@ const PlaylistRightSidebar = () => {
 								onClick={() => {
 									setRightSidebar(false);
 								}}
-								className="absolute top-0 right-0 cursor-pointer border p-[2px]"
+								className="absolute top-15px right-0 cursor-pointer border p-[2px]"
 							>
 								<CloseMosaic />
 							</button>

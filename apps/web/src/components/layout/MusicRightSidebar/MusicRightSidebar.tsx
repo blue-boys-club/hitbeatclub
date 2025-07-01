@@ -185,28 +185,36 @@ export const MusicRightSidebar = memo(() => {
 	};
 
 	const onClickFreeDownload = () => {
-		if (!user?.subscribedAt) {
-			router.push("/subscribe");
+		// if (!user?.subscribedAt) {
+		// 	router.push("/subscribe");
+		// } else {
+		// 	alert("준비중입니다.");
+		// 	// window.open(currentTrack?.downloadUrl, "_blank");
+		// }
+		if (!!user?.id) {
+			router.push(`/products/${currentTrack?.id}`);
 		} else {
-			alert("준비중입니다.");
-			// window.open(currentTrack?.downloadUrl, "_blank");
+			router.push("/auth/login");
+			// toast({
+			// 	description: "로그인 후 이용해주세요.",
+			// });
 		}
 	};
 
 	return (
 		<div
 			className={cn(
-				"fixed right-0 top-87px h-[calc(100vh-92px-72px-15px)] transition-all duration-500 ease-in-out",
+				"fixed right-0 top-72px h-[calc(100vh-92px-72px)] pt-15px transition-all duration-500 ease-in-out  bg-hbc-white",
 				isTrackOpen ? "w-80" : "w-0",
 				(!hasTrack || isProductPage) && "pointer-events-none", // disable pointer events when no track or product page
 			)}
 		>
-			<div className="flex flex-col h-full overflow-hidden border-l-2 border-black w-80 pb-15 bg-hbc-white">
+			<div className="flex flex-col h-full overflow-hidden border-l-2 border-black w-80 pb-15">
 				{hasTrack && !isProductPage && (
 					<button
 						onClick={handleToggleOpen}
 						className={cn(
-							"absolute top-0 cursor-pointer hover:opacity-80 transition-opacity",
+							"absolute top-0 cursor-pointer hover:opacity-80 transition-opacity mt-15px",
 							isTrackOpen ? "left-0" : "-left-8",
 						)}
 					>
