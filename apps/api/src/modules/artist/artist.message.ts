@@ -23,4 +23,7 @@ export const artistMessage = {
 	report: {
 		success: "아티스트 신고 성공",
 	},
+	statistics: {
+		success: "아티스트 통계 조회 성공",
+	},
 };

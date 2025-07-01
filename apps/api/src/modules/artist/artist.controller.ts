@@ -12,7 +12,6 @@ import {
 	ForbiddenException,
 	Query,
 	ParseIntPipe,
-	Logger,
 } from "@nestjs/common";
 import { ArtistService } from "./artist.service";
 import { ApiConsumes, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
@@ -47,6 +46,7 @@ import { PrismaService } from "~/common/prisma/prisma.service";
 import { ArtistBlockResponseDto } from "./dto/response/artist.block.response.dto";
 import { ArtistReportRequestDto } from "./dto/request/artist.report.request.dto";
 import { ArtistReportResponseDto } from "./dto/response/artist.report.response.dto";
+import { ArtistStatisticsResponseDto } from "./dto/response/artist.statistics.response.dto";
 import { ProductFindQuery } from "../product/decorators/product.decorator";
 import { AuthJwtAccessOptional, AuthJwtAccessProtected } from "../auth/decorators/auth.jwt.decorator";
 
@@ -427,6 +427,32 @@ export class ArtistController {
 				artistId: Number(report.artistId),
 				message: "신고가 성공적으로 접수되었습니다.",
 			},
+		};
+	}
+
+	@Get(":id/statistics")
+	@ApiOperation({ summary: "아티스트 통계 조회" })
+	@AuthJwtAccessProtected()
+	@AuthenticationDoc()
+	@DocResponse<ArtistStatisticsResponseDto>(artistMessage.statistics.success, {
+		dto: ArtistStatisticsResponseDto,
+	})
+	async getStatistics(
+		@Req() req: AuthenticatedRequest,
+		@Param("id", ParseIntPipe) artistId: number,
+	): Promise<IResponse<ArtistStatisticsResponseDto>> {
+		// 해당 아티스트가 요청한 사용자의 아티스트인지 확인
+		const userArtist = await this.artistService.findByUserId(req.user.id);
+		if (!userArtist || Number(userArtist.id) !== artistId) {
+			throw new ForbiddenException("본인의 아티스트 통계만 조회할 수 있습니다.");
+		}
+
+		const statistics = await this.artistService.getStatistics(artistId);
+
+		return {
+			statusCode: 200,
+			message: artistMessage.statistics.success,
+			data: statistics,
 		};
 	}
 }

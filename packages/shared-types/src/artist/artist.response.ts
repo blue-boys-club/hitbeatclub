@@ -107,6 +107,49 @@ export const ArtistReportListResponseSchema = z.object({
 	processedAt: z.date().nullable().describe("처리일").default(null),
 });
 
+// 아티스트 통계 응답 스키마
+export const ArtistStatisticsLikedTrackSchema = z.object({
+	id: z.number().describe("트랙 ID").default(11),
+	productId: z.number().describe("상품 ID").default(8),
+	productName: z.string().describe("트랙명").default("Paranoid instrumental (Fm bpm86)"),
+	viewCount: z.number().nullable().describe("조회수").default(null),
+	likeCount: z.number().describe("좋아요 수").default(8),
+	imageUrl: z
+		.string()
+		.nullable()
+		.describe("커버 이미지 URL")
+		.default("https://prod-assets.hitbeatclub.com/product/c67bb1f4-d4b0-4924-b7e8-d6851e002337"),
+});
+
+export const ArtistStatisticsPlayedTrackSchema = z.object({
+	id: z.number().describe("트랙 ID").default(11),
+	productId: z.number().describe("상품 ID").default(8),
+	productName: z.string().describe("트랙명").default("Paranoid instrumental (Fm bpm86)"),
+	viewCount: z.number().nullable().describe("재생 횟수").default(null),
+	imageUrl: z
+		.string()
+		.nullable()
+		.describe("커버 이미지 URL")
+		.default("https://prod-assets.hitbeatclub.com/product/c67bb1f4-d4b0-4924-b7e8-d6851e002337"),
+});
+
+export const ArtistStatisticsCountrySchema = z.object({
+	countryCode: z.string().describe("국가 코드").default("KR"),
+	playCount: z.number().describe("재생 횟수").default(4),
+	percentage: z.number().describe("비율").default(67),
+});
+
+export const ArtistStatisticsResponseSchema = z.object({
+	mostLikedTracks: z.array(ArtistStatisticsLikedTrackSchema).describe("가장 좋아요를 많이 받은 트랙들 (최대 5개)"),
+	mostPlayedTracks: z.array(ArtistStatisticsPlayedTrackSchema).describe("가장 많이 재생된 트랙들 (최대 5개)"),
+	topCountries: z.array(ArtistStatisticsCountrySchema).describe("한달간 재생이 많은 국가 (최대 5개)"),
+});
+
+export type ArtistStatisticsLikedTrack = z.infer<typeof ArtistStatisticsLikedTrackSchema>;
+export type ArtistStatisticsPlayedTrack = z.infer<typeof ArtistStatisticsPlayedTrackSchema>;
+export type ArtistStatisticsCountry = z.infer<typeof ArtistStatisticsCountrySchema>;
+export type ArtistStatisticsResponse = z.infer<typeof ArtistStatisticsResponseSchema>;
+
 export type ArtistReportResponse = z.infer<typeof ArtistReportResponseSchema>;
 export type ArtistReportListResponse = z.infer<typeof ArtistReportListResponseSchema>;
 export type ArtistBlockResponse = z.infer<typeof ArtistBlockResponseSchema>;

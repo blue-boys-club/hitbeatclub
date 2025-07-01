@@ -536,4 +536,87 @@ export class ArtistService {
 			},
 		});
 	}
+
+	async getStatistics(artistId: number) {
+		try {
+			// 가장 좋아요를 많이 받은 트랙들 (최대 5개)
+			const mostLikedTracks = await this.prisma.$queryRaw`
+				SELECT 
+					p.id,
+					p.id as productId,
+					p.product_name as productName,
+					p.view_count as viewCount,
+					COUNT(pl.id) as likeCount,
+					f.url as imageUrl
+				FROM product p
+				LEFT JOIN product_like pl ON p.id = pl.product_id AND pl.deleted_at IS NULL
+				LEFT JOIN file f ON p.id = f.target_id 
+					AND f.target_table = 'product' 
+					AND f.type = ${ENUM_FILE_TYPE.PRODUCT_COVER_IMAGE}
+					AND f.is_enabled = 1 
+					AND f.deleted_at IS NULL
+				WHERE p.seller_id = ${artistId} AND p.deleted_at IS NULL AND f.url IS NOT NULL
+				GROUP BY p.id
+				ORDER BY likeCount DESC, p.view_count DESC
+				LIMIT 5
+			`.then((data) => this.prisma.serializeBigInt(data));
+
+			// 가장 많이 재생된 트랙들 (최대 5개)
+			const mostPlayedTracks = await this.prisma.$queryRaw`
+				SELECT 
+					p.id,
+					p.id as productId,
+					p.product_name as productName,
+					p.view_count as viewCount,
+					f.url as imageUrl
+				FROM product p
+				LEFT JOIN file f ON p.id = f.target_id 
+					AND f.target_table = 'product' 
+					AND f.type = ${ENUM_FILE_TYPE.PRODUCT_COVER_IMAGE}
+					AND f.is_enabled = 1 
+					AND f.deleted_at IS NULL
+				WHERE p.seller_id = ${artistId} AND p.deleted_at IS NULL AND f.url IS NOT NULL
+				GROUP BY p.id
+				ORDER BY p.view_count DESC
+				LIMIT 5
+			`.then((data) => this.prisma.serializeBigInt(data));
+
+			// 한달간 재생이 많은 국가 (최대 5개)
+			const oneMonthAgo = new Date();
+			oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+			const topCountries = await this.prisma.$queryRaw`
+				SELECT 
+					u.country,
+					COUNT(*) as playCount
+				FROM playlist_log pl
+				JOIN user u ON pl.user_id = u.id
+				JOIN product p ON pl.product_id = p.id
+				WHERE p.seller_id = ${artistId} 
+					AND pl.created_at >= ${oneMonthAgo}
+					AND pl.deleted_at IS NULL
+					AND u.country IS NOT NULL
+				GROUP BY u.country
+				ORDER BY playCount DESC
+				LIMIT 5
+			`.then((data) => this.prisma.serializeBigInt(data));
+
+			// 총 월간 재생 수 계산 (비율 계산용)
+			const totalMonthlyPlays = topCountries.reduce((sum, country) => sum + Number(country.playCount), 0);
+
+			const formattedTopCountries = topCountries.map((country) => ({
+				countryCode: country.country,
+				playCount: Number(country.playCount),
+				percentage: totalMonthlyPlays > 0 ? Math.round((Number(country.playCount) / totalMonthlyPlays) * 100) : 0,
+			}));
+
+			return {
+				mostLikedTracks: mostLikedTracks,
+				mostPlayedTracks: mostPlayedTracks,
+				topCountries: formattedTopCountries,
+			};
+		} catch (error) {
+			throw new BadRequestException(`통계 조회에 실패했습니다: ${error.message}`);
+		}
+	}
 }
