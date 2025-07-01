@@ -16,6 +16,7 @@ import {
 	BadRequestException,
 	ForbiddenException,
 	Headers,
+	Ip,
 } from "@nestjs/common";
 import { ProductService } from "./product.service";
 import { ApiOperation, ApiTags, ApiConsumes } from "@nestjs/swagger";
@@ -62,6 +63,7 @@ import { PaymentService } from "../payment/payment.service";
 import { AwsCloudfrontService } from "~/common/aws/services/aws.cloudfront.service";
 import { ProductIdsRequestDto } from "./dto/request/product.ids.request.dto";
 import { PlaylistService } from "../playlist/playlist.service";
+import { Throttle } from "@nestjs/throttler";
 
 @Controller("products")
 @ApiTags("product")
@@ -557,6 +559,7 @@ export class ProductController {
 	}
 
 	@Post(":id/view-count")
+	@Throttle({ default: { limit: 1, ttl: 25 * 1000 } })
 	@ApiOperation({ summary: "상품 조회수 증가" })
 	@AuthenticationDoc({ optional: true })
 	@DocResponse<DatabaseIdResponseDto>(productMessage.find.success, {
@@ -565,8 +568,10 @@ export class ProductController {
 	async increaseViewCount(
 		@Req() req: AuthenticatedRequest,
 		@Param("id") id: number,
+		@Ip() ip: string,
 		@Headers("CloudFront-Viewer-Country-Region") countryRegion?: string,
 	): Promise<DatabaseIdResponseDto> {
+		this.logger.log({ context: { ip, user: req?.user, countryRegion } }, "increaseViewCount");
 		const product = await this.productService.increaseViewCount(id);
 
 		if (req?.user?.id) {
