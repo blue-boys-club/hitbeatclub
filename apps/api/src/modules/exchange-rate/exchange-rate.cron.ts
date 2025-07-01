@@ -18,25 +18,44 @@ export class ExchangeRateCron {
 	@Cron(CronExpression.EVERY_HOUR, {
 		name: "exchangeRateUpdate",
 		timeZone: process.env.APP_TIMEZONE ?? ENUM_APP_TIMEZONE.ASIA_SEOUL,
+		disabled: !(process.env.CRON_ENABLED === "true"),
 	})
 	async handleUpdate() {
 		try {
+			// We store an exchange-rate row identified by (base: KRW, target: USD).
+			// "rate" is the KRW amount required to purchase 1 USD (≒ USDT).
 			const baseCurrency = "KRW";
 			const targetCurrency = "USD";
 
-			// Example external API (exchangerate.host)
-			const url = `https://api.exchangerate.host/convert?from=${baseCurrency}&to=${targetCurrency}`;
-			const response = await firstValueFrom(this.httpService.get(url));
+			// CoinGecko USDT price endpoint
+			const url = "https://api.coingecko.com/api/v3/simple/price?vs_currencies=krw&symbols=usdt";
 
-			const data: any = response.data;
-			const rate: number = data?.result ?? null;
+			// Fetch latest USDT price in KRW
+			const response = await firstValueFrom(
+				this.httpService.get(url, {
+					headers: {
+						accept: "application/json",
+					},
+				}),
+			);
 
-			if (!rate) {
-				this.logger.warn("Failed to fetch exchange rate: invalid response");
+			const priceKrwPerUsd: number | undefined = response.data?.usdt?.krw;
+
+			if (!priceKrwPerUsd || isNaN(priceKrwPerUsd)) {
+				this.logger.warn({ response: response.data }, "Failed to fetch exchange rate: invalid response");
 				return;
 			}
 
-			await this.exchangeRateService.updateExchangeRate(baseCurrency, targetCurrency, rate);
+			// Apply 1% surcharge as requested (USDT is roughly pegged to USD)
+			const adjustedKrwPerUsd = priceKrwPerUsd * 1.01;
+
+			// Persist both directions:
+			//   1) KRW → USD (rate: USD per KRW)
+			//   2) USD → KRW (rate: KRW per USD)
+			const usdPerKrw = 1 / adjustedKrwPerUsd;
+
+			await this.exchangeRateService.updateExchangeRate("KRW", "USD", usdPerKrw);
+			await this.exchangeRateService.updateExchangeRate("USD", "KRW", adjustedKrwPerUsd);
 		} catch (error) {
 			this.logger.error("Exchange rate cron failed", error);
 		}

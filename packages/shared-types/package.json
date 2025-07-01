@@ -100,6 +100,11 @@
 			"types": "./dist/playlist/index.d.ts",
 			"import": "./dist/playlist/index.mjs",
 			"require": "./dist/playlist/index.js"
+		},
+		"./exchange-rate": {
+			"types": "./dist/exchange-rate/index.d.ts",
+			"import": "./dist/exchange-rate/index.mjs",
+			"require": "./dist/exchange-rate/index.js"
 		}
 	},
 	"files": [

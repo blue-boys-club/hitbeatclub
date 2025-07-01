@@ -17,8 +17,9 @@ export default registerAs(
 			prefix: "v",
 			version: process.env.URL_VERSION ?? "1",
 		},
-		deployed: isDeployed,
 
+		deployed: isDeployed,
 		enableTrustProxy: process.env.ENABLE_TRUST_PROXY === "true" || isDeployed,
+		cronSecret: process.env.CRON_SECRET ?? "qwe123!@#",
 	}),
 );

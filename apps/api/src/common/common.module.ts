@@ -18,7 +18,7 @@ import { PrismaModule } from "./prisma/prisma.module";
 		}),
 		HelperModule.forRoot(),
 		HelperModule.forRoot(),
-		ScheduleModule.forRoot(),
+		ScheduleModule.forRoot({}),
 		PrismaModule.forRoot(),
 	],
 })

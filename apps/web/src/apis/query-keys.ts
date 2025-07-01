@@ -151,6 +151,10 @@ const QUERY_KEYS = {
 		manual: (data: PlaylistManualRequest) => ["playlist", "manual", data],
 		recent: ["playlist", "recent"],
 	},
+
+	exchangeRate: {
+		latest: (base: string = "KRW", target: string = "USD") => ["exchange-rate", "latest", base, target],
+	},
 };
 
 export { QUERY_KEYS };

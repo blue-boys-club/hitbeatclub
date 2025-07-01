@@ -19,3 +19,4 @@ export * from "./question";
 export * from "./inquiry";
 export * from "./playlist";
 export * from "./notification";
+export * from "./exchange-rate";

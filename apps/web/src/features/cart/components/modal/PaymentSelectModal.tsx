@@ -15,6 +15,7 @@ import { useCompletePaymentOrderMutation } from "@/apis/payment/mutations/useCom
 import { AxiosError } from "axios";
 import { useQuery } from "@tanstack/react-query";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
+import { useExchangeRateLatestQueryOptions } from "@/apis/exchange-rate/query/exchange-rate.query-options";
 
 export type CheckoutItem = {
 	productId: number;
@@ -129,11 +130,25 @@ export const PaymentSelectModal = ({
 	const { mutateAsync: createPaymentOrder } = useCreatePaymentOrderMutation();
 	const { mutateAsync: completePayment } = useCompletePaymentOrderMutation();
 
+	// 환율 (KRW→USD) – PayPal 결제 시 필요
+	const { data: exchangeRateData } = useQuery(useExchangeRateLatestQueryOptions("KRW", "USD"));
+	const krwToUsdRate = exchangeRateData?.rate ?? null;
+
 	const onHandleOpenChange = useCallback(
 		(openState: boolean) => {
 			onOpenChange(openState);
+
+			// 모달이 닫히면 PayPal UI 초기화 상태를 리셋합니다.
 			if (!openState) {
 				setSelectedMethod(null);
+				paypalInitializedRef.current = false;
+				setPaypalUiStatus("idle");
+
+				// PayPal UI 컨테이너 정리
+				const paypalContainer = document.getElementById("portone-paypal-ui-container");
+				if (paypalContainer) {
+					paypalContainer.innerHTML = "";
+				}
 			}
 		},
 		[onOpenChange],
@@ -165,19 +180,23 @@ export const PaymentSelectModal = ({
 			const orderResponse = await createPaymentOrder({
 				type: "CART",
 				paymentId,
+				currency: selectedMethod.method === "PAYPAL" ? "USD" : undefined,
 				// cartItemIds 생략하면 전체 카트 아이템으로 결제
 			});
 
 			console.log("Order created:", orderResponse);
 
-			// 2. 포트원 결제 요청
+			const currency = selectedMethod.method === "PAYPAL" ? PortOne.Entity.Currency.USD : PortOne.Entity.Currency.KRW;
+			const rate = selectedMethod.method === "PAYPAL" ? (krwToUsdRate ?? 1) : 1;
+			const scaleFactor = selectedMethod.method === "PAYPAL" ? 10 ** 2 : 1;
+
 			const paymentResponse = await PortOne.requestPayment({
 				storeId: PORTONE_STORE_ID,
 				channelKey: PORTONE_CHANNEL_KEY.PAYMENT,
 				paymentId: paymentId,
 				orderName: orderName,
-				totalAmount: total,
-				currency: PortOne.Entity.Currency.KRW,
+				totalAmount: total * rate * scaleFactor,
+				currency,
 				payMethod:
 					selectedMethod.method === "CARD"
 						? "CARD"
@@ -186,6 +205,12 @@ export const PaymentSelectModal = ({
 							: selectedMethod.method === "PAYPAL"
 								? "PAYPAL"
 								: "CARD",
+				// products: checkoutItems.map((item) => ({
+				// 	id: item.productId.toString(),
+				// 	name: item.title,
+				// 	amount: Math.round(item.price * rate * scaleFactor),
+				// 	quantity: 1,
+				// })),
 				customer: {
 					fullName: userMe?.name,
 					phoneNumber: userMe?.phoneNumber,
@@ -231,7 +256,7 @@ export const PaymentSelectModal = ({
 		} finally {
 			setIsProcessing(false);
 		}
-	}, [selectedMethod, checkoutItems, orderName, total, onPaymentComplete, onPaymentError]);
+	}, [selectedMethod, checkoutItems, orderName, total, krwToUsdRate, onPaymentComplete, onPaymentError]);
 
 	const handleMethodSelect = useCallback((method: PaymentMethod) => {
 		setSelectedMethod(method);
@@ -253,12 +278,17 @@ export const PaymentSelectModal = ({
 				paypalPaymentIdRef.current = paymentId;
 
 				// 1. Create order in backend (CART type)
-				await createPaymentOrder({
+				const orderResponse = await createPaymentOrder({
 					type: "CART",
 					paymentId,
+					currency: "USD",
 				});
 
 				// 2. Render PayPal Smart Payment Button via PortOne SDK
+				const usdAmount = krwToUsdRate ? Math.round(total * krwToUsdRate) : total;
+				const rate = krwToUsdRate ?? 1;
+				const usdScaleFactor = 10 ** 2;
+
 				await PortOne.loadPaymentUI(
 					{
 						uiType: "PAYPAL_SPB",
@@ -266,8 +296,14 @@ export const PaymentSelectModal = ({
 						channelKey: PORTONE_CHANNEL_KEY.PAYPAL,
 						paymentId,
 						orderName,
-						totalAmount: total,
-						currency: PortOne.Entity.Currency.KRW,
+						totalAmount: usdAmount * usdScaleFactor,
+						currency: PortOne.Entity.Currency.USD,
+						// products: checkoutItems.map((item) => ({
+						// 	id: item.productId.toString(),
+						// 	name: item.title,
+						// 	amount: Math.round(item.price * rate * usdScaleFactor),
+						// 	quantity: 1,
+						// })),
 						customer: {
 							fullName: userMe?.name,
 							phoneNumber: userMe?.phoneNumber,
@@ -279,7 +315,7 @@ export const PaymentSelectModal = ({
 						onPaymentSuccess: async (response: PaymentResponse) => {
 							try {
 								await completePayment({ paymentId });
-								onPaymentComplete?.({} as PaymentOrderResponse);
+								onPaymentComplete?.(orderResponse.data);
 								onHandleOpenChange(false);
 							} catch (e: any) {
 								const msg = e instanceof AxiosError ? e.response?.data.detail : e?.message;
@@ -288,6 +324,14 @@ export const PaymentSelectModal = ({
 						},
 						onPaymentFail: (error: PaymentError) => {
 							setPaypalUiStatus("error");
+							paypalInitializedRef.current = false;
+
+							// 에러 발생 시 PayPal 컨테이너 정리
+							const paypalErrorContainer = document.getElementById("portone-paypal-ui-container");
+							if (paypalErrorContainer) {
+								paypalErrorContainer.innerHTML = "";
+							}
+
 							onPaymentError?.({ message: error.message, code: error.code || "PAYMENT_ERROR" });
 						},
 					},
@@ -297,6 +341,14 @@ export const PaymentSelectModal = ({
 				setPaypalUiStatus("rendered");
 			} catch (err: any) {
 				setPaypalUiStatus("error");
+				paypalInitializedRef.current = false;
+
+				// 에러 발생 시 PayPal 컨테이너 정리
+				const paypalErrorContainer = document.getElementById("portone-paypal-ui-container");
+				if (paypalErrorContainer) {
+					paypalErrorContainer.innerHTML = "";
+				}
+
 				const msg = err instanceof AxiosError ? err.response?.data?.detail : err?.message;
 				onPaymentError?.({ message: msg || "PAYPAL_UI_ERROR", code: "PAYPAL_UI_ERROR" });
 			}
@@ -305,6 +357,35 @@ export const PaymentSelectModal = ({
 		void loadPaypalUI();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedMethod]);
+
+	/*
+	 * PayPal → 다른 결제 수단으로 전환 시 PayPal UI 관련 상태를 리셋합니다.
+	 * 다시 PayPal을 선택했을 때 UI가 재렌더링되지 않는 문제를 방지합니다.
+	 */
+	useEffect(() => {
+		if (selectedMethod?.method === "PAYPAL") return;
+
+		paypalInitializedRef.current = false;
+		setPaypalUiStatus("idle");
+
+		const paypalContainer = document.getElementById("portone-paypal-ui-container");
+		if (paypalContainer) {
+			paypalContainer.innerHTML = "";
+		}
+	}, [selectedMethod]);
+
+	useEffect(() => {
+		if (!open) return;
+
+		// 모달이 새로 열릴 때 PayPal 상태 초기화 (에러 메시지 제거)
+		paypalInitializedRef.current = false;
+		setPaypalUiStatus("idle");
+
+		const paypalContainer = document.getElementById("portone-paypal-ui-container");
+		if (paypalContainer) {
+			paypalContainer.innerHTML = "";
+		}
+	}, [open]);
 
 	return (
 		<Popup.Popup
@@ -374,9 +455,16 @@ export const PaymentSelectModal = ({
 
 							<div
 								id="portone-paypal-ui-container"
-								className="portone-ui-container flex justify-center"
+								className="portone-ui-container cart-payment-select-modal flex justify-center w-full min-w-full"
 								style={{ display: paypalUiStatus === "rendered" ? "flex" : "none" }}
 							></div>
+
+							{/* 환율 정보 표시 */}
+							<p className="mt-3 text-xs text-center text-gray-500">
+								{krwToUsdRate !== null
+									? `1,000 KRW ≈ ${(1000 * krwToUsdRate).toFixed(4)} USD`
+									: "환율 정보를 불러오는 중..."}
+							</p>
 
 							{paypalUiStatus === "error" && (
 								<p className="mt-2 text-sm text-red-600 text-center">페이팔 버튼 로드 중 오류가 발생했습니다.</p>

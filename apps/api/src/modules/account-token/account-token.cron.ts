@@ -14,6 +14,7 @@ export class AccountTokenCron {
 	@Cron(CronExpression.EVERY_DAY_AT_3AM, {
 		name: "accountTokenCleanup",
 		timeZone: process.env.APP_TIMEZONE ?? ENUM_APP_TIMEZONE.ASIA_SEOUL,
+		disabled: !(process.env.CRON_ENABLED === "true"),
 	})
 	async handleCleanup() {
 		const { count } = await this.tokenService.softDeleteGarbage(30);

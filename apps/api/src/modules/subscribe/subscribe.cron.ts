@@ -10,6 +10,7 @@ export class SubscribeCron {
 	@Cron(CronExpression.EVERY_DAY_AT_10AM, {
 		name: "subscribeHandleDailyPayments",
 		timeZone: process.env.APP_TIMEZONE ?? ENUM_APP_TIMEZONE.ASIA_SEOUL,
+		disabled: !(process.env.CRON_ENABLED === "true"),
 	})
 	async handleDailyPayments() {
 		await this.subscribeService.runScheduledPayments();

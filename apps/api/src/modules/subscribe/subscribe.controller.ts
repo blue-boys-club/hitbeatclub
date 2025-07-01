@@ -1,4 +1,4 @@
-import { Controller, Post, Req, Body, Patch, Get } from "@nestjs/common";
+import { Controller, Post, Req, Body, Patch, Get, Query, UnauthorizedException } from "@nestjs/common";
 import { SubscribeService } from "./subscribe.service";
 import { ApiOperation, ApiTags, ApiBearerAuth, ApiBody } from "@nestjs/swagger";
 import { AuthJwtAccessProtected } from "../auth/decorators/auth.jwt.decorator";
@@ -11,12 +11,16 @@ import { SubscribeCreateResponseDto } from "./dto/response/subscribe.create.resp
 import { SubscribePlanUpdateRequestDto } from "./dto/request/subscribe.plan-update.request.dto";
 import { SubscribeCancelRequestDto } from "./dto/request/subscribe.cancel.request.dto";
 import { SubscribePlansResponseDto } from "./dto/response/subscribe.plans.response.dto";
+import { ConfigService } from "@nestjs/config";
 
 @Controller("subscribe")
 @ApiTags("subscribe")
 @ApiBearerAuth()
 export class SubscribeController {
-	constructor(private readonly subscribeService: SubscribeService) {}
+	constructor(
+		private readonly subscribeService: SubscribeService,
+		private readonly configService: ConfigService,
+	) {}
 
 	/**
 	 * 멤버십을 구독합니다
@@ -108,6 +112,26 @@ export class SubscribeController {
 		return {
 			statusCode: 200,
 			message: body.cancel ? subscribeMessage.cancel.success : subscribeMessage.cancel.undo,
+		};
+	}
+
+	/**
+	 * 스케줄된 멤버십 결제를 수동으로 실행합니다.
+	 *
+	 * cronSecret 쿼리 파라미터가 설정된 시크릿과 일치해야 합니다.
+	 */
+	@Post("cron/daily-payments")
+	@ApiOperation({ summary: "멤버십 결제 스케줄 수동 실행" })
+	async triggerDailyPayments(@Query("secret") secret: string): Promise<IResponse<void>> {
+		if (secret !== this.configService.get<string>("app.cronSecret")) {
+			throw new UnauthorizedException();
+		}
+
+		await this.subscribeService.runScheduledPayments();
+
+		return {
+			statusCode: 200,
+			message: "trigger subscribe cron succeeded",
 		};
 	}
 }

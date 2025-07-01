@@ -24,6 +24,7 @@ export default defineConfig({
 		"question/index": "src/question/index.ts",
 		"inquiry/index": "src/inquiry/index.ts",
 		"notification/index": "src/notification/index.ts",
+		"exchange-rate/index": "src/exchange-rate/index.ts",
 	},
 	format: ["cjs", "esm"],
 	dts: true,

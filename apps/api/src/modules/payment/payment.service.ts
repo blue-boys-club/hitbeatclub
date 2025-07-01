@@ -32,6 +32,7 @@ import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types";
 import { FileService } from "~/modules/file/file.service";
 import { PortOneWebhook, isPaymentWebhook } from "./payment.utils";
 import { ConfigService } from "@nestjs/config";
+import { ExchangeRateService } from "~/modules/exchange-rate/exchange-rate.service";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore -- vscode doesn't recognize this is a dual package even though it is and can be compiled
@@ -95,6 +96,7 @@ export class PaymentService {
 		private readonly productService: ProductService,
 		private readonly fileService: FileService,
 		private readonly configService: ConfigService,
+		private readonly exchangeRateService: ExchangeRateService,
 	) {
 		this.portoneWebhookSecret = this.configService.get<string>("payment.portone.webhook.secret");
 
@@ -190,8 +192,16 @@ export class PaymentService {
 				throw new BadRequestException(PAYMENT_INVALID_REQUEST_ERROR);
 			}
 
-			// 총 금액 계산
-			const totalAmount = selectedItems.reduce((sum, item) => sum + item.selectedLicense.price, 0);
+			// 총 금액(KRW) 계산
+			const totalAmountKRW = selectedItems.reduce((sum, item) => sum + item.selectedLicense.price, 0);
+
+			// 통화 처리 ─ 기본 KRW, PayPal 등 외화 결제 시 currency 요청 필드 사용
+			const currency = dto?.currency?.toUpperCase?.() || "KRW";
+			let exchangeRate: number | null = null;
+			if (currency !== "KRW") {
+				const latestRate = await this.exchangeRateService.findLatest("KRW", currency);
+				exchangeRate = Number(latestRate.rate);
+			}
 
 			// 주문 정보 생성
 			const orderName =
@@ -210,14 +220,17 @@ export class PaymentService {
 
 			// 주문 데이터를 데이터베이스에 저장 (UUID는 자동 생성)
 			const order = await this.prisma.order.create({
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				data: {
 					buyerId: BigInt(userId),
 					orderNumber,
 					orderName,
-					totalAmount,
+					totalAmount: totalAmountKRW,
+					// 새 컬럼 (prisma generate 전 타입 미반영): currency, exchangeRate
+					...(currency !== "KRW" ? { currency, exchangeRate } : {}),
 					status: "PENDING",
 					paymentId: dto.paymentId,
-				},
+				} as any,
 			});
 
 			// 주문 아이템들 생성 (개별 상품 정보)
@@ -299,7 +312,18 @@ export class PaymentService {
 			if (payment.status === "PAID") {
 				// 결제 금액 검증
 				const paymentAmount = payment.amount.total;
-				if (paymentAmount !== (order.totalAmount || order.totalPrice || 0)) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				let expectedAmount = order.totalAmount || order.totalPrice || 0; // in KRW
+
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				const orderCurrency = (order as any).currency;
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				const orderExchangeRate = (order as any).exchangeRate;
+				if (orderCurrency && orderCurrency !== "KRW" && orderExchangeRate) {
+					expectedAmount = Math.round(expectedAmount / Number(orderExchangeRate));
+				}
+
+				if (paymentAmount !== expectedAmount) {
 					throw new BadRequestException(INVALID_PAYMENT_AMOUNT_ERROR);
 				}
 

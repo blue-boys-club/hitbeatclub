@@ -112,6 +112,10 @@ model Order {
   orderName        String?       @map("order_name") @db.VarChar(255)
   totalPrice       Int?          @map("total_price")
   totalAmount      Int?          @map("total_amount")
+  /// 주문 결제에 사용된 통화 (예: USD, KRW 등 ISO 4217 코드)
+  currency         String?       @map("currency") @db.Char(3)
+  /// 결제 시점 기준 환율 (KRW 1당 currency 금액). 필요 시 소수점 8자리까지 저장
+  exchangeRate     Decimal?      @map("exchange_rate") @db.Decimal(15,8)
   status           OrderStatus   @default(INITIATE)
   paymentId        String?       @map("payment_id") @db.VarChar(255)
   paymentMethod    String?       @map("payment_method") @db.VarChar(50)

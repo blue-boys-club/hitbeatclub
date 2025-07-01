@@ -83,3 +83,7 @@ body {
 ::after {
 	box-sizing: border-box;
 }
+
+#ui-container-paypal-spb {
+	width: 330px;
+}
