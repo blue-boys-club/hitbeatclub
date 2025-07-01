@@ -722,8 +722,8 @@ export const MobilePlayer = () => {
 												>
 													<MobileAddCircleSVG
 														fill={isOnCart ? "var(--hbc-white)" : "var(--hbc-black)"}
-														backgroundFill="#3884FF"
-														stroke="black"
+														backgroundFill={isOnCart ? "#3884FF" : "var(--hbc-white)"}
+														stroke={isOnCart ? "var(--hbc-black)" : "transparent"}
 													/>
 												</div>
 											)}

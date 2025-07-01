@@ -35,6 +35,7 @@ export const PaymentOrderCreateResponseSchema = z.object({
 export const PaymentCompletionResponseSchema = z.object({
 	orderId: z.number().describe("주문 ID"),
 	paymentId: z.string().describe("결제 ID"),
+	orderNumber: z.string().describe("주문 번호 - 외부 노출용"),
 	status: OrderStatusSchema.describe("결제 상태"),
 	amount: z.number().describe("결제 금액"),
 	paidAt: z.date().describe("결제 완료 시간").optional(),

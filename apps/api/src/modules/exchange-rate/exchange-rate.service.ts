@@ -45,8 +45,6 @@ export class ExchangeRateService {
 	 */
 	async updateExchangeRate(baseCurrency: string, targetCurrency: string, rate: number): Promise<void> {
 		try {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore – exchangeRate model will exist after Prisma migration
 			await this.prisma.exchangeRate.create({
 				data: {
 					baseCurrency: baseCurrency.toUpperCase(),

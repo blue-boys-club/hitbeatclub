@@ -84,6 +84,6 @@ body {
 	box-sizing: border-box;
 }
 
-#ui-container-paypal-spb {
+.pc-cart-payment-select-modal #ui-container-paypal-spb {
 	width: 330px;
 }

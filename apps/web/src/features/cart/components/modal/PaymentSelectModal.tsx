@@ -455,7 +455,7 @@ export const PaymentSelectModal = ({
 
 							<div
 								id="portone-paypal-ui-container"
-								className="portone-ui-container cart-payment-select-modal flex justify-center w-full min-w-full"
+								className="portone-ui-container pc-cart-payment-select-modal flex justify-center w-full min-w-full"
 								style={{ display: paypalUiStatus === "rendered" ? "flex" : "none" }}
 							></div>
 

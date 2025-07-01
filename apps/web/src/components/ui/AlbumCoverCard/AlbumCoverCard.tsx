@@ -120,8 +120,7 @@ export const AlbumCoverCard = ({
 					});
 				}
 				await createAutoPlaylistAndPlay(autoPlaylistConfig, trackIndex ?? 0);
-				// 플레이리스트가 설정된 이후 공통 play 로직도 호출하여 사이드바/레이아웃 상태 반영
-				play(productId);
+				// 플레이리스트 생성 시 동시에 재생 로직이 실행되므로 중복 호출을 제거합니다.
 				return;
 			} catch (error) {
 				// 실패 시 기본 재생 로직으로 폴백

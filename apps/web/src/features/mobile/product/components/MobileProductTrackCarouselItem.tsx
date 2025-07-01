@@ -32,7 +32,7 @@ export const MobileProductTrackCarouselItem = ({
 		})),
 	);
 
-	const { setCurrentTrackIds, createAutoPlaylistAndPlay } = usePlaylist();
+	const { createAutoPlaylistAndPlay } = usePlaylist();
 
 	const statusIcon = useMemo(() => {
 		if (currentProductId !== track.id) {
@@ -80,17 +80,16 @@ export const MobileProductTrackCarouselItem = ({
 		if (autoPlaylistConfig) {
 			try {
 				await createAutoPlaylistAndPlay(autoPlaylistConfig, trackIndex);
-				play(track.id);
+				// 플레이리스트 생성 단계에서 이미 재생이 시작되므로 중복 토글을 방지하기 위해 추가 호출을 제거합니다.
 				return;
 			} catch (e) {
 				console.error("auto playlist failed", e);
 			}
 		}
 
-		// 일반 단일 트랙 재생 (새 플레이리스트 구성)
-		setCurrentTrackIds([track.id], 0);
+		// 단일 트랙 재생 (플레이리스트 상태는 공통 로직에 위임)
 		play(track.id);
-	}, [autoPlaylistConfig, trackIndex, createAutoPlaylistAndPlay, setCurrentTrackIds, play, track.id, currentProductId]);
+	}, [autoPlaylistConfig, trackIndex, createAutoPlaylistAndPlay, play, track.id, currentProductId]);
 
 	return (
 		<div

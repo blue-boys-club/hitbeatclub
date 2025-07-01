@@ -135,13 +135,12 @@ export const FooterPlayer = () => {
 	// 음원이 변경될 때 바로 재생을 중지시켜 기존 트랙이 이어서 재생되지 않도록 처리
 	useEffect(() => {
 		if (!productId) return;
-		// 현재 재생 중지 및 상태 초기화
+		// 현재 재생 중지 및 상태 초기화 (isPlaying 동기화는 stop 내부 상태 변화로 일괄 처리)
 		stop();
-		setIsPlaying(false);
 		setCurrentAudioUrl("");
 		// 다른 트랙으로 변경될 때 이전 재생 위치를 초기화하여 잘못된 시크 방지
 		lastPlayedTimeRef.current = 0;
-	}, [productId, stop, setIsPlaying]);
+	}, [productId, stop]);
 
 	// 오디오 파일 다운로드 링크가 변경될 때마다 재생
 	useEffect(() => {

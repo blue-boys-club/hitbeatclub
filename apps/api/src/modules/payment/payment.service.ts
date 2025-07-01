@@ -354,6 +354,7 @@ export class PaymentService {
 
 				return {
 					orderId: Number(order.id),
+					orderNumber: order.orderNumber,
 					paymentId: order.paymentId,
 					status: updatedOrder.status,
 					amount: paymentAmount,
@@ -383,6 +384,7 @@ export class PaymentService {
 
 				return {
 					orderId: Number(order.id),
+					orderNumber: order.orderNumber,
 					paymentId: dto.paymentId,
 					status: "WAITING_FOR_DEPOSIT",
 					amount: payment.amount.total,
