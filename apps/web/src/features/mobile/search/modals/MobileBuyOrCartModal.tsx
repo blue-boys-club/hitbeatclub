@@ -1,20 +1,21 @@
 "use client";
 
 import { Acapella, Beat } from "@/assets/svgs";
-import { Popup, PopupContent, PopupHeader, PopupTitle } from "@/components/ui/Popup";
+import { Popup, PopupContent, PopupDescription, PopupHeader, PopupTitle } from "@/components/ui/Popup";
 import Image from "next/image";
-import { memo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { ProductSearchResponse } from "@/apis/search/search.type";
-import { ProductLikeResponse, ProductListPagingResponse } from "@hitbeatclub/shared-types";
-import { useCreateCartItemMutation } from "@/apis/user/mutations/useCreateCartItemMutation";
-import { useAuthStore } from "@/stores/auth";
-import { useShallow } from "zustand/react/shallow";
+import { ProductDetailResponse, ProductLikeResponse, ProductListPagingResponse } from "@hitbeatclub/shared-types";
+import { useUnifiedCart } from "@/hooks/use-unified-cart";
 import { useToast } from "@/hooks/use-toast";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useRouter } from "next/navigation";
 
-type ProductData = 
+type ProductData =
 	| ProductSearchResponse["products"][number]
-	| ProductLikeResponse  
-	| ProductListPagingResponse["data"][number];
+	| ProductLikeResponse
+	| ProductListPagingResponse["data"][number]
+	| ProductDetailResponse;
 
 interface MobileBuyOrCartModalProps {
 	isOpen: boolean;
@@ -25,34 +26,23 @@ interface MobileBuyOrCartModalProps {
 export const MobileBuyOrCartModal = memo(({ isOpen, onClose, product }: MobileBuyOrCartModalProps) => {
 	const [selectedLicenseId, setSelectedLicenseId] = useState<number>(product.licenseInfo?.[0]?.id || 0);
 	const [isProcessing, setIsProcessing] = useState(false);
-
-	// 사용자 ID 가져오기
-	const userId = useAuthStore(useShallow((state) => state.user?.userId));
-
+	const router = useRouter();
 	// Toast 훅
 	const { toast } = useToast();
 
-	// 장바구니 추가 mutation
-	const createCartItemMutation = useCreateCartItemMutation(userId!);
+	// 통합 카트 훅
+	const { addItem } = useUnifiedCart();
 
 	// BPM 표시 로직
-	const bpmDisplay = product.minBpm === product.maxBpm 
-		? `${product.minBpm}BPM` 
-		: `${product.minBpm}BPM - ${product.maxBpm}BPM`;
+	const bpmDisplay =
+		product.minBpm === product.maxBpm ? `${product.minBpm}BPM` : `${product.minBpm}BPM - ${product.maxBpm}BPM`;
 
 	// 선택된 라이센스 정보
-	const selectedLicense = product.licenseInfo?.find(license => license.id === selectedLicenseId) || product.licenseInfo?.[0];
+	const selectedLicense =
+		product.licenseInfo?.find((license) => license.id === selectedLicenseId) || product.licenseInfo?.[0];
 
 	// 장바구니 추가 핸들러
 	const handleAddToCart = async () => {
-		if (!userId) {
-			toast({
-				description: "로그인이 필요합니다",
-				variant: "destructive",
-			});
-			return;
-		}
-
 		if (!selectedLicense?.id) {
 			toast({
 				description: "라이센스를 선택해주세요",
@@ -63,10 +53,7 @@ export const MobileBuyOrCartModal = memo(({ isOpen, onClose, product }: MobileBu
 
 		setIsProcessing(true);
 		try {
-			await createCartItemMutation.mutateAsync({
-				productId: product.id,
-				licenseId: selectedLicense.id,
-			});
+			await addItem(product.id, selectedLicense.id);
 			toast({
 				description: "장바구니에 추가되었습니다",
 			});
@@ -86,15 +73,33 @@ export const MobileBuyOrCartModal = memo(({ isOpen, onClose, product }: MobileBu
 	const handleBuy = async () => {
 		// TODO: 실제 구매 로직 구현
 		await handleAddToCart();
+		router.push("/mobile/my/cart");
 	};
-
+	const label = useMemo(() => {
+		const selectedLicense = product.licenseInfo?.[0];
+		if (selectedLicense) {
+			if ("label" in selectedLicense) {
+				return selectedLicense.label;
+			}
+			return selectedLicense.type.toUpperCase();
+		}
+		return "";
+	}, [product.licenseInfo]);
 	return (
 		<Popup
 			open={isOpen}
 			onOpenChange={onClose}
 			variant="mobile"
 		>
-			<PopupContent className="w-[238px] flex flex-col bg-[#DADADA]">
+			<PopupContent
+				className="w-[238px] flex flex-col bg-[#DADADA] z-[400]"
+				overlayClassName="z-[400]"
+				onClick={(e) => e.stopPropagation()}
+			>
+				<VisuallyHidden>
+					<PopupTitle>구매 또는 장바구니 담기</PopupTitle>
+					<PopupDescription>구매 또는 장바구니 담기</PopupDescription>
+				</VisuallyHidden>
 				<div className="flex flex-col gap-4">
 					<div className="flex gap-2">
 						<div className="w-76px h-76px relative rounded-5px overflow-hidden">
@@ -113,15 +118,17 @@ export const MobileBuyOrCartModal = memo(({ isOpen, onClose, product }: MobileBu
 							</div>
 							<div className="flex flex-col gap-2px font-[450] text-8px leading-100%">
 								<span>{bpmDisplay}</span>
-								<span>{product.musicKey} {product.scaleType?.toLowerCase()}</span>
+								<span>
+									{product.musicKey} {product.scaleType?.toLowerCase()}
+								</span>
 							</div>
 						</div>
 					</div>
 					{selectedLicense && (
 						<div className="flex flex-col items-center gap-2px">
-							<div className="font-medium text-12px leading-100%">{selectedLicense.label} 라이센스 사용범위</div>
+							<div className="font-medium text-12px leading-100%">{label} 라이센스 사용범위</div>
 							<div className="flex gap-10px font-bold text-8px leading-150%">
-								{selectedLicense.label.toUpperCase() === 'MASTER' ? (
+								{label.toUpperCase() === "MASTER" ? (
 									<>
 										<span>믹스테잎용 곡 녹음</span>
 										<span>1개의 상업적 곡 녹음</span>
@@ -141,29 +148,27 @@ export const MobileBuyOrCartModal = memo(({ isOpen, onClose, product }: MobileBu
 								key={license.id}
 								onClick={() => setSelectedLicenseId(license.id)}
 								className={`h-44px rounded-3px flex flex-col justify-center items-center gap-1 font-[450] text-8px leading-100% ${
-									selectedLicenseId === license.id 
-										? 'bg-black text-white' 
-										: 'bg-white text-black'
+									selectedLicenseId === license.id ? "bg-black text-white" : "bg-white text-black"
 								}`}
 							>
-								<span>{license.label}</span>
+								<span>{"label" in license ? license.label : license.type.toUpperCase()}</span>
 								<span>{license.price?.toLocaleString()} KRW</span>
 								<span>MP3, WAV</span>
 							</button>
 						))}
 					</div>
 					<div className="flex gap-1">
-						<button 
+						<button
 							className="rounded-3px h-20px flex-1 font-bold text-8px leading-100% bg-black text-white disabled:opacity-50 disabled:cursor-not-allowed"
 							onClick={handleAddToCart}
-							disabled={isProcessing || !userId}
+							disabled={isProcessing}
 						>
 							{isProcessing ? "처리중..." : "장바구니 담기"}
 						</button>
-						<button 
+						<button
 							className="rounded-3px h-20px flex-1 font-bold text-8px leading-100% bg-black text-white disabled:opacity-50 disabled:cursor-not-allowed"
 							onClick={handleBuy}
-							disabled={isProcessing || !userId}
+							disabled={isProcessing}
 						>
 							{isProcessing ? "처리중..." : "구매하기"}
 						</button>

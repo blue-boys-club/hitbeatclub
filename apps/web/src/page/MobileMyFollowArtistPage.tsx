@@ -124,7 +124,6 @@ export const MobileMyFollowArtistPage = ({ slug }: { slug: string }) => {
 						key={product.id}
 						type="follow"
 						product={product}
-						onBuyClick={handleBuyClick}
 					/>
 				))}
 			</div>

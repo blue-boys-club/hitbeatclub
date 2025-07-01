@@ -12,13 +12,16 @@ export const Footer = () => {
 	const { isPC } = useDevice();
 	const router = useRouter();
 	const pathname = usePathname();
-	const { setPreferredLayout } = useDevicePreferenceStore();
+	const { preferredLayout, setPreferredLayout } = useDevicePreferenceStore();
+
+	// 실제로 PC 스타일을 보여줄지 여부 (선호 레이아웃을 우선으로 판단)
+	const showPcVariant = preferredLayout === "pc" || (preferredLayout === "auto" && isPC);
 
 	/**
 	 * 레이아웃 전환 핸들러 (PC -> Mobile 또는 Mobile -> PC)
 	 */
 	const handleSwitchLayout = () => {
-		if (isPC) {
+		if (showPcVariant) {
 			setPreferredLayout("mobile");
 			router.replace(toMobilePath(pathname));
 		} else {
@@ -27,7 +30,7 @@ export const Footer = () => {
 		}
 	};
 
-	return isPC ? (
+	return showPcVariant ? (
 		<div className="flex flex-col gap-15px my-15px">
 			<UI.BodySmall className="whitespace-pre-line text-hbc-gray-400">
 				회사명 : 블루보이즈클럽

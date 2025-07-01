@@ -148,12 +148,8 @@ export const PurchaseWithCartTrigger = memo(
 			// 기본 PurchaseButton 사용
 			return (
 				<PurchaseButton
-					iconColor={isOnCart ? "var(--hbc-white)" : "var(--hbc-black)"}
-					className={cn(
-						`outline-4 outline-hbc-black font-suisse`,
-						className,
-						!isOnCart && "bg-hbc-white text-black hover:bg-hbc-white",
-					)}
+					className={cn(`outline-4 outline-hbc-black font-suisse`, className)}
+					variant={isOnCart ? "secondary" : "primary"}
 					disabled={isOnCart}
 					onClick={handleClick}
 				>

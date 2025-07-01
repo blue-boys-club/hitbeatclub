@@ -12,6 +12,7 @@ import { useShallow } from "zustand/react/shallow";
 import { ProductLikeResponse, ProductListPagingResponse } from "@hitbeatclub/shared-types";
 import { usePlaylist } from "@/hooks/use-playlist";
 import { usePlayTrack } from "@/hooks/use-play-track";
+import { MobilePurchaseWithCartTrigger } from "./MobilePurchaseWithCartTrigger";
 
 interface SearchProduct {
 	type: "search";
@@ -28,9 +29,7 @@ interface FollowProduct {
 	product: ProductListPagingResponse["data"][number];
 }
 
-type MobileProductItemProps = (SearchProduct | LikeProduct | FollowProduct) & {
-	onBuyClick?: (product: SearchProduct["product"] | LikeProduct["product"] | FollowProduct["product"]) => void;
-};
+type MobileProductItemProps = SearchProduct | LikeProduct | FollowProduct;
 
 /**
  * 좋아요한 트랙 아이템 컴포넌트
@@ -39,7 +38,7 @@ type MobileProductItemProps = (SearchProduct | LikeProduct | FollowProduct) & {
  * - 장바구니 담기 기능
  * - 트랙 관련 태그 표시
  */
-export const MobileProductItem = memo(({ type, product, onBuyClick }: MobileProductItemProps) => {
+export const MobileProductItem = memo(({ type, product }: MobileProductItemProps) => {
 	// 사용자 ID 가져오기
 	const userId = useAuthStore(useShallow((state) => state.user?.userId));
 
@@ -137,28 +136,23 @@ export const MobileProductItem = memo(({ type, product, onBuyClick }: MobileProd
 						<Heart active={isLiked} />
 					</button>
 				</div>
-				<div className="flex flex-col items-end font-semibold">
-					<button
-						onClick={(e) => {
-							e.stopPropagation();
-							onBuyClick?.(product);
-						}}
-						className="bg-black text-white h-13px px-6px rounded-15px text-8px disabled:opacity-50 disabled:cursor-not-allowed"
-						disabled={!userId}
-					>
-						Buy
-					</button>
-					<button
-						className="bg-black text-white h-13px px-6px rounded-15px text-8px disabled:opacity-50 disabled:cursor-not-allowed"
-						onClick={(e) => {
-							e.stopPropagation();
-							onBuyClick?.(product);
-						}}
-						disabled={!userId}
-					>
-						Add to Cart
-					</button>
-				</div>
+
+				<MobilePurchaseWithCartTrigger product={product}>
+					<div className="flex flex-col items-end font-semibold">
+						<button
+							className="bg-black text-white h-13px px-6px rounded-15px text-8px disabled:opacity-50 disabled:cursor-not-allowed"
+							// disabled={!userId}
+						>
+							Buy
+						</button>
+						<button
+							className="bg-black text-white h-13px px-6px rounded-15px text-8px disabled:opacity-50 disabled:cursor-not-allowed"
+							// disabled={!userId}
+						>
+							Add to Cart
+						</button>
+					</div>
+				</MobilePurchaseWithCartTrigger>
 			</div>
 		</div>
 	);

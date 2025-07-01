@@ -7,7 +7,7 @@ export interface PurchaseButtonProps
 	extends React.ButtonHTMLAttributes<HTMLButtonElement>,
 		VariantProps<typeof purchaseButtonVariants> {
 	children: React.ReactNode;
-	iconColor: string;
+	iconColor?: string;
 }
 
 const purchaseButtonVariants = cva(
@@ -36,7 +36,8 @@ const purchaseButtonVariants = cva(
 );
 
 export const PurchaseButton = memo(
-	({ variant, size, className, children, iconColor, ...props }: PurchaseButtonProps) => {
+	({ variant, size, className, children, iconColor: iconColorProp, ...props }: PurchaseButtonProps) => {
+		const iconColor = iconColorProp ?? (variant === "primary" ? "var(--hbc-white)" : "var(--hbc-black)");
 		return (
 			<button
 				className={cn(purchaseButtonVariants({ variant, size }), className)}

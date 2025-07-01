@@ -256,7 +256,6 @@ const MobileSearchPage = () => {
 										key={product.id}
 										type="search"
 										product={product}
-										onBuyClick={handleBuyClick}
 									/>
 								))}
 							</div>

@@ -63,7 +63,7 @@ export default function MobileMainLayout({ children }: { children: React.ReactNo
 				</div>
 			</div>
 			<MobilePlayer />
-			<Toaster viewportClassName="bottom-144px" />
+			<Toaster viewportClassName="bottom-144px z-[500]" />
 		</AudioProvider>
 	);
 }

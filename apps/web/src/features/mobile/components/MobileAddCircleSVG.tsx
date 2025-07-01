@@ -1,9 +1,16 @@
 interface MobileAddCircleSVGProps {
 	className?: string;
 	fill?: string;
+	stroke?: string;
+	backgroundFill?: string;
 }
 
-export const MobileAddCircleSVG = ({ className, fill = "black" }: MobileAddCircleSVGProps) => {
+export const MobileAddCircleSVG = ({
+	className,
+	fill = "black",
+	stroke = "transparent",
+	backgroundFill = "white",
+}: MobileAddCircleSVGProps) => {
 	return (
 		<svg
 			className={className}
@@ -13,6 +20,21 @@ export const MobileAddCircleSVG = ({ className, fill = "black" }: MobileAddCircl
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
 		>
+			<circle
+				cx="12"
+				cy="12"
+				r="9"
+				fill={backgroundFill}
+			/>
+
+			<circle
+				cx="12"
+				cy="12"
+				r="11"
+				stroke={stroke}
+				strokeWidth="2"
+			/>
+
 			<mask
 				id="mask0_1_21248"
 				style={{ maskType: "alpha" }}

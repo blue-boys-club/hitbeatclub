@@ -104,7 +104,6 @@ export const MobileMyLikePage = () => {
 							key={product.id}
 							type="like"
 							product={product}
-							onBuyClick={handleBuyClick}
 						/>
 					))
 				) : (

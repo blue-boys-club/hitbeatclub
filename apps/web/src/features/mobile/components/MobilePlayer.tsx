@@ -13,7 +13,6 @@ import { useAudioStore } from "@/stores/audio";
 import { usePlayTrack } from "@/hooks/use-play-track";
 import { useShallow } from "zustand/react/shallow";
 import { useQuery } from "@tanstack/react-query";
-import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import {
 	getProductQueryOption,
 	getProductFileDownloadLinkQueryOption,
@@ -25,9 +24,8 @@ import { useAudioContext } from "@/contexts/AudioContext";
 import { ReactPlayer } from "@/components/layout/Footer/Player/ReactPlayer";
 import { Heart } from "@/assets/svgs/Heart";
 import { Acapella, AudioBarPause, AudioBarPlay } from "@/assets/svgs";
-import { useCreateCartItemMutation } from "@/apis/user/mutations/useCreateCartItemMutation";
-import { useAuthStore } from "@/stores/auth";
 import { usePlaylist } from "@/hooks/use-playlist";
+import { MobilePurchaseWithCartTrigger } from "../product/components/MobilePurchaseWithCartTrigger";
 
 export const MobilePlayer = () => {
 	// 확장/축소 상태 관리
@@ -60,10 +58,6 @@ export const MobilePlayer = () => {
 		})),
 	);
 
-	// 로그인 상태 확인
-	const { data: user } = useQuery({ ...getUserMeQueryOption(), retry: false });
-	const isLoggedIn = Boolean(user?.id);
-
 	// 상품 정보 조회
 	const { data: productData } = useQuery({
 		...getProductQueryOption(currentProductId!),
@@ -73,12 +67,6 @@ export const MobilePlayer = () => {
 	// 좋아요 기능
 	const { mutate: likeMutation } = useLikeProductMutation();
 	const { mutate: unlikeProduct } = useUnlikeProductMutation();
-
-	// 사용자 ID 가져오기 (장바구니용)
-	const userId = useAuthStore(useShallow((state) => state.user?.userId));
-
-	// 장바구니 추가 mutation
-	const createCartItemMutation = useCreateCartItemMutation(userId!);
 
 	// 토스트 및 오디오 컨텍스트
 	const { toast } = useToast();
@@ -191,50 +179,15 @@ export const MobilePlayer = () => {
 		}
 	}, [currentProductId, productData, likeMutation, unlikeProduct]);
 
-	// 장바구니 추가 핸들러
-	const handleAddToCart = useCallback(async () => {
-		if (!userId) {
-			toast({
-				description: "로그인이 필요합니다",
-				variant: "destructive",
-			});
-			return;
-		}
-
-		if (!currentProductId || !productData) {
-			toast({
-				description: "상품 정보를 불러올 수 없습니다",
-				variant: "destructive",
-			});
-			return;
-		}
-
-		// 첫 번째 라이센스를 기본값으로 사용 (MobileBuyOrCartModal과 동일한 방식)
-		const defaultLicense = productData.licenseInfo?.[0];
-		if (!defaultLicense?.id) {
-			toast({
-				description: "라이센스 정보를 찾을 수 없습니다",
-				variant: "destructive",
-			});
-			return;
-		}
-
-		try {
-			await createCartItemMutation.mutateAsync({
-				productId: currentProductId,
-				licenseId: defaultLicense.id,
-			});
-			toast({
-				description: "장바구니에 추가되었습니다",
-			});
-		} catch (error) {
-			console.error("장바구니 추가 실패:", error);
-			toast({
-				description: "장바구니 추가에 실패했습니다",
-				variant: "destructive",
-			});
-		}
-	}, [userId, currentProductId, productData, createCartItemMutation, toast]);
+	// 모달에서 사용할 상품 객체 (licenseInfo.label 호환성 유지)
+	const triggerProduct = useMemo(() => {
+		if (!productData) return null;
+		// map licenseInfo to include label field if missing
+		const licenseInfo = (productData.licenseInfo || []).map((lic: any) =>
+			lic.label ? lic : { ...lic, label: lic.type[0] + lic.type.slice(1).toLowerCase() },
+		);
+		return { ...productData, licenseInfo } as any;
+	}, [productData]);
 
 	// 풀스크린으로 전환
 	const handleShowFullScreen = useCallback(() => {
@@ -353,7 +306,7 @@ export const MobilePlayer = () => {
 				className="absolute top-full right-0 mt-2 w-52 border-2 border-black bg-white p-4 z-50 max-h-96 overflow-y-auto"
 				onClick={(e) => e.stopPropagation()}
 			>
-				{trackIds.slice(0, 9).map((id, index: number) => (
+				{trackIds.slice(0, 9).map((id: number, index: number) => (
 					<div
 						key={id}
 						className={`flex gap-3 mb-2.5 last:mb-0 cursor-pointer hover:bg-gray-100 p-1 rounded ${
@@ -756,15 +709,26 @@ export const MobilePlayer = () => {
 											/>
 										</div>
 									</div>
-									<div
-										className="cursor-pointer"
-										onClick={(e) => {
-											e.stopPropagation();
-											handleAddToCart();
-										}}
-									>
-										<MobileAddCircleSVG />
-									</div>
+									{triggerProduct && (
+										<MobilePurchaseWithCartTrigger
+											product={triggerProduct}
+											asChild
+											onModalOpen={() => setIsFullScreen(false)}
+										>
+											{({ isOnCart }) => (
+												<div
+													className="cursor-pointer"
+													onClick={(e) => e.stopPropagation()}
+												>
+													<MobileAddCircleSVG
+														fill={isOnCart ? "var(--hbc-white)" : "var(--hbc-black)"}
+														backgroundFill="#3884FF"
+														stroke="black"
+													/>
+												</div>
+											)}
+										</MobilePurchaseWithCartTrigger>
+									)}
 									<div
 										ref={speakerRef}
 										onClick={(e) => {
@@ -832,7 +796,7 @@ export const MobilePlayer = () => {
 			{/* Full Screen Player UI - 확장 상태 */}
 			{(isFullScreen || isClosing) && (
 				<div
-					className={`bg-white z-[1000] fixed top-0 left-0 right-0 bottom-0 flex flex-col ${
+					className={`bg-white z-[300] fixed top-0 left-0 right-0 bottom-0 flex flex-col ${
 						isClosing ? "animate-slide-down" : "animate-slide-up"
 					}`}
 				>
@@ -925,15 +889,21 @@ export const MobilePlayer = () => {
 					</div>
 					<div className="fixed bg-white bottom-72px left-0 right-0 px-4 py-6 flex justify-between">
 						<div className="flex flex-col">
-							{/* <button className="h-30px font-bold text-16px leading-16px text-black border-4px border-black rounded-40px">
-								Free Download
-							</button> */}
-							<button className="font-bold text-16px leading-16px text-white bg-black h-30px px-2 border-4px border-black rounded-40px flex items-center gap-2">
-								<MobileAddCircleSVG fill="white" />
-								{productData?.licenseInfo?.find((license) => license.type === "EXCLUSIVE")?.price?.toLocaleString() ||
-									0}{" "}
-								KRW
-							</button>
+							{triggerProduct && (
+								<MobilePurchaseWithCartTrigger
+									product={triggerProduct}
+									asChild
+									onModalClose={handleHideFullScreen}
+								>
+									<button className="font-bold text-16px leading-16px text-white bg-black h-30px px-2 border-4px border-black rounded-40px flex items-center gap-2">
+										<MobileAddCircleSVG fill="white" />
+										{productData?.licenseInfo
+											?.find((license: any) => (license.label ?? license.type) === "EXCLUSIVE")
+											?.price?.toLocaleString() || 0}{" "}
+										KRW
+									</button>
+								</MobilePurchaseWithCartTrigger>
+							)}
 						</div>
 						<div className="self-end">
 							<div
