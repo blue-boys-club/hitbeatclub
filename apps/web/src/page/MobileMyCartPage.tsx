@@ -9,6 +9,7 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCartListQueryOptions, getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 import { Checkbox } from "@/components/ui";
+import { type CheckoutItem } from "@/features/cart/components/modal/PaymentSelectModal";
 
 // 로딩 스켈레톤 컴포넌트
 const CartItemSkeleton = () => (
@@ -49,16 +50,30 @@ export const MobileMyCartPage = () => {
 		enabled: !!user?.id,
 	});
 
-	// 총 가격 계산
-	const { totalPrice, itemCount } = useMemo(() => {
+	// 총 가격 계산 및 checkoutItems 준비
+	const { totalPrice, itemCount, checkoutItems, orderName } = useMemo(() => {
 		if (!cartItems) {
-			return { totalPrice: 0, itemCount: 0 };
+			return { totalPrice: 0, itemCount: 0, checkoutItems: [] as CheckoutItem[], orderName: "" };
 		}
 
-		const total = cartItems.reduce((sum, item) => sum + item.selectedLicense.price, 0);
+		const total = (cartItems ?? []).reduce((sum, item) => sum + (item.selectedLicense?.price || 0), 0);
+
+		const items: CheckoutItem[] = (cartItems ?? []).map((item) => ({
+			productId: item.product.id,
+			licenseId: item.selectedLicense?.id || 0,
+			imageUrl: item.product.coverImage?.url || "",
+			title: item.product.productName,
+			price: item.selectedLicense?.price || 0,
+		}));
+
+		const orderNameStr =
+			items.length > 0 ? `${items[0].title}${items.length > 1 ? ` 외 ${items.length - 1}개` : ""}` : "";
+
 		return {
 			totalPrice: total,
-			itemCount: cartItems.length,
+			itemCount: (cartItems ?? []).length,
+			checkoutItems: items,
+			orderName: orderNameStr,
 		};
 	}, [cartItems]);
 
@@ -67,11 +82,23 @@ export const MobileMyCartPage = () => {
 			toast({ description: "장바구니가 비어있습니다." });
 			return;
 		}
+		if (!isAgreed) {
+			toast({ description: "결제 약관에 동의해주세요." });
+			return;
+		}
 		setIsPaymentModalOpen(true);
 	};
 
-	const handleCloseModal = () => {
-		setIsPaymentModalOpen(false);
+	const handleCloseModal = (open: boolean) => {
+		setIsPaymentModalOpen(open);
+	};
+
+	const handlePaymentComplete = () => {
+		toast({ description: "결제가 완료되었습니다." });
+	};
+
+	const handlePaymentError = (error: { message: string; code: string }) => {
+		toast({ description: error.message, variant: "destructive" });
 	};
 
 	// 로딩 상태
@@ -157,14 +184,14 @@ export const MobileMyCartPage = () => {
 					right={`${itemCount} Items`}
 				/>
 				<div className="flex flex-col gap-2">
-					{cartItems.map((item) => (
+					{(cartItems ?? []).map((item) => (
 						<MobileMyCartItem
 							key={item.id}
 							title={item.product.productName}
 							artist={item.product.seller?.stageName || "Unknown Artist"}
 							imageUrl={item.product.coverImage?.url || ""}
-							price={item.selectedLicense.price}
-							licenseType={item.selectedLicense.type}
+							price={item.selectedLicense?.price || 0}
+							licenseType={item.selectedLicense?.type || "Unknown"}
 							cartItemId={item.id}
 							userId={user?.id || 0}
 							productId={item.product.id}
@@ -206,6 +233,11 @@ export const MobileMyCartPage = () => {
 			<PaymentMethodModal
 				isOpen={isPaymentModalOpen}
 				onClose={handleCloseModal}
+				total={totalPrice}
+				orderName={orderName}
+				checkoutItems={checkoutItems}
+				onPaymentComplete={handlePaymentComplete}
+				onPaymentError={handlePaymentError}
 			/>
 		</div>
 	);

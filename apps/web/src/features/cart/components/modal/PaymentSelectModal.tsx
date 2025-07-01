@@ -2,7 +2,7 @@
 
 // import { randomUUID } from "crypto";
 import { v4 as uuidv4 } from "uuid";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
 import * as PortOne from "@portone/browser-sdk/v2";
 import * as Popup from "@/components/ui/Popup";
 import { cn } from "@/common/utils";
@@ -122,6 +122,9 @@ export const PaymentSelectModal = ({
 	const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
 	const [selectedEasyPayProvider, setSelectedEasyPayProvider] = useState<EasyPayProvider | null>(null);
 	const [isProcessing, setIsProcessing] = useState(false);
+	const [paypalUiStatus, setPaypalUiStatus] = useState<"idle" | "loading" | "rendered" | "error">("idle");
+	const paypalInitializedRef = useRef(false);
+	const paypalPaymentIdRef = useRef<string | null>(null);
 
 	const { mutateAsync: createPaymentOrder } = useCreatePaymentOrderMutation();
 	const { mutateAsync: completePayment } = useCompletePaymentOrderMutation();
@@ -239,6 +242,70 @@ export const PaymentSelectModal = ({
 		setSelectedEasyPayProvider(null);
 	}, []);
 
+	// Load PayPal Smart Payment Button UI when PayPal method selected
+	useEffect(() => {
+		const loadPaypalUI = async () => {
+			if (paypalInitializedRef.current || selectedMethod?.method !== "PAYPAL") return;
+
+			setPaypalUiStatus("loading");
+			try {
+				const paymentId = `payment-${uuidv4()}`;
+				paypalPaymentIdRef.current = paymentId;
+
+				// 1. Create order in backend (CART type)
+				await createPaymentOrder({
+					type: "CART",
+					paymentId,
+				});
+
+				// 2. Render PayPal Smart Payment Button via PortOne SDK
+				await PortOne.loadPaymentUI(
+					{
+						uiType: "PAYPAL_SPB",
+						storeId: PORTONE_STORE_ID,
+						channelKey: PORTONE_CHANNEL_KEY.PAYPAL,
+						paymentId,
+						orderName,
+						totalAmount: total,
+						currency: PortOne.Entity.Currency.KRW,
+						customer: {
+							fullName: userMe?.name,
+							phoneNumber: userMe?.phoneNumber,
+							email: userMe?.email,
+							customerId: `hitbeatclub-${userMe?.id}`,
+						},
+					},
+					{
+						onPaymentSuccess: async (response: PaymentResponse) => {
+							try {
+								await completePayment({ paymentId });
+								onPaymentComplete?.({} as PaymentOrderResponse);
+								onHandleOpenChange(false);
+							} catch (e: any) {
+								const msg = e instanceof AxiosError ? e.response?.data.detail : e?.message;
+								onPaymentError?.({ message: msg || "PAYMENT_ERROR", code: "PAYMENT_ERROR" });
+							}
+						},
+						onPaymentFail: (error: PaymentError) => {
+							setPaypalUiStatus("error");
+							onPaymentError?.({ message: error.message, code: error.code || "PAYMENT_ERROR" });
+						},
+					},
+				);
+
+				paypalInitializedRef.current = true;
+				setPaypalUiStatus("rendered");
+			} catch (err: any) {
+				setPaypalUiStatus("error");
+				const msg = err instanceof AxiosError ? err.response?.data?.detail : err?.message;
+				onPaymentError?.({ message: msg || "PAYPAL_UI_ERROR", code: "PAYPAL_UI_ERROR" });
+			}
+		};
+
+		void loadPaypalUI();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedMethod]);
+
 	return (
 		<Popup.Popup
 			open={open}
@@ -276,6 +343,47 @@ export const PaymentSelectModal = ({
 						))}
 					</div>
 
+					{/* PayPal UI Container */}
+					{selectedMethod?.method === "PAYPAL" && (
+						<div className="my-4">
+							{paypalUiStatus === "loading" && (
+								<div className="flex flex-col items-center justify-center p-4 text-center rounded-md bg-gray-50 min-h-[120px]">
+									<svg
+										className="w-8 h-8 mb-3 text-blue-500 animate-spin"
+										xmlns="http://www.w3.org/2000/svg"
+										fill="none"
+										viewBox="0 0 24 24"
+									>
+										<circle
+											className="opacity-25"
+											cx="12"
+											cy="12"
+											r="10"
+											stroke="currentColor"
+											strokeWidth="4"
+										></circle>
+										<path
+											className="opacity-75"
+											fill="currentColor"
+											d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+										></path>
+									</svg>
+									<p className="font-semibold">페이팔 결제 버튼을 준비 중입니다...</p>
+								</div>
+							)}
+
+							<div
+								id="portone-paypal-ui-container"
+								className="portone-ui-container flex justify-center"
+								style={{ display: paypalUiStatus === "rendered" ? "flex" : "none" }}
+							></div>
+
+							{paypalUiStatus === "error" && (
+								<p className="mt-2 text-sm text-red-600 text-center">페이팔 버튼 로드 중 오류가 발생했습니다.</p>
+							)}
+						</div>
+					)}
+
 					<Popup.PopupFooter className="mt-6">
 						<Popup.PopupButton
 							className="text-black bg-white border-2 border-black"
@@ -283,20 +391,22 @@ export const PaymentSelectModal = ({
 						>
 							취소
 						</Popup.PopupButton>
-						<Popup.PopupButton
-							onClick={handlePaymentRequest}
-							disabled={
-								!selectedMethod || (selectedMethod.method === "EASY_PAY" && !selectedEasyPayProvider) || isProcessing
-							}
-							className={cn(
-								(!selectedMethod ||
-									(selectedMethod.method === "EASY_PAY" && !selectedEasyPayProvider) ||
-									isProcessing) &&
-									"opacity-50 cursor-not-allowed",
-							)}
-						>
-							{isProcessing ? "결제 처리 중..." : "결제하기"}
-						</Popup.PopupButton>
+						{selectedMethod?.method !== "PAYPAL" && (
+							<Popup.PopupButton
+								onClick={handlePaymentRequest}
+								disabled={
+									!selectedMethod || (selectedMethod.method === "EASY_PAY" && !selectedEasyPayProvider) || isProcessing
+								}
+								className={cn(
+									(!selectedMethod ||
+										(selectedMethod.method === "EASY_PAY" && !selectedEasyPayProvider) ||
+										isProcessing) &&
+										"opacity-50 cursor-not-allowed",
+								)}
+							>
+								{isProcessing ? "결제 처리 중..." : "결제하기"}
+							</Popup.PopupButton>
+						)}
 					</Popup.PopupFooter>
 				</div>
 			</Popup.PopupContent>

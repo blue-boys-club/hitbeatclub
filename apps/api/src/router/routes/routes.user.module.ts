@@ -15,6 +15,7 @@ import { PaymentModule } from "~/modules/payment/payment.module";
 import { SearchModule } from "~/modules/search/search.module";
 import { PlaylistModule } from "~/modules/playlist/playlist.module";
 import { NotificationModule } from "~/modules/notification/notification.module";
+import { ExchangeRateModule } from "~/modules/exchange-rate/exchange-rate.module";
 
 @Module({
 	controllers: [],
@@ -37,6 +38,7 @@ import { NotificationModule } from "~/modules/notification/notification.module";
 		SearchModule,
 		PlaylistModule,
 		NotificationModule,
+		ExchangeRateModule,
 	],
 })
 export class RoutesUserModule {}

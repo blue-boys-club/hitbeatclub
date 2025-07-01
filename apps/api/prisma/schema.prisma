@@ -55,7 +55,7 @@ model Artist {
   userId                     BigInt    @map("user_id")
   stageName                  String?   @map("stage_name") @db.VarChar(30)
   slug                       String?   @db.VarChar(20)
-  viewCount                  BigInt?   @map("view_count") @db.UnsignedBigInt
+  viewCount                  BigInt    @default(0) @map("view_count") @db.UnsignedBigInt
   description                String?   @db.Text
   isVerified                 Int?      @map("is_verified") @db.TinyInt 
   profileImageUrl            String?   @map("profile_image_url") @db.VarChar(255)
@@ -170,7 +170,7 @@ model Product {
   currency                  String?   @db.VarChar(10)
   isFreeDownload            Int?      @map("is_free_download") @db.TinyInt
   isPublic                  Int?      @map("is_public") @db.TinyInt
-  viewCount                 BigInt?   @map("view_count") @db.UnsignedBigInt
+  viewCount                 BigInt    @default(0) @map("view_count") @db.UnsignedBigInt
   createdAt                 DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt                 DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
   deletedAt                 DateTime? @map("deleted_at") @db.Timestamp(0)
@@ -713,4 +713,18 @@ model PlaylistLog {
   @@index([productId], map: "FK_product_TO_playlist_log_1")
   @@index([createdAt], map: "idx_playlist_log_created")
   @@map("playlist_log")
+}
+
+model ExchangeRate {
+  id            BigInt    @id @default(autoincrement())
+  baseCurrency   String    @map("base_currency") @db.Char(3)      // 기준 통화 (예: KRW)
+  targetCurrency String    @map("target_currency") @db.Char(3)     // 대상 통화 (예: USD)
+  rate           Decimal   @db.Decimal(15,8)                       // 1 baseCurrency 당 targetCurrency 금액
+  createdAt     DateTime? @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt     DateTime? @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamp(0)
+
+  @@index([baseCurrency, targetCurrency], map: "idx_exchange_rate_pair")
+  @@unique([baseCurrency, targetCurrency, createdAt, deletedAt], map: "ux_exchange_rate_pair_created_deleted")
+  @@map("exchange_rate")
 }
