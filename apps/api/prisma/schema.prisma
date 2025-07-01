@@ -571,6 +571,7 @@ model Playlist {
   playedTracks  PlayedTracks[]
 
   @@index([userId], map: "FK_user_TO_playlist_1")
+  @@unique([userId, deletedAt], map: "ux_playlist_user_deleted")
   @@map("playlist")
 }
 
@@ -588,6 +589,7 @@ model PlayedTracks {
   playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
 
   @@map("played_tracks")
+  @@unique([userId, deletedAt], map: "ux_played_tracks_user_deleted")
 }
 
 model Question {
@@ -692,13 +694,14 @@ model Notification {
 }
 
 model PlaylistLog {
-  id        BigInt    @id @default(autoincrement())
-  userId    BigInt    @map("user_id")
-  sellerId  BigInt    @map("seller_id")
-  productId BigInt    @map("product_id")
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
-  updatedAt DateTime  @default(now()) @map("updated_at") @db.Timestamp(0)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamp(0)
+  id                      BigInt    @id @default(autoincrement())
+  userId                  BigInt    @map("user_id")
+  sellerId                BigInt    @map("seller_id")
+  productId               BigInt    @map("product_id")
+  cloudfrontCountryRegion String?   @map("cloudfront_country_region") @db.VarChar(255)
+  createdAt               DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt               DateTime  @default(now()) @map("updated_at") @db.Timestamp(0)
+  deletedAt               DateTime? @map("deleted_at") @db.Timestamp(0)
   
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_user_TO_playlist_log_1")
   seller    Artist    @relation(fields: [sellerId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_artist_TO_playlist_log_1")
