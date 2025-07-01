@@ -520,7 +520,7 @@ model Notice {
 model ArtistReport {
   id                   BigInt      @id @default(autoincrement())
   artistId             BigInt      @map("artist_id")
-  userId               BigInt      @map("user_id")
+  userId               BigInt?      @map("user_id")
   reporterName         String      @map("reporter_name") @db.VarChar(100)
   reporterPhone        String      @map("reporter_phone") @db.VarChar(20)
   reporterEmail        String      @map("reporter_email") @db.VarChar(255)
@@ -533,7 +533,7 @@ model ArtistReport {
   deletedAt            DateTime?   @map("deleted_at") @db.Timestamp(0)
   
   artist               Artist      @relation(fields: [artistId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_artist_TO_report_1")
-  user                 User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_user_TO_report_1")
+  user                 User?        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_user_TO_report_1")
   @@index([artistId], map: "FK_artist_TO_report_1")
   @@map("artist_report")
 }
