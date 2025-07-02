@@ -363,7 +363,7 @@ const UserAccountForm = memo(() => {
 							<button
 								type="button"
 								onClick={openChangePasswordModal}
-								className="text-[#001EFF] font-[600] text-[12px] leading-[12px] tracking-[0.12px] font-['SUIT Variable'] cursor-pointer"
+								className="text-[#001EFF] font-[600] text-[12px] leading-[12px] tracking-[0.12px] font-suit cursor-pointer"
 							>
 								비밀번호 변경
 							</button>
@@ -371,15 +371,15 @@ const UserAccountForm = memo(() => {
 
 						{/* <div className="flex flex-col gap-3 pb-4 border-b-1 border-black">
 							<div className="flex gap-1">
-								<span className="text-black font-extrabold text-base leading-[160%] tracking-[-0.32px] font-[SUIT]">
+								<span className="text-black font-extrabold text-base leading-[160%] tracking-[-0.32px] font-suit">
 									디스플레이
 								</span>
-								<span className="text-black font-semibold text-base leading-[160%] tracking-[-0.32px] font-['Suisse_Intl']">
+								<span className="text-black font-semibold text-base leading-[160%] tracking-[-0.32px] font-suisse">
 									Display
 								</span>
 							</div>
 							<div className="flex justify-between">
-								<div className="text-black font-semibold text-xs leading-none tracking-[0.12px] font-['SUIT_Variable']">
+								<div className="text-black font-semibold text-xs leading-none tracking-[0.12px] font-suit">
 									다크모드
 								</div>
 								<Toggle onChange={toggleDarkMode} />
@@ -388,21 +388,21 @@ const UserAccountForm = memo(() => {
 
 						<div className="flex flex-col gap-3 pb-4 border-b-1 border-black">
 							<div className="flex gap-1">
-								<span className="text-black font-extrabold text-base leading-[160%] tracking-[-0.32px] font-[SUIT]">
+								<span className="text-black font-extrabold text-base leading-[160%] tracking-[-0.32px] font-suit">
 									도움말
 								</span>
-								<span className="text-black font-semibold text-base leading-[160%] tracking-[-0.32px] font-['Suisse_Intl']">
+								<span className="text-black font-semibold text-base leading-[160%] tracking-[-0.32px] font-suisse">
 									Help
 								</span>
 							</div>
 							<div className="flex justify-between">
 								<div className="flex gap-[10px]">
-									<div className="text-black font-semibold text-xs leading-none tracking-[0.12px] font-['SUIT_Variable']">
+									<div className="text-black font-semibold text-xs leading-none tracking-[0.12px] font-suit">
 										도움이 필요하신가요?
 									</div>
 									<Link
 										href={"/support"}
-										className="text-[#FF1900] font-semibold text-xs leading-none tracking-[0.12px] font-['SUIT_Variable'] cursor-pointer"
+										className="text-[#FF1900] font-semibold text-xs leading-none tracking-[0.12px] font-suit cursor-pointer"
 									>
 										고객센터 바로가기
 									</Link>
@@ -410,12 +410,12 @@ const UserAccountForm = memo(() => {
 							</div>
 							<div className="flex justify-between">
 								<div className="flex gap-[10px]">
-									<div className="text-black font-semibold text-xs leading-none tracking-[0.12px] font-['SUIT_Variable']">
+									<div className="text-black font-semibold text-xs leading-none tracking-[0.12px] font-suit">
 										히트비트클럽에 대해 궁금하신가요?
 									</div>
 									<Link
 										href={"/"}
-										className="text-[#FF1900] font-semibold text-xs leading-none tracking-[0.12px] font-['SUIT_Variable'] cursor-pointer"
+										className="text-[#FF1900] font-semibold text-xs leading-none tracking-[0.12px] font-suit cursor-pointer"
 									>
 										회사 소개 바로가기
 									</Link>
@@ -427,7 +427,7 @@ const UserAccountForm = memo(() => {
 							<button
 								type="button"
 								onClick={isMembership ? openCancelMembershipModal : openDeleteAccountModal}
-								className="text-[#87878A] font-semibold text-[12px] leading-[100%] tracking-[0.12px] font-['SUIT_Variable'] pb-[3px] border-b-1 border-[#87878A] cursor-pointer"
+								className="text-[#87878A] font-semibold text-[12px] leading-[100%] tracking-[0.12px] font-suit pb-[3px] border-b-1 border-[#87878A] cursor-pointer"
 							>
 								회원 탈퇴하기
 							</button>
@@ -439,7 +439,7 @@ const UserAccountForm = memo(() => {
 								disabled={isSubmitting || !isDirty || !isValid || updateUserProfileMutation.isPending}
 								size={"sm"}
 								rounded={"full"}
-								className="text-white font-black text-[12px] leading-[100%] tracking-[0.12px] font-['SUIT_Variable'] disabled:opacity-50"
+								className="text-white font-black text-[12px] leading-[100%] tracking-[0.12px] font-suit disabled:opacity-50"
 							>
 								{isSubmitting || updateUserProfileMutation.isPending ? "저장 중..." : "변경사항 저장"}
 							</Button>

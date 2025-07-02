@@ -23,17 +23,17 @@ const UserCancelMembershipModal = ({ isModalOpen, onClose, userId }: UserCancelM
 			onOpenChange={onClose}
 		>
 			<PopupContent>
-				<PopupTitle className="text-black text-center font-[SUIT] text-[26px] font-bold leading-[32px] tracking-[0.26px]">
+				<PopupTitle className="text-black text-center font-suit text-[26px] font-bold leading-[32px] tracking-[0.26px]">
 					현재 회원님은 멤버십에 가입되어 있습니다!
 				</PopupTitle>
 				<div className="flex flex-col justify-center px-4">
-					<div className="text-black font-['Inter'] text-base font-bold leading-[160%] tracking-[-0.32px]">
+					<div className="text-black font-inter font-suit text-base font-bold leading-[160%] tracking-[-0.32px]">
 						현재 멤버십에 가입되어 있어 회원 탈퇴를 진행할 수 없습니다.
 						<br />
 						먼저 멤버십을 해지해주세요 :)
 					</div>
 					<br />
-					<div className="text-black font-[Inter] text-xs font-bold leading-[160%] tracking-[-0.24px]">
+					<div className="text-black font-inter font-suit text-xs font-bold leading-[160%] tracking-[-0.24px]">
 						[AtistStudio] &gt; [Atist Info] &gt;[히트비트 멤버십 정보] &gt;[멤버십 해지]
 					</div>
 				</div>

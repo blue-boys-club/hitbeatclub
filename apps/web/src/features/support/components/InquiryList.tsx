@@ -17,7 +17,7 @@ export const InquiryList = ({ data, currentPage = 1, onPageChange }: InquiryList
 		<section className="pb-12 overflow-hidden">
 			<table className="w-full table-fixed">
 				<thead>
-					<tr className="border-b-6 border-black text-left text-hbc-black font-[SUIT] text-lg font-extrabold leading-[24px] tracking-[-0.32px]">
+					<tr className="border-b-6 border-black text-left text-hbc-black font-suit text-lg font-extrabold leading-[24px] tracking-[-0.32px]">
 						<th className="w-20 pb-1 px-2">NO.</th>
 						<th className="w-32 pb-1 px-4">이름</th>
 						<th className="pb-1 px-4">문의 내용</th>
@@ -30,7 +30,7 @@ export const InquiryList = ({ data, currentPage = 1, onPageChange }: InquiryList
 						return (
 							<tr
 								key={inquiry.id}
-								className="border-b-2 border-black text-hbc-black font-[SUIT] text-lg font-extrabold leading-[24px] tracking-[-0.32px] hover:bg-hbc-black hover:text-hbc-white cursor-pointer select-none"
+								className="border-b-2 border-black text-hbc-black font-suit text-lg font-extrabold leading-[24px] tracking-[-0.32px] hover:bg-hbc-black hover:text-hbc-white cursor-pointer select-none"
 								onClick={() => navigate.push(`/support/inquiries/${inquiry.id}`)}
 							>
 								<td className="py-[10px] px-2">{String(displayNumber).padStart(3, "0")}</td>

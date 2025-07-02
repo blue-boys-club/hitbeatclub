@@ -105,7 +105,7 @@ export const ArtistReportModal = memo(({ isOpen, onCloseModal, artistId }: Artis
 		>
 			<PopupContent>
 				<PopupHeader>
-					<PopupTitle className="text-[36px] font-normal text-black text-center font-['Actor'] leading-[32px] tracking-[0.36px]">
+					<PopupTitle className="text-[36px] font-normal text-black text-center font-suit leading-[32px] tracking-[0.36px]">
 						신고하기
 					</PopupTitle>
 				</PopupHeader>
@@ -116,7 +116,7 @@ export const ArtistReportModal = memo(({ isOpen, onCloseModal, artistId }: Artis
 							<div className="flex items-center justify-between gap-2">
 								<label
 									htmlFor="name"
-									className="text-[#000] font-['SUIT'] text-[18px] font-semibold leading-[160%] tracking-[0.18px]"
+									className="text-[#000] font-suit text-[18px] font-semibold leading-[160%] tracking-[0.18px]"
 								>
 									이름
 								</label>
@@ -133,7 +133,7 @@ export const ArtistReportModal = memo(({ isOpen, onCloseModal, artistId }: Artis
 							<div className="flex items-center justify-between gap-2">
 								<label
 									htmlFor="phone"
-									className="text-[#000] font-['SUIT'] text-[18px] font-semibold leading-[160%] tracking-[0.18px]"
+									className="text-[#000] font-suit text-[18px] font-semibold leading-[160%] tracking-[0.18px]"
 								>
 									휴대폰 번호
 								</label>
@@ -150,7 +150,7 @@ export const ArtistReportModal = memo(({ isOpen, onCloseModal, artistId }: Artis
 							<div className="flex items-center justify-between gap-2">
 								<label
 									htmlFor="email"
-									className="text-[#000] font-['SUIT'] text-[18px] font-semibold leading-[160%] tracking-[0.18px]"
+									className="text-[#000] font-suit text-[18px] font-semibold leading-[160%] tracking-[0.18px]"
 								>
 									이메일 주소
 								</label>
@@ -168,7 +168,7 @@ export const ArtistReportModal = memo(({ isOpen, onCloseModal, artistId }: Artis
 						<div className="flex flex-col gap-2 mb-6">
 							<label
 								htmlFor="report-reason"
-								className="text-[#000] font-['SUIT'] text-[18px] font-semibold leading-[160%] tracking-[0.18px]"
+								className="text-[#000] font-suit text-[18px] font-semibold leading-[160%] tracking-[0.18px]"
 							>
 								신고 내용
 							</label>
@@ -186,18 +186,18 @@ export const ArtistReportModal = memo(({ isOpen, onCloseModal, artistId }: Artis
 							onClick={onCheckboxChange}
 						>
 							{agreedPrivacyPolicy ? <Checkbox /> : <EmptyCheckbox />}
-							<span className="inline-flex items-center gap-2 text-[#000] font-['SUIT'] text-[12px] font-semibold leading-[150%] tracking-[0.12px]">
+							<span className="inline-flex items-center gap-2 text-[#000] font-suit text-[12px] font-semibold leading-[150%] tracking-[0.12px]">
 								[필수] 개인정보 수집 및 이용에 동의합니다.
 								<ChevronRight />
 							</span>
 						</div>
 						{validate.error && (
-							<div className="items-center gap-2 font-['SUIT'] text-[12px] font-semibold leading-[150%] tracking-[0.12px] text-hbc-red">
+							<div className="items-center gap-2 font-suit text-[12px] font-semibold leading-[150%] tracking-[0.12px] text-hbc-red">
 								{validate.message}
 							</div>
 						)}
 						{isError && (
-							<div className="inline-flex items-center gap-2 font-['SUIT'] text-[12px] font-semibold leading-[150%] tracking-[0.12px] text-hbc-red">
+							<div className="inline-flex items-center gap-2 font-suit text-[12px] font-semibold leading-[150%] tracking-[0.12px] text-hbc-red">
 								신고 전송 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
 							</div>
 						)}

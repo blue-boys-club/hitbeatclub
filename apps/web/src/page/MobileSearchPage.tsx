@@ -219,7 +219,7 @@ const MobileSearchPage = () => {
 				{!executedSearchQuery ? (
 					<div className="w-full h-full flex flex-col justify-center items-center gap-2 text-16px font-semibold leading-140%">
 						<span>검색어를 입력해주세요</span>
-						<span className="font-[450]">Search your keywords</span>
+						<span className="font-suisse font-[450]">Search your keywords</span>
 					</div>
 				) : (
 					<div className="flex flex-col gap-3">

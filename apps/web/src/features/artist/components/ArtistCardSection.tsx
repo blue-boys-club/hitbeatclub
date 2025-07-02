@@ -1,5 +1,5 @@
 "use client";
-import { cn } from "@/common/utils";
+import { checkIsPureEnglish, cn } from "@/common/utils";
 import { ArtistAvatar } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
 import React, { useState, useEffect } from "react";
@@ -122,12 +122,13 @@ const ArtistCardSection = ({
 											className={cn(
 												"text-[#000]",
 												"text-center",
-												"font-suisse-intl",
+												"font-suit",
 												"text-[20px]",
 												"not-italic",
 												"font-semibold",
 												"leading-[28px]",
 												"tracking-[0.2px]",
+												checkIsPureEnglish(artist.stageName) && "font-suisse",
 											)}
 										>
 											{artist.stageName}
@@ -136,12 +137,13 @@ const ArtistCardSection = ({
 											className={cn(
 												"text-center",
 												"text-[#4D4D4F]",
-												"font-suisse-intl",
+												"font-suit",
 												"text-[12px]",
 												"not-italic",
 												"font-[450]",
 												"leading-[150%]",
 												"tracking-[0.12px]",
+												checkIsPureEnglish(artist.stageName) && "font-suisse",
 											)}
 										>
 											{artist.followerCount} Followers

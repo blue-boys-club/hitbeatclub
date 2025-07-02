@@ -21,7 +21,7 @@ const InquiryDetailPage = () => {
 		<div className="px-8 py-6">
 			{/* 헤더 */}
 			<header className="pb-3 border-b-6 border-black flex justify-between items-center">
-				<div className="text-black font-bold text-[31px] leading-[46px] tracking-[0.31px] uppercase font-['Suisse_Intl']">
+				<div className="text-black font-bold text-[31px] leading-[46px] tracking-[0.31px] uppercase font-suisse">
 					문의 내역
 				</div>
 				<button

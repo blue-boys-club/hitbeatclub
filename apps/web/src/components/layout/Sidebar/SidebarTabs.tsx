@@ -1,6 +1,6 @@
 import { cn } from "@/common/utils";
 import * as Tabs from "@radix-ui/react-tabs";
-import { memo, ReactNode, useState } from "react";
+import { memo, ReactNode, useCallback, useState } from "react";
 import { Tab } from "./types";
 import { OpenInNew } from "@/assets/svgs";
 import { LikeSection } from "./Like";
@@ -10,25 +10,39 @@ import { useQuery } from "@tanstack/react-query";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 
 interface TabTriggerProps {
-	onClick: () => void;
+	onClick?: () => void;
+	onClickIcon?: () => void;
 	value: Tab;
 	children: ReactNode;
 }
 
-const TabTrigger = memo(({ onClick, value, children }: TabTriggerProps) => {
+const TabTrigger = memo(({ onClick, onClickIcon, value, children }: TabTriggerProps) => {
+	const handleOnClick = useCallback(() => {
+		onClick?.();
+	}, [onClick, onClickIcon]);
+
+	const handleOnClickIcon = useCallback(() => {
+		onClickIcon?.();
+	}, [onClickIcon]);
+
 	return (
 		<Tabs.Trigger
 			className={cn(
 				"flex items-center justify-center @200px/sidebar:justify-between cursor-pointer @200px/sidebar:pl-3px",
 				"font-suisse text-16px leading-20px tracking-016px font-bold",
 				"data-[state=active]:text-hbc-black data-[state=inactive]:text-hbc-gray",
-				"[&>svg]:hidden data-[state=inactive]:[&>svg]:hidden @200px/sidebar:data-[state=active]:[&>svg]:block",
+				"[&>button]:hidden data-[state=inactive]:[&>button]:hidden @200px/sidebar:data-[state=active]:[&>button]:block",
 			)}
-			onClick={onClick}
+			onClick={handleOnClick}
 			value={value}
 		>
 			<span>{children}</span>
-			<OpenInNew />
+			<button
+				className="cursor-pointer"
+				onClick={handleOnClickIcon}
+			>
+				<OpenInNew />
+			</button>
 		</Tabs.Trigger>
 	);
 });
@@ -69,7 +83,7 @@ export const SidebarTabs = memo(() => {
 					<div className="grid grid-cols-2">
 						<TabTrigger
 							value="like"
-							onClick={() => {
+							onClickIcon={() => {
 								if (currentTab === "like") {
 									if (!userMe) {
 										router.push("/auth/login");
@@ -83,7 +97,7 @@ export const SidebarTabs = memo(() => {
 						</TabTrigger>
 						<TabTrigger
 							value="follow"
-							onClick={() => {
+							onClickIcon={() => {
 								if (currentTab === "follow") {
 									if (!userMe) {
 										router.push("/auth/login");

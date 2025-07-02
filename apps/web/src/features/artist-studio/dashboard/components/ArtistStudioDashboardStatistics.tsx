@@ -18,7 +18,7 @@ const ArtistStudioDashboardStatistics = () => {
 			<div className="border-b-6 border-hbc-black flex flex-col gap-7 pb-[28px]">
 				<div className="grid grid-cols-3 gap-auto pt-[18px] pb-3">
 					<div className="flex flex-col gap-2 items-center">
-						<div className="text-[16px] leading-[160%] tracking-[-0.32px] font-bold text-hbc-black font-[SUIT]">
+						<div className="text-[16px] leading-[160%] tracking-[-0.32px] font-bold text-hbc-black font-suit">
 							가장 좋아요를 많이 받은 트랙
 						</div>
 						<div className="flex gap-1.5">
@@ -35,14 +35,14 @@ const ArtistStudioDashboardStatistics = () => {
 				<div className={cn("grid grid-cols-3 gap-auto", !isOpen && "hidden")}>
 					<div className="grid grid-cols-2 gap-x-3 gap-y-4 px-7">
 						<div className="flex flex-col gap-2 justify-center items-center">
-							<div className="text-hbc-black text-center font-[SUIT] text-[12px] font-black leading-[120%] tracking-[0.12px]">
+							<div className="text-hbc-black text-center font-suit text-[12px] font-black leading-[120%] tracking-[0.12px]">
 								2위
 							</div>
 							<UserAvatar
 								src=""
 								size={"large"}
 							/>
-							<div className="text-hbc-black text-center font-[Suisse] text-[12px] font-bold leading-[120%] tracking-[0.12px]">
+							<div className="text-hbc-black text-center font-suisse text-[12px] font-bold leading-[120%] tracking-[0.12px]">
 								Cheek to Cheek
 							</div>
 						</div>
@@ -55,14 +55,14 @@ const ArtistStudioDashboardStatistics = () => {
 					>
 						{!isOpen ? (
 							<div className="flex items-center gap-1">
-								<div className="text-center font-[SUIT] text-[16px] font-extrabold leading-[100%] tracking-[0.16px] text-hbc-white">
+								<div className="text-center font-suit text-[16px] font-extrabold leading-[100%] tracking-[0.16px] text-hbc-white">
 									더보기
 								</div>
 								<Plus />
 							</div>
 						) : (
 							<div className="flex items-center gap-1">
-								<div className="text-center font-[SUIT] text-[16px] font-extrabold leading-[100%] tracking-[0.16px] text-hbc-white">
+								<div className="text-center font-suit text-[16px] font-extrabold leading-[100%] tracking-[0.16px] text-hbc-white">
 									접기
 								</div>
 								<div className="rotate-45">
