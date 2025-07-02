@@ -88,6 +88,7 @@ const QUERY_KEYS = {
 			"infinite",
 			payload,
 		],
+		statistics: (id: number): QueryKey => ["artist", id, "statistics"],
 	},
 	tag: {
 		_key: ["tag"],

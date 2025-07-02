@@ -6,6 +6,7 @@ import {
 	ArtistUpdateRequest,
 	ArtistProductListQuerySchema,
 	ArtistReportRequest,
+	ArtistStatisticsResponse,
 } from "@hitbeatclub/shared-types/artist";
 import type { CommonResponse, CommonResponseId } from "@/apis/api.type";
 import { ArtistUploadProfileRequest } from "./artist.type";
@@ -160,5 +161,15 @@ export const unblockArtist = async (id: number) => {
 
 export const reportArtist = async (id: number, payload: ArtistReportRequest) => {
 	const response = await axiosInstance.post<CommonResponseId>(`/artists/${id}/report`, payload);
+	return response.data;
+};
+
+/**
+ * 아티스트 통계 조회
+ * @param id 아티스트 아이디
+ * @returns 아티스트 통계 정보
+ */
+export const getArtistStatistics = async (id: number) => {
+	const response = await axiosInstance.get<CommonResponse<ArtistStatisticsResponse>>(`/artists/${id}/statistics`);
 	return response.data;
 };

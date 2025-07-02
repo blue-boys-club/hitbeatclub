@@ -439,7 +439,7 @@ const UserAccountForm = memo(() => {
 								disabled={isSubmitting || !isDirty || !isValid || updateUserProfileMutation.isPending}
 								size={"sm"}
 								rounded={"full"}
-								className="text-white font-black text-[12px] leading-[100%] tracking-[0.12px] font-suit disabled:opacity-50"
+								className="text-white font-black text-[12px] leading-[100%] tracking-[0.12px] font-suit"
 							>
 								{isSubmitting || updateUserProfileMutation.isPending ? "저장 중..." : "변경사항 저장"}
 							</Button>

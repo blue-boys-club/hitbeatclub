@@ -14,6 +14,7 @@ interface TabTriggerProps {
 	onClickIcon?: () => void;
 	value: Tab;
 	children: ReactNode;
+	showOpenInNew: boolean;
 }
 
 const TabTrigger = memo(({ onClick, onClickIcon, value, children }: TabTriggerProps) => {
@@ -96,7 +97,9 @@ export const SidebarTabs = memo(() => {
 									}
 									router.push("/likes");
 								}
+								router.push("/likes");
 							}}
+							showOpenInNew={currentTab === "like"}
 						>
 							Like
 						</TabTrigger>
@@ -110,7 +113,9 @@ export const SidebarTabs = memo(() => {
 									}
 									router.push("/follow-artists");
 								}
+								router.push("/follow-artists");
 							}}
+							showOpenInNew={currentTab === "follow"}
 						>
 							Follow
 						</TabTrigger>

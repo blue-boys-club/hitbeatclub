@@ -6,6 +6,7 @@ import {
 	getArtistDetail,
 	getArtistDetailBySlug,
 	getArtistMe,
+	getArtistStatistics,
 } from "../artist.api";
 import { ArtistProductListQueryRequest } from "@hitbeatclub/shared-types/artist";
 
@@ -81,5 +82,13 @@ export const getArtistProductListBySlugInfiniteQueryOption = (
 			page: 1,
 			limit: 10,
 		},
+	});
+};
+
+export const getArtistStatisticsQueryOption = (id: number) => {
+	return queryOptions({
+		queryKey: QUERY_KEYS.artist.statistics(id),
+		queryFn: () => getArtistStatistics(id),
+		select: (response) => response.data,
 	});
 };
