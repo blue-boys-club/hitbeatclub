@@ -27,22 +27,27 @@ const TabTrigger = memo(({ onClick, onClickIcon, value, children }: TabTriggerPr
 
 	return (
 		<Tabs.Trigger
-			className={cn(
-				"flex items-center justify-center @200px/sidebar:justify-between cursor-pointer @200px/sidebar:pl-3px",
-				"font-suisse text-16px leading-20px tracking-016px font-bold",
-				"data-[state=active]:text-hbc-black data-[state=inactive]:text-hbc-gray",
-				"[&>button]:hidden data-[state=inactive]:[&>button]:hidden @200px/sidebar:data-[state=active]:[&>button]:block",
-			)}
+			asChild
 			onClick={handleOnClick}
 			value={value}
 		>
-			<span>{children}</span>
-			<button
-				className="cursor-pointer"
-				onClick={handleOnClickIcon}
+			<div
+				role="button"
+				className={cn(
+					"flex items-center justify-center @200px/sidebar:justify-between cursor-pointer @200px/sidebar:pl-3px",
+					"font-suisse text-16px leading-20px tracking-016px font-bold",
+					"data-[state=active]:text-hbc-black data-[state=inactive]:text-hbc-gray",
+					"[&>button]:hidden data-[state=inactive]:[&>button]:hidden @200px/sidebar:data-[state=active]:[&>button]:block",
+				)}
 			>
-				<OpenInNew />
-			</button>
+				<span>{children}</span>
+				<button
+					className="cursor-pointer"
+					onClick={handleOnClickIcon}
+				>
+					<OpenInNew />
+				</button>
+			</div>
 		</Tabs.Trigger>
 	);
 });

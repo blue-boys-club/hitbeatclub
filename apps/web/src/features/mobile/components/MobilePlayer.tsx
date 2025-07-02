@@ -12,7 +12,7 @@ import { MobileFullScreenPlayerShuffleSVG } from "./MobileFullScreenPlayerShuffl
 import { useAudioStore } from "@/stores/audio";
 import { usePlayTrack } from "@/hooks/use-play-track";
 import { useShallow } from "zustand/react/shallow";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
 	getProductQueryOption,
 	getProductFileDownloadLinkQueryOption,
@@ -47,14 +47,16 @@ export const MobilePlayer = () => {
 		toggleRepeatMode,
 		toggleShuffle,
 		setCurrentIndex,
+		handleUnplayableTrack,
 	} = usePlaylist();
 
 	const { play } = usePlayTrack();
-	const { currentProductId, isPlaying, setIsPlaying } = useAudioStore(
+	const { currentProductId, isPlaying, setIsPlaying, setStatus } = useAudioStore(
 		useShallow((state) => ({
 			currentProductId: state.productId,
 			isPlaying: state.isPlaying,
 			setIsPlaying: state.setIsPlaying,
+			setStatus: state.setStatus,
 		})),
 	);
 
@@ -94,17 +96,19 @@ export const MobilePlayer = () => {
 	// 현재 오디오 URL 상태
 	const [currentAudioUrl, setCurrentAudioUrl] = useState<string>("");
 
-	// 사용자의 명시적인 일시정지 액션 추적
+	// 사용자의 명시적인 일시정지 액션 추적 - 개선된 추적 로직
 	const [userPausedRef, setUserPausedRef] = useState(false);
+
+	// 트랙 변경 감지를 위한 이전 productId 추적 - null로 초기화하여 첫 번째 트랙도 변경으로 감지
+	const prevProductIdRef = useRef<number | null>(null);
 
 	// 이전 재생 상태를 추적하여 외부 토글(예: 트랙 리스트 클릭)에 의한 일시정지를 감지
 	const prevContextPlayingRef = useRef(contextIsPlaying);
 
-	// 오디오 파일 다운로드 링크 조회
-	const { data: audioFileDownloadLink, error: audioFileError } = useQuery({
-		...getProductFileDownloadLinkQueryOption(currentProductId!, ENUM_FILE_TYPE.PRODUCT_AUDIO_FILE),
-		enabled: !!currentProductId,
-	});
+	// 오디오 파일 다운로드 링크(state & fetchQuery)
+	const queryClient = useQueryClient();
+	const [audioFileDownloadUrl, setAudioFileDownloadUrl] = useState<string>("");
+	const [audioFileError, setAudioFileError] = useState<unknown>(null);
 
 	const volumeBarRef = useRef<HTMLDivElement>(null);
 	const speakerRef = useRef<HTMLDivElement>(null);
@@ -114,6 +118,26 @@ export const MobilePlayer = () => {
 	const playIcon = useMemo(() => {
 		// AudioContext의 실제 재생 상태를 우선적으로 사용
 		const isCurrentlyPlaying = contextIsPlaying;
+		const hasValidAudio = currentAudioUrl && currentAudioUrl.trim() !== "";
+
+		// 오디오 URL이 없으면 비활성화된 플레이 아이콘 표시
+		if (!hasValidAudio) {
+			return isFullScreen ? (
+				<div className="opacity-50">
+					<AudioBarPlay
+						width={58}
+						height={58}
+					/>
+				</div>
+			) : (
+				<div className="flex w-6 h-6 items-center justify-center opacity-50">
+					<AudioBarPlay
+						width={20}
+						height={20}
+					/>
+				</div>
+			);
+		}
 
 		if (isCurrentlyPlaying) {
 			return isFullScreen ? (
@@ -144,10 +168,20 @@ export const MobilePlayer = () => {
 				</div>
 			);
 		}
-	}, [contextIsPlaying, isFullScreen]);
+	}, [contextIsPlaying, isFullScreen, currentAudioUrl]);
 
 	const onPlayHandler = useCallback(() => {
 		if (!currentProductId) return;
+
+		// 유효한 오디오 URL이 없으면 재생 방지
+		if (!currentAudioUrl || currentAudioUrl.trim() === "") {
+			console.warn(`[MobilePlayer] Cannot play - no valid audio URL`);
+			toast({
+				description: "재생할 수 없는 트랙입니다.",
+				variant: "destructive",
+			});
+			return;
+		}
 
 		if (contextIsPlaying) {
 			// 일시정지 -> 사용자 액션으로 기록
@@ -159,7 +193,7 @@ export const MobilePlayer = () => {
 
 		// 같은 트랙일 경우 AudioContext 토글만 수행
 		togglePlay();
-	}, [currentProductId, contextIsPlaying, togglePlay]);
+	}, [currentProductId, currentAudioUrl, contextIsPlaying, togglePlay, toast]);
 
 	const onClickLike = useCallback(() => {
 		if (!currentProductId || !productData) return;
@@ -295,6 +329,32 @@ export const MobilePlayer = () => {
 			// 더 이상 재생할 트랙이 없는 경우 처리할 로직이 있으면 여기에 추가
 		}
 	}, [repeatMode, currentProductId, play, playNextTrack]);
+
+	// 오디오 로딩/재생 에러 핸들러
+	const handleAudioError = useCallback(
+		(error: any) => {
+			console.error(`[MobilePlayer] Audio error for track ${currentProductId}:`, error);
+
+			if (!currentProductId) return;
+
+			// 현재 오디오 URL 초기화
+			setCurrentAudioUrl("");
+
+			// 토스트 메시지 표시
+			toast({
+				description: "오디오 파일을 재생할 수 없습니다.",
+				variant: "destructive",
+			});
+
+			// 트랙을 재생 불가로 마킹하고 다음 트랙으로 이동 시도
+			handleUnplayableTrack(currentProductId);
+
+			// 재생 상태 정리
+			setIsPlaying(false);
+			setStatus("paused");
+		},
+		[currentProductId, toast, handleUnplayableTrack, setIsPlaying, setStatus],
+	);
 
 	// 플레이리스트 컴포넌트
 	const PlaylistModal = useCallback(() => {
@@ -532,63 +592,153 @@ export const MobilePlayer = () => {
 		};
 	}, [showPlaylist]);
 
-	// 음원이 변경될 때 처리
+	// 음원이 변경될 때 처리 - 개선된 로직
+	useEffect(() => {
+		// 트랙 변경 감지
+		const isTrackChanged = prevProductIdRef.current !== currentProductId;
+
+		if (isTrackChanged && currentProductId) {
+			console.log(`[MobilePlayer] Track changed: ${prevProductIdRef.current} -> ${currentProductId}`);
+
+			// 기존 오디오 URL 초기화
+			if (currentAudioUrl) {
+				setCurrentAudioUrl("");
+			}
+
+			// 새로운 트랙이므로 사용자 일시정지 상태 초기화
+			setUserPausedRef(false);
+
+			// 이전 productId 업데이트
+			prevProductIdRef.current = currentProductId;
+		}
+	}, [currentProductId, currentAudioUrl]);
+
+	// 오디오 파일 다운로드 링크(state & fetchQuery) - 개선된 로직
 	useEffect(() => {
 		if (!currentProductId) return;
 
-		// 기존 오디오 URL과 다른 경우에만 초기화
-		if (currentAudioUrl && audioFileDownloadLink?.url !== currentAudioUrl) {
-			setCurrentAudioUrl("");
-		}
-	}, [currentProductId, currentAudioUrl, audioFileDownloadLink?.url]);
+		let cancelled = false;
 
-	// 오디오 파일 다운로드 링크가 변경될 때마다 재생
-	useEffect(() => {
-		if (audioFileDownloadLink?.url && audioFileDownloadLink.url !== currentAudioUrl) {
-			setCurrentAudioUrl(audioFileDownloadLink.url);
+		const fetchAudioLink = async () => {
+			try {
+				console.log(`[MobilePlayer] Fetching audio link for product ${currentProductId}`);
 
-			// 새로운 트랙이 시작되므로 사용자 일시정지 상태 초기화
-			setUserPausedRef(false);
+				const linkData = await queryClient.fetchQuery(
+					getProductFileDownloadLinkQueryOption(currentProductId, ENUM_FILE_TYPE.PRODUCT_AUDIO_FILE),
+				);
 
-			// 새로운 트랙이므로 stop 후 autoPlay
-			stop();
-			const timer = setTimeout(() => {
-				autoPlay();
-			}, 300); // 조금 더 여유있는 타이밍
-			return () => clearTimeout(timer);
-		}
-	}, [audioFileDownloadLink, currentAudioUrl, stop, autoPlay]);
+				if (cancelled) return;
 
-	// 오디오 파일 다운로드 에러 처리
-	useEffect(() => {
-		if (audioFileError) {
-			toast({
-				description: "오디오 파일을 불러올 수 없습니다. 잠시 후 다시 시도해주세요.",
-				variant: "destructive",
-			});
-		}
-	}, [audioFileError, toast]);
+				const newUrl = linkData?.data?.url ?? "";
+
+				if (!newUrl) {
+					throw new Error("No audio URL returned from server");
+				}
+
+				console.log(`[MobilePlayer] Audio link fetched: ${newUrl}`);
+
+				setAudioFileDownloadUrl(newUrl);
+				setAudioFileError(null);
+			} catch (err) {
+				if (cancelled) return;
+
+				console.error(`[MobilePlayer] Audio link fetch error:`, err);
+				setAudioFileError(err);
+
+				// 오디오 URL 초기화
+				setAudioFileDownloadUrl("");
+				setCurrentAudioUrl("");
+
+				// 토스트 메시지 표시
+				toast({
+					description: "오디오 파일 다운로드 링크를 가져올 수 없습니다.",
+					variant: "destructive",
+				});
+
+				// 트랙을 재생 불가로 마킹하고 다음 트랙으로 이동 시도
+				handleUnplayableTrack(currentProductId);
+
+				// 재생 상태 정리
+				setIsPlaying(false);
+				setStatus("paused");
+			}
+		};
+
+		fetchAudioLink();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [currentProductId, queryClient, toast, handleUnplayableTrack, setIsPlaying, setStatus]);
 
 	// AudioContext 재생 상태를 글로벌 스토어와 동기화 (단방향: Context -> Store)
 	useEffect(() => {
 		if (isPlaying !== contextIsPlaying) {
 			setIsPlaying(contextIsPlaying);
+			setStatus(contextIsPlaying ? "playing" : "paused");
 		}
-	}, [isPlaying, contextIsPlaying, setIsPlaying]);
+	}, [isPlaying, contextIsPlaying, setIsPlaying, setStatus]);
 
-	// 새로운 트랙이 로드되었을 때 재생 상태 확인
+	// 새로운 트랙이 로드되었을 때 재생 상태 확인 - 개선된 로직
 	useEffect(() => {
-		if (currentAudioUrl && currentProductId && !contextIsPlaying && !userPausedRef) {
-			// 오디오 URL이 설정되었는데 재생되지 않는 경우, 잠시 후 재생 시도
-			// 단, 사용자가 명시적으로 일시정지한 경우에는 자동 재생하지 않음
+		if (audioFileDownloadUrl && audioFileDownloadUrl !== currentAudioUrl) {
+			console.log(`[MobilePlayer] Loading new audio URL: ${audioFileDownloadUrl}`);
+
+			setCurrentAudioUrl(audioFileDownloadUrl);
+
+			// 새로운 트랙이 시작되므로 사용자 일시정지 상태 초기화
+			setUserPausedRef(false);
+
+			// 새로운 트랙이므로 stop 후 짧은 지연 후 autoPlay
+			stop();
+
+			// 더 짧은 지연으로 변경하고 로깅 추가
 			const timer = setTimeout(() => {
-				if (!contextIsPlaying && !userPausedRef) {
+				// 유효한 URL이 있을 때만 재생 시도
+				if (audioFileDownloadUrl && audioFileDownloadUrl.trim() !== "") {
+					console.log(`[MobilePlayer] Auto-playing new track`);
 					autoPlay();
+					// FooterPlayer와 같이 명시적으로 재생 상태 설정
+					setIsPlaying(true);
+					setStatus("playing");
+				} else {
+					console.warn(`[MobilePlayer] Cannot play track - invalid audio URL`);
+					setIsPlaying(false);
+					setStatus("paused");
 				}
-			}, 500);
+			}, 100); // 300ms -> 100ms로 단축
+
 			return () => clearTimeout(timer);
 		}
-	}, [currentAudioUrl, currentProductId, contextIsPlaying, userPausedRef, autoPlay]);
+	}, [audioFileDownloadUrl, currentAudioUrl, stop, autoPlay, setIsPlaying, setStatus]);
+
+	// 오디오 URL은 설정되었지만 재생이 시작되지 않은 경우(loading 등) 자동 재생 시도 - 개선된 로직
+	useEffect(() => {
+		if (currentAudioUrl && currentProductId && !contextIsPlaying && !userPausedRef) {
+			console.log(`[MobilePlayer] Audio loaded but not playing, attempting auto-play`);
+
+			const timer = setTimeout(() => {
+				if (!contextIsPlaying && !userPausedRef) {
+					console.log(`[MobilePlayer] Retrying auto-play`);
+					autoPlay();
+					setIsPlaying(true);
+					setStatus("playing");
+				}
+			}, 300); // 500ms -> 300ms로 단축
+
+			return () => clearTimeout(timer);
+		}
+	}, [currentAudioUrl, currentProductId, contextIsPlaying, userPausedRef, autoPlay, setIsPlaying, setStatus]);
+
+	// 오디오 URL이 초기화되었을 때 재생 중지
+	useEffect(() => {
+		if (!currentAudioUrl || currentAudioUrl.trim() === "") {
+			console.log(`[MobilePlayer] Audio URL cleared, stopping playback`);
+			stop();
+			setIsPlaying(false);
+			setStatus("paused");
+		}
+	}, [currentAudioUrl, stop, setIsPlaying, setStatus]);
 
 	// 사용자가 시크바를 조작하지 않을 때만 currentTime과 동기화
 	useEffect(() => {
@@ -628,17 +778,25 @@ export const MobilePlayer = () => {
 		};
 	}, [currentProductId, onPlayHandler]);
 
-	// 이전 재생 상태를 추적하여 외부 토글(예: 트랙 리스트 클릭)에 의한 일시정지를 감지
+	// 이전 재생 상태를 추적하여 외부 토글에 의한 일시정지를 감지 - 개선된 로직
 	useEffect(() => {
-		if (prevContextPlayingRef.current && !contextIsPlaying) {
-			// 재생 → 일시정지 로 변경됨: 사용자가 일시정지했다고 간주
-			setUserPausedRef(true);
-		} else if (!prevContextPlayingRef.current && contextIsPlaying) {
-			// 일시정지 → 재생 로 변경됨: 사용자 일시정지 상태 해제
-			setUserPausedRef(false);
+		// 트랙이 변경된 경우 사용자 일시정지 상태 추적을 건너뛰기
+		const isTrackChanged = prevProductIdRef.current !== currentProductId;
+
+		if (!isTrackChanged) {
+			if (prevContextPlayingRef.current && !contextIsPlaying) {
+				// 재생 → 일시정지 로 변경됨: 사용자가 일시정지했다고 간주
+				console.log(`[MobilePlayer] User paused the track`);
+				setUserPausedRef(true);
+			} else if (!prevContextPlayingRef.current && contextIsPlaying) {
+				// 일시정지 → 재생 로 변경됨: 사용자 일시정지 상태 해제
+				console.log(`[MobilePlayer] Track resumed playing`);
+				setUserPausedRef(false);
+			}
 		}
+
 		prevContextPlayingRef.current = contextIsPlaying;
-	}, [contextIsPlaying]);
+	}, [contextIsPlaying, currentProductId]);
 
 	if (!currentProductId) {
 		return null;
@@ -646,19 +804,22 @@ export const MobilePlayer = () => {
 
 	return (
 		<>
-			{/* 단일 ReactPlayer */}
-			<ReactPlayer
-				ref={playerRef}
-				url={currentAudioUrl}
-				playing={contextIsPlaying}
-				controls={false}
-				width="0"
-				height="0"
-				volume={volume}
-				onEnded={handleTrackEnded}
-				onProgress={({ playedSeconds }) => onProgress(playedSeconds)}
-				onDuration={(duration) => onDuration(duration)}
-			/>
+			{/* 단일 ReactPlayer - 유효한 URL이 있을 때만 렌더링 */}
+			{currentAudioUrl && currentAudioUrl.trim() !== "" && (
+				<ReactPlayer
+					ref={playerRef}
+					url={currentAudioUrl}
+					playing={contextIsPlaying}
+					controls={false}
+					width="0"
+					height="0"
+					volume={volume}
+					onEnded={handleTrackEnded}
+					onProgress={({ playedSeconds }) => onProgress(playedSeconds)}
+					onDuration={(duration) => onDuration(duration)}
+					onError={handleAudioError}
+				/>
+			)}
 
 			{/* Footer PlayBar UI - 기본 상태 */}
 			{!isFullScreen && (
@@ -896,7 +1057,11 @@ export const MobilePlayer = () => {
 									onModalClose={handleHideFullScreen}
 								>
 									<button className="font-bold text-16px leading-16px text-white bg-black h-30px px-2 border-4px border-black rounded-40px flex items-center gap-2">
-										<MobileAddCircleSVG fill="white" />
+										<MobileAddCircleSVG
+											fill="white"
+											backgroundFill="transparent"
+											stroke="black"
+										/>
 										{productData?.licenseInfo
 											?.find((license: any) => (license.label ?? license.type) === "EXCLUSIVE")
 											?.price?.toLocaleString() || 0}{" "}
