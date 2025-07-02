@@ -1,5 +1,10 @@
 import PaymentCompletePage from "@/page/PaymentCompletePage";
+import { Suspense } from "react";
 
 export default function PaymentCompleteRoute() {
-	return <PaymentCompletePage />;
+	return (
+		<Suspense fallback={null}>
+			<PaymentCompletePage />
+		</Suspense>
+	);
 }
