@@ -13,23 +13,36 @@ interface TabTriggerProps {
 	onClick: () => void;
 	value: Tab;
 	children: ReactNode;
+	showOpenInNew: boolean;
 }
 
-const TabTrigger = memo(({ onClick, value, children }: TabTriggerProps) => {
+const TabTrigger = memo(({ onClick, value, children, showOpenInNew }: TabTriggerProps) => {
 	return (
-		<Tabs.Trigger
-			className={cn(
-				"flex items-center justify-center @200px/sidebar:justify-between cursor-pointer @200px/sidebar:pl-3px",
-				"font-suisse text-16px leading-20px tracking-016px font-bold",
-				"data-[state=active]:text-hbc-black data-[state=inactive]:text-hbc-gray",
-				"[&>svg]:hidden data-[state=inactive]:[&>svg]:hidden @200px/sidebar:data-[state=active]:[&>svg]:block",
+		<div className="flex items-center justify-between">
+			<Tabs.Trigger
+				className={cn(
+					"flex items-center cursor-pointer pl-3px flex-1",
+					"font-suisse text-16px leading-20px tracking-016px font-bold",
+					"data-[state=active]:text-hbc-black data-[state=inactive]:text-hbc-gray",
+				)}
+				value={value}
+			>
+				<span>{children}</span>
+			</Tabs.Trigger>
+
+			{showOpenInNew && (
+				<button
+					onClick={onClick}
+					className={cn(
+						"hidden @200px/sidebar:block",
+						"data-[state=active]:block data-[state=inactive]:hidden",
+						"cursor-pointer",
+					)}
+				>
+					<OpenInNew />
+				</button>
 			)}
-			onClick={onClick}
-			value={value}
-		>
-			<span>{children}</span>
-			<OpenInNew />
-		</Tabs.Trigger>
+		</div>
 	);
 });
 
@@ -70,28 +83,26 @@ export const SidebarTabs = memo(() => {
 						<TabTrigger
 							value="like"
 							onClick={() => {
-								if (currentTab === "like") {
-									if (!userMe) {
-										router.push("/auth/login");
-										return;
-									}
-									router.push("/likes");
+								if (!userMe) {
+									router.push("/auth/login");
+									return;
 								}
+								router.push("/likes");
 							}}
+							showOpenInNew={currentTab === "like"}
 						>
 							Like
 						</TabTrigger>
 						<TabTrigger
 							value="follow"
 							onClick={() => {
-								if (currentTab === "follow") {
-									if (!userMe) {
-										router.push("/auth/login");
-										return;
-									}
-									router.push("/follow-artists");
+								if (!userMe) {
+									router.push("/auth/login");
+									return;
 								}
+								router.push("/follow-artists");
 							}}
+							showOpenInNew={currentTab === "follow"}
 						>
 							Follow
 						</TabTrigger>
