@@ -61,7 +61,7 @@ async function bootstrap() {
 	// Set trust proxy if it is explictly enabled or it is deployed to ECS/Lambda
 	const enableTrustProxy = configService.get<boolean>("app.enableTrustProxy");
 	if (enableTrustProxy) {
-		app.set("trust proxy", "true");
+		app.set("trust proxy", true);
 	}
 
 	await app.listen(4000);
