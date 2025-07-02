@@ -67,7 +67,7 @@ export const MobileMyCartPage = () => {
 		}));
 
 		const orderNameStr =
-			items.length > 0 ? `${items[0].title}${items.length > 1 ? ` 외 ${items.length - 1}개` : ""}` : "";
+			items.length > 0 ? `${items[0]?.title || "상품"}${items.length > 1 ? ` 외 ${items.length - 1}개` : ""}` : "";
 
 		return {
 			totalPrice: total,

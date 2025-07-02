@@ -1,6 +1,6 @@
 import { cn } from "@/common/utils";
 import * as Tabs from "@radix-ui/react-tabs";
-import { memo, ReactNode, useState } from "react";
+import { memo, ReactNode, useCallback, useState } from "react";
 import { Tab } from "./types";
 import { OpenInNew } from "@/assets/svgs";
 import { LikeSection } from "./Like";
@@ -10,39 +10,46 @@ import { useQuery } from "@tanstack/react-query";
 import { getUserMeQueryOption } from "@/apis/user/query/user.query-option";
 
 interface TabTriggerProps {
-	onClick: () => void;
+	onClick?: () => void;
+	onClickIcon?: () => void;
 	value: Tab;
 	children: ReactNode;
 	showOpenInNew: boolean;
 }
 
-const TabTrigger = memo(({ onClick, value, children, showOpenInNew }: TabTriggerProps) => {
+const TabTrigger = memo(({ onClick, onClickIcon, value, children }: TabTriggerProps) => {
+	const handleOnClick = useCallback(() => {
+		onClick?.();
+	}, [onClick, onClickIcon]);
+
+	const handleOnClickIcon = useCallback(() => {
+		onClickIcon?.();
+	}, [onClickIcon]);
+
 	return (
-		<div className="flex items-center justify-between">
-			<Tabs.Trigger
+		<Tabs.Trigger
+			asChild
+			onClick={handleOnClick}
+			value={value}
+		>
+			<div
+				role="button"
 				className={cn(
-					"flex items-center cursor-pointer pl-3px flex-1",
+					"flex items-center justify-center @200px/sidebar:justify-between cursor-pointer @200px/sidebar:pl-3px",
 					"font-suisse text-16px leading-20px tracking-016px font-bold",
 					"data-[state=active]:text-hbc-black data-[state=inactive]:text-hbc-gray",
+					"[&>button]:hidden data-[state=inactive]:[&>button]:hidden @200px/sidebar:data-[state=active]:[&>button]:block",
 				)}
-				value={value}
 			>
 				<span>{children}</span>
-			</Tabs.Trigger>
-
-			{showOpenInNew && (
 				<button
-					onClick={onClick}
-					className={cn(
-						"hidden @200px/sidebar:block",
-						"data-[state=active]:block data-[state=inactive]:hidden",
-						"cursor-pointer",
-					)}
+					className="cursor-pointer"
+					onClick={handleOnClickIcon}
 				>
 					<OpenInNew />
 				</button>
-			)}
-		</div>
+			</div>
+		</Tabs.Trigger>
 	);
 });
 
@@ -82,10 +89,13 @@ export const SidebarTabs = memo(() => {
 					<div className="grid grid-cols-2">
 						<TabTrigger
 							value="like"
-							onClick={() => {
-								if (!userMe) {
-									router.push("/auth/login");
-									return;
+							onClickIcon={() => {
+								if (currentTab === "like") {
+									if (!userMe) {
+										router.push("/auth/login");
+										return;
+									}
+									router.push("/likes");
 								}
 								router.push("/likes");
 							}}
@@ -95,10 +105,13 @@ export const SidebarTabs = memo(() => {
 						</TabTrigger>
 						<TabTrigger
 							value="follow"
-							onClick={() => {
-								if (!userMe) {
-									router.push("/auth/login");
-									return;
+							onClickIcon={() => {
+								if (currentTab === "follow") {
+									if (!userMe) {
+										router.push("/auth/login");
+										return;
+									}
+									router.push("/follow-artists");
 								}
 								router.push("/follow-artists");
 							}}

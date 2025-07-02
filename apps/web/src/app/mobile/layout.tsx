@@ -49,13 +49,13 @@ export default function MobileMainLayout({ children }: { children: React.ReactNo
 
 	return (
 		<AudioProvider>
-			<div className="w-full min-h-screen overflow-y-scroll flex flex-col">
+			<div className="w-full min-h-screen flex flex-col">
 				{!isSearchPage && (
 					<div className="z-50 fixed top-0 left-0 right-0">
 						<Header mobile />
 					</div>
 				)}
-				<div className={`flex-1 ${isSearchPage ? "pt-0" : "pt-[62px]"} pb-[70px]`}>
+				<div className={`flex-1 ${isSearchPage ? "pt-0" : "pt-[62px]"} pb-[72px]`}>
 					<div className={`${getContentHeight()} overflow-y-auto`}>{children}</div>
 				</div>
 				<div className="z-50 fixed bottom-0 left-0 right-0">

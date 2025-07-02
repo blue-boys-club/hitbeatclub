@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/common/utils";
+import { checkIsPureEnglish, cn } from "@/common/utils";
 import { UserAvatar } from "@/components/ui";
 import UserProfileImage from "@/assets/images/user-profile.png";
 import { useMemo } from "react";
@@ -15,6 +15,10 @@ export const FollowItem = ({ follow }: FollowItemProps) => {
 	const artistProfileImageUrl = useMemo(() => {
 		return follow.profileImageUrl || UserProfileImage;
 	}, [follow.profileImageUrl]);
+
+	const isStageNamePureEnglish = useMemo(() => {
+		return checkIsPureEnglish(follow.stageName ?? "");
+	}, [follow.stageName]);
 
 	return (
 		<Link
@@ -32,7 +36,12 @@ export const FollowItem = ({ follow }: FollowItemProps) => {
 			</div>
 			<div className="hidden @200px/sidebar:flex  flex-row w-full h-full gap-3px">
 				<div className="flex flex-col items-center justify-center h-full font-suit text-16px text-hbc-black leading-100% max-w-200px">
-					<div className="w-full hover:underline text-black font-suit text-16px font-bold leading-normal truncate underline-offset-[1px] [text-underline-position:from-font]">
+					<div
+						className={cn(
+							"w-full hover:underline text-black font-suit text-16px font-bold leading-normal truncate underline-offset-[1px] [text-underline-position:from-font]",
+							isStageNamePureEnglish && "font-suisse",
+						)}
+					>
 						{follow.stageName ?? ""}
 					</div>
 				</div>

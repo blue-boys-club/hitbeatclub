@@ -15,7 +15,7 @@ import { PurchaseWithCartTrigger } from "@/features/product/components/PurchaseW
 import { DropContentWrapper } from "@/features/dnd/components/DropContentWrapper";
 import { useToast } from "@/hooks/use-toast";
 import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getProductFileDownloadLinkQueryOption } from "@/apis/product/query/product.query-option";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option";
 import { SidebarType, useLayoutStore } from "@/stores/layout";
@@ -126,13 +126,11 @@ export const FooterPlayer = () => {
 		}
 	};
 
-	// 오디오 파일 다운로드 링크 조회
-	const { data: audioFileDownloadLink, error: audioFileError } = useQuery({
-		...getProductFileDownloadLinkQueryOption(productId!, ENUM_FILE_TYPE.PRODUCT_AUDIO_FILE),
-		enabled: !!productId,
-	});
+	// 오디오 파일 다운로드 링크 조회 (fetchQuery 사용으로 불필요한 리렌더 방지)
+	const queryClient = useQueryClient();
+	const [audioFileError, setAudioFileError] = useState<unknown>(null);
 
-	// 음원이 변경될 때 바로 재생을 중지시켜 기존 트랙이 이어서 재생되지 않도록 처리
+	// productId 가 변경될 때마다 현재 재생을 중지하고 상태를 초기화합니다.
 	useEffect(() => {
 		if (!productId) return;
 		// 현재 재생 중지 및 상태 초기화 (isPlaying 동기화는 stop 내부 상태 변화로 일괄 처리)
@@ -142,48 +140,52 @@ export const FooterPlayer = () => {
 		lastPlayedTimeRef.current = 0;
 	}, [productId, stop]);
 
-	// 오디오 파일 다운로드 링크가 변경될 때마다 재생
 	useEffect(() => {
-		if (audioFileDownloadLink?.url) {
-			// 현재 재생 중이던 위치를 보존합니다.
-			const prevTime = lastPlayedTimeRef.current;
-			const prevProductId = lastPlayedProductIdRef.current;
+		if (!productId) return;
 
-			// 새로 받은 URL 을 설정합니다.
-			setCurrentAudioUrl(audioFileDownloadLink.url);
+		let cancelled = false;
 
-			// 플레이어를 초기화합니다.
-			stop();
+		const fetchAudioLink = async () => {
+			try {
+				const audioFileDownloadLink = await queryClient.fetchQuery(
+					getProductFileDownloadLinkQueryOption(productId, ENUM_FILE_TYPE.PRODUCT_AUDIO_FILE),
+				);
 
-			// 약간의 지연 후 자동 재생 및 이전 위치로 시크합니다.
-			const timer = setTimeout(() => {
-				autoPlay();
-				// 이전에 재생 중이던 위치가 존재하면 해당 위치로 이동합니다.
-				if (prevTime > 0 && prevProductId === productId) {
-					onSeek(prevTime);
-				}
-				setIsPlaying(true);
-			}, 200);
+				if (cancelled || !audioFileDownloadLink?.data?.url) return;
 
-			return () => clearTimeout(timer);
-		}
-	}, [audioFileDownloadLink, stop, autoPlay, onSeek, setIsPlaying, productId]);
+				// 현재 재생 중이던 위치를 보존합니다.
+				const prevTime = lastPlayedTimeRef.current;
+				const prevProductId = lastPlayedProductIdRef.current;
 
-	// 오디오 파일 다운로드 에러 처리 - 재생 불가 트랙으로 처리
-	useEffect(() => {
-		if (audioFileError && productId) {
-			// 재생 불가 트랙으로 마킹하고 자동으로 다음 트랙으로 이동
-			handleUnplayableTrack(productId);
-			setIsPlaying(false);
-		}
-	}, [audioFileError, productId, handleUnplayableTrack, setIsPlaying]);
+				// 새로 받은 URL 을 설정합니다.
+				setCurrentAudioUrl(audioFileDownloadLink.data.url);
 
-	// AudioContext 재생 상태를 글로벌 스토어와 동기화 (단방향: Context -> Store)
-	useEffect(() => {
-		if (isPlaying !== contextIsPlaying) {
-			setIsPlaying(contextIsPlaying);
-		}
-	}, [isPlaying, contextIsPlaying, setIsPlaying]);
+				// 플레이어를 초기화합니다.
+				stop();
+
+				// 약간의 지연 후 자동 재생 및 이전 위치로 시크합니다.
+				const timer = setTimeout(() => {
+					autoPlay();
+					// 이전에 재생 중이던 위치가 존재하면 해당 위치로 이동합니다.
+					if (prevTime > 0 && prevProductId === productId) {
+						onSeek(prevTime);
+					}
+					setIsPlaying(true);
+				}, 200);
+
+				return () => clearTimeout(timer);
+			} catch (error) {
+				if (cancelled) return;
+				setAudioFileError(error);
+			}
+		};
+
+		fetchAudioLink();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [productId, queryClient, stop, autoPlay, onSeek, setIsPlaying]);
 
 	// 이전 트랙 재생 핸들러
 	const handlePreviousTrack = () => {

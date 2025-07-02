@@ -7,6 +7,7 @@ import { useShallow } from "zustand/react/shallow";
 import { SmallEqualizer } from "@/assets/svgs";
 import { usePlaylist } from "@/hooks/use-playlist";
 import { createPlaylistConfig } from "@/components/layout/PlaylistProvider";
+import { checkIsPureEnglish, cn } from "@/common/utils";
 
 export interface LikeItemProps {
 	track: ProductRowByDashboardResponse;
@@ -72,13 +73,19 @@ export const LikeItem = ({ track, index, sort }: LikeItemProps) => {
 			<div className="flex flex-row w-full h-full gap-3px">
 				<div className="hidden @200px/sidebar:flex flex-col items-start justify-center h-full font-suit text-16px text-hbc-black leading-100% max-w-200px">
 					<Link
-						className="w-full font-bold truncate cursor-pointer hover:underline"
+						className={cn(
+							"w-full font-bold truncate cursor-pointer hover:underline",
+							checkIsPureEnglish(track.productName) && "font-suisse",
+						)}
 						href={`/products/${track.id}`}
 					>
 						{track.productName}
 					</Link>
 					<Link
-						className="w-full font-normal truncate hover:underline"
+						className={cn(
+							"w-full font-normal truncate hover:underline",
+							checkIsPureEnglish(track.seller.stageName ?? "") && "font-suisse",
+						)}
 						href={`/artists/${track.seller.slug}`}
 					>
 						{track.seller.stageName}

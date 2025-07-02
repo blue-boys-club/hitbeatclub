@@ -27,7 +27,9 @@ const PaymentCompletePage = () => {
 	const { mutateAsync: completePayment } = useCompletePaymentOrderMutation();
 
 	const handleClose = useCallback(() => {
-		router.replace(isMobile ? "/mobile/my/orders" : "/orders");
+		// 결제 완료 후 모바일은 장바구니 페이지로 이동 (주문목록 페이지 없음)
+		// PC는 주문목록 페이지로 이동
+		router.replace(isMobile ? "/mobile/my/cart" : "/orders");
 	}, [router, isMobile]);
 
 	useEffect(() => {
@@ -59,7 +61,7 @@ const PaymentCompletePage = () => {
 	const descriptionCls = (extra?: string) =>
 		`${isMobile ? "text-8px" : "text-12px"} font-semibold leading-150% text-center ${extra ?? ""}`;
 
-	const buttonCls = isMobile ? "w-full h-22px text-12px" : "w-full h-30px text-14px";
+	const buttonCls = isMobile ? "w-full h-22px text-12px text-hbc-white" : "w-full h-30px text-14px text-hbc-white";
 
 	return (
 		<Popup

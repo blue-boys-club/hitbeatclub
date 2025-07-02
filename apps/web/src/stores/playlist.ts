@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
+import { enableMapSet } from "immer";
+
+enableMapSet();
 
 export interface PlaylistActions {
 	/** 현재 재생 중인 상품 ID 설정 */

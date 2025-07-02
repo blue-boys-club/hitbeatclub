@@ -57,7 +57,7 @@ const UserDeleteAccountModal = ({ isModalOpen, onClose, onOpen }: UserDeleteAcco
 					<PopupTitle className="text-2xl font-extrabold tracking-[0.26px]">회원 탈퇴 신청</PopupTitle>
 				</PopupHeader>
 				<div className="py-4">
-					<p className="pb-5 text-black font-[SUIT] text-base font-bold leading-[160%] tracking-[-0.32px] border-b-1 border-black">
+					<p className="pb-5 text-black font-suit text-base font-bold leading-[160%] tracking-[-0.32px] border-b-1 border-black">
 						😢 정말 탈퇴하시겠어요? <br />
 						탈퇴하시면 보유한 정산 내역, 구매 이력, 판매 데이터, 업로드한 음원 정보가 모두 삭제되며,
 						<br />
@@ -71,7 +71,7 @@ const UserDeleteAccountModal = ({ isModalOpen, onClose, onOpen }: UserDeleteAcco
 								checked={checkStates.profit}
 								onChange={handleCheckChange("profit")}
 							/>
-							<span className="text-black font-[SUIT] text-base font-bold leading-[160%] tracking-[-0.32px]">
+							<span className="text-black font-suit text-base font-bold leading-[160%] tracking-[-0.32px]">
 								정산되지 않은 수익이 없는 것을 확인했습니다.
 							</span>
 						</label>
@@ -81,7 +81,7 @@ const UserDeleteAccountModal = ({ isModalOpen, onClose, onOpen }: UserDeleteAcco
 								checked={checkStates.product}
 								onChange={handleCheckChange("product")}
 							/>
-							<span className="text-black font-[SUIT] text-base font-bold leading-[160%] tracking-[-0.32px]">
+							<span className="text-black font-suit text-base font-bold leading-[160%] tracking-[-0.32px]">
 								판매 중인 상품은 더 이상 노출되지 않으며, 복구가 불가합니다.
 							</span>
 						</label>
@@ -91,12 +91,12 @@ const UserDeleteAccountModal = ({ isModalOpen, onClose, onOpen }: UserDeleteAcco
 								checked={checkStates.reregister}
 								onChange={handleCheckChange("reregister")}
 							/>
-							<span className="text-black font-[SUIT] text-base font-bold leading-[160%] tracking-[-0.32px]">
+							<span className="text-black font-suit text-base font-bold leading-[160%] tracking-[-0.32px]">
 								탈퇴 후 동일 계정으로는 재가입이 불가할 수 있습니다.
 							</span>
 						</label>
 					</div>
-					<p className="pt-5 text-black font-[SUIT] text-base font-bold leading-[160%] tracking-[-0.32px]">
+					<p className="pt-5 text-black font-suit text-base font-bold leading-[160%] tracking-[-0.32px]">
 						더 나은 서비스를 위해 의견을 듣고 싶어요!
 					</p>
 					<div className="flex pt-6">

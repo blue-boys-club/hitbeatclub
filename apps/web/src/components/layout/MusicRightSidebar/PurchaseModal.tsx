@@ -2,7 +2,7 @@
 
 import * as Popup from "@/components/ui/Popup";
 import { useMemo, useState, useCallback, memo } from "react";
-import { cn } from "@/common/utils";
+import { checkIsPureEnglish, cn } from "@/common/utils";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { getProductQueryOption } from "@/apis/product/query/product.query-option"; // Assuming this path
@@ -158,6 +158,7 @@ export const PurchaseModal = memo(({ isOpen, onClose, productId }: PurchaseModal
 											className={cn(
 												"text-[12px] font-bold font-suit leading-150% tracking-012px",
 												"text-hbc-gray-400",
+												checkIsPureEnglish(typeof benefit === "string" ? benefit : benefit.text) && "font-suisse",
 												typeof benefit === "object" && benefit.color,
 											)}
 										>

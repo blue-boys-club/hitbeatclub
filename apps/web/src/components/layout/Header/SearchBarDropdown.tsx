@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/common/utils";
+import { checkIsPureEnglish, cn } from "@/common/utils";
 import { ChevronDown } from "@/assets/svgs/ChevronDown";
 import {
 	useCallback,
@@ -172,6 +172,7 @@ export const TagDropdown = memo(function TagDropdown({
 						"transition-colors duration-200",
 						"sm:px-2 sm:py-[3px]",
 						"hover:bg-black hover:text-white",
+						checkIsPureEnglish(option.label) && "font-suisse",
 						option.className,
 					)}
 					role="menuitem"

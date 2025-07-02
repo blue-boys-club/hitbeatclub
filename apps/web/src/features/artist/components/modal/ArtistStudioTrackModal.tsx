@@ -12,7 +12,7 @@ import { ENUM_FILE_TYPE } from "@hitbeatclub/shared-types/file";
 import { TrackUploadFormSchema } from "@/features/artist-studio/artist-studio.types";
 import { Acapella, AddCircle, Beat, LargeEqualizer, MinusCircle, Plus } from "@/assets/svgs";
 import Circle from "@/assets/svgs/Circle";
-import { cn } from "@/common/utils";
+import { checkIsPureEnglish, cn } from "@/common/utils";
 import { AlbumAvatar, Badge, BPMDropdown, Dropdown, Input, KeyDropdown } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
 import { Popup, PopupContent, PopupFooter, PopupHeader, PopupTitle } from "@/components/ui/Popup";
@@ -784,7 +784,13 @@ const ArtistStudioTrackModal = ({
 											<div className="rotate-45">
 												<Plus stroke="red" />
 											</div>
-											<span className="text-hbc-red font-[SUIT] text-md font-extrabold leading-[150%] tracking-[0.12px]">
+											<span
+												className={cn(
+													"text-hbc-red text-md font-extrabold leading-[150%] tracking-[0.12px]",
+													"font-suit",
+													checkIsPureEnglish(errors.uploadedFiles.coverImage.message) && "font-suisse",
+												)}
+											>
 												{errors.uploadedFiles.coverImage.message}
 											</span>
 										</div>
@@ -919,10 +925,15 @@ const ArtistStudioTrackModal = ({
 						<div className="flex flex-col gap-2.5">
 							{/* 제목 입력 */}
 							<div className="flex flex-col gap-[5px]">
-								<div className="font-[SUIT] text-xs flex justify-between">
+								<div className="font-suit text-xs flex justify-between">
 									<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">제목</div>
 									{errors.productName && (
-										<div className="text-hbc-red font-semibold leading-[150%] tracking-[0.12px]">
+										<div
+											className={cn(
+												"text-hbc-red font-semibold leading-[150%] tracking-[0.12px]",
+												checkIsPureEnglish(errors.productName.message) && "font-suisse",
+											)}
+										>
 											{errors.productName.message}
 										</div>
 									)}
@@ -941,10 +952,15 @@ const ArtistStudioTrackModal = ({
 
 							{/* 곡 설명/가사 입력 */}
 							<div className="flex flex-col gap-[5px]">
-								<div className="font-[SUIT] text-xs flex justify-between">
+								<div className="font-suit text-xs flex justify-between">
 									<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">곡 설명 / 가사</div>
 									{errors.description && (
-										<div className="text-hbc-red font-semibold leading-[150%] tracking-[0.12px]">
+										<div
+											className={cn(
+												"text-hbc-red font-semibold leading-[150%] tracking-[0.12px]",
+												checkIsPureEnglish(errors.description.message) && "font-suisse",
+											)}
+										>
 											{errors.description.message}
 										</div>
 									)}
@@ -997,10 +1013,15 @@ const ArtistStudioTrackModal = ({
 
 							{/* 장르 선택 */}
 							<div className="flex flex-col gap-[5px]">
-								<div className="font-[SUIT] text-xs flex justify-between">
+								<div className="font-suit text-xs flex justify-between">
 									<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">장르</div>
 									{errors.genres && (
-										<div className="text-hbc-red font-semibold leading-[150%] tracking-[0.12px]">
+										<div
+											className={cn(
+												"text-hbc-red font-semibold leading-[150%] tracking-[0.12px]",
+												checkIsPureEnglish(errors.genres.message) && "font-suisse",
+											)}
+										>
 											{errors.genres.message}
 										</div>
 									)}
@@ -1033,10 +1054,15 @@ const ArtistStudioTrackModal = ({
 
 							{/* 태그 선택 */}
 							<div className="flex flex-col gap-[5px]">
-								<div className="font-[SUIT] text-xs flex justify-between">
+								<div className="font-suit text-xs flex justify-between">
 									<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">태그</div>
 									{errors.tags && (
-										<div className="text-hbc-red font-semibold leading-[150%] tracking-[0.12px]">
+										<div
+											className={cn(
+												"text-hbc-red font-semibold leading-[150%] tracking-[0.12px]",
+												checkIsPureEnglish(errors.tags.message) && "font-suisse",
+											)}
+										>
 											{errors.tags.message}
 										</div>
 									)}
@@ -1068,7 +1094,7 @@ const ArtistStudioTrackModal = ({
 
 							{/* BPM 설정 - 단순화 */}
 							<div className="flex flex-col gap-[5px]">
-								<div className="font-[SUIT] text-xs flex justify-between">
+								<div className="font-suisse text-xs flex justify-between">
 									<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">BPM</div>
 								</div>
 								<Controller
@@ -1096,7 +1122,7 @@ const ArtistStudioTrackModal = ({
 							{/* Key 설정 (BEAT일 때만) */}
 							{watchedCategory === "BEAT" && (
 								<div className="flex flex-col gap-[5px]">
-									<div className="font-[SUIT] text-xs flex justify-between">
+									<div className="font-suisse text-xs flex justify-between">
 										<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">Key</div>
 									</div>
 									<Controller
@@ -1123,7 +1149,7 @@ const ArtistStudioTrackModal = ({
 
 							{/* 라이센스 설정 */}
 							<div className="flex flex-col gap-[5px]">
-								<div className="font-[SUIT] text-xs flex justify-between">
+								<div className="font-suit text-xs flex justify-between">
 									<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">License</div>
 									{errors.licenseInfo && (
 										<div className="text-hbc-red font-semibold leading-[150%] tracking-[0.12px]">
@@ -1191,7 +1217,7 @@ const ArtistStudioTrackModal = ({
 
 							{/* 공개여부 */}
 							<div className="flex flex-col gap-[5px]">
-								<div className="font-[SUIT] text-xs flex justify-between">
+								<div className="font-suit text-xs flex justify-between">
 									<div className="text-black font-extrabold leading-[160%] tracking-[-0.24px]">공개여부</div>
 								</div>
 								<div className="grid grid-cols-2">
@@ -1237,7 +1263,7 @@ const ArtistStudioTrackModal = ({
 								/>
 								<label
 									htmlFor="free-download-checkbox"
-									className="select-none text-[#000] font-[Suisse Int'l] text-[12px] font-semibold leading-normal tracking-[0.12px]"
+									className="select-none text-[#000] font-suisse text-[12px] font-semibold leading-normal tracking-[0.12px]"
 								>
 									Free DownLoad
 								</label>
@@ -1252,13 +1278,13 @@ const ArtistStudioTrackModal = ({
 						<Button
 							onClick={onClose}
 							type="button"
-							className="bg-white px-2 py-1 text-hbc-gray-200 border-b-2 border-hbc-gray-200 rounded-none font-[Suisse Int'l] text-[24px] font-bold leading-normal tracking-[0.24px]"
+							className="bg-white px-2 py-1 text-hbc-gray-200 border-b-2 border-hbc-gray-200 rounded-none font-suisse text-[24px] font-bold leading-normal tracking-[0.24px]"
 						>
 							CANCEL
 						</Button>
 						<Button
 							type="submit"
-							className="bg-white px-2 py-1 text-hbc-red border-b-2 border-hbc-red rounded-none font-[SUIT] text-[24px] font-extrabold leading-normal tracking-[0.24px]"
+							className="bg-white px-2 py-1 text-hbc-red border-b-2 border-hbc-red rounded-none font-suit text-[24px] font-extrabold leading-normal tracking-[0.24px]"
 							disabled={isProcessing}
 						>
 							{isProcessing ? loadingText : submitButtonText}

@@ -21,6 +21,16 @@ import { usePlaylist } from "@/hooks/use-playlist";
 import { useResponsiveRouting } from "@/hooks/use-responsive-routing";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
+	return (
+		<AudioProvider>
+			<DndContext>
+				<MainLayoutInner>{children}</MainLayoutInner>
+			</DndContext>
+		</AudioProvider>
+	);
+}
+
+export function MainLayoutInner({ children }: { children: React.ReactNode }) {
 	// 모바일 기기에서 접근 시 '/mobile' 경로로 자동 리다이렉트
 	useResponsiveRouting("pc");
 	const router = useRouter();
@@ -68,44 +78,40 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 	}, [isSuccess, setPhoneNumber, userMe, router, userPhoneNumber]);
 
 	return (
-		<AudioProvider>
-			<DndContext>
-				<div className="h-screen overflow-hidden">
-					{/* Fixed Sidebar - 100vh - footer size */}
-					<div className={cn("fixed left-0 top-0", sidebarHeightClass, isLeftSidebarOpen ? "w-305px" : "w-150px")}>
-						<Sidebar />
-					</div>
+		<div className="h-screen overflow-hidden">
+			{/* Fixed Sidebar - 100vh - footer size */}
+			<div className={cn("fixed left-0 top-0", sidebarHeightClass, isLeftSidebarOpen ? "w-305px" : "w-150px")}>
+				<Sidebar />
+			</div>
 
-					{/* Fixed Header */}
-					<Header />
+			{/* Fixed Header */}
+			<Header />
 
-					{/* Main Content */}
-					<main
-						className={cn(
-							"absolute top-[72px] right-0 pt-15px overflow-auto",
-							"transition-all duration-500",
-							mainHeightClass,
-							isLeftSidebarOpen ? "left-[305px] pl-11px" : "left-[150px] pl-83px",
-							isRightSidebarVisible ? "pr-[329px]" : "pr-[40px]",
-						)}
-					>
-						{children}
-					</main>
+			{/* Main Content */}
+			<main
+				className={cn(
+					"absolute top-[72px] right-0 pt-15px overflow-auto",
+					"transition-all duration-500",
+					mainHeightClass,
+					isLeftSidebarOpen ? "left-[305px] pl-11px" : "left-[150px] pl-83px",
+					isRightSidebarVisible ? "pr-[329px]" : "pr-[40px]",
+				)}
+			>
+				{children}
+			</main>
 
-					<div className="fixed right-0">
-						<MusicRightSidebar />
-						<PlaylistRightSidebar />
-					</div>
+			<div className="fixed right-0">
+				<MusicRightSidebar />
+				<PlaylistRightSidebar />
+			</div>
 
-					{/* Fixed Footer */}
+			{/* Fixed Footer */}
 
-					<div className="fixed left-0 right-0 bottom-12px">
-						<FooterPlayer />
-					</div>
+			<div className="fixed left-0 right-0 bottom-12px">
+				<FooterPlayer />
+			</div>
 
-					<Toaster viewportClassName={toasterBottomClass} />
-				</div>
-			</DndContext>
-		</AudioProvider>
+			<Toaster viewportClassName={toasterBottomClass} />
+		</div>
 	);
 }

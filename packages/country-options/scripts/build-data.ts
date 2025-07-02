@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 
 // world_countries_lists 패키지의 데이터 경로
@@ -315,6 +315,10 @@ export { COUNTRY_CODE_TO_NAME_MAP_EN as COUNTRY_CODE_TO_NAME_MAP_EN_LEGACY } fro
 
 	// 파일 저장
 	const srcDir = join(process.cwd(), "src");
+	// check src directory, if not exists, create it
+	if (!existsSync(srcDir)) {
+		mkdirSync(srcDir, { recursive: true });
+	}
 	writeFileSync(join(srcDir, "types.ts"), typeContent);
 	writeFileSync(join(srcDir, "country-options.ts"), countryOptionsContent);
 	writeFileSync(join(srcDir, "region-options.ts"), regionOptionsContent);

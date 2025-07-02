@@ -3,7 +3,7 @@
 import { memo, useEffect, useState, useRef } from "react";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import Image from "next/image";
-import { cn } from "@/common/utils";
+import { checkIsPureEnglish, cn } from "@/common/utils";
 
 import { Acapella, ArrowLeftMosaic, ArrowRightMosaic, Beat, Like } from "@/assets/svgs";
 import { FreeDownloadButton } from "@/components/ui/FreeDownloadButton";
@@ -274,7 +274,12 @@ export const MusicRightSidebar = memo(() => {
 				<ScrollArea.Root className="flex-1 min-h-0 px-6 my-4">
 					<ScrollArea.Viewport className="p-2 size-full">
 						<div className="mb-3 text-base font-bold leading-snug font-suit">곡 정보</div>
-						<div className="mb-6 text-base font-bold leading-relaxed text-hbc-gray-300 font-suit">
+						<div
+							className={cn(
+								"mb-6 text-base font-bold leading-relaxed text-hbc-gray-300 font-suit",
+								checkIsPureEnglish(currentTrack?.description ?? "") && "font-suisse",
+							)}
+						>
 							{currentTrack?.description}
 						</div>
 

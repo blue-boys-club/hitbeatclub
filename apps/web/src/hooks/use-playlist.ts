@@ -15,6 +15,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { PlaylistAutoRequest, PlaylistManualRequest } from "@hitbeatclub/shared-types";
 import { useLayoutStore } from "@/stores/layout";
+import { useAudioContext } from "@/contexts/AudioContext";
 
 /**
  * 플레이리스트 관리 훅
@@ -93,6 +94,9 @@ export const usePlaylist = () => {
 		enabled: isLoggedIn,
 		retry: false,
 	});
+
+	// Audio context for toggle control
+	const { togglePlay } = useAudioContext();
 
 	/**
 	 * 200ms 디바운스를 적용한 서버 동기화
@@ -281,8 +285,12 @@ export const usePlaylist = () => {
 	 */
 	const playTrackAtIndex = useCallback(
 		(index: number) => {
+			console.log(`[usePlaylist] playTrackAtIndex called with index ${index}, trackIds: [${trackIds.join(",")}]`);
+
 			if (index >= 0 && index < trackIds.length) {
 				const trackId = trackIds[index];
+				console.log(`[usePlaylist] Moving to track ${trackId} at index ${index}`);
+
 				setCurrentIndex(index);
 
 				if (trackId) {
@@ -296,6 +304,8 @@ export const usePlaylist = () => {
 				}
 				return true;
 			}
+
+			console.warn(`[usePlaylist] Invalid index ${index} for trackIds length ${trackIds.length}`);
 			return false;
 		},
 		[trackIds, setCurrentIndex, setProductId, isLoggedIn, debouncedSync, setPlayer],
@@ -306,6 +316,7 @@ export const usePlaylist = () => {
 	 */
 	const handleUnplayableTrack = useCallback(
 		(trackId: number) => {
+			console.log(`[usePlaylist] Marking track ${trackId} as unplayable`);
 			addUnplayableTrack(trackId);
 
 			toast({
@@ -315,6 +326,7 @@ export const usePlaylist = () => {
 			// 자동으로 다음 재생 가능한 트랙으로 이동
 			const nextIndex = getNextPlayableIndex();
 			if (nextIndex !== null) {
+				console.log(`[usePlaylist] Moving to next playable track at index ${nextIndex}`);
 				setCurrentIndex(nextIndex);
 				const nextTrackId = trackIds[nextIndex];
 				if (nextTrackId) {
@@ -326,6 +338,17 @@ export const usePlaylist = () => {
 				if (isLoggedIn) {
 					debouncedSync();
 				}
+			} else {
+				// 더 이상 재생 가능한 트랙이 없는 경우
+				console.log(`[usePlaylist] No more playable tracks available`);
+				toast({
+					description: "더 이상 재생할 수 있는 곡이 없습니다.",
+					variant: "destructive",
+				});
+
+				// 재생 상태 정리 (AudioStore를 통해)
+				useAudioStore.getState().setIsPlaying(false);
+				useAudioStore.getState().setStatus("paused");
 			}
 		},
 		[
@@ -381,27 +404,76 @@ export const usePlaylist = () => {
 	 */
 	const createAutoPlaylistAndPlay = useCallback(
 		async (request: PlaylistAutoRequest, index = 0) => {
+			console.log(`[usePlaylist] createAutoPlaylistAndPlay called with index ${index}`, request);
+
 			const data = await createAutoPlaylist(request);
-			// 플레이리스트가 저장된 직후 상태가 이미 업데이트되어 있으므로 바로 호출 가능
-			playTrackAtIndex(index);
+
+			const desiredTrackId = data.data.trackIds[index];
+			const { productId: currentId } = useAudioStore.getState();
+
+			console.log(`[usePlaylist] Desired track: ${desiredTrackId}, current: ${currentId}`);
+
+			if (desiredTrackId === currentId) {
+				// 같은 트랙이면 재생/일시정지 토글만 수행
+				console.log(`[usePlaylist] Same track, toggling playback`);
+				togglePlay();
+			} else {
+				// 다른 트랙이면 해당 인덱스로 이동하고 재생 시작
+				console.log(`[usePlaylist] Different track, moving to index ${index} and starting playback`);
+				playTrackAtIndex(index);
+
+				// 트랙 변경 후 짧은 지연 후 재생 시작 (MobilePlayer의 useEffect가 처리할 시간을 줌)
+				setTimeout(() => {
+					const { isPlaying: currentIsPlaying } = useAudioStore.getState();
+					if (!currentIsPlaying) {
+						console.log(`[usePlaylist] Ensuring playback starts for new track`);
+						togglePlay();
+					}
+				}, 100);
+			}
+
 			if (process.env.NODE_ENV !== "production") {
-				console.debug("[Playlist] Auto playlist created & playing", { index, trackIds: data.data.trackIds });
+				console.debug("[Playlist] Auto playlist created", { index, trackIds: data.data.trackIds });
 			}
 			return data;
 		},
-		[createAutoPlaylist, playTrackAtIndex],
+		[createAutoPlaylist, playTrackAtIndex, togglePlay],
 	);
 
 	const createManualPlaylistAndPlay = useCallback(
 		async (request: PlaylistManualRequest, index = 0) => {
+			console.log(`[usePlaylist] createManualPlaylistAndPlay called with index ${index}`, request);
+
 			const data = await createManualPlaylist(request);
-			playTrackAtIndex(index);
+
+			const desiredTrackId = data.data.trackIds[index];
+			const { productId: currentId } = useAudioStore.getState();
+
+			console.log(`[usePlaylist] Manual playlist - Desired track: ${desiredTrackId}, current: ${currentId}`);
+
+			if (desiredTrackId === currentId) {
+				console.log(`[usePlaylist] Same track, toggling playback`);
+				togglePlay();
+			} else {
+				console.log(`[usePlaylist] Different track, moving to index ${index} and starting playback`);
+				playTrackAtIndex(index);
+
+				// 트랙 변경 후 짧은 지연 후 재생 시작
+				setTimeout(() => {
+					const { isPlaying: currentIsPlaying } = useAudioStore.getState();
+					if (!currentIsPlaying) {
+						console.log(`[usePlaylist] Ensuring playback starts for new track`);
+						togglePlay();
+					}
+				}, 100);
+			}
+
 			if (process.env.NODE_ENV !== "production") {
-				console.debug("[Playlist] Manual playlist created & playing", { index, trackIds: data.data.trackIds });
+				console.debug("[Playlist] Manual playlist created", { index, trackIds: data.data.trackIds });
 			}
 			return data;
 		},
-		[createManualPlaylist, playTrackAtIndex],
+		[createManualPlaylist, playTrackAtIndex, togglePlay],
 	);
 
 	return {

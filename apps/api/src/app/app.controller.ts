@@ -9,7 +9,10 @@ export class AppController {
 
 	// health check
 	@Get("health")
-	healthCheck(): string {
-		return "ok";
+	healthCheck(): { message: string; timestamp: string } {
+		return {
+			message: "ok",
+			timestamp: new Date().toISOString(),
+		};
 	}
 }

@@ -117,10 +117,15 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
 
 	// 플레이어 컨트롤
 	const togglePlay = useCallback(() => {
-		setState((prev) => ({ ...prev, isPlaying: !prev.isPlaying }));
+		setState((prev) => {
+			const newIsPlaying = !prev.isPlaying;
+			console.log(`[AudioContext] togglePlay: ${prev.isPlaying} -> ${newIsPlaying}`);
+			return { ...prev, isPlaying: newIsPlaying };
+		});
 	}, []);
 
 	const stop = useCallback(() => {
+		console.log(`[AudioContext] stop called`);
 		if (playerRef.current) {
 			playerRef.current.seekTo(0);
 			setState((prev) => ({ ...prev, isPlaying: false, currentTime: 0 }));
@@ -128,11 +133,17 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
 	}, []);
 
 	const autoPlay = useCallback(() => {
+		console.log(`[AudioContext] autoPlay called`);
 		if (playerRef.current) {
 			playerRef.current.seekTo(0);
 			setState((prev) => ({ ...prev, isPlaying: true, currentTime: 0 }));
 		}
 	}, []);
+
+	// zustand store와 isPlaying 동기화 (렌더 이후 안전하게)
+	useEffect(() => {
+		useAudioStore.getState().setIsPlaying(state.isPlaying);
+	}, [state.isPlaying]);
 
 	// 탐색 컨트롤 - 외부 콜백 호출
 	const onPrevious = useCallback(() => {

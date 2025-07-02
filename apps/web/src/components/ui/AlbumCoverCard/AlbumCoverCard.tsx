@@ -109,27 +109,33 @@ export const AlbumCoverCard = ({
 		}
 	}, [status, currentProductId, productId]);
 
-	const onClickHandler = useCallback(async () => {
-		if (autoPlaylistConfig) {
-			try {
-				if (process.env.NODE_ENV !== "production") {
-					console.debug("[AlbumCoverCard] click with autoPlaylistConfig", {
-						productId,
-						trackIndex,
-						autoPlaylistConfig,
-					});
+	const onClickHandler = useCallback<React.MouseEventHandler<HTMLButtonElement>>(
+		async (e) => {
+			// 부모 요소로의 이벤트 전파를 중단하여 중복 토글을 방지합니다.
+			e.stopPropagation();
+
+			if (autoPlaylistConfig) {
+				try {
+					if (process.env.NODE_ENV !== "production") {
+						console.debug("[AlbumCoverCard] click with autoPlaylistConfig", {
+							productId,
+							trackIndex,
+							autoPlaylistConfig,
+						});
+					}
+					await createAutoPlaylistAndPlay(autoPlaylistConfig, trackIndex ?? 0);
+					// 플레이리스트 생성 시 동시에 재생 로직이 실행되므로 중복 호출을 제거합니다.
+					return;
+				} catch (error) {
+					// 실패 시 기본 재생 로직으로 폴백
+					console.error("[AlbumCoverCard] createAutoPlaylistAndPlay failed", error);
 				}
-				await createAutoPlaylistAndPlay(autoPlaylistConfig, trackIndex ?? 0);
-				// 플레이리스트 생성 시 동시에 재생 로직이 실행되므로 중복 호출을 제거합니다.
-				return;
-			} catch (error) {
-				// 실패 시 기본 재생 로직으로 폴백
-				console.error("[AlbumCoverCard] createAutoPlaylistAndPlay failed", error);
 			}
-		}
-		// 기본 재생 로직
-		play(productId);
-	}, [autoPlaylistConfig, trackIndex, createAutoPlaylistAndPlay, play, productId]);
+			// 기본 재생 로직
+			play(productId);
+		},
+		[autoPlaylistConfig, trackIndex, createAutoPlaylistAndPlay, play, productId],
+	);
 
 	return (
 		<button

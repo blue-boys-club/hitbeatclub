@@ -21,11 +21,6 @@ export default function MobileMainPage() {
 	const [currentTab, setCurrentTab] = useState<"ALL" | "BEAT" | "ACAPELLA">("ALL");
 	const { isMobilePlayerVisible } = useMobilePlayerVisibility();
 
-	// 동적 높이 계산
-	const contentHeight = isMobilePlayerVisible
-		? "h-[calc(100vh-204px)]" // FooterNav + MobilePlayer
-		: "h-[calc(100vh-132px)]"; // FooterNav만
-
 	const tabContent = {
 		ALL: (
 			<>
@@ -82,7 +77,7 @@ export default function MobileMainPage() {
 	};
 
 	return (
-		<div className={`flex flex-col justify-between ${contentHeight} overflow-y-auto`}>
+		<div className={`flex flex-col justify-between min-h-full`}>
 			<div>
 				<div className="w-full h-90px relative">
 					<Image

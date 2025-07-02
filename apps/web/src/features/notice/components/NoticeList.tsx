@@ -14,7 +14,7 @@ export const NoticeList = ({ data, currentPage = 1, onPageChange }: NoticeListPr
 		<section className="pb-12">
 			<table className="w-full">
 				<thead>
-					<tr className="border-b-6 border-black text-left text-hbc-black font-[SUIT] text-lg font-extrabold leading-[24px] tracking-[-0.32px]">
+					<tr className="border-b-6 border-black text-left text-hbc-black font-suit text-lg font-extrabold leading-[24px] tracking-[-0.32px]">
 						<th>NO.</th>
 						<th className="pb-1 px-14 w-[1300px]">제목</th>
 						<th className="pb-1 px-2 whitespace-nowrap">작성일</th>
@@ -28,7 +28,7 @@ export const NoticeList = ({ data, currentPage = 1, onPageChange }: NoticeListPr
 						return (
 							<tr
 								key={notice.id}
-								className="border-b-2 border-black text-hbc-black font-[SUIT] text-lg font-extrabold leading-[24px] tracking-[-0.32px] hover:bg-hbc-black hover:text-hbc-white cursor-pointer select-none"
+								className="border-b-2 border-black text-hbc-black font-suit text-lg font-extrabold leading-[24px] tracking-[-0.32px] hover:bg-hbc-black hover:text-hbc-white cursor-pointer select-none"
 								onClick={() => navigate.push(`/notices/${notice.id}`)}
 							>
 								<td className="py-[10px]">{String(notice.id).padStart(3, "0")}</td>

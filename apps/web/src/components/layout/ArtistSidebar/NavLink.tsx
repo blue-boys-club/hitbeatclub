@@ -1,5 +1,5 @@
 import { Lock } from "@/assets/svgs";
-import { cn } from "@/common/utils";
+import { checkIsPureEnglish, cn } from "@/common/utils";
 import Link from "next/link";
 
 export interface NavLinkProps {
@@ -30,7 +30,13 @@ const NavLink = ({ href, label, Icon, isActive, isLocked, onClick }: NavLinkProp
 				width={40}
 				height={40}
 			/>
-			<span className={cn("flex-1 font-extrabold text-[20px] font-suit", isActive ? "text-white" : "text-[#FF1900]")}>
+			<span
+				className={cn(
+					"flex-1 font-extrabold text-[20px] font-suit",
+					isActive ? "text-white" : "text-[#FF1900]",
+					checkIsPureEnglish(label) && "font-suisse",
+				)}
+			>
 				{label}
 			</span>
 			<div className="w-6 flex-shrink-0">

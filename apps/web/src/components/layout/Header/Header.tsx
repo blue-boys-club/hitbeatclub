@@ -24,17 +24,37 @@ interface MobileHeaderNavOption {
 
 const mobileHeaderNavOptions: MobileHeaderNavOption[] = [
 	{
-		label: "내 프로필",
+		label: "내 계정",
 		value: "profile",
 	},
+	// {
+	// 	label: "주문목록",
+	// 	value: "order",
+	// },
 	{
-		label: "구독정보",
+		label: "장바구니",
+		value: "cart",
+	},
+	{
+		label: "멤버십관리",
 		value: "subscribe",
 	},
+	{
+		label: "공지사항",
+		value: "notice",
+	},
+	// {
+	// 	label: "고객센터",
+	// 	value: "customer-center",
+	// },
 	{
 		label: "로그아웃",
 		value: "logout",
 	},
+	// {
+	// 	label: "아티스트스튜디오",
+	// 	value: "artist-studio",
+	// },
 ];
 
 const Header = memo(({ mobile }: { mobile?: boolean }) => {
@@ -92,13 +112,25 @@ const MobileHeader = () => {
 				case "profile":
 					void router.push("/mobile/settings");
 					break;
+				// case "order":
+				// 	break;
+				case "cart":
+					void router.push("/mobile/my/cart");
+					break;
 				case "subscribe":
 					void router.push("/mobile/subscribe");
 					break;
+				case "notice":
+					void router.push("/mobile/notice");
+					break;
+				// case "customer-center":
+				// 	break;
 				case "logout":
 					signOut();
 					void router.push("/mobile/login");
 					break;
+				// case "artist-studio":
+				// 	break;
 			}
 		},
 		[router, signOut],

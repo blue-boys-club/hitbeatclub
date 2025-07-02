@@ -2,7 +2,7 @@
 
 import { memo, useState } from "react";
 import { CloseWhite } from "@/assets/svgs/CloseWhite";
-import { cn } from "@/common/utils";
+import { checkIsPureEnglish, cn } from "@/common/utils";
 
 interface TagButtonProps {
 	name: string;
@@ -31,7 +31,15 @@ export const TagButton = memo(({ name, className, onSelect, isClickable = true }
 				className,
 			)}
 		>
-			<div className={cn("text-sm font-medium leading-none", isSelected ? "text-white" : "text-black")}>#{name}</div>
+			<div
+				className={cn(
+					"text-sm font-medium leading-none",
+					isSelected ? "text-white" : "text-black",
+					checkIsPureEnglish(name) && "font-suisse",
+				)}
+			>
+				#{name}
+			</div>
 
 			{isSelected && <CloseWhite />}
 		</div>

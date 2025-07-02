@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import { cn } from "@/common/utils";
+import { checkIsPureEnglish, cn } from "@/common/utils";
 import { CloseBlack } from "@/assets/svgs/CloseBlack";
 
 interface GenreButtonProps {
@@ -33,6 +33,7 @@ export const GenreButton = memo(
 						"text-xs font-semibold leading-none tracking-tight transition-colors",
 						showDeleteButton ? "text-black" : "text-black group-hover:text-white",
 						readOnly && "text-black group-hover:text-black",
+						checkIsPureEnglish(name) && "font-suisse",
 					)}
 				>
 					{name}
